@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+build
+coverage
+test-results
+playwright-report
+blob-report
+reports
+.stryker-tmp
+pnpm-lock.yaml
+types/database.types.ts
+next-env.d.ts

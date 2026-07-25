@@ -1,0 +1,121 @@
+@import 'tailwindcss';
+
+/**
+ * Design tokens (§5).
+ *
+ * Palette: white · light blue · deep blue · gold. The token names follow the
+ * shadcn/ui convention so `pnpm dlx shadcn add <component>` drops in primitives that
+ * already match this theme without hand-editing each one.
+ *
+ * There is deliberately no dark theme. The invitation is a printed-card metaphor —
+ * a dark variant of it would be a different design, not the same one inverted — and
+ * a half-built dark mode is worse than none. The admin dashboard inherits the same
+ * light surface for consistency.
+ */
+
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(0.995 0.003 250);
+  --foreground: oklch(0.25 0.035 254);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.035 254);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.035 254);
+
+  /* Deep blue — primary actions, headings, the invitation frame. */
+  --primary: oklch(0.38 0.098 254);
+  --primary-foreground: oklch(0.99 0.004 250);
+
+  /* Light blue — supporting surfaces and quiet fills. */
+  --secondary: oklch(0.94 0.028 240);
+  --secondary-foreground: oklch(0.33 0.075 254);
+
+  --muted: oklch(0.965 0.008 250);
+  --muted-foreground: oklch(0.52 0.028 254);
+
+  /* Gold — ornament and emphasis only, never a large surface. */
+  --accent: oklch(0.79 0.115 84);
+  --accent-foreground: oklch(0.28 0.045 70);
+
+  --destructive: oklch(0.55 0.19 27);
+  --destructive-foreground: oklch(0.99 0.004 250);
+
+  --success: oklch(0.55 0.12 155);
+  --success-foreground: oklch(0.99 0.004 250);
+
+  --border: oklch(0.9 0.014 250);
+  --input: oklch(0.9 0.014 250);
+  --ring: oklch(0.38 0.098 254);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-assistant), system-ui, sans-serif;
+  --font-display: var(--font-frank-ruhl), Georgia, serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    /* Hebrew dates and counters must not be re-shaped by the browser. */
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* §9: a focus state that stays visible on every surface, including the gold accent. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* §5 and §9: motion is decoration here, so honouring the preference costs nothing. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

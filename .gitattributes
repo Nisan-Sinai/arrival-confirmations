@@ -1,0 +1,14 @@
+# Normalise line endings so a checkout on Windows and one in Linux CI produce the
+# same bytes. Without this, `prettier --check` passes locally and fails in CI.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+pnpm-lock.yaml linguist-generated=true
