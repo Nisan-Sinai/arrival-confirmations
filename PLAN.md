@@ -8,10 +8,47 @@
 
 ## מצב נוכחי — היכן להמשיך
 
-**פאזה 1 (Scaffold + tooling) — הושלמה.** להמשיך מפאזה 2 (מסד נתונים).
+**פאזות 1–2 הושלמו. להמשיך מפאזה 3 (ליבת שרת).**
+
+הצעד הראשון בפאזה 3, לפני כל דבר אחר: להריץ `pnpm supabase:types` כדי לייצר את
+`types/database.types.ts`. הוא עדיין לא בריפו כי הוא דורש `TEST_DATABASE_URL`
+ב-`.env.local`, ואף שורת קוד ב-`repositories/` לא נכתבת לפניו.
+
+### תשתית חיה
+
+| משאב             | ערך                                                      |
+| ---------------- | -------------------------------------------------------- |
+| GitHub           | `Nisan-Sinai/arrival-confirmations` (פרטי)               |
+| Supabase project | `qjzyjetkwqtasqzhvoat` · eu-central-1 · מסלול חינמי ($0) |
+| Supabase URL     | `https://qjzyjetkwqtasqzhvoat.supabase.co`               |
+
+`.env.local` עדיין לא קיים — המפתחות נלקחים מ-Supabase → Project Settings → API Keys
+לפי הטבלה ב-SETUP.md.
+
+### רקע: למה זה נעצר בפעם הראשונה
 
 הסשן המקורי רץ בענן והועבר למחשב המקומי עם `messageCount: 0`, כלומר היסטוריית
 השיחה אבדה בהעברה. הקבצים על הדיסק שרדו במלואם. אין כאן תקלה בקוד.
+
+### החלטות שהתקבלו תוך כדי, ושכדאי לא לגלות מחדש
+
+1. **שמות עמודות מוכללים.** המפרט כתב `parents_names` / `child_display_name` /
+   `brit_time` (ברית מילה). בפועל: `hosts_names` / `honoree_display_name` /
+   `ceremony_time`, כי המערכת תומכת ב-11 סוגי אירוע והתווית מגיעה מה-preset.
+2. **ההקרנה הציבורית היא פונקציה, לא view.** `public.get_public_event()` מחזירה טיפוס
+   מורכב עם רשימת עמודות קבועה, כך שהוספת עמודה ל-`events` לא יכולה להרחיב את מה
+   שאנונימי רואה. אומת: 19 עמודות בטבלה, 16 חשופות, מוסתרות `created_at`,
+   `updated_at`, `is_active`.
+3. **הערכת RLS דורשת EXECUTE על `is_admin()`.** נבדק אמפירית מול המסד: ביטול ההרשאה
+   מ-`authenticated` שובר את המדיניות עם `permission denied for function is_admin`.
+   לכן ההתראה של Supabase על `is_admin`/`is_owner` הניתנות להרצה על ידי
+   `authenticated` היא בלתי נמנעת ומקובלת — הפונקציה מחזירה בוליאני על הקורא עצמו
+   בלבד. יש לתעד זאת ב-SECURITY.md.
+4. **ה-default privileges של Supabase גוברים על `revoke from public`.** נדרשה
+   מיגרציה נפרדת (`20260726000700`) כדי לבטל EXECUTE מ-`anon` בפועל.
+5. **`now()` קבוע לאורך טרנזקציה** — בדיקת טריגר `updated_at` שמשווה
+   `created_at` ל-`updated_at` באותה טרנזקציה תמיד "תיכשל" לשווא. הבדיקה הנכונה:
+   לכתוב ערך ישן במפורש ולוודא שהטריגר דרס אותו.
 
 ---
 
@@ -52,7 +89,7 @@
 | #   | פאזה                                                                                                                                       | סטטוס    |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
 | 1   | Scaffold + tooling: Next.js, TS strict, Tailwind, shadcn, ESLint, Prettier, Vitest, Playwright, `config/`, `.env.example`, אימות env       | ✅ הושלם |
-| 2   | Database: migrations, enums, constraints, triggers, RLS policies, `is_admin()`, seed, טיפוסים מגוללים                                      | ⬜       |
+| 2   | Database: migrations, enums, constraints, triggers, RLS policies, `is_admin()`, seed, טיפוסים מגוללים                                      | ✅ הושלם |
 | 3   | ליבת שרת: גיבוב טוקנים, החלפת invite-session, idempotency, פונקציית submit טרנזקציונית, rate limiter + IP resolver, repositories, services | ⬜       |
 | 4   | דף הזמנה ציבורי + טופס RSVP + זרימת יצירה/עדכון מאובטחת                                                                                    | ⬜       |
 | 5   | אדמין: auth + דשבורד (סטטיסטיקות, גרפים, טבלה, פעולות, CSV, WhatsApp)                                                                      | ⬜       |
