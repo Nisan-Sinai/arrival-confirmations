@@ -4,6 +4,7 @@ import { HDate } from '@hebcal/core';
 import { EVENT_TIMEZONE } from '@/config/event.config';
 import { getEventTypePreset } from '@/config/eventTypes';
 import { UI_MESSAGES } from '@/config/messages';
+import { Countdown } from '@/features/invite/Countdown';
 import {
   Balloons,
   Bunting,
@@ -101,24 +102,30 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
   const { weekday, date } = formatGregorian(event.event_date!);
   const ceremonyTime = formatTime(event.ceremony_time);
   const receptionTime = formatTime(event.reception_time);
+  // Resolved here, not in the browser: the countdown must run against Asia/Jerusalem
+  // regardless of where the guest's phone thinks it is.
+  const countdownTargetMs = new TZDate(
+    `${event.event_date}T${event.ceremony_time ?? '12:00:00'}`,
+    EVENT_TIMEZONE,
+  ).getTime();
 
   return (
     <article className="relative mx-auto w-full max-w-2xl overflow-hidden">
       <WatercolourWash />
       {/* Outer gold rule, then an inset second rule — the double frame of the print. */}
       <div className="border-accent/70 rounded-lg border-2 p-2 sm:p-3">
-        <div className="border-accent/40 from-secondary/20 relative rounded-md border bg-gradient-to-b via-white/95 to-white/95 px-5 py-10 sm:px-12 sm:py-14">
+        <div className="border-accent/40 from-secondary/20 relative rounded-md border bg-gradient-to-b via-white/95 to-white/95 px-4 pt-12 pb-20 sm:px-12 sm:pt-14 sm:pb-24">
           {/* Four corners from one shape, rotated. */}
           <CornerFiligree className="absolute top-1 right-1 size-14 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute top-1 left-1 size-14 -scale-x-100 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute right-1 bottom-1 size-14 -scale-y-100 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute bottom-1 left-1 size-14 -scale-100 opacity-70 sm:size-16" />
 
-          <Bunting className="pointer-events-none absolute -top-1 left-2 w-40 opacity-90 sm:w-56" />
-          <Balloons className="pointer-events-none absolute top-6 right-1 w-20 opacity-95 sm:w-28" />
+          <Bunting className="pointer-events-none absolute -top-1 left-1 w-28 opacity-80 sm:w-56 sm:opacity-90" />
+          <Balloons className="pointer-events-none absolute top-4 right-0 w-14 opacity-80 sm:top-6 sm:right-1 sm:w-28 sm:opacity-95" />
           <TeddyBear className="pointer-events-none absolute right-1 -bottom-2 w-24 opacity-95 sm:w-32" />
-          <GiftAndShoes className="pointer-events-none absolute bottom-0 left-1 w-24 opacity-95 sm:w-32" />
-          <FloralSprig className="pointer-events-none absolute bottom-16 left-0 w-16 opacity-80 sm:w-20" />
+          <GiftAndShoes className="pointer-events-none absolute bottom-0 left-0 w-16 opacity-85 sm:left-1 sm:w-32 sm:opacity-95" />
+          <FloralSprig className="pointer-events-none absolute bottom-14 left-0 hidden w-16 opacity-75 sm:block sm:w-20" />
 
           <div className="relative z-10">
             <p className="text-muted-foreground text-center text-sm">ב״ה</p>
@@ -129,16 +136,16 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
               {preset.invitationLine}
             </p>
 
-            <h1 className="text-primary mt-6 text-center font-[family-name:var(--font-display)] text-5xl font-bold tracking-tight drop-shadow-sm sm:text-6xl">
+            <h1 className="text-primary mt-6 text-center font-[family-name:var(--font-display)] text-[2.6rem] leading-[1.05] font-bold tracking-tight drop-shadow-sm sm:text-6xl">
               {preset.label}
             </h1>
 
             <p className="text-muted-foreground mt-4 text-center text-lg">של</p>
-            <p className="text-primary mt-1 text-center font-[family-name:var(--font-display)] text-3xl font-bold sm:text-4xl">
+            <p className="text-primary mt-1 text-center font-[family-name:var(--font-display)] text-2xl font-bold sm:text-4xl">
               {event.honoree_display_name}
             </p>
 
-            <Flourish className="my-9" />
+            <Flourish className="my-8 sm:my-9" />
 
             {/* The three practical facts, side by side as on the print. On a narrow
               phone they stack rather than shrink past legibility (§9, 200% zoom). */}
@@ -201,7 +208,11 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
               </Medallion>
             </div>
 
-            <Flourish className="my-9" />
+            <Flourish className="my-8 sm:my-9" />
+
+            <Countdown targetMs={countdownTargetMs} />
+
+            <Flourish className="my-8 sm:my-9" />
 
             {event.description !== null && (
               <p className="text-foreground text-center text-base leading-relaxed whitespace-pre-line sm:text-lg">
