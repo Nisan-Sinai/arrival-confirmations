@@ -91,9 +91,14 @@
   html {
     /* Hebrew dates and counters must not be re-shaped by the browser. */
     font-variant-numeric: lining-nums tabular-nums;
+    /* No decorative element may widen the document. `clip` not `hidden`: hidden on
+       a root element turns the other axis into a scroll container and breaks
+       position: sticky further down the page. */
+    overflow-x: clip;
   }
 
   body {
+    overflow-x: clip;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);

@@ -114,7 +114,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
       <WatercolourWash />
       {/* Outer gold rule, then an inset second rule — the double frame of the print. */}
       <div className="border-accent/70 rounded-lg border-2 p-2 sm:p-3">
-        <div className="border-accent/40 from-secondary/20 relative rounded-md border bg-gradient-to-b via-white/95 to-white/95 px-4 pt-12 pb-20 sm:px-12 sm:pt-14 sm:pb-24">
+        <div className="border-accent/40 from-secondary/20 relative overflow-hidden rounded-md border bg-gradient-to-b via-white/95 to-white/95 px-4 pt-12 pb-20 sm:px-12 sm:pt-14 sm:pb-24">
           {/* Four corners from one shape, rotated. */}
           <CornerFiligree className="absolute top-1 right-1 size-14 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute top-1 left-1 size-14 -scale-x-100 opacity-70 sm:size-16" />
