@@ -88,8 +88,19 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
 
       <form action={formAction} className="mt-6 space-y-5" noValidate>
         <input type="hidden" name="eventId" value={eventId} />
-        {/* §6.1 honeypot: off-screen rather than display:none, which some bots skip. */}
-        <div aria-hidden="true" className="absolute left-[-9999px] h-px w-px overflow-hidden">
+        {/*
+          §6.1 honeypot. Hidden without display:none, which many bots skip — they only
+          fill fields they believe a human can see.
+
+          Clipped to nothing rather than pushed to left-[-9999px]. The negative offset
+          worked but widened the document to 10,359px, so every page scrolled sideways
+          on a phone; the clip achieves the same concealment inside the layout.
+        */}
+        <div
+          aria-hidden="true"
+          className="absolute h-px w-px overflow-hidden"
+          style={{ clipPath: 'inset(50%)' }}
+        >
           <label htmlFor={`${formId}-company`}>אל תמלאו שדה זה</label>
           <input
             id={`${formId}-company`}

@@ -1,0 +1,109 @@
+name: CI
+
+# §11: every push and every pull request. A gate that only runs on one of them is a
+# gate somebody will route around.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push to the same branch makes the first run's answer irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Deterministic stand-ins so the suites that need no database still run in a fork,
+  # where secrets are unavailable. Obviously fake, and never valid anywhere.
+  NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key-0123456789
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-0123456789
+  TOKEN_PEPPER: ci-placeholder-token-pepper-0123456789-abcdef
+  IP_HASH_PEPPER: ci-placeholder-ip-pepper-9876543210-zyxwvu
+
+jobs:
+  quality:
+    name: Format, lint, types, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Pinned rather than 'latest': §1 requires the toolchain to be reproducible.
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        # Frozen: a lockfile CI is allowed to update is a lockfile that proves nothing.
+        run: pnpm install --frozen-lockfile
+
+      - name: Prettier
+        run: pnpm format:check
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: TypeScript
+        run: pnpm typecheck
+
+      - name: Unit and component tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Secret scan over source and build output
+        # Runs after the build on purpose: §4.5's browser-bundle grep has nothing to
+        # inspect until .next exists.
+        run: pnpm scan:secrets
+
+      - name: Dependency audit
+        # Advisory: a transitive advisory with no fix available should not block a
+        # release that does not reach the vulnerable path. It is still reported.
+        run: pnpm audit --audit-level high
+        continue-on-error: true
+
+  e2e:
+    name: End-to-end and accessibility
+    runs-on: ubuntu-latest
+    # Needs real credentials, which forks cannot have. Skipping is honest; faking a
+    # pass would not be (§17).
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E and axe
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TOKEN_PEPPER: ${{ secrets.TOKEN_PEPPER }}
+          IP_HASH_PEPPER: ${{ secrets.IP_HASH_PEPPER }}
+          E2E_EVENT_PUBLIC_ID: ${{ secrets.E2E_EVENT_PUBLIC_ID }}
+        run: pnpm test:e2e
+
+      - name: Upload the report when something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
