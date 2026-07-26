@@ -3,6 +3,7 @@ import { Assistant, Frank_Ruhl_Libre } from 'next/font/google';
 
 import { appConfig } from '@/config/event.config';
 import { UI_MESSAGES } from '@/config/messages';
+import { SiteFooter } from '@/features/layout/SiteFooter';
 
 import './globals.css';
 
@@ -61,6 +62,7 @@ export default function RootLayout({
           {UI_MESSAGES.a11y.skipToContent}
         </a>
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

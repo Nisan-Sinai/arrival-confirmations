@@ -84,6 +84,8 @@ export type Database = {
       };
       events: {
         Row: {
+          owner_user_id: string | null;
+          public_id: string;
           address: string;
           ceremony_time: string | null;
           contact_phone: string | null;
@@ -105,6 +107,8 @@ export type Database = {
           waze_url: string | null;
         };
         Insert: {
+          owner_user_id?: string | null;
+          public_id: string;
           address: string;
           ceremony_time?: string | null;
           contact_phone?: string | null;
@@ -126,6 +130,8 @@ export type Database = {
           waze_url?: string | null;
         };
         Update: {
+          owner_user_id?: string | null;
+          public_id?: string;
           address?: string;
           ceremony_time?: string | null;
           contact_phone?: string | null;
@@ -383,16 +389,11 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      get_public_event: {
-        Args: never;
-        Returns: Database['public']['CompositeTypes']['public_event'];
-        SetofOptions: {
-          from: '*';
-          to: 'public_event';
-          isOneToOne: true;
-          isSetofReturn: false;
-        };
+      get_public_event_by_public_id: {
+        Args: { p_public_id: string };
+        Returns: Database['public']['CompositeTypes']['public_event_v2'];
       };
+      owns_event: { Args: { p_event_id: string }; Returns: boolean };
       is_admin: { Args: never; Returns: boolean };
       is_owner: { Args: never; Returns: boolean };
       /**
@@ -451,8 +452,9 @@ export type Database = {
       rsvp_source: 'personal_link' | 'public_form';
     };
     CompositeTypes: {
-      public_event: {
+      public_event_v2: {
         id: string | null;
+        public_id: string | null;
         event_type: Database['public']['Enums']['event_type'] | null;
         title: string | null;
         hosts_names: string | null;

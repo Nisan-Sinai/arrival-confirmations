@@ -15,6 +15,7 @@ import { UI_MESSAGES } from '@/config/messages';
  */
 
 interface RsvpFormProps {
+  readonly eventId: string;
   readonly sideALabel: string;
   readonly sideBLabel: string;
 }
@@ -48,7 +49,7 @@ function FieldError({ id, message }: { id: string; message: string | undefined }
   );
 }
 
-export function RsvpForm({ sideALabel, sideBLabel }: RsvpFormProps) {
+export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
   const [state, formAction, isPending] = useActionState<RsvpFormState, FormData>(
     submitRsvpAction,
     INITIAL_STATE,
@@ -86,6 +87,7 @@ export function RsvpForm({ sideALabel, sideBLabel }: RsvpFormProps) {
       </h2>
 
       <form action={formAction} className="mt-6 space-y-5" noValidate>
+        <input type="hidden" name="eventId" value={eventId} />
         {/* §6.1 honeypot: off-screen rather than display:none, which some bots skip. */}
         <div aria-hidden="true" className="absolute left-[-9999px] h-px w-px overflow-hidden">
           <label htmlFor={`${formId}-company`}>אל תמלאו שדה זה</label>

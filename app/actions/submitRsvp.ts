@@ -40,6 +40,13 @@ export async function submitRsvpAction(
   _previous: RsvpFormState,
   formData: FormData,
 ): Promise<RsvpFormState> {
+  // Which event this submission belongs to. Carried in the form rather than resolved
+  // from 'the active event', which no longer exists — many events are live at once.
+  const eventId = formData.get('eventId');
+  if (typeof eventId !== 'string' || eventId === '') {
+    return { status: 'error', message: UI_MESSAGES.errors.genericBody, fieldErrors: {} };
+  }
+
   // §6.1 step 1: re-validate on the server. The client already ran this schema; that
   // run was a convenience and this one is the control.
   const parsed = parseRsvpSubmission({
@@ -67,8 +74,15 @@ export async function submitRsvpAction(
 
   const supabase = createPrivilegedClient();
 
-  const { data: event } = await supabase.rpc('get_public_event');
-  if (event === null || event.id === null) {
+  // Re-read the event server-side rather than trusting the id from the form: an
+  // unpublished or unknown id must not reach submit_rsvp at all.
+  const { data: event } = await supabase
+    .from('events')
+    .select('id')
+    .eq('id', eventId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (event === null) {
     return { status: 'error', message: UI_MESSAGES.errors.genericBody, fieldErrors: {} };
   }
 
@@ -147,7 +161,7 @@ export async function submitRsvpAction(
     return { status: 'error', message: UI_MESSAGES.rsvp.unknownError, fieldErrors: {} };
   }
 
-  revalidatePath('/');
+  revalidatePath('/e', 'layout');
 
   return {
     status: 'success',

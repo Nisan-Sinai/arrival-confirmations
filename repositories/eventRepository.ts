@@ -6,33 +6,37 @@ import type { Database } from '@/types/database.types';
 /**
  * Read access to event data (§2 "only repositories/ talks to Supabase").
  *
- * The public projection is fetched through `get_public_event()` rather than by
- * selecting from `events`, because that routine's fixed return type is what stops a
- * column added later from becoming visible to anonymous visitors (§4.6). Selecting
- * columns here would move that guarantee into application code, where the next
- * person to add a field has to remember it.
+ * The public read goes through `get_public_event_by_public_id()` rather than a
+ * SELECT on `events`. That routine's fixed return type is what stops a column added
+ * later from becoming visible to anonymous visitors (§4.6); selecting columns here
+ * would move the guarantee into application code, where the next person to add a
+ * field has to remember it.
  */
 
-export type PublicEvent = NonNullable<Database['public']['CompositeTypes']['public_event']>;
+export type PublicEvent = NonNullable<Database['public']['CompositeTypes']['public_event_v2']>;
 
 /**
- * The active event, or null when none is published.
+ * One published event, addressed by its unguessable public id.
  *
- * Returning null rather than throwing is deliberate: "no event is live yet" is an
- * ordinary state for a fresh deployment, and the page renders a real message for it
- * instead of an error screen.
+ * Returns null both when no such event exists and when it exists but is unpublished.
+ * The caller renders the same 404 for either, so a visitor probing ids cannot tell
+ * the two apart — which is what stops the URL space from being enumerable.
  */
-export async function getPublicEvent(): Promise<PublicEvent | null> {
+export async function getEventByPublicId(publicId: string): Promise<PublicEvent | null> {
+  // Cheap rejection before a database round trip; the column has the same CHECK.
+  if (!/^[A-Za-z0-9_-]{10,32}$/.test(publicId)) return null;
+
   const supabase = createAnonymousClient();
-  const { data, error } = await supabase.rpc('get_public_event');
+  const { data, error } = await supabase.rpc('get_public_event_by_public_id', {
+    p_public_id: publicId,
+  });
 
   if (error) {
-    // §13: the Supabase error carries connection details that must not reach a guest.
-    // It is re-thrown as a plain message; the route's error boundary renders Hebrew.
-    throw new Error(`get_public_event failed: ${error.code}`);
+    // §13: the Supabase error carries connection detail that must not reach a guest.
+    throw new Error(`get_public_event_by_public_id failed: ${error.code}`);
   }
 
-  // The routine returns a composite whose fields are all null when no row matched.
+  // The composite comes back with every field null when nothing matched.
   if (data === null || data.id === null) return null;
   return data;
 }
