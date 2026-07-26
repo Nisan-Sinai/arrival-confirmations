@@ -24,12 +24,6 @@ export interface EventFormState {
   readonly fieldErrors: Record<string, string>;
 }
 
-export const initialEventFormState: EventFormState = {
-  status: 'idle',
-  message: '',
-  fieldErrors: {},
-};
-
 /** Trimmed, or null when the field was left empty. */
 function optional(value: FormDataEntryValue | null): string | null {
   const text = typeof value === 'string' ? value.trim() : '';
