@@ -194,8 +194,10 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
                 {rows.map((r) => (
                   <tr key={r.id} className="border-b">
                     <td className="py-2.5">{r.full_name}</td>
-                    <td className="py-2.5" dir="ltr">
-                      {formatIsraeliPhoneForDisplay(r.phone_normalized)}
+                    <td className="py-2.5">
+                      <span dir="ltr" className="inline-block">
+                        {formatIsraeliPhoneForDisplay(r.phone_normalized)}
+                      </span>
                     </td>
                     <td className="py-2.5">
                       <span

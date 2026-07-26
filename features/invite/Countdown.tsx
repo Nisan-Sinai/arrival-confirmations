@@ -37,13 +37,29 @@ function remainingFrom(targetMs: number, nowMs: number): Remaining | null {
   };
 }
 
-/** Hebrew needs the singular for one, so "1 ימים" never appears. */
-const UNITS: ReadonlyArray<{ key: keyof Remaining; one: string; many: string }> = [
-  { key: 'days', one: 'יום', many: 'ימים' },
-  { key: 'hours', one: 'שעה', many: 'שעות' },
-  { key: 'minutes', one: 'דקה', many: 'דקות' },
-  { key: 'seconds', one: 'שנייה', many: 'שניות' },
+/**
+ * Hebrew inflects for one and for two, so a bare plural is wrong twice over: "1
+ * ימים" and "2 ימים" both read as mistakes to a native speaker. `two` is the dual
+ * form where the language has a distinct one.
+ */
+const UNITS: ReadonlyArray<{
+  key: keyof Remaining;
+  one: string;
+  two: string;
+  many: string;
+}> = [
+  { key: 'days', one: 'יום', two: 'יומיים', many: 'ימים' },
+  { key: 'hours', one: 'שעה', two: 'שעתיים', many: 'שעות' },
+  { key: 'minutes', one: 'דקה', two: 'דקות', many: 'דקות' },
+  { key: 'seconds', one: 'שנייה', two: 'שניות', many: 'שניות' },
 ];
+
+/** The dual carries the count itself, so "2 יומיים" would say two twice. */
+function unitLabel(value: number, unit: (typeof UNITS)[number]): string {
+  if (value === 1) return unit.one;
+  if (value === 2) return unit.two;
+  return unit.many;
+}
 
 export function Countdown({ targetMs }: CountdownProps) {
   /**
@@ -84,20 +100,27 @@ export function Countdown({ targetMs }: CountdownProps) {
   return (
     <div
       className="flex items-stretch justify-center gap-2 sm:gap-3"
-      // A live region ticking every second would be read aloud endlessly. The figure
-      // is decorative next to the date, which is already stated in full above.
+      /*
+       * Forced left-to-right. The surrounding page is RTL, which lays flex children
+       * right-to-left and put the seconds first — the figures read as 22, 59, 17, 2
+       * across the row. A counted-down clock is written largest-unit-first in every
+       * locale, Hebrew included, so the row is LTR while its labels stay Hebrew.
+       */
+      dir="ltr"
+      // A live region ticking every second would be announced endlessly. The figure
+      // is decorative beside the date, which is already stated in full above.
       aria-hidden="true"
     >
-      {UNITS.map(({ key, one, many }) => (
+      {UNITS.map((unit) => (
         <div
-          key={key}
+          key={unit.key}
           className="border-accent/40 from-secondary/40 flex min-w-14 flex-col items-center rounded-xl border bg-gradient-to-b to-white/60 px-2 py-2.5 sm:min-w-16 sm:px-3"
         >
           <span className="text-primary font-[family-name:var(--font-display)] text-2xl leading-none font-bold tabular-nums sm:text-3xl">
-            {remaining[key]}
+            {remaining[unit.key]}
           </span>
           <span className="text-muted-foreground mt-1 text-[11px] sm:text-xs">
-            {remaining[key] === 1 ? one : many}
+            {unitLabel(remaining[unit.key], unit)}
           </span>
         </div>
       ))}
