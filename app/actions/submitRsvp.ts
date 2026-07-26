@@ -26,12 +26,6 @@ export interface RsvpFormState {
   readonly fieldErrors: Record<string, string>;
 }
 
-export const initialRsvpFormState: RsvpFormState = {
-  status: 'idle',
-  message: '',
-  fieldErrors: {},
-};
-
 const RATE_LIMIT_PER_WINDOW = 5;
 const RATE_LIMIT_WINDOW_SECONDS = 300;
 

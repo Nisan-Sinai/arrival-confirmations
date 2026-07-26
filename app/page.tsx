@@ -4,6 +4,7 @@ import { HDate } from '@hebcal/core';
 import { EVENT_TIMEZONE } from '@/config/event.config';
 import { getEventTypePreset } from '@/config/eventTypes';
 import { UI_MESSAGES } from '@/config/messages';
+import { RsvpForm } from '@/features/rsvp/RsvpForm';
 import { getPublicEvent, type PublicEvent } from '@/repositories/eventRepository';
 
 /**
@@ -178,12 +179,33 @@ function NoActiveEvent() {
 export default async function HomePage() {
   const event = await getPublicEvent();
 
+  if (event === null) {
+    return (
+      <main
+        id="main"
+        className="from-secondary/40 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-4 py-12"
+      >
+        <NoActiveEvent />
+      </main>
+    );
+  }
+
+  // Side labels come from the event first and the type preset second, so a host can
+  // override "צד החתן" without the preset having to know about their family (§3).
+  const preset = getEventTypePreset(event.event_type);
+
   return (
     <main
       id="main"
-      className="from-secondary/40 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-4 py-12 sm:py-20"
+      className="from-secondary/40 flex flex-1 flex-col items-center gap-8 bg-gradient-to-b to-transparent px-4 py-12 sm:py-16"
     >
-      {event === null ? <NoActiveEvent /> : <InvitationCard event={event} />}
+      <InvitationCard event={event} />
+      <div className="w-full max-w-xl">
+        <RsvpForm
+          sideALabel={event.side_a_label ?? preset.defaultSideALabel}
+          sideBLabel={event.side_b_label ?? preset.defaultSideBLabel}
+        />
+      </div>
     </main>
   );
 }
