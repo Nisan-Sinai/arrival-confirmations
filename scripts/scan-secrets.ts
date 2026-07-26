@@ -116,8 +116,18 @@ const PRIVILEGED_ENV_NAMES = [
   'TEST_USER_PASSWORD',
 ] as const;
 
-/** Placeholders from `.env.example`; matching one proves nothing and would cry wolf. */
-const PLACEHOLDER_VALUE = /^(?:your-|generate-a-|change-me-|postgresql:\/\/postgres:password@)/;
+/**
+ * Declared placeholders — from `.env.example` and from the CI workflow's own env
+ * block. Matching one proves nothing and would cry wolf.
+ *
+ * `ci-placeholder-` earns its place the hard way: in CI those values *are* what
+ * `process.env` holds, and they are written in `.github/workflows/ci.yml`, so the
+ * value-based check reported the workflow file as leaking a live secret on every
+ * run. It was right about the letter and wrong about the substance, and a scanner
+ * that flags a declared placeholder teaches people to stop reading it.
+ */
+const PLACEHOLDER_VALUE =
+  /^(?:your-|generate-a-|change-me-|ci-placeholder-|postgresql:\/\/postgres:password@)/;
 
 interface Finding {
   readonly rule: string;
