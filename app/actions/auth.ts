@@ -15,7 +15,7 @@ import { createUserClient } from '@/lib/server/supabase';
  */
 
 export interface AuthFormState {
-  readonly status: 'idle' | 'error';
+  readonly status: 'idle' | 'error' | 'sent';
   readonly message: string;
 }
 
@@ -75,6 +75,70 @@ export async function signUpAction(
 
   revalidatePath('/', 'layout');
   redirect('/dashboard');
+}
+
+/**
+ * Password reset (§8 auth, §4.4).
+ *
+ * Always reports success, whether or not the address has an account. Saying "no such
+ * user" would turn this form into the account-enumeration oracle the login page
+ * refuses to be, and it is the easier of the two to overlook.
+ */
+export async function requestPasswordResetAction(
+  _previous: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const email = formData.get('email');
+  if (!isValidEmail(email)) {
+    return { status: 'error', message: 'כתובת אימייל לא תקינה' };
+  }
+
+  const supabase = await createUserClient();
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/reset-password`,
+  });
+
+  // The error, if any, is deliberately not surfaced.
+  return {
+    status: 'sent',
+    message: 'אם קיים חשבון עם הכתובת הזו, נשלח אליה קישור לאיפוס סיסמה.',
+  };
+}
+
+/** Sets a new password for the session the reset link established. */
+export async function updatePasswordAction(
+  _previous: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const password = formData.get('password');
+  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+    return { status: 'error', message: `הסיסמה חייבת להכיל לפחות ${MIN_PASSWORD_LENGTH} תווים` };
+  }
+
+  const supabase = await createUserClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { status: 'error', message: 'הקישור פג תוקף. בקשו קישור איפוס חדש.' };
+  }
+
+  revalidatePath('/', 'layout');
+  redirect('/dashboard');
+}
+
+/**
+ * Google sign-in.
+ *
+ * Returns the provider URL for the browser to follow rather than redirecting here:
+ * the OAuth handshake has to happen in the top-level window, and a redirect issued
+ * inside a Server Action would be followed by the action's fetch instead.
+ */
+export async function signInWithGoogleAction(): Promise<void> {
+  const supabase = await createUserClient();
+  const { data } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/auth/callback` },
+  });
+  if (data.url) redirect(data.url);
 }
 
 export async function signOutAction(): Promise<void> {

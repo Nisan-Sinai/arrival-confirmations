@@ -65,7 +65,14 @@ export default async function DashboardPage() {
           {(events ?? []).map((event) => (
             <li key={event.id} className="bg-card rounded-2xl border p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-primary text-lg font-semibold">{event.title}</h2>
+                <h2 className="text-primary text-lg font-semibold">
+                  <Link
+                    className="underline underline-offset-4"
+                    href={'/dashboard/events/' + event.id}
+                  >
+                    {event.title}
+                  </Link>
+                </h2>
                 <span className="text-muted-foreground text-sm">
                   {getEventTypePreset(event.event_type).label}
                 </span>
