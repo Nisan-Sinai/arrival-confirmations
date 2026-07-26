@@ -67,7 +67,20 @@ interface SecretPattern {
   readonly id: string;
   readonly description: string;
   readonly pattern: RegExp;
+  /**
+   * When true, the rule is not applied to test files.
+   *
+   * Only shape-based rules may set this. A test that assigns a fake pepper to prove
+   * a hash actually depends on the pepper is doing the right thing, and flagging it
+   * teaches people to ignore the scanner. The value-based checks — the ones that
+   * search for the real secrets currently in the environment — still run over tests,
+   * so a genuine leak into a fixture is still caught.
+   */
+  readonly allowedInTests?: boolean;
 }
+
+/** Test and fixture files, where a deliberately fake secret is the correct thing. */
+const TEST_PATH = /(^|[\\/])(tests|e2e)[\\/]/;
 
 const SOURCE_PATTERNS: readonly SecretPattern[] = [
   {
@@ -75,6 +88,7 @@ const SOURCE_PATTERNS: readonly SecretPattern[] = [
     description: 'A secret assigned a literal value instead of being read from the environment',
     pattern:
       /\b(SUPABASE_SERVICE_ROLE_KEY|TOKEN_PEPPER|IP_HASH_PEPPER|TEST_DATABASE_URL)\s*[:=]\s*['"`][^'"`\n]{12,}['"`]/,
+    allowedInTests: true,
   },
   {
     id: 'postgres-url-with-password',
@@ -231,7 +245,10 @@ async function scanSourceTree(): Promise<Finding[]> {
   for (const absolute of files) {
     const repoPath = relative(REPO_ROOT, absolute);
     const content = await readFile(absolute, 'utf8');
-    findings.push(...scanContent(repoPath, content, SOURCE_PATTERNS));
+    const applicable = TEST_PATH.test(repoPath)
+      ? SOURCE_PATTERNS.filter((rule) => rule.allowedInTests !== true)
+      : SOURCE_PATTERNS;
+    findings.push(...scanContent(repoPath, content, applicable));
     findings.push(...scanForPrivilegedJwts(repoPath, content));
 
     for (const { name, value } of secrets) {
