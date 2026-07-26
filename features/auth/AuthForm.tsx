@@ -26,6 +26,8 @@ interface AuthFormProps {
   readonly footerLinkLabel: string;
   /** Sign-up only; drives the autocomplete hint and the minimum length note. */
   readonly isRegistration?: boolean;
+  /** Password reset: the address is all we can ask for before the link is followed. */
+  readonly emailOnly?: boolean;
 }
 
 export function AuthForm({
@@ -37,6 +39,7 @@ export function AuthForm({
   footerHref,
   footerLinkLabel,
   isRegistration = false,
+  emailOnly = false,
 }: AuthFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL);
   const formId = useId();
@@ -63,27 +66,34 @@ export function AuthForm({
           />
         </div>
 
-        <div>
-          <label htmlFor={`${formId}-password`} className="block text-sm font-semibold">
-            סיסמה
-          </label>
-          <input
-            id={`${formId}-password`}
-            name="password"
-            type="password"
-            required
-            // The right hint matters: browsers offer to generate a strong password on
-            // new-password and to fill a saved one on current-password.
-            autoComplete={isRegistration ? 'new-password' : 'current-password'}
-            minLength={isRegistration ? 10 : undefined}
-            dir="ltr"
-            className="border-input mt-1.5 w-full rounded-lg border px-3 py-2.5 text-base"
-          />
-          {isRegistration && <p className="text-muted-foreground mt-1.5 text-sm">לפחות 10 תווים</p>}
-        </div>
+        {!emailOnly && (
+          <div>
+            <label htmlFor={`${formId}-password`} className="block text-sm font-semibold">
+              סיסמה
+            </label>
+            <input
+              id={`${formId}-password`}
+              name="password"
+              type="password"
+              required
+              // The right hint matters: browsers offer to generate a strong password on
+              // new-password and to fill a saved one on current-password.
+              autoComplete={isRegistration ? 'new-password' : 'current-password'}
+              minLength={isRegistration ? 10 : undefined}
+              dir="ltr"
+              className="border-input mt-1.5 w-full rounded-lg border px-3 py-2.5 text-base"
+            />
+            {isRegistration && (
+              <p className="text-muted-foreground mt-1.5 text-sm">לפחות 10 תווים</p>
+            )}
+          </div>
+        )}
 
-        {state.status === 'error' && (
-          <p role="alert" className="text-destructive text-center text-sm">
+        {state.status !== 'idle' && (
+          <p
+            role="alert"
+            className={`text-center text-sm ${state.status === 'sent' ? 'text-success' : 'text-destructive'}`}
+          >
             {state.message}
           </p>
         )}
@@ -96,6 +106,17 @@ export function AuthForm({
           {isPending ? pendingLabel : submitLabel}
         </button>
       </form>
+
+      {!isRegistration && !emailOnly && (
+        <p className="mt-4 text-center text-sm">
+          <Link
+            className="text-muted-foreground hover:text-primary underline underline-offset-4"
+            href="/forgot-password"
+          >
+            שכחתי סיסמה
+          </Link>
+        </p>
+      )}
 
       <p className="text-muted-foreground mt-6 text-center text-sm">
         {footerPrompt}{' '}

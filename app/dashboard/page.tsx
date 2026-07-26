@@ -43,14 +43,22 @@ export default async function DashboardPage() {
         <h1 className="text-primary font-[family-name:var(--font-display)] text-3xl font-bold">
           האירועים שלי
         </h1>
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            className="text-muted-foreground hover:text-primary text-sm underline underline-offset-4"
+        <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard/events/new"
+            className="bg-primary text-primary-foreground rounded-full px-5 py-2 text-sm font-semibold"
           >
-            התנתקות
-          </button>
-        </form>
+            אירוע חדש
+          </Link>
+          <form action={signOutAction}>
+            <button
+              type="submit"
+              className="text-muted-foreground hover:text-primary text-sm underline underline-offset-4"
+            >
+              התנתקות
+            </button>
+          </form>
+        </div>
       </div>
       <p className="text-muted-foreground mt-2 text-sm" dir="ltr">
         {user.email}
