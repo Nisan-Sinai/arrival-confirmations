@@ -30,6 +30,7 @@
     "test:mutation:full": "stryker run",
     "data:retention:cleanup": "tsx scripts/data-retention-cleanup.ts",
     "check:auth-urls": "tsx scripts/check-auth-urls.ts",
+    "check:schema-drift": "tsx scripts/check-schema-drift.ts",
     "scan:secrets": "tsx scripts/scan-secrets.ts",
     "deadcode": "knip",
     "supabase:start": "tsx scripts/supabase-local-notice.ts",
