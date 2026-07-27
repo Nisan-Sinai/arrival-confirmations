@@ -58,7 +58,10 @@ export const appConfig: AppConfig = {
   inviteTokenTtlDays: 180,
   updateTokenTtlDays: 60,
   idempotencyTtlHours: 24,
-  defaultRetentionDaysAfterEvent: 30,
+  // One year. Stated in the privacy notice and enforced by the nightly pg_cron job in
+  // 20260726001500_schedule_retention.sql — the number here is the single source for
+  // both, so the promise and the purge cannot drift apart.
+  defaultRetentionDaysAfterEvent: 365,
   auditLogRetentionDays: 365,
 };
 

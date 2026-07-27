@@ -96,9 +96,16 @@ export default function PrivacyPage() {
 
           <Section title="כמה זמן המידע נשמר">
             <p>
-              פרטי האורחים נמחקים או עוברים אנונימיזציה עד <strong>{RETENTION_DAYS} ימים</strong>{' '}
-              לאחר מועד האירוע. רישומי הביקורת נשמרים עד {appConfig.auditLogRetentionDays} ימים
-              ואינם כוללים את פרטי הקשר שלכם.
+              פרטי האורחים נמחקים או עוברים אנונימיזציה עד <strong>שנה</strong> ({RETENTION_DAYS}{' '}
+              ימים) לאחר מועד האירוע. רישומי הביקורת נשמרים עד {appConfig.auditLogRetentionDays}{' '}
+              ימים ואינם כוללים את פרטי הקשר שלכם.
+            </p>
+            {/* The mechanism is named because §14 asks for a documented process, and
+                because "we delete it eventually" is what everyone writes. */}
+            <p>
+              המחיקה אינה ידנית: משימה מתוזמנת רצה במסד הנתונים מדי לילה, מאתרת אירועים שעברו את
+              תקופת השמירה, ומוחקת מהם את השם, הטלפון, דרישות התזונה וההערות. מספרי המשתתפים נשארים
+              לבעל האירוע בלבד, בלי שום פרט מזהה.
             </p>
           </Section>
 

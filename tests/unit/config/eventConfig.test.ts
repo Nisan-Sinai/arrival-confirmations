@@ -55,6 +55,17 @@ describe('app configuration', () => {
       expect(findPlaceholderKeys()).toEqual([]);
     });
 
+    /**
+     * Three places state the retention window and they must agree: this constant, the
+     * sentence a guest reads in the privacy notice, and the pg_cron job in
+     * `20260726001500_schedule_retention.sql` that actually performs the erase. The
+     * first two share this value; the third cannot import it, so this assertion is
+     * what makes a change here visible rather than silent.
+     */
+    it('keeps the retention window at the one year the privacy notice promises', () => {
+      expect(appConfig.defaultRetentionDaysAfterEvent).toBe(365);
+    });
+
     it('ships a reachable support address and telephone, which the two legal notices render', () => {
       expect(appConfig.supportEmail).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/);
       expect(appConfig.supportPhone.replace(/\D/g, '').length).toBeGreaterThanOrEqual(9);
