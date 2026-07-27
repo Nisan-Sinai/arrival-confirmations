@@ -16,7 +16,17 @@ type Rsvp = Database['public']['Tables']['rsvps']['Row'];
 
 let sequence = 0;
 
-/** A row with every column present, so the fixture cannot drift from the schema. */
+/**
+ * A row with every column present, so the fixture cannot drift from the schema.
+ *
+ * The return type is annotated and there is deliberately no `as Rsvp` cast. An earlier
+ * version had one, and it did precisely what a cast does: it silenced the compiler
+ * while the fixture carried `consent_given` and `consent_given_at`, two columns that do
+ * not exist — the real one is `consent`. The tests passed, the fixture was wrong, and
+ * the comment above it was a claim the code was not backing. Without the cast, a column
+ * renamed in a migration fails here at compile time, which is what this was always
+ * supposed to do.
+ */
 function rsvp(overrides: Partial<Rsvp> = {}): Rsvp {
   sequence += 1;
   return {
@@ -33,15 +43,14 @@ function rsvp(overrides: Partial<Rsvp> = {}): Rsvp {
     babies_count: 0,
     dietary_requirements: null,
     notes: null,
-    consent_given: true,
-    consent_given_at: '2026-08-01T09:00:00Z',
+    consent: true,
     source: 'public_form',
     submitted_at: '2026-08-01T09:00:00Z',
     updated_at: '2026-08-01T09:00:00Z',
     update_token_hash: null,
     update_token_expires_at: null,
     ...overrides,
-  } as Rsvp;
+  };
 }
 
 describe('computeRsvpStats', () => {

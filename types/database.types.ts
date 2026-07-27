@@ -432,6 +432,22 @@ export type Database = {
         Returns: Json;
       };
       purge_expired_rate_limits: { Args: never; Returns: number };
+      /** HAND-PATCHED — see the note at the top of this file. §14 retention purge. */
+      purge_expired_guest_data: {
+        Args: {
+          p_retention_days: number;
+          p_audit_retention_days: number;
+          p_dry_run: boolean;
+        };
+        Returns: {
+          events_processed: number;
+          rsvps_anonymised: number;
+          guests_deleted: number;
+          invite_sessions_deleted: number;
+          idempotency_keys_deleted: number;
+          audit_logs_deleted: number;
+        }[];
+      };
     };
     Enums: {
       admin_role: 'admin' | 'owner';

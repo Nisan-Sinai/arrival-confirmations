@@ -84,6 +84,12 @@ export default defineConfig({
       reporter: ['text', 'html', 'lcov', 'json'],
       reportsDirectory: './coverage',
       /**
+       * Measured over `unit` and `component` only — see the `test:coverage` script.
+       * Running every project would drag in `integration` and `rls`, which need a
+       * dedicated Supabase project and now refuse outright when TEST_DATABASE_URL
+       * names the one the application serves. A coverage report that cannot be
+       * produced without a second database is a coverage report nobody runs.
+       *
        * The logic layers, and only those.
        *
        * `app/**` and `features/**` were in this list under a 100% threshold, which

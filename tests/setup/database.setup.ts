@@ -2,6 +2,10 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
 
 import './unit.setup';
+import { resolveTestDatabaseUrl, TestDatabaseConfigError } from './testDatabaseUrl';
+
+// Re-exported so the database-backed suites keep importing them from one place.
+export { resolveTestDatabaseUrl, TestDatabaseConfigError };
 
 /**
  * Shared setup for the suites that talk to a real database — `integration` and `rls`
@@ -22,41 +26,6 @@ const APP_TABLES = [
   'admin_profiles',
   'events',
 ] as const;
-
-export class TestDatabaseConfigError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'TestDatabaseConfigError';
-  }
-}
-
-/**
- * §11 "Never production" and §15 "Verify Preview deployments never connect to the
- * production database" — the guard is here, in the only place that hands out a
- * privileged connection to the test suites.
- */
-export function resolveTestDatabaseUrl(
-  env: Record<string, string | undefined> = process.env,
-): string {
-  const url = env.TEST_DATABASE_URL;
-  if (!url) {
-    throw new TestDatabaseConfigError(
-      'TEST_DATABASE_URL is not set. The integration and RLS suites need a dedicated ' +
-        'test database — see SETUP.md. Run `pnpm test:unit` for the suites that do not.',
-    );
-  }
-  if (!/^postgres(ql)?:\/\//.test(url)) {
-    throw new TestDatabaseConfigError(
-      'TEST_DATABASE_URL must be a postgresql:// connection string.',
-    );
-  }
-  if (env.NODE_ENV === 'production') {
-    throw new TestDatabaseConfigError(
-      'Refusing to run destructive test setup with NODE_ENV=production.',
-    );
-  }
-  return url;
-}
 
 let pool: Pool | null = null;
 
