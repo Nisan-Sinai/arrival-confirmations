@@ -46,6 +46,19 @@ describe('absoluteUrl', () => {
   });
 });
 
+describe('GOOGLE_SITE_VERIFICATION', () => {
+  /**
+   * Not a secret — it is a meta tag on a public page — but it is load-bearing: drop it
+   * and the Search Console property silently un-verifies, taking the sitemap reporting
+   * with it. Nothing else in the application would notice, which is why it is asserted
+   * here rather than left to be discovered months later.
+   */
+  it('is present, so the Search Console property stays verified', async () => {
+    const { GOOGLE_SITE_VERIFICATION } = await loadSeo('https://example.test');
+    expect(GOOGLE_SITE_VERIFICATION).toMatch(/^[\w-]{40,50}$/);
+  });
+});
+
 describe('the crawlable surface', () => {
   it('offers exactly the three pages that carry no personal data', async () => {
     const { INDEXABLE_PATHS } = await loadSeo('https://example.test');

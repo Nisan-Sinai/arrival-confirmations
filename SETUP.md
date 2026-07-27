@@ -34,10 +34,6 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API Keys → anon / publishable |
 | `NEXT_PUBLIC_SITE_URL`          | כתובת הבסיס. בפיתוח `http://localhost:3000`                 |
 
-| משתנה לא חובה                          | מה זה                                                          |
-| -------------------------------------- | -------------------------------------------------------------- |
-| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | אסימון אימות הבעלות של Google Search Console. ראו "קידום" למטה |
-
 ### שרת בלבד — אסור בהחלט עם קידומת `NEXT_PUBLIC_`
 
 | משתנה                       | מקור                                                  |
@@ -135,13 +131,16 @@ pnpm ci           # שער האיכות המלא
 
 הקוד עושה את כל מה שקוד יכול לעשות: `robots.txt`, `sitemap.xml`, `canonical`, Open
 Graph עם תמונת שיתוף לכל אירוע, ו-JSON-LD. **זה לא מכניס את האתר לגוגל.** גוגל לא
-מגלה דומיין חדש שאף אחד לא מקשר אליו. שני הצעדים שנשארו הם ידניים, ובלעדיהם האתר לא
-יופיע על שום חיפוש:
+מגלה דומיין חדש שאף אחד לא מקשר אליו.
 
-1. **אימות בעלות.** [Search Console](https://search.google.com/search-console) → Add
-   property → URL prefix → `https://arrival-confirmations.vercel.app` → HTML tag.
-   קחו רק את הערך מתוך `content="..."`, הגדירו אותו כ-`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`
-   ב-Vercel (Project → Settings → Environment Variables), פרסמו מחדש, ולחצו Verify.
+אסימון האימות של Search Console נמצא בקוד — `GOOGLE_SITE_VERIFICATION` ב-`lib/seo.ts`.
+הוא לא סוד: כל המנגנון הוא תגית `<meta>` שגוגל קורא מהעמוד הציבורי, הוא לא מתחלף,
+ויש אחד לאתר. אם מחליפים דומיין, מייצרים אסימון חדש ב-Search Console ומעדכנים שם.
+
+מה שנשאר ידני, ובלעדיו האתר לא יופיע על שום חיפוש:
+
+1. **אימות.** [Search Console](https://search.google.com/search-console) → Add property
+   → URL prefix → `https://arrival-confirmations.vercel.app` → Verify.
 2. **הגשת ה-sitemap.** Search Console → Sitemaps → `sitemap.xml` → Submit.
 
 מכאן זה לוקח ימים עד שבועות עד שהעמודים נכנסים לאינדקס. אפשר לעקוב ב-Pages וב-URL

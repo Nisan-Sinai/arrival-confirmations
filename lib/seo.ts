@@ -49,6 +49,22 @@ export const DISALLOWED_PATHS = [
   '/auth/',
 ] as const;
 
+/**
+ * Google Search Console's ownership token, committed rather than configured.
+ *
+ * It looks like a credential and is not one. The entire mechanism is a meta tag Google
+ * reads off the public page — anyone can already see this value by viewing source, it
+ * never rotates, and there is one of it for one site. Behind an environment variable it
+ * would buy no secrecy and cost a manual dashboard step plus a redeploy, with a failure
+ * mode nobody would notice: clear the variable and the site quietly stops being
+ * verified, taking the sitemap reporting with it.
+ *
+ * The one thing worth knowing about copying it elsewhere: pasting this token on another
+ * domain grants *this* Google account ownership of *that* site, never the reverse. It
+ * is a liability for whoever copies it, not for us.
+ */
+export const GOOGLE_SITE_VERIFICATION = 'E28NaBeiOIjkaklYu2ZeTrE9hEni9yBGcYeyGkrZ7MQ';
+
 /** Absolute URL for a site-relative path. */
 export function absoluteUrl(path: string): string {
   return `${SITE_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;

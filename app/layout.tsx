@@ -4,8 +4,7 @@ import { Assistant, Frank_Ruhl_Libre } from 'next/font/google';
 import { appConfig, assertNoPlaceholders } from '@/config/event.config';
 import { UI_MESSAGES } from '@/config/messages';
 import { SiteFooter } from '@/features/layout/SiteFooter';
-import { clientEnv } from '@/lib/env.client';
-import { SITE_ORIGIN } from '@/lib/seo';
+import { GOOGLE_SITE_VERIFICATION, SITE_ORIGIN } from '@/lib/seo';
 
 import './globals.css';
 
@@ -77,15 +76,15 @@ export const metadata: Metadata = {
   // whether the image renders full-bleed or as a thumbnail beside the text.
   twitter: { card: 'summary_large_image' },
   /**
-   * Ownership proof for Google Search Console. Absent until the token is configured,
-   * and `undefined` here emits no tag at all rather than an empty one.
+   * Ownership proof for Google Search Console — see the note on the constant for why
+   * it is committed rather than configured.
    *
-   * This is the step that actually gets the site into Google. Nothing else in this file
+   * This is the tag that actually gets the site into Google. Nothing else in this file
    * does: robots.txt and a sitemap describe a site Google already knows about, and
    * Google will not discover a brand-new domain with no inbound links on its own.
    * Verifying here and submitting `/sitemap.xml` is what starts the clock.
    */
-  verification: { google: clientEnv.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
+  verification: { google: GOOGLE_SITE_VERIFICATION },
 };
 
 export const viewport: Viewport = {
