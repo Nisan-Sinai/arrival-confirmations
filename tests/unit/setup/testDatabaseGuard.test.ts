@@ -1,27 +1,31 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
-  DESTRUCTIVE_OPT_IN,
   extractProjectRef,
   resolveTestDatabaseUrl,
   TestDatabaseConfigError,
 } from '../../setup/testDatabaseUrl';
 
 /**
- * The guard that stands between `pnpm test:rls` and a real guest list.
+ * What keeps `pnpm test:rls` away from a real guest list.
  *
- * `tests/setup/database.setup.ts` truncates `events`, `rsvps` and `guests` before every
- * single test. Its only protection used to be a NODE_ENV check, which cannot tell a
- * test project from a live one — and in this repository `.env.local` had
- * `TEST_DATABASE_URL` pointing at the same Supabase project serving the real site. One
- * `pnpm test:rls` would have erased a real event and every reply collected for it.
+ * The protection used to be a refusal: the setup truncated every table before every
+ * test, so it checked whether TEST_DATABASE_URL named the same Supabase project as the
+ * application and threw if it did. That was correct for a destructive setup and it
+ * forced a second Supabase project on a product built to fit in one free tier.
  *
- * These assertions are the reason that can no longer happen quietly.
+ * The setup is not destructive any more, so the protection moved from a check to a
+ * property: every test runs inside a transaction that is always rolled back. The last
+ * assertions in this file are what stop truncation from coming back — they read the
+ * setup file itself, because a design decision nothing enforces is a comment.
  */
 
 const PROD = 'https://qjzyjetkwqtasqzhvoat.supabase.co';
 const SAME = 'postgresql://postgres:pw@db.qjzyjetkwqtasqzhvoat.supabase.co:5432/postgres';
-const OTHER = 'postgresql://postgres:pw@db.abcdefghijklmnopqrst.supabase.co:5432/postgres';
+const LOCAL = 'postgresql://postgres@localhost:54322/postgres';
 
 describe('extractProjectRef', () => {
   it('reads the ref from a direct connection string', () => {
@@ -41,64 +45,63 @@ describe('extractProjectRef', () => {
   });
 
   it('has no answer for a local database or a missing value', () => {
-    expect(extractProjectRef('postgresql://postgres@localhost:54322/postgres')).toBeNull();
+    expect(extractProjectRef(LOCAL)).toBeNull();
     expect(extractProjectRef(undefined)).toBeNull();
     expect(extractProjectRef('')).toBeNull();
   });
 });
 
 describe('resolveTestDatabaseUrl', () => {
-  it('accepts a dedicated test project', () => {
+  it('accepts the same project the application serves, because nothing is destroyed', () => {
     expect(
-      resolveTestDatabaseUrl({ TEST_DATABASE_URL: OTHER, NEXT_PUBLIC_SUPABASE_URL: PROD }),
-    ).toBe(OTHER);
+      resolveTestDatabaseUrl({ TEST_DATABASE_URL: SAME, NEXT_PUBLIC_SUPABASE_URL: PROD }),
+    ).toBe(SAME);
   });
 
-  /** The case that was live in this repository. */
-  it('refuses when the test database is the project the application serves', () => {
-    const call = () =>
-      resolveTestDatabaseUrl({ TEST_DATABASE_URL: SAME, NEXT_PUBLIC_SUPABASE_URL: PROD });
-    expect(call).toThrow(TestDatabaseConfigError);
-    expect(call).toThrow(/same Supabase project/);
-    // The message has to say what to do, not only what went wrong.
-    expect(call).toThrow(/separate Supabase project/);
+  it('accepts a local database', () => {
+    expect(resolveTestDatabaseUrl({ TEST_DATABASE_URL: LOCAL })).toBe(LOCAL);
   });
 
-  it('allows the override, but only with the exact opt-in string', () => {
-    const base = { TEST_DATABASE_URL: SAME, NEXT_PUBLIC_SUPABASE_URL: PROD };
-    expect(resolveTestDatabaseUrl({ ...base, ALLOW_DESTRUCTIVE_TESTS: DESTRUCTIVE_OPT_IN })).toBe(
-      SAME,
-    );
-    // Anything vaguer must not count — the point is that it cannot be typed by reflex.
-    for (const attempt of ['1', 'true', 'yes', 'YES-I-WILL-LOSE-THIS-DATA', '']) {
-      expect(() => resolveTestDatabaseUrl({ ...base, ALLOW_DESTRUCTIVE_TESTS: attempt })).toThrow(
-        TestDatabaseConfigError,
-      );
-    }
-  });
-
-  it('still refuses an unset or malformed connection string', () => {
+  it('refuses an unset or malformed connection string', () => {
     expect(() => resolveTestDatabaseUrl({})).toThrow(/TEST_DATABASE_URL is not set/);
     expect(() => resolveTestDatabaseUrl({ TEST_DATABASE_URL: 'mysql://nope' })).toThrow(
       /postgresql:\/\//,
     );
   });
 
-  it('still refuses to run destructively in production', () => {
+  it('refuses to run against a database the environment calls production', () => {
     expect(() =>
-      resolveTestDatabaseUrl({ TEST_DATABASE_URL: OTHER, NODE_ENV: 'production' }),
-    ).toThrow(/NODE_ENV=production/);
+      resolveTestDatabaseUrl({ TEST_DATABASE_URL: SAME, NODE_ENV: 'production' }),
+    ).toThrow(TestDatabaseConfigError);
+  });
+});
+
+/**
+ * The design decision, enforced.
+ *
+ * Reading the source is blunt, and it is the only thing that actually stops the next
+ * person from reaching for TRUNCATE when a test leaves residue. The correct answer to
+ * residue here is that there is none: nothing commits.
+ */
+describe('the database setup stays non-destructive', () => {
+  const setupPath = join(process.cwd(), 'tests', 'setup', 'database.setup.ts');
+
+  it('contains no TRUNCATE, DROP or unqualified DELETE', async () => {
+    const source = await readFile(setupPath, 'utf8');
+    // Comments explain why truncation was removed, so only executable SQL is examined.
+    const code = source
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*(\/\/|\*).*$/gm, '')
+      .toUpperCase();
+
+    expect(code).not.toMatch(/\bTRUNCATE\b/);
+    expect(code).not.toMatch(/\bDROP\s+TABLE\b/);
+    expect(code).not.toMatch(/\bDELETE\s+FROM\b/);
   });
 
-  /**
-   * A local Postgres has no project ref, so the comparison cannot fire. That is the
-   * correct outcome — `supabase start` is a throwaway database and the whole point of
-   * the guard is the hosted case.
-   */
-  it('does not block a local database', () => {
-    const local = 'postgresql://postgres@localhost:54322/postgres';
-    expect(
-      resolveTestDatabaseUrl({ TEST_DATABASE_URL: local, NEXT_PUBLIC_SUPABASE_URL: PROD }),
-    ).toBe(local);
+  it('always rolls back — the transaction is closed in a finally', async () => {
+    const source = await readFile(setupPath, 'utf8');
+    expect(source).toContain('withRollback');
+    expect(source).toMatch(/finally\s*\{[\s\S]*rollback/i);
   });
 });

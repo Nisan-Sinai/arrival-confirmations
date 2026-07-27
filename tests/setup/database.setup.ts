@@ -1,35 +1,34 @@
-import { Pool } from 'pg';
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { Pool, type PoolClient } from 'pg';
+import { afterAll, beforeAll } from 'vitest';
 
 import './unit.setup';
 import { resolveTestDatabaseUrl, TestDatabaseConfigError } from './testDatabaseUrl';
 
-// Re-exported so the database-backed suites keep importing them from one place.
+// Re-exported so the database-backed suites import them from one place.
 export { resolveTestDatabaseUrl, TestDatabaseConfigError };
 
 /**
  * Shared setup for the suites that talk to a real database — `integration` and `rls`
- * (§10.4, §10.6). Both projects run single-fork and non-parallel, so one pool per
- * worker is enough and truncation between tests cannot race another file.
+ * (§10.4, §10.6).
  *
- * §11 requires a deterministic, self-cleaning test database that is never production.
- * Cleanup runs before every test rather than only after, so a suite aborted mid-run
- * (Ctrl-C, a crashed worker) cannot poison the next one with leftover rows.
+ * THIS FILE USED TO TRUNCATE EVERY APPLICATION TABLE BEFORE EVERY TEST, and that was
+ * the single most dangerous thing in the repository. `.env.local` pointed
+ * `TEST_DATABASE_URL` at the same Supabase project serving the live site, so one
+ * `pnpm test:rls` would have erased a real event and every reply on it. The only thing
+ * preventing that was those suites happening to contain no tests.
+ *
+ * The fix is not a louder warning, and it is not a second Supabase project. It is that
+ * these suites no longer leave anything to clean up: every test runs inside a
+ * transaction that is always rolled back, so rows it creates never commit and rows it
+ * did not create are never touched. That makes them safe against any database — which
+ * is the point, because a suite nobody dares run protects nothing.
+ *
+ * The rule this file exists to enforce: **no test may write outside `withRollback`.**
  */
-
-const APP_TABLES = [
-  'invite_sessions',
-  'idempotency_keys',
-  'audit_logs',
-  'rsvps',
-  'guests',
-  'admin_profiles',
-  'events',
-] as const;
 
 let pool: Pool | null = null;
 
-/** The pool the database-backed suites share. Only valid inside a `beforeAll`-run test. */
+/** The pool the database-backed suites share. Only valid inside a test. */
 export function getTestPool(): Pool {
   if (!pool) {
     throw new TestDatabaseConfigError(
@@ -40,40 +39,34 @@ export function getTestPool(): Pool {
 }
 
 /**
- * Empties every application table that currently exists.
+ * Runs a test body inside a transaction and rolls it back, always.
  *
- * The intersection with `information_schema` is deliberate: the suites must stay
- * runnable while migrations are still being added, instead of failing on a table
- * that has not been created yet.
+ * One connection for the whole body: a second connection would not see the uncommitted
+ * rows the first created, which is the usual way this pattern gets quietly broken.
+ *
+ * The rollback sits in `finally` and its own failure is swallowed. If the body threw
+ * because the transaction was already aborted, the rollback still has to run — and its
+ * error must not replace the assertion failure that actually explains the problem.
  */
-export async function truncateAppTables(client: Pool): Promise<void> {
-  const { rows } = await client.query<{ table_name: string }>(
-    `SELECT table_name
-       FROM information_schema.tables
-      WHERE table_schema = 'public'
-        AND table_type = 'BASE TABLE'
-        AND table_name = ANY($1::text[])`,
-    [[...APP_TABLES]],
-  );
-  if (rows.length === 0) return;
-
-  const identifiers = rows.map((row) => `public.${JSON.stringify(row.table_name)}`).join(', ');
-  await client.query(`TRUNCATE TABLE ${identifiers} RESTART IDENTITY CASCADE`);
+export async function withRollback<T>(body: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await getTestPool().connect();
+  try {
+    await client.query('begin');
+    return await body(client);
+  } finally {
+    await client.query('rollback').catch(() => undefined);
+    client.release();
+  }
 }
 
 beforeAll(async () => {
   pool = new Pool({ connectionString: resolveTestDatabaseUrl(), max: 4 });
   // Fail here with a connection error rather than inside the first unrelated test.
-  await pool.query('SELECT 1');
-});
-
-beforeEach(async () => {
-  await truncateAppTables(getTestPool());
+  await pool.query('select 1');
 });
 
 afterAll(async () => {
   if (!pool) return;
-  await truncateAppTables(pool);
   await pool.end();
   pool = null;
 });

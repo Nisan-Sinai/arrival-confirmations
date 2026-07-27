@@ -1,20 +1,22 @@
 import { randomUUID } from 'node:crypto';
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import type { PoolClient } from 'pg';
+import { describe, expect, it } from 'vitest';
 
-import { getTestPool } from '../setup/database.setup';
+import { withRollback } from '../setup/database.setup';
 
 /**
  * `submit_rsvp` as a transaction (§6.3, §6.4, §10.4).
  *
  * The Server Action is a thin orchestrator; the decisions that matter — create versus
- * update, idempotent replay, and the refusal to leak whether a phone number is already
- * on the list — all happen inside this one routine, where they are atomic. Testing them
- * through the action would test the action. This tests the guarantee.
+ * update, idempotent replay, and the refusal to tell an anonymous submitter whether a
+ * phone number is already on the list — all happen inside this one routine, where they
+ * are atomic. Testing them through the action would test the action. This tests the
+ * guarantee.
  *
- * REQUIRES A DEDICATED TEST PROJECT. The shared setup truncates every table before each
- * test; `tests/setup/testDatabaseUrl.ts` refuses to run when TEST_DATABASE_URL names the
- * same Supabase project as the application.
+ * Every test runs inside `withRollback`, so nothing it writes ever commits. That is
+ * what makes the suite safe against any database, including the one serving the live
+ * site, and it is why no second Supabase project is needed.
  */
 
 const PHONE = '+972501234567';
@@ -30,30 +32,29 @@ interface SubmitArgs {
   readonly fingerprint?: string;
 }
 
-async function seedEvent(): Promise<string> {
-  const pool = getTestPool();
+async function seedEvent(client: PoolClient): Promise<string> {
   const ownerId = randomUUID();
-  await pool.query(
+  await client.query(
     `insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
                              email_confirmed_at, created_at, updated_at)
      values ($1, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
              $2, '', now(), now(), now())`,
-    [ownerId, `submit-${Date.now()}@example.test`],
+    [ownerId, `submit-${randomUUID()}@example.test`],
   );
-  const { rows } = await pool.query<{ id: string }>(
+  const { rows } = await client.query<{ id: string }>(
     `insert into public.events
        (owner_user_id, public_id, title, event_type, hosts_names, honoree_display_name,
         event_date, venue_name, address, is_active)
      values ($1, $2, 'אירוע', 'other', 'מארחים', 'חוגג', current_date + 30, 'אולם', 'כתובת', true)
      returning id`,
-    [ownerId, `sub${Date.now()}`.slice(0, 12)],
+    [ownerId, randomUUID().replaceAll('-', '').slice(0, 12)],
   );
   return rows[0]!.id;
 }
 
 /** Calls the routine the way the privileged server client does. */
-async function submit(args: SubmitArgs): Promise<Record<string, unknown>> {
-  const { rows } = await getTestPool().query<{ submit_rsvp: Record<string, unknown> }>(
+async function submit(client: PoolClient, args: SubmitArgs): Promise<Record<string, unknown>> {
+  const { rows } = await client.query<{ submit_rsvp: Record<string, unknown> }>(
     `select public.submit_rsvp(
        $1, null, 'אורח בדיקה', $2, $2, null, $3::public.attendance_status,
        $4, $5, $6, null, null, true, 'public_form'::public.rsvp_source,
@@ -73,25 +74,22 @@ async function submit(args: SubmitArgs): Promise<Record<string, unknown>> {
   return rows[0]!.submit_rsvp;
 }
 
-const countRsvps = async (eventId: string): Promise<number> => {
-  const { rows } = await getTestPool().query<{ count: string }>(
+async function countRsvps(client: PoolClient, eventId: string): Promise<number> {
+  const { rows } = await client.query<{ count: string }>(
     'select count(*) from public.rsvps where event_id = $1',
     [eventId],
   );
   return Number(rows[0]!.count);
-};
+}
 
 describe('submit_rsvp', () => {
-  let eventId: string;
-
-  beforeEach(async () => {
-    eventId = await seedEvent();
-  });
-
   it('creates a reply', async () => {
-    const result = await submit({ eventId });
-    expect(result['outcome']).toBe('accepted');
-    expect(await countRsvps(eventId)).toBe(1);
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      const result = await submit(client, { eventId });
+      expect(result['outcome']).toBe('accepted');
+      expect(await countRsvps(client, eventId)).toBe(1);
+    });
   });
 
   /**
@@ -100,67 +98,133 @@ describe('submit_rsvp', () => {
    * and must not produce a second row.
    */
   it('collapses an identical resubmission into one row', async () => {
-    const key = randomUUID();
-    const fingerprint = randomUUID();
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      const idempotencyKeyHash = randomUUID();
+      const fingerprint = randomUUID();
 
-    const first = await submit({ eventId, idempotencyKeyHash: key, fingerprint });
-    const second = await submit({ eventId, idempotencyKeyHash: key, fingerprint });
+      const first = await submit(client, { eventId, idempotencyKeyHash, fingerprint });
+      const second = await submit(client, { eventId, idempotencyKeyHash, fingerprint });
 
-    expect(first['outcome']).toBe('accepted');
-    expect(second['outcome']).toBe('accepted');
-    expect(await countRsvps(eventId)).toBe(1);
+      expect(first['outcome']).toBe('accepted');
+      expect(second['outcome']).toBe('accepted');
+      expect(await countRsvps(client, eventId)).toBe(1);
+    });
   });
 
   /**
-   * §6.4. The same phone with a *different* answer is a genuine change of mind, not a
-   * replay. It updates rather than inserting, and the caller is told the same thing
-   * either way — an anonymous submitter must not learn that the number was already on
-   * the list.
+   * §6.4, and the most important assertion in this file.
+   *
+   * Knowing a phone number must not be enough to overwrite somebody else's reply. The
+   * UNIQUE constraint on (event_id, phone_normalized) stops a duplicate row; it is not
+   * authorisation. So an unauthorised resubmission for a number already on the list has
+   * to leave that row exactly as it was — while still answering 'accepted', because any
+   * other answer would confirm to a stranger that the number is on the list.
+   *
+   * The first version of this test asserted the opposite: that the counts were
+   * overwritten. It failed, and it was the test that was wrong — it demanded the
+   * vulnerability this routine exists to prevent.
    */
-  it('updates in place when the same phone answers differently', async () => {
-    await submit({ eventId, adults: 2 });
-    const changed = await submit({ eventId, adults: 5, children: 2 });
+  it('acknowledges an unauthorised resubmission without changing the row', async () => {
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      await submit(client, { eventId, adults: 2, children: 0 });
 
-    expect(changed['outcome']).toBe('accepted');
-    expect(await countRsvps(eventId)).toBe(1);
+      const second = await submit(client, { eventId, adults: 5, children: 2 });
 
-    const { rows } = await getTestPool().query<{ adults_count: number; children_count: number }>(
-      'select adults_count, children_count from public.rsvps where event_id = $1',
-      [eventId],
-    );
-    expect(rows[0]).toMatchObject({ adults_count: 5, children_count: 2 });
+      // Indistinguishable from a first submission, on purpose.
+      expect(second['outcome']).toBe('accepted');
+      expect(await countRsvps(client, eventId)).toBe(1);
+
+      const { rows } = await client.query<{ adults_count: number; children_count: number }>(
+        'select adults_count, children_count from public.rsvps where event_id = $1',
+        [eventId],
+      );
+      // Untouched: the numbers are still the ones the original guest submitted.
+      expect(rows[0]).toMatchObject({ adults_count: 2, children_count: 0 });
+    });
+  });
+
+  /** The same write, authorised — a live update token scoped to that one reply. */
+  it('does update when the caller holds the row’s update token', async () => {
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      const token = randomUUID();
+
+      await client.query(
+        `insert into public.rsvps
+           (event_id, full_name, phone, phone_normalized, attendance_status, adults_count,
+            consent, source, update_token_hash, update_token_expires_at)
+         values ($1, 'אורח בדיקה', $2, $2, 'attending', 2, true, 'public_form', $3, now() + interval '30 days')`,
+        [eventId, PHONE, token],
+      );
+
+      const { rows: result } = await client.query<{ submit_rsvp: Record<string, unknown> }>(
+        `select public.submit_rsvp(
+           $1, null, 'אורח בדיקה', $2, $2, null, 'attending'::public.attendance_status,
+           5, 2, 0, null, null, true, 'public_form'::public.rsvp_source,
+           $3, $4, $5, null, 60, 24
+         ) as submit_rsvp`,
+        [eventId, PHONE, randomUUID(), randomUUID(), token],
+      );
+      /*
+       * 'updated', where the unauthorised path answers 'accepted'. That asymmetry is
+       * the §6.4 rule in one word: only a caller who proved it owns the row is told
+       * that a row existed. Anyone else gets the same answer whether they created
+       * something or changed nothing, and cannot tell the difference.
+       */
+      expect(result[0]!.submit_rsvp['outcome']).toBe('updated');
+
+      const { rows } = await client.query<{ adults_count: number; children_count: number }>(
+        'select adults_count, children_count from public.rsvps where event_id = $1',
+        [eventId],
+      );
+      expect(rows[0]).toMatchObject({ adults_count: 5, children_count: 2 });
+    });
   });
 
   it('keeps two different phone numbers as two replies', async () => {
-    await submit({ eventId, phone: '+972501111111' });
-    await submit({ eventId, phone: '+972502222222' });
-    expect(await countRsvps(eventId)).toBe(2);
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      await submit(client, { eventId, phone: '+972501111111' });
+      await submit(client, { eventId, phone: '+972502222222' });
+      expect(await countRsvps(client, eventId)).toBe(2);
+    });
   });
 
   it('refuses a reply to an event that is not published', async () => {
-    await getTestPool().query('update public.events set is_active = false where id = $1', [
-      eventId,
-    ]);
-    const result = await submit({ eventId });
-    expect(result['outcome']).toBe('event_unavailable');
-    expect(await countRsvps(eventId)).toBe(0);
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      await client.query('update public.events set is_active = false where id = $1', [eventId]);
+
+      const result = await submit(client, { eventId });
+      expect(result['outcome']).toBe('event_unavailable');
+      expect(await countRsvps(client, eventId)).toBe(0);
+    });
   });
 
   it('refuses a reply to an event that does not exist', async () => {
-    const result = await submit({ eventId: randomUUID() });
-    expect(result['outcome']).toBe('event_unavailable');
+    await withRollback(async (client) => {
+      const result = await submit(client, { eventId: randomUUID() });
+      expect(result['outcome']).toBe('event_unavailable');
+    });
   });
 
   /** Mirrors `rsvps_not_attending_has_no_seats`, which the form also enforces. */
   it('rejects seats on a decline rather than storing them', async () => {
-    await expect(submit({ eventId, status: 'not_attending', adults: 3 })).rejects.toThrow(
-      /rsvps_not_attending_has_no_seats|check constraint/i,
-    );
-    expect(await countRsvps(eventId)).toBe(0);
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      await expect(submit(client, { eventId, status: 'not_attending', adults: 3 })).rejects.toThrow(
+        /rsvps_not_attending_has_no_seats|check constraint/i,
+      );
+    });
   });
 
   it('accepts a decline with no seats', async () => {
-    const result = await submit({ eventId, status: 'not_attending', adults: 0 });
-    expect(result['outcome']).toBe('accepted');
+    await withRollback(async (client) => {
+      const eventId = await seedEvent(client);
+      const result = await submit(client, { eventId, status: 'not_attending', adults: 0 });
+      expect(result['outcome']).toBe('accepted');
+    });
   });
 });
