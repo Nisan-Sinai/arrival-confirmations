@@ -117,8 +117,15 @@ export default defineConfig({
          * was just handed, which is a test of the mock. What they actually guarantee —
          * that the anon client cannot read past RLS and that the privileged one is
          * never bundled — is checked by `tests/rls/` and by `pnpm scan:secrets`.
+         *
+         * `supabase.browser.ts` is here for the same reason and one more: the property
+         * that matters about it is *which* factory it calls — `createBrowserClient`
+         * writes the session to cookies the server can read, where `createClient` would
+         * put it in localStorage and the user would appear signed out on navigation.
+         * That is verified end to end by the recovery flow, not by asserting a mock.
          */
         'lib/server/supabase.ts',
+        'lib/supabase.browser.ts',
       ],
       /**
        * Real numbers, met on every run — which the previous 100-across-the-board was

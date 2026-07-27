@@ -161,15 +161,24 @@
   /* Fluid type. `clamp` rather than a stack of breakpoint overrides: the display
      sizes need to move continuously between a 320px phone and a 1440px desktop, and
      a stepped scale visibly jumps at exactly the widths people resize through. */
-  --text-display: clamp(2.5rem, 1.6rem + 4.5vw, 4.5rem);
-  --text-display--line-height: 1.04;
-  --text-display--letter-spacing: -0.02em;
-  --text-h1: clamp(2rem, 1.45rem + 2.75vw, 3.25rem);
-  --text-h1--line-height: 1.1;
-  --text-h1--letter-spacing: -0.015em;
-  --text-h2: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
-  --text-h2--line-height: 1.18;
-  --text-h2--letter-spacing: -0.01em;
+  /*
+   * Set tighter and heavier than a default scale. Hebrew display type at 800 with
+   * negative tracking is what separates an editorial page from a template one: the
+   * letterforms of Frank Ruhl Libre have enough weight to hold together at -0.025em,
+   * and the headline reads as one object rather than a row of words.
+   */
+  --text-display: clamp(2.75rem, 1.5rem + 5.4vw, 5.75rem);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 800;
+  --text-h1: clamp(2.15rem, 1.5rem + 3.1vw, 3.75rem);
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 800;
+  --text-h2: clamp(1.65rem, 1.25rem + 1.9vw, 2.75rem);
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.018em;
+  --text-h2--font-weight: 800;
   --text-h3: clamp(1.2rem, 1.08rem + 0.6vw, 1.5rem);
   --text-h3--line-height: 1.28;
   --text-lead: clamp(1.075rem, 1rem + 0.4vw, 1.3rem);
@@ -266,6 +275,46 @@
   .animate-rise {
     animation: rise var(--duration-slow) var(--ease-out) both;
   }
+
+  /**
+   * The event-type marquee.
+   *
+   * Two identical copies of the list sit side by side and the track translates by
+   * exactly -50%, so the second copy is in the first's place when the animation
+   * restarts and the loop is seamless. Translating a single copy would snap.
+   *
+   * `translate3d` on a flex track, not `left` or `margin`: this runs on the compositor
+   * and costs no layout, which is what makes a permanently animating strip acceptable
+   * on a phone. The band is `aria-hidden` and duplicated, so the content is announced
+   * once by the list that follows it.
+   */
+  .marquee-track {
+    animation: marquee 46s linear infinite;
+    will-change: transform;
+  }
+
+  .marquee-mask {
+    /* The strip fades out at both edges instead of being cut, so it reads as
+       continuing rather than as clipped. */
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+
+  @media (hover: hover) {
+    .marquee-mask:hover .marquee-track {
+      animation-play-state: paused;
+    }
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    /* RTL: the track starts shifted and moves rightwards, matching the reading
+       direction of everything around it. */
+    transform: translate3d(50%, 0, 0);
+  }
 }
 
 @keyframes rise {
@@ -292,5 +341,16 @@
 
   html {
     scroll-behavior: auto;
+  }
+
+  /*
+   * The blanket rule above would leave the marquee frozen at the *end* of its
+   * keyframe — translated 50% out of place — because a 0.01ms animation still runs to
+   * completion. Removing the animation outright leaves the strip where it belongs and
+   * simply still.
+   */
+  .marquee-track {
+    animation: none !important;
+    transform: none !important;
   }
 }

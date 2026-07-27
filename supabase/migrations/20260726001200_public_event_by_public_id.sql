@@ -12,28 +12,41 @@
 -- So this migration does two things, and the second matters as much as the first:
 -- it adds the addressed projection, and it removes the unaddressed one.
 
-create type public.public_event_v2 as (
-  id uuid,
-  -- Present in the projection where `public_event` had no equivalent: the invitation
-  -- needs to build its own share link, and re-deriving it client-side from the URL
-  -- would break the moment the route changes.
-  public_id text,
-  event_type public.event_type,
-  title text,
-  hosts_names text,
-  honoree_display_name text,
-  event_date date,
-  ceremony_time time,
-  reception_time time,
-  venue_name text,
-  address text,
-  waze_url text,
-  google_maps_url text,
-  contact_phone text,
-  description text,
-  side_a_label text,
-  side_b_label text
-);
+-- `create type` has no `if not exists`, and this migration has to be runnable against
+-- two different databases: a fresh one, where nothing exists, and the live project,
+-- which already carries this type because it was created there directly and never
+-- written down here. A migration that only works on an empty database cannot be used
+-- to reconcile the two, which is the whole reason this file exists.
+do $$
+begin
+  create type public.public_event_v2 as (
+    id uuid,
+    -- Present in the projection where `public_event` had no equivalent: the invitation
+    -- needs to build its own share link, and re-deriving it client-side from the URL
+    -- would break the moment the route changes.
+    public_id text,
+    event_type public.event_type,
+    title text,
+    hosts_names text,
+    honoree_display_name text,
+    event_date date,
+    ceremony_time time,
+    reception_time time,
+    venue_name text,
+    address text,
+    waze_url text,
+    google_maps_url text,
+    contact_phone text,
+    description text,
+    side_a_label text,
+    side_b_label text
+  );
+exception
+  -- Narrow on purpose: only "it is already there" is tolerated. Any other failure —
+  -- a missing `event_type` enum, say — still aborts the migration.
+  when duplicate_object then null;
+end
+$$;
 
 comment on type public.public_event_v2 is
   'The complete set of event columns an anonymous visitor may see (§4.6). Adding a column to `events` cannot widen this — the type would have to change too, which is the point.';

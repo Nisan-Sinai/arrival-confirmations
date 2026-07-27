@@ -104,7 +104,15 @@ test.describe('routes that used to 404', () => {
     // Matched by its text, not by role alone: Next.js keeps a permanently mounted
     // `role="alert"` route announcer in the document, so a bare role query resolves
     // to two elements and fails Playwright's strict mode.
-    await expect(page.getByRole('alert').filter({ hasText: 'הקישור אינו תקין' })).toBeVisible();
+    await expect(page.getByRole('alert').filter({ hasText: 'לא הצלחנו' })).toBeVisible();
+  });
+
+  test('an expired link is reported as expired, not as a generic failure', async ({ page }) => {
+    // The distinction matters: "request another" is actionable, "something went
+    // wrong" is not, and an expired recovery link is by far the common case.
+    await page.goto('/auth/callback?error=access_denied&error_code=otp_expired');
+    await expect(page).toHaveURL(/\/login\?error=expired/);
+    await expect(page.getByRole('alert').filter({ hasText: 'פג תוקף' })).toBeVisible();
   });
 
   test('an unknown path renders the Hebrew 404, not the built-in English one', async ({ page }) => {

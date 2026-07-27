@@ -5,6 +5,7 @@ import { buttonClass } from '@/components/ui/button';
 import { Card, CardBody, CardTitle } from '@/components/ui/card';
 import { Container, Rule, Section, SectionHeader } from '@/components/ui/layout';
 import { listEventTypePresets } from '@/config/eventTypes';
+import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 
 /**
@@ -91,6 +92,15 @@ export default function LandingPage() {
     <>
       <SiteHeader />
       <main id="main" className="flex flex-1 flex-col">
+        {/*
+          Here as well as on /login, because this is where an expired recovery link
+          actually lands: when Supabase cannot honour `redirectTo` it falls back to the
+          configured Site URL, which is the site root. Without this the host arrives at
+          a normal landing page and has no idea their link failed.
+        */}
+        <div className="px-5 pt-5 empty:hidden">
+          <AuthFragmentNotice />
+        </div>
         {/* ── Hero ───────────────────────────────────────────────────────────────
             Split rather than centred: a centred hero with a single column is the
             layout every template ships with, and the right-hand panel earns its
@@ -225,7 +235,7 @@ export default function LandingPage() {
             <SectionHeader
               id="how"
               eyebrow="שלושה שלבים"
-              title="איך זה עובד"
+              title="איך זה עובד."
               lede="מהרגע שנכנסתם ועד שהאישור הראשון מגיע."
             />
             <ol className="mt-14 space-y-px">
@@ -259,7 +269,7 @@ export default function LandingPage() {
             <SectionHeader
               id="features"
               eyebrow="מה מקבלים"
-              title="הכול כלול, בלי שדרוגים"
+              title="הכול כלול. בלי שדרוגים."
               align="start"
             />
             {/*
@@ -284,34 +294,54 @@ export default function LandingPage() {
           </Container>
         </Section>
 
-        {/* ── Event types ───────────────────────────────────────────────────── */}
-        <Section aria-labelledby="types">
+        {/* ── Event types ─────────────────────────────────────────────────────
+            A moving band rather than a static cloud of pills. Eleven event types is
+            the product's real breadth and the pill list undersold it — a strip that
+            keeps moving reads as a catalogue that continues past the edge of the
+            screen, which is exactly the claim being made. */}
+        <Section aria-labelledby="types" spacing="sm">
           <Container width="card">
             <SectionHeader
               id="types"
               eyebrow="מתאים לכל שמחה"
-              title="אחד עשר סוגי אירוע"
+              title="אחד עשר סוגי אירוע."
               lede="כל סוג מגיע עם הברכה, נוסח ההזמנה ותוויות הצדדים המתאימים לו — ואפשר לשנות כל אחד מהם."
             />
-            {/* Read from the same config the invitation renders from, so this list
-                cannot drift out of step with what the product actually supports. */}
-            <ul className="mt-11 flex flex-wrap justify-center gap-2.5">
-              {eventTypes.map((preset) => (
-                <li
-                  key={preset.value}
-                  className="border-accent-strong/25 bg-card text-primary shadow-paper rounded-full border px-4 py-2 text-sm font-medium"
-                >
-                  {preset.label}
-                </li>
-              ))}
-            </ul>
           </Container>
         </Section>
+
+        <div className="marquee-mask border-border/70 relative overflow-hidden border-y py-5">
+          {/*
+            Duplicated on purpose and hidden from assistive technology: the animation
+            needs two copies to loop seamlessly, and a screen reader must not hear the
+            eleven types twice. The accessible copy is the visually-hidden list below.
+          */}
+          <div aria-hidden="true" className="marquee-track flex w-max gap-3">
+            {[0, 1].map((copy) => (
+              <div key={copy} className="flex shrink-0 gap-3">
+                {eventTypes.map((preset) => (
+                  <span
+                    key={preset.value}
+                    className="border-accent-strong/25 bg-card text-primary shadow-paper flex items-center gap-3 rounded-full border px-5 py-2.5 text-sm font-medium whitespace-nowrap"
+                  >
+                    {preset.label}
+                    <span className="bg-accent size-1 rounded-full" />
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+          <ul className="sr-only">
+            {eventTypes.map((preset) => (
+              <li key={preset.value}>{preset.label}</li>
+            ))}
+          </ul>
+        </div>
 
         {/* ── FAQ ───────────────────────────────────────────────────────────── */}
         <Section tone="sand" aria-labelledby="faq">
           <Container width="card">
-            <SectionHeader id="faq" eyebrow="שאלות" title="מה שנשאלנו עד עכשיו" />
+            <SectionHeader id="faq" eyebrow="שאלות" title="מה שנשאלנו עד עכשיו." />
             <div className="mt-11 space-y-3">
               {FAQ.map((item) => (
                 <details
