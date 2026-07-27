@@ -13,8 +13,10 @@
  *   1. Gold is a *rule and a mark*, never a fill and never body text. `--accent` is
  *      the decorative weight; `--accent-strong` is the only gold with enough contrast
  *      to sit on paper as text, and it is what the utilities resolve to.
- *   2. Paper is warm (hue 85), ink is cool (hue 258). The slight opposition is what
- *      keeps a cream page from reading as "unstyled off-white".
+ *   2. Ivory, burgundy and gold all sit in the warm half of the wheel (hue 16–85).
+ *      A single-family palette risks going flat, so separation comes from lightness
+ *      and chroma instead — which is also what keeps the error red distinguishable
+ *      from the brand wine.
  *   3. Every foreground token is checked against its intended background at 4.5:1 or
  *      better; the muted grey is deliberately darker than the shadcn default because
  *      §5 calls out older guests reading this on a phone in a hall.
@@ -27,34 +29,37 @@
 :root {
   /* ── Colour ──────────────────────────────────────────────────────────────── */
 
-  /* Warm paper. Not white: white makes the gold read as yellow. */
-  --background: oklch(0.985 0.006 85);
-  --foreground: oklch(0.24 0.028 258);
+  /* Warm ivory. Not white: white makes the gold read as yellow, and it turns the
+     burgundy pink at the edges where the two meet. */
+  --background: oklch(0.983 0.008 65);
+  --foreground: oklch(0.25 0.022 20);
 
   /* Raised paper — cards, the invitation face. */
-  --card: oklch(0.995 0.003 85);
-  --card-foreground: oklch(0.24 0.028 258);
+  --card: oklch(0.995 0.004 70);
+  --card-foreground: oklch(0.25 0.022 20);
 
   /* A tinted surface for bands that need to separate without a border. */
-  --surface-sand: oklch(0.955 0.012 82);
-  --surface-ink: oklch(0.27 0.035 258);
+  --surface-sand: oklch(0.955 0.014 60);
+  --surface-ink: oklch(0.26 0.055 18);
 
-  --popover: oklch(0.995 0.003 85);
-  --popover-foreground: oklch(0.24 0.028 258);
+  --popover: oklch(0.995 0.004 70);
+  --popover-foreground: oklch(0.25 0.022 20);
 
-  /* Deep navy — primary actions, headings, the invitation frame. */
-  --primary: oklch(0.34 0.075 258);
-  --primary-hover: oklch(0.29 0.078 258);
-  --primary-foreground: oklch(0.985 0.006 85);
+  /* Deep burgundy — primary actions, headings, the invitation frame.
+     Dark and low-chroma on purpose: at this lightness it reads as wine rather than
+     as red, which is what lets a warning still read as a warning beside it. */
+  --primary: oklch(0.33 0.095 16);
+  --primary-hover: oklch(0.28 0.098 16);
+  --primary-foreground: oklch(0.983 0.008 65);
 
-  /* Light blue-grey — supporting surfaces and quiet fills. */
-  --secondary: oklch(0.935 0.018 245);
-  --secondary-foreground: oklch(0.31 0.055 258);
+  /* Pale blush — supporting surfaces and quiet fills. */
+  --secondary: oklch(0.94 0.02 22);
+  --secondary-foreground: oklch(0.32 0.07 18);
 
-  --muted: oklch(0.955 0.008 85);
+  --muted: oklch(0.955 0.01 60);
   /* 0.47, not the 0.52 a default palette would use: this carries hints and helper
      text that a guest in their seventies has to read on a phone. */
-  --muted-foreground: oklch(0.47 0.022 258);
+  --muted-foreground: oklch(0.47 0.018 25);
 
   /* Gold. Two weights, and the distinction is load-bearing. */
   --accent: oklch(0.78 0.1 78);
@@ -63,23 +68,33 @@
   --accent-strong: oklch(0.52 0.088 72);
   --accent-foreground: oklch(0.28 0.045 70);
 
-  /* Terracotta rather than a signal red: it has to sit beside gold without shouting. */
-  --destructive: oklch(0.51 0.16 28);
-  --destructive-foreground: oklch(0.99 0.004 85);
-  --destructive-soft: oklch(0.955 0.025 30);
+  /*
+   * Destructive, and the hardest token in a burgundy palette: the brand colour is
+   * already red, so an ordinary red error would read as brand chrome and a "delete"
+   * button would look like a primary one.
+   *
+   * It is separated on all three axes rather than on hue alone — brighter (0.52 to the
+   * primary's 0.33), far more saturated (0.19 to 0.095), and pushed toward orange
+   * (hue 30 to 16). That combination is what makes it read as an alarm next to wine
+   * instead of a darker shade of it.
+   */
+  --destructive: oklch(0.52 0.19 30);
+  --destructive-foreground: oklch(0.99 0.004 70);
+  --destructive-soft: oklch(0.955 0.035 35);
 
-  /* Sage rather than a spreadsheet green, for the same reason. */
-  --success: oklch(0.48 0.088 155);
-  --success-foreground: oklch(0.99 0.004 85);
-  --success-soft: oklch(0.95 0.03 155);
+  /* Sage. The one cool note in the palette, which is exactly why it survives as a
+     status colour: nothing else on the page is green. */
+  --success: oklch(0.46 0.09 158);
+  --success-foreground: oklch(0.99 0.004 70);
+  --success-soft: oklch(0.95 0.032 158);
 
   --warning: oklch(0.55 0.11 75);
   --warning-soft: oklch(0.955 0.04 82);
 
-  --border: oklch(0.895 0.012 85);
-  --border-strong: oklch(0.82 0.018 85);
-  --input: oklch(0.87 0.014 85);
-  --ring: oklch(0.34 0.075 258);
+  --border: oklch(0.9 0.012 55);
+  --border-strong: oklch(0.82 0.018 50);
+  --input: oklch(0.875 0.014 50);
+  --ring: oklch(0.33 0.095 16);
 
   /* ── Radius ──────────────────────────────────────────────────────────────── */
   --radius: 0.75rem;
@@ -88,13 +103,12 @@
      Paper, not glass. Each level is two layers — a tight contact shadow that keeps
      the edge crisp and a wide diffuse one — and every shadow is tinted with the ink
      hue instead of neutral black, which is what stops them looking like grey smudge. */
-  --shadow-paper:
-    0 1px 2px -1px oklch(0.24 0.028 258 / 0.07), 0 1px 3px oklch(0.24 0.028 258 / 0.05);
+  --shadow-paper: 0 1px 2px -1px oklch(0.25 0.022 20 / 0.07), 0 1px 3px oklch(0.25 0.022 20 / 0.05);
   --shadow-raised:
-    0 2px 4px -2px oklch(0.24 0.028 258 / 0.08), 0 6px 16px -4px oklch(0.24 0.028 258 / 0.08);
+    0 2px 4px -2px oklch(0.25 0.022 20 / 0.08), 0 6px 16px -4px oklch(0.25 0.022 20 / 0.08);
   --shadow-lifted:
-    0 4px 8px -4px oklch(0.24 0.028 258 / 0.1), 0 16px 32px -12px oklch(0.24 0.028 258 / 0.12);
-  --shadow-overlay: 0 24px 60px -20px oklch(0.24 0.028 258 / 0.28);
+    0 4px 8px -4px oklch(0.25 0.022 20 / 0.1), 0 16px 32px -12px oklch(0.25 0.022 20 / 0.12);
+  --shadow-overlay: 0 24px 60px -20px oklch(0.25 0.022 20 / 0.28);
 
   /* ── Motion ───────────────────────────────────────────────────────────────
      Fast enough to feel like feedback rather than animation. Nothing here is longer

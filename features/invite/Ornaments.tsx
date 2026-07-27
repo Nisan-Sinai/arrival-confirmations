@@ -17,9 +17,9 @@
  */
 
 /** The palette, kept here so the whole scene recolours from one place. */
-const BLUE_DEEP = '#1c3557';
-const BLUE_SOFT = '#a9c4e4';
-const BLUE_PALE = '#dce9f7';
+const BLUE_DEEP = '#5e1b28';
+const BLUE_SOFT = '#dcaeb5';
+const BLUE_PALE = '#f6e3e5';
 const GOLD = '#c9a227';
 const GOLD_PALE = '#e8d9a0';
 const CREAM = '#faf7ef';
@@ -133,7 +133,7 @@ export function Balloons({ className = '' }: { className?: string }) {
         <radialGradient id="balloon-solid" cx="35%" cy="30%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
           <stop offset="45%" stopColor={BLUE_SOFT} />
-          <stop offset="100%" stopColor="#8fb0d8" />
+          <stop offset="100%" stopColor="#c98d97" />
         </radialGradient>
         <radialGradient id="balloon-clear" cx="35%" cy="30%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
@@ -151,7 +151,7 @@ export function Balloons({ className = '' }: { className?: string }) {
       />
 
       <ellipse cx="40" cy="38" rx="27" ry="32" fill="url(#balloon-solid)" />
-      <path d="M40 70l-4 6h8z" fill="#8fb0d8" />
+      <path d="M40 70l-4 6h8z" fill="#c98d97" />
 
       <ellipse
         cx="84"
