@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "app/**/{page,layout,loading,error,not-found,global-error,route,template,default}.tsx",
+    "app/**/{route,default}.ts",
+    "e2e/**/*.spec.ts",
+    "tests/**/*.test.{ts,tsx}",
+    "tests/setup/*.ts",
+    "scripts/*.ts"
+  ],
+  "project": ["**/*.{ts,tsx}", "!node_modules/**", "!.next/**"],
+  "ignoreDependencies": [
+    "tailwindcss",
+    "@stryker-mutator/vitest-runner",
+    "@testing-library/user-event"
+  ],
+  "ignore": ["types/database.types.ts"],
+  "ignoreExportsUsedInFile": true
+}

@@ -154,5 +154,3 @@ export function LoadingState({ label = 'טוען…' }: { label?: string }) {
     </div>
   );
 }
-
-export { badgeVariants };

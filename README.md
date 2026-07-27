@@ -39,9 +39,14 @@
 
 ## סטאק
 
-Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind CSS 4 · shadcn/ui ·
-Supabase (Postgres, Auth, RLS) · React Hook Form + Zod · Vitest · Playwright ·
+Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind CSS 4 ·
+Supabase (Postgres, Auth, RLS) · Server Actions + Zod · Vitest · Playwright ·
 axe-core · Stryker · Vercel
+
+הטפסים אינם מבוקרים ומשתמשים ב-`useActionState` מול Server Actions, ולא ב-React
+Hook Form: כך הם עובדים גם לפני hydration — אורח על חיבור חלש באולם יכול לענות
+לפני שה-JavaScript סיים להיטען. הקומפוננטות ב-`components/ui/` נכתבו לפרויקט לפי
+מוסכמות shadcn, אך אינן מותקנות ממנו.
 
 ## מבנה התיקיות
 

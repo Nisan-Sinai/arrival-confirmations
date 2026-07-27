@@ -5,6 +5,7 @@ import { updatePasswordAction } from '@/app/actions/auth';
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AuthForm } from '@/features/auth/AuthForm';
+import { SiteHeader } from '@/features/layout/SiteHeader';
 import { createUserClient } from '@/lib/server/supabase';
 
 /**
@@ -39,37 +40,46 @@ export default async function ResetPasswordPage() {
   // by the one person who needs this page.
   if (user === null) {
     return (
-      <main
-        id="main"
-        className="from-secondary/30 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
-      >
-        <Card padding="lg" className="mx-auto w-full max-w-md text-center">
-          <h1 className="text-h2 text-primary font-bold">הקישור פג תוקף</h1>
-          <p className="text-muted-foreground mt-3 leading-relaxed">
-            קישורי איפוס תקפים לזמן מוגבל וניתן להשתמש בהם פעם אחת בלבד. בקשו קישור חדש ונשלח אותו
-            שוב.
-          </p>
-          <Link href="/forgot-password" className={buttonClass({ size: 'lg', className: 'mt-7' })}>
-            בקשת קישור חדש
-          </Link>
-        </Card>
-      </main>
+      <>
+        <SiteHeader minimal />
+        <main
+          id="main"
+          className="from-secondary/30 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
+        >
+          <Card padding="lg" className="mx-auto w-full max-w-md text-center">
+            <h1 className="text-h2 text-primary font-bold">הקישור פג תוקף</h1>
+            <p className="text-muted-foreground mt-3 leading-relaxed">
+              קישורי איפוס תקפים לזמן מוגבל וניתן להשתמש בהם פעם אחת בלבד. בקשו קישור חדש ונשלח אותו
+              שוב.
+            </p>
+            <Link
+              href="/forgot-password"
+              className={buttonClass({ size: 'lg', className: 'mt-7' })}
+            >
+              בקשת קישור חדש
+            </Link>
+          </Card>
+        </main>
+      </>
     );
   }
 
   return (
-    <main
-      id="main"
-      className="from-secondary/30 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
-    >
-      <AuthForm
-        action={updatePasswordAction}
-        mode="setPassword"
-        title="בחירת סיסמה חדשה"
-        subtitle="לאחר השמירה תיכנסו אוטומטית לחשבון."
-        submitLabel="שמירת הסיסמה"
-        pendingLabel="שומר…"
-      />
-    </main>
+    <>
+      <SiteHeader minimal />
+      <main
+        id="main"
+        className="from-secondary/30 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
+      >
+        <AuthForm
+          action={updatePasswordAction}
+          mode="setPassword"
+          title="בחירת סיסמה חדשה"
+          subtitle="לאחר השמירה תיכנסו אוטומטית לחשבון."
+          submitLabel="שמירת הסיסמה"
+          pendingLabel="שומר…"
+        />
+      </main>
+    </>
   );
 }

@@ -23,7 +23,21 @@ import { cn } from '@/lib/utils';
  * above a family's simcha is an advertisement placed on their invitation. The footer
  * credit is the only product chrome a guest sees.
  */
-export function SiteHeader({ className }: { className?: string }) {
+export function SiteHeader({
+  className,
+  /**
+   * Wordmark only, for the credential screens.
+   *
+   * A "כניסה / יצירת אירוע" pair above a sign-in form offers the user the page they
+   * are already on. Dropping the actions leaves the one thing those screens genuinely
+   * lacked: a way back to the site. Without any header at all — which is how they
+   * shipped — /login was a dead end whose only exits were the two legal pages.
+   */
+  minimal = false,
+}: {
+  className?: string;
+  minimal?: boolean;
+}) {
   return (
     <header
       className={cn(
@@ -57,14 +71,16 @@ export function SiteHeader({ className }: { className?: string }) {
           אישורי הגעה
         </Link>
 
-        <nav aria-label="ניווט ראשי" className="flex items-center gap-1.5 sm:gap-3">
-          <Link href="/login" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
-            כניסה
-          </Link>
-          <Link href="/signup" className={buttonClass({ size: 'sm' })}>
-            יצירת אירוע
-          </Link>
-        </nav>
+        {!minimal && (
+          <nav aria-label="ניווט ראשי" className="flex items-center gap-1.5 sm:gap-3">
+            <Link href="/login" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
+              כניסה
+            </Link>
+            <Link href="/signup" className={buttonClass({ size: 'sm' })}>
+              יצירת אירוע
+            </Link>
+          </nav>
+        )}
       </Container>
     </header>
   );

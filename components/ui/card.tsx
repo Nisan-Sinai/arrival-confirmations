@@ -64,5 +64,3 @@ export function CardBody({ className, children }: { className?: string; children
     <p className={cn('text-muted-foreground mt-2.5 leading-relaxed', className)}>{children}</p>
   );
 }
-
-export { cardVariants };

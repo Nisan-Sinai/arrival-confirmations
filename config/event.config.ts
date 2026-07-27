@@ -62,14 +62,12 @@ export const appConfig: AppConfig = {
   auditLogRetentionDays: 365,
 };
 
-/**
- * Config keys whose value is allowed to be a placeholder outside production.
- *
- * Empty, and that is the goal state rather than an oversight: every branding value is
- * now filled in, so there is nothing left to tolerate. The list stays because the next
- * key added here will need somewhere to sit while it is being decided.
+/*
+ * `PLACEHOLDER_ALLOWED_KEYS` used to live here, listing `supportEmail` as tolerated
+ * outside production. Every branding value is filled in now, so the list was empty and
+ * nothing read it — an exemption mechanism with nothing to exempt. Removed rather than
+ * left as an empty array, because an unused escape hatch is an invitation to use one.
  */
-export const PLACEHOLDER_ALLOWED_KEYS = [] as const;
 
 export function findPlaceholderKeys(config: AppConfig = appConfig): string[] {
   return Object.entries(config)

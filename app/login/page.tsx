@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { signInAction } from '@/app/actions/auth';
 import { Alert } from '@/components/ui/feedback';
 import { AuthForm } from '@/features/auth/AuthForm';
+import { SiteHeader } from '@/features/layout/SiteHeader';
 
 export const metadata: Metadata = {
   title: 'כניסה לחשבון',
@@ -21,26 +22,29 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <main
-      id="main"
-      className="from-secondary/30 flex flex-1 flex-col items-center justify-center gap-5 bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
-    >
-      {error === 'auth' && (
-        <Alert tone="error" className="w-full max-w-md">
-          הקישור אינו תקין או שכבר נעשה בו שימוש. בקשו קישור חדש.
-        </Alert>
-      )}
-      <AuthForm
-        action={signInAction}
-        mode="signIn"
-        title="כניסה לחשבון"
-        subtitle="נהלו את האירועים שלכם ואת אישורי ההגעה שהתקבלו."
-        submitLabel="כניסה"
-        pendingLabel="נכנס…"
-        footerPrompt="אין לכם חשבון?"
-        footerHref="/signup"
-        footerLinkLabel="הרשמה חינם"
-      />
-    </main>
+    <>
+      <SiteHeader minimal />
+      <main
+        id="main"
+        className="from-secondary/30 flex flex-1 flex-col items-center justify-center gap-5 bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
+      >
+        {error === 'auth' && (
+          <Alert tone="error" className="w-full max-w-md">
+            הקישור אינו תקין או שכבר נעשה בו שימוש. בקשו קישור חדש.
+          </Alert>
+        )}
+        <AuthForm
+          action={signInAction}
+          mode="signIn"
+          title="כניסה לחשבון"
+          subtitle="נהלו את האירועים שלכם ואת אישורי ההגעה שהתקבלו."
+          submitLabel="כניסה"
+          pendingLabel="נכנס…"
+          footerPrompt="אין לכם חשבון?"
+          footerHref="/signup"
+          footerLinkLabel="הרשמה חינם"
+        />
+      </main>
+    </>
   );
 }

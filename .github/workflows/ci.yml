@@ -60,12 +60,13 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # Catches an export or a module that nothing imports, which is how
-      # `updatePasswordAction`, `updateRsvpAction` and an entire `/reset-password`
-      # flow came to exist with no caller and no route.
+      # A hard gate, not advisory. This is how `updatePasswordAction`,
+      # `updateRsvpAction` and an entire `/reset-password` flow came to exist with no
+      # caller and no route, and how six unused production dependencies — including
+      # recharts and react-hook-form — stayed in the manifest. It exits clean today,
+      # so anything it reports tomorrow is new.
       - name: Dead code and unused exports
         run: pnpm deadcode
-        continue-on-error: true
 
       - name: Secret scan over source and build output
         # Runs after the build on purpose: §4.5's browser-bundle grep has nothing to
