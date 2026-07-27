@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { buttonClass } from '@/components/ui/button';
 import { Card, CardBody, CardTitle } from '@/components/ui/card';
 import { Container, Rule, Section, SectionHeader } from '@/components/ui/layout';
+import { appConfig } from '@/config/event.config';
 import { listEventTypePresets } from '@/config/eventTypes';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { SiteHeader } from '@/features/layout/SiteHeader';
+import { SITE_ORIGIN } from '@/lib/seo';
 
 /**
  * The landing page.
@@ -27,6 +29,15 @@ export const metadata: Metadata = {
   title: 'אישורי הגעה — חינם, לכל אירוע',
   description:
     'הזמנה דיגיטלית וטופס אישור הגעה לכל סוג אירוע. בלי מנוי, בלי תשלום לפי אורח, בלי הגבלת כמות.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'he_IL',
+    siteName: appConfig.siteName,
+    title: 'אישורי הגעה — חינם, לכל אירוע',
+    description: 'הזמנה דיגיטלית וטופס אישור הגעה לכל סוג אירוע. בלי מנוי ובלי תשלום לפי אורח.',
+    url: '/',
+  },
 };
 
 const STEPS = [
@@ -85,11 +96,70 @@ const FAQ = [
   },
 ] as const;
 
+/**
+ * §12. Structured data, and only the part of it that is true.
+ *
+ * Two nodes in one graph. `WebApplication` with a zero-price `Offer` is the whole
+ * product claim: this is a web app and it costs nothing. `FAQPage` is built from the
+ * same `FAQ` array the page renders below, which is the condition Google actually
+ * enforces — markup describing questions a visitor cannot see on the page is a
+ * structured-data violation, and deriving both from one array is what stops the two
+ * drifting apart when someone edits the copy.
+ *
+ * There is no `AggregateRating` and no `review`. The product has no ratings, and a
+ * fabricated one is both a manual-action risk and the exact thing §22 rules out of the
+ * landing copy.
+ *
+ * What this buys, honestly: eligibility and presentation, not position. It can widen
+ * the result once the page ranks for something. It cannot make it rank.
+ */
+const STRUCTURED_DATA = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebApplication',
+      name: appConfig.siteName,
+      description: appConfig.siteDescription,
+      url: SITE_ORIGIN,
+      applicationCategory: 'LifestyleApplication',
+      // A browser is the requirement; naming an OS would be a narrower claim than the
+      // truth.
+      operatingSystem: 'Web',
+      inLanguage: 'he-IL',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'ILS' },
+    },
+    {
+      '@type': 'FAQPage',
+      inLanguage: 'he-IL',
+      mainEntity: FAQ.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+  ],
+} as const;
+
 export default function LandingPage() {
   const eventTypes = listEventTypePresets();
 
   return (
     <>
+      {/*
+        The one `dangerouslySetInnerHTML` in the application, and the CSP note in
+        next.config.ts names it. React escapes text children, which would turn the
+        quotes in this JSON into `&quot;` and hand a crawler an unparseable block, so
+        there is no safe alternative that still produces valid JSON-LD. The input is a
+        frozen object literal from config — no request data reaches it — and `<` is
+        escaped anyway so no value could ever close the tag early.
+      */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(STRUCTURED_DATA).replace(/</g, '\\u003c'),
+        }}
+      />
       <SiteHeader />
       <main id="main" className="flex flex-1 flex-col">
         {/*

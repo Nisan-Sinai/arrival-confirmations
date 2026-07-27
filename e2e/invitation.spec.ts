@@ -141,8 +141,110 @@ test.describe('security headers', () => {
   });
 });
 
+/**
+ * §12. The crawler-facing surface, which is invisible in every other suite: these are
+ * artefacts nobody looks at while using the product, so a regression here is silent
+ * until a host wonders why their link previews as a grey rectangle.
+ */
+test.describe('the crawlable surface', () => {
+  test('serves a robots.txt that closes the invitation namespace', async ({ request }) => {
+    const response = await request.get('/robots.txt');
+    const body = await response.text();
+
+    expect(response.status()).toBe(200);
+    expect(body).toContain('Allow: /');
+    // The line that matters: an indexed invitation defeats the unguessable URL.
+    expect(body).toContain('Disallow: /e/');
+    expect(body).toContain('Disallow: /dashboard/');
+    expect(body).toMatch(/Sitemap: https?:\/\/\S+\/sitemap\.xml/);
+  });
+
+  test('lists exactly the three pages that carry no personal data', async ({ request }) => {
+    const response = await request.get('/sitemap.xml');
+    const body = await response.text();
+
+    expect(response.status()).toBe(200);
+    const paths = [...body.matchAll(/<loc>(?<url>[^<]+)<\/loc>/g)].map((match) =>
+      new URL(match[1]!).pathname.replace(/(.)\/$/, '$1'),
+    );
+    expect(paths).toEqual(['/', '/privacy', '/accessibility']);
+  });
+
+  test('the landing page declares a canonical URL and a share card', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /^https?:\/\//);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      'content',
+      /\/opengraph-image/,
+    );
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      'content',
+      '1200',
+    );
+  });
+
+  test('describes itself as a free web application', async ({ page }) => {
+    await page.goto('/');
+    const raw = await page.locator('script[type="application/ld+json"]').innerText();
+    const graph = (JSON.parse(raw) as { '@graph': Record<string, unknown>[] })['@graph'];
+
+    const app = graph.find((node) => node['@type'] === 'WebApplication');
+    expect(app?.offers).toMatchObject({ price: '0', priceCurrency: 'ILS' });
+
+    /**
+     * Google treats FAQ markup describing questions absent from the page as a
+     * structured-data violation, so the graph has to agree with what the page renders.
+     * The questions sit in a `<summary>` and are visible while collapsed; the answers
+     * are inside a closed `<details>`, which Google explicitly allows — content behind
+     * an expander counts as present.
+     */
+    const faq = graph.find((node) => node['@type'] === 'FAQPage');
+    const entries = faq?.mainEntity as { name: string; acceptedAnswer: { text: string } }[];
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      await expect(page.getByText(entry.name, { exact: true })).toBeVisible();
+      await expect(page.getByText(entry.acceptedAnswer.text, { exact: true })).toBeAttached();
+    }
+  });
+
+  test('renders the product share card as a real PNG', async ({ request }) => {
+    const response = await request.get('/opengraph-image');
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain('image/png');
+    // Satori draws Hebrew only when it is handed a font it can parse; a card that
+    // failed to load one still returns 200, just far smaller and entirely blank.
+    expect((await response.body()).byteLength).toBeGreaterThan(10_000);
+  });
+});
+
 test.describe('the invitation', () => {
   requiresSeededEvent();
+
+  /**
+   * §12, and the distinction the whole OG effort rests on. `noindex` keeps the
+   * invitation out of search results; Open Graph decides what WhatsApp draws when the
+   * link is pasted into a family group. They look like they should conflict and do
+   * not — losing the second in an attempt to enforce the first is the regression this
+   * guards.
+   */
+  test('keeps its share card while staying out of search indexes', async ({ page, request }) => {
+    await page.goto(eventPath);
+
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+
+    const imageUrl = await page.locator('meta[property="og:image"]').getAttribute('content');
+    expect(imageUrl).toContain(`/e/${EVENT_PUBLIC_ID}/opengraph-image`);
+    // Named for the occasion, not for the product: this is the line a guest reads
+    // under the picture before deciding whether to tap.
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /\S/);
+
+    const image = await request.get(imageUrl!);
+    expect(image.status()).toBe(200);
+    expect(image.headers()['content-type']).toContain('image/png');
+    expect((await image.body()).byteLength).toBeGreaterThan(10_000);
+  });
 
   test('renders the event and its Hebrew date', async ({ page }) => {
     await page.goto(eventPath);

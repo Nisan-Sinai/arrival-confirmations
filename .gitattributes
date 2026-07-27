@@ -9,6 +9,8 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+*.ttf binary
+*.otf binary
 *.pdf binary
 
 pnpm-lock.yaml linguist-generated=true

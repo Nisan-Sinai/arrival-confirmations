@@ -18,6 +18,7 @@ import { SiteHeader } from '@/features/layout/SiteHeader';
 export const metadata: Metadata = {
   title: 'מדיניות פרטיות',
   description: 'איזה מידע נאסף באתר, לשם מה, כמה זמן הוא נשמר ומה הזכויות שלכם.',
+  alternates: { canonical: '/privacy' },
 };
 
 const RETENTION_DAYS = appConfig.defaultRetentionDaysAfterEvent;

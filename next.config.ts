@@ -34,9 +34,11 @@ const supabaseOrigin = (() => {
  * alternative — a per-request nonce — forces every route to render dynamically,
  * including the landing page and the legal pages that are currently static. On a
  * product whose entire premise is fitting inside the Vercel free tier, that is a real
- * cost. The XSS surface it leaves is narrow: there is no `dangerouslySetInnerHTML`
- * anywhere in the application, guest-supplied text is escaped by React, and the host's
- * own URL fields are restricted to https:// in both the action and a CHECK constraint.
+ * cost. The XSS surface it leaves is narrow: guest-supplied text is escaped by React,
+ * and the host's own URL fields are restricted to https:// in both the action and a
+ * CHECK constraint. There is exactly one `dangerouslySetInnerHTML` in the application
+ * — the JSON-LD block in `app/page.tsx`, whose input is a frozen literal from config
+ * with no request data anywhere near it.
  *
  * Everything else is closed. `object-src 'none'` and `base-uri 'self'` remove the two
  * classic ways to turn an injected tag into navigation, and `frame-ancestors 'none'`
@@ -88,6 +90,17 @@ const nextConfig: NextConfig = {
   // A leaked stack trace is an information disclosure (§13).
   productionBrowserSourceMaps: false,
   poweredByHeader: false,
+  /**
+   * The share images read three TTFs off the filesystem at render time. Nothing
+   * `import`s those files, so Next's tracer has no reason to believe they are needed
+   * and would deploy the route without them — a failure that only shows up in
+   * production, as a 500 on the one request a WhatsApp preview makes. Naming them
+   * here is what puts them in the bundle.
+   */
+  outputFileTracingIncludes: {
+    '/opengraph-image': ['./assets/fonts/*.ttf'],
+    '/e/[publicId]/opengraph-image': ['./assets/fonts/*.ttf'],
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

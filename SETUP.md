@@ -34,6 +34,10 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API Keys → anon / publishable |
 | `NEXT_PUBLIC_SITE_URL`          | כתובת הבסיס. בפיתוח `http://localhost:3000`                 |
 
+| משתנה לא חובה                          | מה זה                                                          |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | אסימון אימות הבעלות של Google Search Console. ראו "קידום" למטה |
+
 ### שרת בלבד — אסור בהחלט עם קידומת `NEXT_PUBLIC_`
 
 | משתנה                       | מקור                                                  |
@@ -126,6 +130,28 @@ pnpm ci           # שער האיכות המלא
 
 `pnpm scan:secrets` סורק גם את `.next/`, ולכן שווה להריץ `pnpm build` לפניו כדי
 שהבדיקה תכסה גם את הבאנדל של הדפדפן.
+
+## שיופיע בגוגל
+
+הקוד עושה את כל מה שקוד יכול לעשות: `robots.txt`, `sitemap.xml`, `canonical`, Open
+Graph עם תמונת שיתוף לכל אירוע, ו-JSON-LD. **זה לא מכניס את האתר לגוגל.** גוגל לא
+מגלה דומיין חדש שאף אחד לא מקשר אליו. שני הצעדים שנשארו הם ידניים, ובלעדיהם האתר לא
+יופיע על שום חיפוש:
+
+1. **אימות בעלות.** [Search Console](https://search.google.com/search-console) → Add
+   property → URL prefix → `https://arrival-confirmations.vercel.app` → HTML tag.
+   קחו רק את הערך מתוך `content="..."`, הגדירו אותו כ-`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`
+   ב-Vercel (Project → Settings → Environment Variables), פרסמו מחדש, ולחצו Verify.
+2. **הגשת ה-sitemap.** Search Console → Sitemaps → `sitemap.xml` → Submit.
+
+מכאן זה לוקח ימים עד שבועות עד שהעמודים נכנסים לאינדקס. אפשר לעקוב ב-Pages וב-URL
+Inspection.
+
+**מה שזה עדיין לא נותן.** אינדוקס הוא לא דירוג. "אישורי הגעה" היא מילת מפתח מסחרית
+תחרותית בישראל, ושלושת הדברים שמזיזים אותה — תוכן שעונה על מה שאנשים באמת מחפשים,
+ותק של דומיין, וקישורים נכנסים — לא נמצאים בקוד. ריאלי בטווח הקרוב: חיפושים על שם
+המוצר, וביטויים ארוכים ומדויקים יותר. הערך המיידי של העבודה הזו הוא לא גוגל אלא
+וואטסאפ — קישור שנשלח מגיע עם שמות בעלי השמחה, התאריך והמקום.
 
 ## פתרון תקלות
 

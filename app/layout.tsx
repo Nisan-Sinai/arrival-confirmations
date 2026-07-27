@@ -4,6 +4,8 @@ import { Assistant, Frank_Ruhl_Libre } from 'next/font/google';
 import { appConfig, assertNoPlaceholders } from '@/config/event.config';
 import { UI_MESSAGES } from '@/config/messages';
 import { SiteFooter } from '@/features/layout/SiteFooter';
+import { clientEnv } from '@/lib/env.client';
+import { SITE_ORIGIN } from '@/lib/seo';
 
 import './globals.css';
 
@@ -39,6 +41,13 @@ const frankRuhl = Frank_Ruhl_Libre({
 });
 
 export const metadata: Metadata = {
+  /**
+   * §12. Every relative URL in a `Metadata` object — canonical tags, `og:image`,
+   * `og:url` — is resolved against this. Without it Next.js emits the image path
+   * relative and warns, and a preview crawler is handed a URL it cannot fetch, which
+   * is the difference between a share card and a bare grey rectangle.
+   */
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
     default: appConfig.siteName,
     template: `%s · ${appConfig.siteName}`,
@@ -50,6 +59,33 @@ export const metadata: Metadata = {
     // mid-sentence; the contact block links deliberately instead.
     telephone: false,
   },
+  /**
+   * Defaults, not the last word: `openGraph` is replaced wholesale by any route that
+   * declares its own, which is why the invitation page restates `type` and `locale`.
+   * The image is the exception — `app/opengraph-image.tsx` is picked up by file
+   * convention and does not need naming here.
+   */
+  openGraph: {
+    type: 'website',
+    locale: 'he_IL',
+    siteName: appConfig.siteName,
+    title: appConfig.siteName,
+    description: appConfig.siteDescription,
+    url: '/',
+  },
+  // Read by more preview clients than Twitter's own, and the only thing it changes is
+  // whether the image renders full-bleed or as a thumbnail beside the text.
+  twitter: { card: 'summary_large_image' },
+  /**
+   * Ownership proof for Google Search Console. Absent until the token is configured,
+   * and `undefined` here emits no tag at all rather than an empty one.
+   *
+   * This is the step that actually gets the site into Google. Nothing else in this file
+   * does: robots.txt and a sitemap describe a site Google already knows about, and
+   * Google will not discover a brand-new domain with no inbound links on its own.
+   * Verifying here and submitting `/sitemap.xml` is what starts the clock.
+   */
+  verification: { google: clientEnv.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
 };
 
 export const viewport: Viewport = {

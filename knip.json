@@ -2,17 +2,15 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "app/**/{page,layout,loading,error,not-found,global-error,route,template,default}.tsx",
+    "app/**/{robots,sitemap,manifest}.ts",
+    "app/**/{opengraph-image,twitter-image,icon,apple-icon}.tsx",
     "e2e/**/*.spec.ts",
     "tests/**/*.test.{ts,tsx}",
     "tests/setup/*.ts",
     "scripts/*.ts"
   ],
   "project": ["**/*.{ts,tsx}", "!node_modules/**", "!.next/**"],
-  "ignoreDependencies": [
-    "tailwindcss",
-    "@stryker-mutator/vitest-runner",
-    "@testing-library/user-event"
-  ],
+  "ignoreDependencies": ["tailwindcss", "@stryker-mutator/vitest-runner"],
   "ignore": ["types/database.types.ts"],
   "ignoreExportsUsedInFile": true
 }

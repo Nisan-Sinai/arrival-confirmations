@@ -20,6 +20,7 @@ import { SiteHeader } from '@/features/layout/SiteHeader';
 export const metadata: Metadata = {
   title: 'הצהרת נגישות',
   description: 'רמת הנגישות של האתר, ההתאמות שבוצעו, מגבלות ידועות ודרכי פנייה.',
+  alternates: { canonical: '/accessibility' },
 };
 
 /** One clause, matched to the privacy notice so the two legal pages read as a pair. */

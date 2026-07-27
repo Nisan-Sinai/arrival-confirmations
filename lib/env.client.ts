@@ -13,6 +13,13 @@ const clientEnvSchema = z.object({
     .string()
     .min(20, 'NEXT_PUBLIC_SUPABASE_ANON_KEY קצר מדי — ודאו שהועתק במלואו'),
   NEXT_PUBLIC_SITE_URL: z.string().url('NEXT_PUBLIC_SITE_URL חייב להיות כתובת URL תקינה'),
+  /**
+   * Google Search Console's verification token (§12). Optional, because the site runs
+   * perfectly well unverified — it only decides whether the owner can submit the
+   * sitemap and see what Google thinks of the site. It is public by construction: the
+   * whole mechanism is a meta tag Google reads off the page.
+   */
+  NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: z.string().min(1).optional(),
 });
 
 export type ClientEnv = z.infer<typeof clientEnvSchema>;
@@ -42,4 +49,5 @@ export const clientEnv: ClientEnv = parseClientEnv({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
 });
