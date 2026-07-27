@@ -101,6 +101,7 @@ export type Database = {
           reception_time: string | null;
           side_a_label: string | null;
           side_b_label: string | null;
+          expected_guests: number | null;
           title: string;
           updated_at: string;
           venue_name: string;
@@ -124,6 +125,7 @@ export type Database = {
           reception_time?: string | null;
           side_a_label?: string | null;
           side_b_label?: string | null;
+          expected_guests?: number | null;
           title: string;
           updated_at?: string;
           venue_name: string;
@@ -147,6 +149,7 @@ export type Database = {
           reception_time?: string | null;
           side_a_label?: string | null;
           side_b_label?: string | null;
+          expected_guests?: number | null;
           title?: string;
           updated_at?: string;
           venue_name?: string;
@@ -486,6 +489,10 @@ export type Database = {
         description: string | null;
         side_a_label: string | null;
         side_b_label: string | null;
+        // `expected_guests` is deliberately absent. This composite is the entire
+        // surface an anonymous visitor can read (§4.6), and how many invitations the
+        // host sent is theirs alone — the projection's fixed column list is exactly
+        // what stops a new column leaking into it by default.
       };
     };
   };

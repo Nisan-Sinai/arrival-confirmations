@@ -67,33 +67,60 @@ export interface ResponseRate {
 /**
  * Response rate (§8.1).
  *
- * The denominator is invited *guest records*, not RSVPs. A public submission with no
- * matching guest row is a real response and appears in the totals, but it must not
- * quietly change the denominator — otherwise inviting nobody and receiving one reply
- * would read as 100%.
+ * Two denominators, in order of how much they can be trusted.
  *
- * Revoked and deactivated invitations are excluded, because a link the host
- * cancelled is not an outstanding request. That choice is documented here because
- * §8.1 requires it to be stated rather than assumed.
+ * A per-guest invite list is the better answer, so it wins when it exists: the
+ * denominator is invited *guest records* and the numerator counts only replies linked
+ * to one of them. A public submission from somebody who was never on the list is a real
+ * reply and appears in every other total, but it must not quietly enter this one —
+ * otherwise inviting four people and receiving one reply from a stranger reads as 25%
+ * of a set that stranger was never in.
+ *
+ * Failing that, `expectedGuests` — the number of invitations the host says they sent.
+ * This is the case that actually occurs: the product sends one unguessable link
+ * forwarded around a WhatsApp group, so there are no guest rows and there never were.
+ * Before this fallback existed the tile read "not available" on every event ever
+ * created, which is a correct answer to a question nobody could make answerable.
+ *
+ * And failing both, no percentage at all. §8.1 forbids inventing a denominator, and a
+ * host who does not know how many invitations went out is exactly whose number would
+ * have to be invented.
+ *
+ * Revoked and deactivated invitations are excluded from the guest count, because a link
+ * the host cancelled is not an outstanding request.
  */
 export function computeResponseRate(
   guests: readonly { id: string; is_active: boolean; token_revoked_at: string | null }[],
   rsvps: readonly Pick<Rsvp, 'guest_id'>[],
+  expectedGuests: number | null = null,
 ): ResponseRate {
   const invited = guests.filter((g) => g.is_active && g.token_revoked_at === null);
-  if (invited.length === 0) {
-    // No guest list: the honest answer is "not available", never a percentage.
-    return { percentage: null, responded: 0, invited: 0 };
+
+  if (invited.length > 0) {
+    const invitedIds = new Set(invited.map((g) => g.id));
+    const responded = new Set(
+      rsvps.map((r) => r.guest_id).filter((id): id is string => id !== null && invitedIds.has(id)),
+    ).size;
+
+    return {
+      percentage: Math.round((responded / invited.length) * 100),
+      responded,
+      invited: invited.length,
+    };
   }
 
-  const invitedIds = new Set(invited.map((g) => g.id));
-  const responded = new Set(
-    rsvps.map((r) => r.guest_id).filter((id): id is string => id !== null && invitedIds.has(id)),
-  ).size;
+  if (expectedGuests !== null && expectedGuests > 0) {
+    // Every reply counts here, because without a guest list there is nothing to match
+    // against — the host's own figure is the whole population.
+    const responded = rsvps.length;
+    return {
+      // Capped: more replies than invitations means the link was forwarded further than
+      // the host expected, which is a good problem and not a 140% one.
+      percentage: Math.min(100, Math.round((responded / expectedGuests) * 100)),
+      responded,
+      invited: expectedGuests,
+    };
+  }
 
-  return {
-    percentage: Math.round((responded / invited.length) * 100),
-    responded,
-    invited: invited.length,
-  };
+  return { percentage: null, responded: 0, invited: 0 };
 }

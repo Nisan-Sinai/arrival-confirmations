@@ -188,6 +188,57 @@ describe('computeResponseRate', () => {
     expect(rate.percentage).toBe(100);
   });
 
+  /**
+   * The case the tile actually hits. Nothing in this product creates a `guests` row —
+   * the personal-invite-link flow was specified and never built — so before the host's
+   * own figure became a fallback, the response rate read "not available" on every event
+   * that has ever existed. These assertions are that fallback.
+   */
+  describe('when the host says how many invitations they sent', () => {
+    it('divides replies by that number', () => {
+      const rate = computeResponseRate([], [rsvp(), rsvp(), rsvp()], 12);
+      expect(rate.percentage).toBe(25);
+      expect(rate.invited).toBe(12);
+      expect(rate.responded).toBe(3);
+    });
+
+    it('counts every reply, because there is no list to match against', () => {
+      // guest_id is null on a public submission, which is all of them here.
+      const rate = computeResponseRate([], [rsvp({ guest_id: null }), rsvp({ guest_id: null })], 4);
+      expect(rate.percentage).toBe(50);
+    });
+
+    /**
+     * The link is forwarded around a WhatsApp group, so more replies than invitations
+     * is normal rather than an error. "137% responded" would look like a bug in the
+     * product to the one host it happens to.
+     */
+    it('caps at 100 when the link travelled further than the host expected', () => {
+      const rate = computeResponseRate([], [rsvp(), rsvp(), rsvp(), rsvp(), rsvp()], 3);
+      expect(rate.percentage).toBe(100);
+      expect(rate.responded).toBe(5);
+    });
+
+    it('still reports nothing when the host left the field empty', () => {
+      expect(computeResponseRate([], [rsvp()], null).percentage).toBeNull();
+    });
+
+    it('refuses zero as a denominator rather than dividing by it', () => {
+      expect(computeResponseRate([], [rsvp()], 0).percentage).toBeNull();
+    });
+
+    /** A real invite list is a better answer than an estimate, so it wins. */
+    it('prefers real guest rows over the host’s estimate', () => {
+      const rate = computeResponseRate(
+        [guest('g1'), guest('g2')],
+        [rsvp({ guest_id: 'g1' })],
+        1000,
+      );
+      expect(rate.invited).toBe(2);
+      expect(rate.percentage).toBe(50);
+    });
+  });
+
   it('rounds to a whole percentage', () => {
     const rate = computeResponseRate(
       [guest('g1'), guest('g2'), guest('g3')],

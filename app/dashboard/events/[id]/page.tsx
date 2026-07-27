@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
 import { getEventTypePreset } from '@/config/eventTypes';
-import { UI_MESSAGES } from '@/config/messages';
+import { ResponseRateTile } from '@/features/admin/ResponseRateTile';
 import { RsvpRow } from '@/features/admin/RsvpRow';
 import { ShareInvitation } from '@/features/admin/ShareInvitation';
 import { describeTimeUntilEvent, formatEventDate, formatEventWeekday } from '@/lib/eventDate';
@@ -83,7 +83,7 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
   const { data: event } = await supabase
     .from('events')
     .select(
-      'id, public_id, title, event_type, event_date, venue_name, honoree_display_name, is_active',
+      'id, public_id, title, event_type, event_date, venue_name, honoree_display_name, is_active, expected_guests',
     )
     .eq('id', id)
     .maybeSingle();
@@ -100,7 +100,9 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
 
   const rows = rsvps ?? [];
   const stats = computeRsvpStats(rows);
-  const rate = computeResponseRate(guests ?? [], rows);
+  // The host's own figure is the denominator when there are no per-guest rows, which
+  // in this product is always — the tile read "not available" on every event until now.
+  const rate = computeResponseRate(guests ?? [], rows, event.expected_guests);
   const preset = getEventTypePreset(event.event_type);
 
   return (
@@ -179,15 +181,14 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
           <Stat label="מתלבטים" value={stats.maybe} />
           <Stat label="מבוגרים" value={stats.adults} />
           <Stat label="ילדים" value={stats.children} />
-          <Stat
-            label="אחוז מענה"
-            // §8.1: with no guest list there is no denominator, so no percentage.
-            value={
-              rate.percentage === null
-                ? UI_MESSAGES.admin.responseRateUnavailable
-                : `${rate.percentage}%`
-            }
-            hint={rate.percentage === null ? 'אין רשימת מוזמנים' : `מתוך ${rate.invited} מוזמנים`}
+          {/* The only editable tile: its denominator is a number the host knows while
+              looking at this screen, and sending them to a separate form to change it
+              is what left it reading "not available" on every event. */}
+          <ResponseRateTile
+            eventId={event.id}
+            percentage={rate.percentage}
+            invited={rate.invited}
+            expectedGuests={event.expected_guests}
           />
         </div>
 

@@ -46,6 +46,7 @@ export interface EventFormValues {
   readonly description: string | null;
   readonly side_a_label: string | null;
   readonly side_b_label: string | null;
+  readonly expected_guests: number | null;
   readonly is_active: boolean;
 }
 
@@ -206,6 +207,25 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
 
         <Field label="הערה להזמנה" hint="למשל: חניה חינם במקום, או קוד לבוש">
           <Textarea name="description" rows={3} defaultValue={value('description')} />
+        </Field>
+      </Group>
+
+      <Group title="מעקב">
+        {/* The denominator for the response-rate tile. Optional, and the tile says
+            "not available" without it rather than inventing a figure (§8.1). */}
+        <Field
+          label="כמה הזמנות שלחתם"
+          hint="לא חובה. משמש רק לחישוב אחוז המענה בדשבורד, ולא מוצג לאורחים."
+        >
+          <Input
+            name="expectedGuests"
+            type="number"
+            min={1}
+            max={5000}
+            inputMode="numeric"
+            placeholder="למשל 120"
+            defaultValue={value('expected_guests')}
+          />
         </Field>
       </Group>
 

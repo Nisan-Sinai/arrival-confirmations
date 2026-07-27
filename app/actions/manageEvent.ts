@@ -39,6 +39,21 @@ function optional(value: FormDataEntryValue | null): string | null {
   return text === '' ? null : text;
 }
 
+/**
+ * A positive whole number, or null when the host left it blank.
+ *
+ * Null and zero are different answers here: null is "I did not say", which the
+ * dashboard renders as no percentage at all, while zero would be a denominator that
+ * cannot divide. Anything unparseable becomes null rather than an error — this field
+ * is optional, and refusing to save an event over a typo in it would be absurd.
+ */
+function optionalCount(value: FormDataEntryValue | null): number | null {
+  const text = optional(value);
+  if (text === null) return null;
+  const parsed = Number(text);
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= 5000 ? parsed : null;
+}
+
 /** A URL we are willing to put behind a button a guest will tap. */
 function safeUrl(value: FormDataEntryValue | null): string | null {
   const text = optional(value);
@@ -92,10 +107,62 @@ function parseEventForm(formData: FormData): ParsedEvent {
       side_b_label: optional(formData.get('sideBLabel')),
       waze_url: safeUrl(formData.get('wazeUrl')),
       google_maps_url: safeUrl(formData.get('googleMapsUrl')),
+      expected_guests: optionalCount(formData.get('expectedGuests')),
       is_active: formData.get('isActive') === 'on',
     },
     errors,
   };
+}
+
+export interface ExpectedGuestsState {
+  readonly status: 'idle' | 'saved' | 'error';
+  readonly message: string;
+}
+
+/**
+ * Sets how many invitations the host sent, from the dashboard tile itself (§8.1).
+ *
+ * Separate from `updateEventAction` rather than reusing it, because that one parses the
+ * whole event and would blank every field this form does not carry. A one-number edit
+ * needs a one-number write.
+ *
+ * Authorisation stays where it belongs: the statement runs through the host's own
+ * session, so `events_owner_manage` decides what exists. The affected-row check is what
+ * turns a policy refusal into something visible — an UPDATE the policy rejects matches
+ * nothing and returns no error at all.
+ */
+export async function updateExpectedGuestsAction(
+  _previous: ExpectedGuestsState,
+  formData: FormData,
+): Promise<ExpectedGuestsState> {
+  const eventId = formData.get('eventId');
+  if (typeof eventId !== 'string') {
+    return { status: 'error', message: 'הפעולה נכשלה.' };
+  }
+
+  const raw = optional(formData.get('expectedGuests'));
+  const expected = optionalCount(formData.get('expectedGuests'));
+
+  // Clearing the field is a legitimate answer — "I do not know" — and puts the tile
+  // back to showing no percentage. A non-empty value that parses to nothing is a typo.
+  if (raw !== null && expected === null) {
+    return { status: 'error', message: 'יש להזין מספר שלם בין 1 ל-5000.' };
+  }
+
+  const supabase = await createUserClient();
+  const { data: updated, error } = await supabase
+    .from('events')
+    .update({ expected_guests: expected })
+    .eq('id', eventId)
+    .select('id');
+
+  if (error) return { status: 'error', message: 'השמירה נכשלה. נסו שוב.' };
+  if (updated === null || updated.length === 0) {
+    return { status: 'error', message: 'האירוע לא נמצא, או שאין לכם הרשאה לערוך אותו.' };
+  }
+
+  revalidatePath(`/dashboard/events/${eventId}`);
+  return { status: 'saved', message: 'נשמר.' };
 }
 
 export async function createEventAction(
