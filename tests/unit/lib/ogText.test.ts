@@ -40,8 +40,13 @@ describe('toVisualSegments', () => {
     expect(toVisualSegments('2026-2027')).toEqual(['2026-2027']);
   });
 
-  it('keeps a terminator with the number it belongs to (W5)', () => {
+  it('keeps a terminator with the number it belongs to, on either side (W5)', () => {
     expect(toVisualSegments('50%')).toEqual(['50%']);
+    expect(toVisualSegments('מחיר $50')).toEqual([mirrored('מחיר'), '$50']);
+  });
+
+  it('leaves a terminator with no number beside it as ordinary punctuation', () => {
+    expect(toVisualSegments('מחיר 250 ₪')).toEqual([mirrored('מחיר'), '250', '₪']);
   });
 
   it('places a number to the left of the Hebrew it follows', () => {

@@ -39,16 +39,16 @@ const BASE_LEVEL = 1;
  * often an unassigned or invisible code point, and one that is silently wrong is not
  * something a reader of this file could have seen.
  */
-const RTL_SCRIPT = /[֐-׿؀-޿ࠀ-࡟ࢠ-ࣿיִ-﷿ﹰ-﻿]/u;
+const RTL_SCRIPT = /^[֐-׿؀-޿ࠀ-࡟ࢠ-ࣿיִ-﷿ﹰ-﻿]/u;
 
 /** Bidi class `CS` — a separator that binds two numbers together, as in `14:30`. */
-const COMMON_SEPARATOR = /[,.:/ ،٫٬，．：]/u;
+const COMMON_SEPARATOR = /^[,.:/ ،٫٬，．：]/u;
 
 /** Bidi class `ES` — the separators that may sign or join a number, as in `2026-2027`. */
-const EUROPEAN_SEPARATOR = /[+\-−]/u;
+const EUROPEAN_SEPARATOR = /^[+\-−]/u;
 
 /** Bidi class `ET` — terminators that belong to an adjacent number, as in `50%`. */
-const EUROPEAN_TERMINATOR = /[#$%°‰₠-₿]/u;
+const EUROPEAN_TERMINATOR = /^[#$%°‰₠-₿]/u;
 
 /**
  * Rule L4: a mirrored character is drawn as its mirror image in a right-to-left run.
@@ -86,15 +86,18 @@ interface Cluster {
   level: number;
 }
 
+/**
+ * Every pattern is anchored, so a cluster is classified by the base character it opens
+ * with and its combining marks are along for the ride.
+ */
 function classify(cluster: string): BidiClass {
-  const base = cluster[0] ?? '';
-  if (RTL_SCRIPT.test(base)) return 'R';
-  if (/\p{Nd}/u.test(base)) return 'EN';
-  if (/\p{L}/u.test(base)) return 'L';
-  if (COMMON_SEPARATOR.test(base)) return 'CS';
-  if (EUROPEAN_SEPARATOR.test(base)) return 'ES';
-  if (EUROPEAN_TERMINATOR.test(base)) return 'ET';
-  if (/\s/u.test(base)) return 'WS';
+  if (RTL_SCRIPT.test(cluster)) return 'R';
+  if (/^\p{Nd}/u.test(cluster)) return 'EN';
+  if (/^\p{L}/u.test(cluster)) return 'L';
+  if (COMMON_SEPARATOR.test(cluster)) return 'CS';
+  if (EUROPEAN_SEPARATOR.test(cluster)) return 'ES';
+  if (EUROPEAN_TERMINATOR.test(cluster)) return 'ET';
+  if (/^\s/u.test(cluster)) return 'WS';
   return 'ON';
 }
 
@@ -119,15 +122,18 @@ function resolveNumericContext(clusters: Cluster[]): void {
     }
   }
 
-  // W5: a run of terminators adjacent to a number joins it, from either side.
+  // W5: a terminator adjacent to a number joins it. Two passes rather than one, so that
+  // a *run* of terminators attaches as a whole: each pass carries the conversion along
+  // the run in the direction it travels.
   for (let index = 0; index < clusters.length; index++) {
-    if (clusters[index]!.type !== 'ET') continue;
-    let end = index;
-    while (end + 1 < clusters.length && clusters[end + 1]!.type === 'ET') end++;
-    if (clusters[index - 1]?.type === 'EN' || clusters[end + 1]?.type === 'EN') {
-      for (let inner = index; inner <= end; inner++) clusters[inner]!.type = 'EN';
+    if (clusters[index]!.type === 'ET' && clusters[index - 1]?.type === 'EN') {
+      clusters[index]!.type = 'EN';
     }
-    index = end;
+  }
+  for (let index = clusters.length - 1; index >= 0; index--) {
+    if (clusters[index]!.type === 'ET' && clusters[index + 1]?.type === 'EN') {
+      clusters[index]!.type = 'EN';
+    }
   }
 
   // W7: a number whose nearest strong text to the left is left-to-right belongs to that
@@ -163,12 +169,10 @@ function assignLevels(clusters: Cluster[]): void {
  * space — and therefore a place the line may break — rather than part of the date.
  */
 function resolveNeutrals(clusters: Cluster[]): void {
-  const strongDirection = (index: number): 'R' | 'L' | null => {
-    const type = clusters[index]?.type;
-    if (type === undefined || isNeutral(type)) return null;
-    // N1: "European and Arabic numbers act as if they were R".
-    return type === 'L' ? 'L' : 'R';
-  };
+  // Only ever asked about a cluster just outside a maximal neutral run, so the answer is
+  // never "neutral" and never off the end.
+  // N1: "European and Arabic numbers act as if they were R".
+  const strongDirection = (index: number): 'R' | 'L' => (clusters[index]!.type === 'L' ? 'L' : 'R');
 
   for (let index = 0; index < clusters.length; index++) {
     if (!isNeutral(clusters[index]!.type)) continue;
@@ -180,7 +184,7 @@ function resolveNeutrals(clusters: Cluster[]): void {
     // Hebrew edge would.
     const before = index === 0 ? 'R' : strongDirection(index - 1);
     const after = end === clusters.length - 1 ? 'R' : strongDirection(end + 1);
-    const resolved = before !== null && before === after ? before : 'R';
+    const resolved = before === after ? before : 'R';
 
     for (let inner = index; inner <= end; inner++) {
       // The type is left alone — `WS` still marks where a line may break — and only the
