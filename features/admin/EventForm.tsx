@@ -84,11 +84,30 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
   };
 
   /**
-   * The chosen type, tracked only so the two side-label hints can name that type's
-   * defaults. Showing "ריק = ברירת המחדל" told a host nothing; showing "ריק = צד
+   * The chosen type. It drives the two side-label hints and every people-and-time label
+   * on the form — showing "ריק = ברירת המחדל" told a host nothing, where "ריק = צד
    * החתן" tells them exactly what the guest will see.
+   *
+   * Re-seeded from the echoed submission, and the control remounted with it, because
+   * neither half worked alone. The state was initialised lazily on first render, so it
+   * stayed on whatever the form loaded with; and `defaultValue` on a `<select>` is
+   * applied at mount and never again — with React resetting the form once the action
+   * resolves, which puts a controlled value back too. A host who chose "חתונה", left
+   * the venue blank and submitted got the form back asking for "שעת האירוע" and
+   * offering "ריק = צד א׳" — the wording of a type they had already changed away from,
+   * beside a dropdown that no longer agreed with it either.
    */
   const [eventType, setEventType] = useState(() => value('event_type') || 'other');
+  const [submissionKey, setSubmissionKey] = useState(0);
+  const [seenSubmission, setSeenSubmission] = useState<EventFormState['values']>(undefined);
+  if (state.values !== seenSubmission) {
+    setSeenSubmission(state.values);
+    setSubmissionKey((n) => n + 1);
+    // Narrowed by the parse the action already ran, so this is one of the enum members
+    // or nothing — an emptiness check here would be a branch no value can take.
+    const submittedType = state.values?.event_type;
+    if (submittedType !== undefined && submittedType !== null) setEventType(submittedType);
+  }
   const preset = getEventTypePreset(eventType);
 
   const isPublished =
@@ -101,8 +120,9 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
       <Group title="האירוע">
         <Field label="סוג האירוע" required error={err('eventType')}>
           <Select
+            key={submissionKey}
             name="eventType"
-            defaultValue={value('event_type') || 'other'}
+            defaultValue={eventType}
             onChange={(event) => setEventType(event.target.value)}
           >
             {presets.map((p) => (

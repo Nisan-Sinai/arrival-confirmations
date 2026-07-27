@@ -67,9 +67,15 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
    */
   const submittedStatus = state.values?.attendanceStatus;
   const [status, setStatus] = useState('attending');
+  /**
+   * Bumped once per echoed submission, and used as a `key` on the one control that
+   * cannot redraw without being remounted — see the family-side field below.
+   */
+  const [submissionKey, setSubmissionKey] = useState(0);
   const [seenSubmission, setSeenSubmission] = useState<RsvpFormValues | undefined>(undefined);
   if (state.values !== seenSubmission) {
     setSeenSubmission(state.values);
+    setSubmissionKey((n) => n + 1);
     if (submittedStatus !== undefined && submittedStatus !== '') setStatus(submittedStatus);
   }
 
@@ -213,7 +219,21 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
         )}
 
         <Field label="צד משפחה">
-          <Select name="familySide" defaultValue={previous?.familySide ?? ''}>
+          {/*
+            The `key` is what makes this field survive a rejection, and it is the only
+            control on the form that needs one. React applies `defaultValue` to a
+            `<select>` at mount and never again, and it resets the form once the action
+            resolves — so a changed default reaches the text inputs but leaves this one
+            sitting on "לא רלוונטי". Making it controlled does not help either: the
+            reset lands after the re-render and puts it back. Remounting per submission
+            re-applies the default as a `selected` attribute, which is what the reset
+            itself then restores, so the two stop fighting.
+
+            The guest-visible bug: someone picks "צד הכלה", mistypes their phone, and
+            gets the form back with the side silently cleared. They resubmit without
+            noticing and the host seats them with the wrong family.
+          */}
+          <Select key={submissionKey} name="familySide" defaultValue={previous?.familySide ?? ''}>
             <option value="">לא רלוונטי</option>
             <option value="side_a">{sideALabel}</option>
             <option value="side_b">{sideBLabel}</option>
