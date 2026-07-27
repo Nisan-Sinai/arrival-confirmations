@@ -67,12 +67,40 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 לפי §0 במפרט, ערכי placeholder מותרים אך ורק ב-`config/event.config.ts`, מסומנים
 בקבוע `PLACEHOLDER_SENTINEL`, ונכשלים באימות בעליית פרודקשן.
 
-| מפתח           | משמעות                   | סטטוס       |
-| -------------- | ------------------------ | ----------- |
-| `supportEmail` | כתובת התמיכה במסכי שגיאה | ⚠ טרם הוחלף |
+| מפתח           | משמעות                        | סטטוס    |
+| -------------- | ----------------------------- | -------- |
+| `supportEmail` | כתובת התמיכה בהצהרות המשפטיות | ✅ הוחלף |
+| `supportPhone` | טלפון רכז הנגישות             | ✅ הוחלף |
 
-`assertNoPlaceholders()` זורק `PlaceholderConfigError` כאשר `NODE_ENV=production`
-וערך כזה עדיין במקומו. מחוץ לפרודקשן הוא נסבל ומסומן ויזואלית.
+`assertNoPlaceholders()` נקראת ב-`app/layout.tsx` וזורקת `PlaceholderConfigError`
+כאשר `NODE_ENV=production` וערך כזה עדיין במקומו — כלומר **build לפרודקשן נכשל**,
+ולא מתגלה רק כשמשתמש נתקל בזה.
+
+## הגדרת כתובות ההפניה ב-Supabase
+
+**חובה, ובלי זה איפוס הסיסמה לא עובד.** זו לא הגדרה בקוד אלא בדשבורד.
+
+כשמשתמש לוחץ על קישור איפוס, Supabase מפנה אותו לכתובת ש-`redirectTo` מבקש — אבל
+**רק אם היא נמצאת ברשימת ההיתר**. אחרת הוא מתעלם ממנה בשקט ומפנה ל-Site URL. אם
+ה-Site URL הוא `http://localhost:3000`, כל משתמש בפרודקשן נשלח לשרת שלא רץ אצלו,
+והתסמין הוא בדיוק "המייל מגיע אבל האיפוס לא עובד".
+
+**Supabase → Authentication → URL Configuration**
+
+| שדה             | ערך                                                               |
+| --------------- | ----------------------------------------------------------------- |
+| `Site URL`      | `https://<הדומיין-שלכם>`                                          |
+| `Redirect URLs` | `https://<הדומיין-שלכם>/**` וגם `http://localhost:3000/**` לפיתוח |
+
+לבדיקה שההגדרה נתפסה — הפקודה הבאה אמורה להפנות לדומיין שלכם, לא ל-localhost:
+
+```bash
+curl -sI "https://<project-ref>.supabase.co/auth/v1/verify?token=bogus&type=recovery&redirect_to=https%3A%2F%2F<הדומיין-שלכם>%2Fauth%2Fcallback" | grep -i location
+```
+
+הקוד עצמו תומך בשלוש הזרימות ש-Supabase עשוי להחזיר — `?code=` (PKCE),
+`?token_hash=` (תבנית OTP) ו-`#access_token=` (implicit) — כך ששינוי סוג הזרימה
+בדשבורד לא ישבור אותו.
 
 פרטי האירוע עצמו — מארחים, בעל השמחה, תאריך, אולם, טלפון — **אינם** כאן. הם יושבים
 בטבלת `events` ונקבעים ממסך הניהול, כדי שלא תהיה שום גרסה של "שכחנו להחליף את
