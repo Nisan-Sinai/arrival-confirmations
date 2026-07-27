@@ -1,114 +1,163 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useId } from 'react';
+import { useActionState } from 'react';
 
 import type { AuthFormState } from '@/app/actions/auth';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Field, Input } from '@/components/ui/field';
+import { Alert } from '@/components/ui/feedback';
+import { Rule } from '@/components/ui/layout';
 
 /**
- * Shared shell for sign-in and sign-up (§8, §9).
+ * Shared shell for every credential form (§8, §9).
  *
- * One component for both because the two forms differ only in their labels and the
- * action they post to. Keeping them identical is also a security property: a sign-up
- * page that looked or behaved differently from sign-in would give away which
- * addresses already hold an account.
+ * One component for sign-in, sign-up, recovery and reset because they differ only in
+ * which fields they show and where they post. Keeping them identical is also a
+ * security property: a sign-up page that looked or behaved differently from sign-in
+ * would give away which addresses already hold an account.
  */
 
 const INITIAL: AuthFormState = { status: 'idle', message: '' };
 
+type AuthMode = 'signIn' | 'signUp' | 'requestReset' | 'setPassword';
+
 interface AuthFormProps {
   readonly action: (state: AuthFormState, formData: FormData) => Promise<AuthFormState>;
+  readonly mode: AuthMode;
   readonly title: string;
+  readonly subtitle: string;
   readonly submitLabel: string;
   readonly pendingLabel: string;
-  readonly footerPrompt: string;
-  readonly footerHref: string;
-  readonly footerLinkLabel: string;
-  /** Sign-up only; drives the autocomplete hint and the minimum length note. */
-  readonly isRegistration?: boolean;
-  /** Password reset: the address is all we can ask for before the link is followed. */
-  readonly emailOnly?: boolean;
+  readonly footerPrompt?: string;
+  readonly footerHref?: string;
+  readonly footerLinkLabel?: string;
 }
+
+const MIN_PASSWORD_LENGTH = 10;
 
 export function AuthForm({
   action,
+  mode,
   title,
+  subtitle,
   submitLabel,
   pendingLabel,
   footerPrompt,
   footerHref,
   footerLinkLabel,
-  isRegistration = false,
-  emailOnly = false,
 }: AuthFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL);
-  const formId = useId();
+
+  const showEmail = mode !== 'setPassword';
+  const showPassword = mode !== 'requestReset';
+  const isRegistration = mode === 'signUp';
+  const isNewPassword = isRegistration || mode === 'setPassword';
+
+  /**
+   * Once the mail is away there is nothing useful left on this form — leaving the
+   * fields up invites a second, third and fourth send. The confirmation replaces it.
+   */
+  if (state.status === 'sent') {
+    return (
+      <Card padding="lg" className="mx-auto w-full max-w-md text-center">
+        <span
+          aria-hidden="true"
+          className="border-accent-strong/30 text-accent-strong mx-auto mb-6 flex size-14 items-center justify-center rounded-full border"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-6"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m2 7 10 6 10-6" />
+          </svg>
+        </span>
+        <h1 className="text-h2 text-primary font-bold">בדקו את תיבת הדואר</h1>
+        <p className="text-muted-foreground mt-3 leading-relaxed">{state.message}</p>
+        <Rule className="my-7" />
+        <Link
+          href="/login"
+          className="text-primary text-sm font-semibold underline-offset-4 hover:underline"
+        >
+          חזרה לכניסה
+        </Link>
+      </Card>
+    );
+  }
 
   return (
-    <section className="bg-card mx-auto w-full max-w-md rounded-2xl border p-6 sm:p-8">
-      <h1 className="text-primary text-center font-[family-name:var(--font-display)] text-2xl font-bold">
-        {title}
-      </h1>
+    <Card padding="lg" className="mx-auto w-full max-w-md">
+      <div className="text-center">
+        <h1 className="text-h2 text-primary font-bold">{title}</h1>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{subtitle}</p>
+      </div>
 
-      <form action={formAction} className="mt-6 space-y-4" noValidate>
-        <div>
-          <label htmlFor={`${formId}-email`} className="block text-sm font-semibold">
-            אימייל
-          </label>
-          <input
-            id={`${formId}-email`}
-            name="email"
-            type="email"
+      <Rule className="my-7" />
+
+      <form action={formAction} className="space-y-5" noValidate>
+        {showEmail && (
+          <Field label="כתובת אימייל" required>
+            <Input
+              name="email"
+              type="email"
+              autoComplete="email"
+              dir="ltr"
+              className="text-start"
+              placeholder="name@example.com"
+              // Echoed from the action so a rejected attempt does not blank the field.
+              defaultValue={state.email ?? ''}
+            />
+          </Field>
+        )}
+
+        {showPassword && (
+          <Field
+            label={mode === 'setPassword' ? 'סיסמה חדשה' : 'סיסמה'}
             required
-            autoComplete="email"
-            dir="ltr"
-            className="border-input mt-1.5 w-full rounded-lg border px-3 py-2.5 text-base"
-          />
-        </div>
-
-        {!emailOnly && (
-          <div>
-            <label htmlFor={`${formId}-password`} className="block text-sm font-semibold">
-              סיסמה
-            </label>
-            <input
-              id={`${formId}-password`}
+            hint={isNewPassword ? `לפחות ${MIN_PASSWORD_LENGTH} תווים` : undefined}
+          >
+            <Input
               name="password"
               type="password"
-              required
-              // The right hint matters: browsers offer to generate a strong password on
-              // new-password and to fill a saved one on current-password.
-              autoComplete={isRegistration ? 'new-password' : 'current-password'}
-              minLength={isRegistration ? 10 : undefined}
+              // The right hint matters: browsers offer to generate a strong password
+              // on new-password and to fill a saved one on current-password.
+              autoComplete={isNewPassword ? 'new-password' : 'current-password'}
+              minLength={isNewPassword ? MIN_PASSWORD_LENGTH : undefined}
               dir="ltr"
-              className="border-input mt-1.5 w-full rounded-lg border px-3 py-2.5 text-base"
+              className="text-start"
             />
-            {isRegistration && (
-              <p className="text-muted-foreground mt-1.5 text-sm">לפחות 10 תווים</p>
-            )}
-          </div>
+          </Field>
         )}
 
-        {state.status !== 'idle' && (
-          <p
-            role="alert"
-            className={`text-center text-sm ${state.status === 'sent' ? 'text-success' : 'text-destructive'}`}
-          >
-            {state.message}
-          </p>
+        {mode === 'setPassword' && (
+          <Field label="אימות הסיסמה החדשה" required>
+            <Input
+              name="passwordConfirmation"
+              type="password"
+              autoComplete="new-password"
+              minLength={MIN_PASSWORD_LENGTH}
+              dir="ltr"
+              className="text-start"
+            />
+          </Field>
         )}
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="bg-primary text-primary-foreground w-full rounded-lg px-6 py-3 text-base font-semibold disabled:opacity-60"
-        >
+        {state.status === 'error' && <Alert tone="error">{state.message}</Alert>}
+
+        <Button type="submit" size="lg" block disabled={isPending}>
           {isPending ? pendingLabel : submitLabel}
-        </button>
+        </Button>
       </form>
 
-      {!isRegistration && !emailOnly && (
-        <p className="mt-4 text-center text-sm">
+      {mode === 'signIn' && (
+        <p className="mt-5 text-center text-sm">
           <Link
             className="text-muted-foreground hover:text-primary underline underline-offset-4"
             href="/forgot-password"
@@ -118,12 +167,17 @@ export function AuthForm({
         </p>
       )}
 
-      <p className="text-muted-foreground mt-6 text-center text-sm">
-        {footerPrompt}{' '}
-        <Link className="text-primary font-semibold underline underline-offset-2" href={footerHref}>
-          {footerLinkLabel}
-        </Link>
-      </p>
-    </section>
+      {footerPrompt !== undefined && footerHref !== undefined && (
+        <p className="text-muted-foreground border-border mt-7 border-t pt-6 text-center text-sm">
+          {footerPrompt}{' '}
+          <Link
+            className="text-primary font-semibold underline underline-offset-2"
+            href={footerHref}
+          >
+            {footerLinkLabel}
+          </Link>
+        </p>
+      )}
+    </Card>
   );
 }

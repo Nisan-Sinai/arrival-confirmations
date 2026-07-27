@@ -2,8 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { signOutAction } from '@/app/actions/auth';
+import { buttonClass } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge, EmptyState } from '@/components/ui/feedback';
+import { Container } from '@/components/ui/layout';
 import { getEventTypePreset } from '@/config/eventTypes';
+import { describeTimeUntilEvent, formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { createUserClient } from '@/lib/server/supabase';
 
 /**
@@ -37,73 +41,116 @@ export default async function DashboardPage() {
     .select('id, public_id, title, event_type, event_date, venue_name, is_active')
     .order('event_date', { ascending: true });
 
-  return (
-    <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-primary font-[family-name:var(--font-display)] text-3xl font-bold">
-          האירועים שלי
-        </h1>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/dashboard/events/new"
-            className="bg-primary text-primary-foreground rounded-full px-5 py-2 text-sm font-semibold"
-          >
-            אירוע חדש
-          </Link>
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="text-muted-foreground hover:text-primary text-sm underline underline-offset-4"
-            >
-              התנתקות
-            </button>
-          </form>
-        </div>
-      </div>
-      <p className="text-muted-foreground mt-2 text-sm" dir="ltr">
-        {user.email}
-      </p>
+  const rows = events ?? [];
 
-      {(events ?? []).length === 0 ? (
-        <p className="text-muted-foreground bg-card mt-8 rounded-2xl border p-8 text-center">
-          עדיין אין לכם אירועים.
-        </p>
-      ) : (
-        <ul className="mt-8 space-y-4">
-          {(events ?? []).map((event) => (
-            <li key={event.id} className="bg-card rounded-2xl border p-5">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-primary text-lg font-semibold">
-                  <Link
-                    className="underline underline-offset-4"
-                    href={'/dashboard/events/' + event.id}
-                  >
-                    {event.title}
-                  </Link>
-                </h2>
-                <span className="text-muted-foreground text-sm">
-                  {getEventTypePreset(event.event_type).label}
-                </span>
-              </div>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {event.event_date} · {event.venue_name}
-              </p>
-              <p className="mt-3 text-sm">
-                {/* The link a host sends. Shown in full so it can be copied by hand. */}
-                <span className="text-muted-foreground">קישור להזמנה: </span>
-                <Link
-                  className="text-primary underline underline-offset-2"
-                  href={`/e/${event.public_id}`}
-                  dir="ltr"
-                >
-                  /e/{event.public_id}
-                </Link>
-                {!event.is_active && <span className="text-destructive mr-2">· לא מפורסם</span>}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
+  return (
+    <main id="main" className="flex-1 py-10 sm:py-14">
+      <Container width="app">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-eyebrow text-accent-strong font-semibold">לוח הבקרה</p>
+            <h1 className="text-h1 text-primary mt-2 font-bold">האירועים שלי</h1>
+          </div>
+          {rows.length > 0 && (
+            <p className="text-muted-foreground text-sm">
+              {rows.length === 1 ? 'אירוע אחד' : `${rows.length} אירועים`}
+            </p>
+          )}
+        </div>
+
+        {rows.length === 0 ? (
+          <EmptyState
+            className="mt-10"
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="size-6"
+              >
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M8 3v4M16 3v4M3 10h18M12 14v4M10 16h4" />
+              </svg>
+            }
+            title="עדיין אין לכם אירועים"
+            description="צרו את האירוע הראשון, וקבלו קישור פרטי מוכן לשליחה בוואטסאפ."
+            action={
+              <Link href="/dashboard/events/new" className={buttonClass({ size: 'lg' })}>
+                יצירת האירוע הראשון
+              </Link>
+            }
+          />
+        ) : (
+          <ul className="mt-10 grid gap-4 sm:grid-cols-2">
+            {rows.map((event) => (
+              <li key={event.id}>
+                <Card interactive padding="md" className="flex h-full flex-col">
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="text-h3 text-primary font-semibold">
+                      {/* The whole card lifts on hover, but only the title is the
+                          link: a card-wide anchor would swallow the invitation link
+                          nested inside it. */}
+                      <Link
+                        href={`/dashboard/events/${event.id}`}
+                        className="rounded-sm underline-offset-4 hover:underline"
+                      >
+                        {event.title}
+                      </Link>
+                    </h2>
+                    {event.is_active ? (
+                      <Badge tone="success">מפורסם</Badge>
+                    ) : (
+                      <Badge tone="warning">טיוטה</Badge>
+                    )}
+                  </div>
+
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {getEventTypePreset(event.event_type).label}
+                  </p>
+
+                  <dl className="mt-5 space-y-1.5 text-sm">
+                    <div className="flex gap-2">
+                      <dt className="text-muted-foreground">מתי:</dt>
+                      <dd className="text-foreground font-medium">
+                        {/* Not the raw `2026-09-04` this used to print on an RTL page. */}
+                        יום {formatEventWeekday(event.event_date)},{' '}
+                        {formatEventDate(event.event_date)}
+                        <span className="text-muted-foreground font-normal">
+                          {' · '}
+                          {describeTimeUntilEvent(event.event_date)}
+                        </span>
+                      </dd>
+                    </div>
+                    <div className="flex gap-2">
+                      <dt className="text-muted-foreground">איפה:</dt>
+                      <dd className="text-foreground font-medium">{event.venue_name}</dd>
+                    </div>
+                  </dl>
+
+                  <div className="border-border mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                    <Link
+                      href={`/e/${event.public_id}`}
+                      className="text-primary rounded-sm text-sm underline underline-offset-4"
+                      dir="ltr"
+                    >
+                      /e/{event.public_id}
+                    </Link>
+                    <Link
+                      href={`/dashboard/events/${event.id}`}
+                      className={buttonClass({ variant: 'outline', size: 'sm' })}
+                    >
+                      אישורי הגעה
+                    </Link>
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Container>
     </main>
   );
 }

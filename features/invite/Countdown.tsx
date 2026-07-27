@@ -89,7 +89,38 @@ export function Countdown({ targetMs }: CountdownProps) {
     };
   }, [targetMs]);
 
-  if (!mounted) return null;
+  /**
+   * Before mount the boxes are drawn at their final size with the figures blanked,
+   * rather than returning null.
+   *
+   * Returning null was a layout shift by construction: the invitation rendered without
+   * a countdown, then grew by the height of a row of medallions the instant the effect
+   * ran, pushing the greeting and the navigation buttons down the page under whatever
+   * the guest's thumb happened to be over. §12 rules that out. The placeholder is
+   * identical on the server and on the first client render, so there is no hydration
+   * mismatch to suppress either.
+   */
+  if (!mounted) {
+    return (
+      <div
+        className="flex items-stretch justify-center gap-2 sm:gap-3"
+        dir="ltr"
+        aria-hidden="true"
+      >
+        {UNITS.map((unit) => (
+          <div
+            key={unit.key}
+            className="border-accent/40 from-secondary/40 flex min-w-14 flex-col items-center rounded-xl border bg-gradient-to-b to-white/60 px-2 py-2.5 sm:min-w-16 sm:px-3"
+          >
+            <span className="text-primary/25 font-[family-name:var(--font-display)] text-2xl leading-none font-bold tabular-nums sm:text-3xl">
+              ––
+            </span>
+            <span className="text-muted-foreground mt-1 text-[11px] sm:text-xs">{unit.many}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (remaining === null) {
     return (

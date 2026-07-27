@@ -55,10 +55,13 @@ export default async function EventPage({ params }: EventPageProps) {
   return (
     <main
       id="main"
-      className="from-secondary/40 flex flex-1 flex-col items-center gap-8 bg-gradient-to-b to-transparent px-3 py-8 sm:px-4 sm:py-16"
+      className="from-secondary/35 relative flex flex-1 flex-col items-center gap-10 bg-gradient-to-b to-transparent px-3 py-8 sm:px-4 sm:py-16"
     >
       <InvitationCard event={event} />
-      <div className="w-full max-w-xl">
+
+      {/* The form is the point of the page, so it is anchored and linked to from the
+          card above rather than left to be found by scrolling. */}
+      <div id="rsvp" className="w-full max-w-xl scroll-mt-8">
         <RsvpForm
           eventId={event.id!}
           sideALabel={event.side_a_label ?? preset.defaultSideALabel}

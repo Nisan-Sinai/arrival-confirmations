@@ -9,12 +9,18 @@ import { createUserClient } from '@/lib/server/supabase';
  *
  * A guest says "we'll be four" on the phone the week before, or cancels, or a name
  * was typed wrong. The host has to be able to correct the list, and until now could
- * not: the only write path was the guest's own form.
+ * not: these two actions existed but nothing in the application called them — the
+ * event page rendered a read-only table. They are reachable from the UI as of this
+ * change.
  *
  * Authorisation is not re-implemented here. Every statement runs through the host's
  * own session, so the `rsvps_owner_manage` policy decides what exists — an id
  * belonging to somebody else's event simply matches no row. That is stronger than a
  * check in this file, because it holds even if this file is wrong.
+ *
+ * What *is* re-implemented is noticing when the policy said no. A write that matches
+ * zero rows returns no error, so both functions ask for the affected rows back rather
+ * than reporting a save that never happened.
  */
 
 export interface ManageRsvpState {
@@ -55,7 +61,7 @@ export async function updateRsvpAction(
   const zeroed = status === 'not_attending';
 
   const supabase = await createUserClient();
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('rsvps')
     .update({
       attendance_status: status as 'attending' | 'not_attending' | 'maybe',
@@ -63,9 +69,13 @@ export async function updateRsvpAction(
       children_count: zeroed ? 0 : children,
       babies_count: zeroed ? 0 : babies,
     })
-    .eq('id', rsvpId);
+    .eq('id', rsvpId)
+    .select('id');
 
   if (error) return { status: 'error', message: 'השמירה נכשלה. נסו שוב.' };
+  if (updated === null || updated.length === 0) {
+    return { status: 'error', message: 'הרשומה לא נמצאה. רעננו את הדף.' };
+  }
 
   revalidatePath(`/dashboard/events/${eventId}`);
   return { status: 'saved', message: 'העדכון נשמר.' };

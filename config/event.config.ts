@@ -24,8 +24,14 @@ export interface AppConfig {
   readonly siteName: string;
   /** Short description used for SEO and WhatsApp link previews. */
   readonly siteDescription: string;
-  /** Support address surfaced on error screens. */
+  /** Support address surfaced on error screens and in the two legal notices. */
   readonly supportEmail: string;
+  /**
+   * Support telephone. Israeli accessibility regulations expect a statement to name a
+   * route to a human, and a phone number is the route an older guest will actually
+   * take — which is the population §9 exists for.
+   */
+  readonly supportPhone: string;
   /** Guest counters are capped here and in a Postgres CHECK constraint (§3). */
   readonly maxAttendeesPerCategory: number;
   /** Invite session lifetime, minutes (§4.3). */
@@ -45,7 +51,8 @@ export interface AppConfig {
 export const appConfig: AppConfig = {
   siteName: 'אישורי הגעה',
   siteDescription: 'הזמנה דיגיטלית ואישור הגעה לאירוע',
-  supportEmail: PLACEHOLDER_SENTINEL,
+  supportEmail: 'nisan.sinai5@gmail.com',
+  supportPhone: '058-7170978',
   maxAttendeesPerCategory: 30,
   inviteSessionTtlMinutes: 120,
   inviteTokenTtlDays: 180,
@@ -55,8 +62,14 @@ export const appConfig: AppConfig = {
   auditLogRetentionDays: 365,
 };
 
-/** Config keys whose value is allowed to be a placeholder outside production. */
-export const PLACEHOLDER_ALLOWED_KEYS = ['supportEmail'] as const;
+/**
+ * Config keys whose value is allowed to be a placeholder outside production.
+ *
+ * Empty, and that is the goal state rather than an oversight: every branding value is
+ * now filled in, so there is nothing left to tolerate. The list stays because the next
+ * key added here will need somewhere to sit while it is being decided.
+ */
+export const PLACEHOLDER_ALLOWED_KEYS = [] as const;
 
 export function findPlaceholderKeys(config: AppConfig = appConfig): string[] {
   return Object.entries(config)

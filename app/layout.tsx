@@ -1,11 +1,23 @@
 import type { Metadata, Viewport } from 'next';
 import { Assistant, Frank_Ruhl_Libre } from 'next/font/google';
 
-import { appConfig } from '@/config/event.config';
+import { appConfig, assertNoPlaceholders } from '@/config/event.config';
 import { UI_MESSAGES } from '@/config/messages';
 import { SiteFooter } from '@/features/layout/SiteFooter';
 
 import './globals.css';
+
+/**
+ * §0 and §15: refuse to serve production while a branding placeholder is still in
+ * place. `assertNoPlaceholders` was written for this and had no caller anywhere in the
+ * application, which made it a guarantee nobody was collecting on — `supportEmail` is
+ * still `__REPLACE_ME__`, and without this the first person to notice would have been
+ * a guest reading the privacy notice and finding no way to contact anyone.
+ *
+ * Called at module scope so it fails when the route tree is first loaded rather than
+ * on some later request, and a no-op outside production so local work is unaffected.
+ */
+assertNoPlaceholders();
 
 /**
  * Body face. Assistant is a Hebrew-first sans with a large x-height, which is what

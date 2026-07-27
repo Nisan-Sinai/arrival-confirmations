@@ -5,10 +5,15 @@ import { NextResponse, type NextRequest } from 'next/server';
  * Keeps the Supabase session fresh and turns away anonymous visitors to /dashboard.
  *
  * This is a convenience and a redirect, not the access control. §4.4: every route
- * checks for itself, and RLS scopes every row regardless. Middleware that was the
- * only guard would be one misconfigured matcher away from exposing everything.
+ * checks for itself, and RLS scopes every row regardless. A proxy that was the only
+ * guard would be one misconfigured matcher away from exposing everything.
+ *
+ * Named `proxy` in `proxy.ts` rather than `middleware` in `middleware.ts`: Next.js 16
+ * deprecated the old convention, and every build printed a warning about it. The
+ * behaviour is unchanged — this is the same function under the name the framework now
+ * expects.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

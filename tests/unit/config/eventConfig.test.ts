@@ -43,8 +43,21 @@ describe('app configuration', () => {
       expect(findPlaceholderKeys(cleanConfig)).toEqual([]);
     });
 
-    it('defaults to the shipped configuration', () => {
-      expect(findPlaceholderKeys()).toEqual(['supportEmail']);
+    /**
+     * This assertion used to read `toEqual(['supportEmail'])` — it pinned the fact
+     * that the shipped config was *not* ready to deploy, and passed for as long as it
+     * stayed that way. Inverted, it is now the gate: the shipped configuration must
+     * carry no placeholder at all, because `app/layout.tsx` calls
+     * `assertNoPlaceholders()` at module scope and a production build refuses to
+     * complete while one remains.
+     */
+    it('finds no placeholder left in the shipped configuration', () => {
+      expect(findPlaceholderKeys()).toEqual([]);
+    });
+
+    it('ships a reachable support address and telephone, which the two legal notices render', () => {
+      expect(appConfig.supportEmail).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/);
+      expect(appConfig.supportPhone.replace(/\D/g, '').length).toBeGreaterThanOrEqual(9);
     });
   });
 

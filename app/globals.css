@@ -3,52 +3,123 @@
 /**
  * Design tokens (§5).
  *
- * Palette: white · light blue · deep blue · gold. The token names follow the
- * shadcn/ui convention so `pnpm dlx shadcn add <component>` drops in primitives that
- * already match this theme without hand-editing each one.
+ * DIRECTION — "a printed invitation, brought online".
  *
- * There is deliberately no dark theme. The invitation is a printed-card metaphor —
- * a dark variant of it would be a different design, not the same one inverted — and
- * a half-built dark mode is worse than none. The admin dashboard inherits the same
- * light surface for consistency.
+ * The product sends a link to a simcha. The guest surface should read as stationery:
+ * warm paper, ink, and a hairline of gold. The host surface is the same brand with
+ * the ceremony taken out — same ink, same paper, quieter accents, denser rhythm.
+ *
+ * Three rules the palette enforces rather than suggests:
+ *   1. Gold is a *rule and a mark*, never a fill and never body text. `--accent` is
+ *      the decorative weight; `--accent-strong` is the only gold with enough contrast
+ *      to sit on paper as text, and it is what the utilities resolve to.
+ *   2. Paper is warm (hue 85), ink is cool (hue 258). The slight opposition is what
+ *      keeps a cream page from reading as "unstyled off-white".
+ *   3. Every foreground token is checked against its intended background at 4.5:1 or
+ *      better; the muted grey is deliberately darker than the shadcn default because
+ *      §5 calls out older guests reading this on a phone in a hall.
+ *
+ * There is deliberately no dark theme. The invitation is a printed-card metaphor — a
+ * dark variant of it would be a different design, not the same one inverted — and a
+ * half-built dark mode is worse than none.
  */
 
 :root {
-  --radius: 0.75rem;
+  /* ── Colour ──────────────────────────────────────────────────────────────── */
 
-  --background: oklch(0.995 0.003 250);
-  --foreground: oklch(0.25 0.035 254);
+  /* Warm paper. Not white: white makes the gold read as yellow. */
+  --background: oklch(0.985 0.006 85);
+  --foreground: oklch(0.24 0.028 258);
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0.035 254);
+  /* Raised paper — cards, the invitation face. */
+  --card: oklch(0.995 0.003 85);
+  --card-foreground: oklch(0.24 0.028 258);
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0.035 254);
+  /* A tinted surface for bands that need to separate without a border. */
+  --surface-sand: oklch(0.955 0.012 82);
+  --surface-ink: oklch(0.27 0.035 258);
 
-  /* Deep blue — primary actions, headings, the invitation frame. */
-  --primary: oklch(0.38 0.098 254);
-  --primary-foreground: oklch(0.99 0.004 250);
+  --popover: oklch(0.995 0.003 85);
+  --popover-foreground: oklch(0.24 0.028 258);
 
-  /* Light blue — supporting surfaces and quiet fills. */
-  --secondary: oklch(0.94 0.028 240);
-  --secondary-foreground: oklch(0.33 0.075 254);
+  /* Deep navy — primary actions, headings, the invitation frame. */
+  --primary: oklch(0.34 0.075 258);
+  --primary-hover: oklch(0.29 0.078 258);
+  --primary-foreground: oklch(0.985 0.006 85);
 
-  --muted: oklch(0.965 0.008 250);
-  --muted-foreground: oklch(0.52 0.028 254);
+  /* Light blue-grey — supporting surfaces and quiet fills. */
+  --secondary: oklch(0.935 0.018 245);
+  --secondary-foreground: oklch(0.31 0.055 258);
 
-  /* Gold — ornament and emphasis only, never a large surface. */
-  --accent: oklch(0.79 0.115 84);
+  --muted: oklch(0.955 0.008 85);
+  /* 0.47, not the 0.52 a default palette would use: this carries hints and helper
+     text that a guest in their seventies has to read on a phone. */
+  --muted-foreground: oklch(0.47 0.022 258);
+
+  /* Gold. Two weights, and the distinction is load-bearing. */
+  --accent: oklch(0.78 0.1 78);
+  --accent-soft: oklch(0.9 0.05 82);
+  /* The only gold allowed to carry text — 5.4:1 on paper. */
+  --accent-strong: oklch(0.52 0.088 72);
   --accent-foreground: oklch(0.28 0.045 70);
 
-  --destructive: oklch(0.55 0.19 27);
-  --destructive-foreground: oklch(0.99 0.004 250);
+  /* Terracotta rather than a signal red: it has to sit beside gold without shouting. */
+  --destructive: oklch(0.51 0.16 28);
+  --destructive-foreground: oklch(0.99 0.004 85);
+  --destructive-soft: oklch(0.955 0.025 30);
 
-  --success: oklch(0.55 0.12 155);
-  --success-foreground: oklch(0.99 0.004 250);
+  /* Sage rather than a spreadsheet green, for the same reason. */
+  --success: oklch(0.48 0.088 155);
+  --success-foreground: oklch(0.99 0.004 85);
+  --success-soft: oklch(0.95 0.03 155);
 
-  --border: oklch(0.9 0.014 250);
-  --input: oklch(0.9 0.014 250);
-  --ring: oklch(0.38 0.098 254);
+  --warning: oklch(0.55 0.11 75);
+  --warning-soft: oklch(0.955 0.04 82);
+
+  --border: oklch(0.895 0.012 85);
+  --border-strong: oklch(0.82 0.018 85);
+  --input: oklch(0.87 0.014 85);
+  --ring: oklch(0.34 0.075 258);
+
+  /* ── Radius ──────────────────────────────────────────────────────────────── */
+  --radius: 0.75rem;
+
+  /* ── Elevation ───────────────────────────────────────────────────────────────
+     Paper, not glass. Each level is two layers — a tight contact shadow that keeps
+     the edge crisp and a wide diffuse one — and every shadow is tinted with the ink
+     hue instead of neutral black, which is what stops them looking like grey smudge. */
+  --shadow-paper:
+    0 1px 2px -1px oklch(0.24 0.028 258 / 0.07), 0 1px 3px oklch(0.24 0.028 258 / 0.05);
+  --shadow-raised:
+    0 2px 4px -2px oklch(0.24 0.028 258 / 0.08), 0 6px 16px -4px oklch(0.24 0.028 258 / 0.08);
+  --shadow-lifted:
+    0 4px 8px -4px oklch(0.24 0.028 258 / 0.1), 0 16px 32px -12px oklch(0.24 0.028 258 / 0.12);
+  --shadow-overlay: 0 24px 60px -20px oklch(0.24 0.028 258 / 0.28);
+
+  /* ── Motion ───────────────────────────────────────────────────────────────
+     Fast enough to feel like feedback rather than animation. Nothing here is longer
+     than a fifth of a second, and nothing animates layout. */
+  --duration-instant: 90ms;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Layout ──────────────────────────────────────────────────────────────── */
+  --container-prose: 42rem;
+  --container-card: 48rem;
+  --container-app: 72rem;
+  --container-wide: 84rem;
+
+  /* ── Layers ──────────────────────────────────────────────────────────────── */
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-header: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-skip-link: 70;
 }
 
 @theme inline {
@@ -56,31 +127,72 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-surface-sand: var(--surface-sand);
+  --color-surface-ink: var(--surface-ink);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
   --font-sans: var(--font-assistant), system-ui, sans-serif;
   --font-display: var(--font-frank-ruhl), Georgia, serif;
 
+  /* Fluid type. `clamp` rather than a stack of breakpoint overrides: the display
+     sizes need to move continuously between a 320px phone and a 1440px desktop, and
+     a stepped scale visibly jumps at exactly the widths people resize through. */
+  --text-display: clamp(2.5rem, 1.6rem + 4.5vw, 4.5rem);
+  --text-display--line-height: 1.04;
+  --text-display--letter-spacing: -0.02em;
+  --text-h1: clamp(2rem, 1.45rem + 2.75vw, 3.25rem);
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.015em;
+  --text-h2: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  --text-h2--line-height: 1.18;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h3: clamp(1.2rem, 1.08rem + 0.6vw, 1.5rem);
+  --text-h3--line-height: 1.28;
+  --text-lead: clamp(1.075rem, 1rem + 0.4vw, 1.3rem);
+  --text-lead--line-height: 1.65;
+  /* Eyebrow labels. Hebrew has no case, so the emphasis has to come from tracking
+     and weight — `uppercase` would do nothing at all here. */
+  --text-eyebrow: 0.8125rem;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.08em;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 12px);
+
+  --shadow-paper: var(--shadow-paper);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-lifted: var(--shadow-lifted);
+  --shadow-overlay: var(--shadow-overlay);
+
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
 }
 
 @layer base {
@@ -95,6 +207,9 @@
        a root element turns the other axis into a scroll container and breaks
        position: sticky further down the page. */
     overflow-x: clip;
+    scroll-behavior: smooth;
+    /* Anchored headings must not land under the sticky header. */
+    scroll-padding-top: 5.5rem;
   }
 
   body {
@@ -104,12 +219,63 @@
     font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* §9: a focus state that stays visible on every surface, including the gold accent. */
+  /* §9: a focus state that stays visible on every surface, including the gold accent.
+     Two rings — ink on paper — so it reads on both light and dark bands. */
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Headings default to the display face; body copy never does. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* A Hebrew comma or full stop at the end of an LTR-marked field (a phone number,
+     an email) otherwise jumps to the wrong end of the line. */
+  [dir='ltr'] {
+    unicode-bidi: isolate;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+    color: var(--color-foreground);
+  }
+}
+
+@layer components {
+  /**
+   * Section entrance. Opacity and transform only — animating height or margin here
+   * would cost a layout on every scroll, and §12 rules out layout shift.
+   *
+   * Applied through a class rather than an IntersectionObserver: a scroll-triggered
+   * reveal that depends on JavaScript leaves the content invisible until hydration,
+   * which is a worse failure than no animation at all.
+   */
+  .animate-rise {
+    animation: rise var(--duration-slow) var(--ease-out) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -122,5 +288,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }

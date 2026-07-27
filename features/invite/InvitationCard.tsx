@@ -1,9 +1,11 @@
 import { TZDate } from '@date-fns/tz';
 import { HDate } from '@hebcal/core';
 
+import { buttonClass } from '@/components/ui/button';
 import { EVENT_TIMEZONE } from '@/config/event.config';
 import { getEventTypePreset } from '@/config/eventTypes';
 import { UI_MESSAGES } from '@/config/messages';
+import { AddToCalendar } from '@/features/invite/AddToCalendar';
 import { Countdown } from '@/features/invite/Countdown';
 import {
   Balloons,
@@ -140,8 +142,15 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
               {preset.label}
             </h1>
 
-            <p className="text-muted-foreground mt-4 text-center text-lg">של</p>
-            <p className="text-primary mt-1 text-center font-[family-name:var(--font-display)] text-2xl font-bold sm:text-4xl">
+            {/*
+              The standalone "של" that used to sit here was a duplicate. Every
+              `invitationLine` already ends with the relation word — "…לברית המילה של
+              בננו" for a brit, "…לחתונה של" for a wedding — so the card read
+              "…של בננו · של · בננו היקר". The presets are written to be followed
+              directly by the honoree, and the same pairing is what `generateMetadata`
+              and the WhatsApp template use.
+            */}
+            <p className="text-primary mt-5 text-center font-[family-name:var(--font-display)] text-2xl font-bold sm:text-4xl">
               {event.honoree_display_name}
             </p>
 
@@ -229,18 +238,30 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
               <div className="mt-9 flex flex-wrap justify-center gap-3">
                 {event.waze_url !== null && (
                   <a
-                    className="border-accent/70 text-primary hover:bg-secondary/60 rounded-full border px-6 py-2.5 text-sm font-semibold transition-colors"
+                    className={buttonClass({ variant: 'gold', size: 'sm' })}
                     href={event.waze_url}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.6}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" />
+                      <circle cx="12" cy="10" r="2.5" />
+                    </svg>
                     ניווט ב-Waze
                     <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
                   </a>
                 )}
                 {event.google_maps_url !== null && (
                   <a
-                    className="border-accent/70 text-primary hover:bg-secondary/60 rounded-full border px-6 py-2.5 text-sm font-semibold transition-colors"
+                    className={buttonClass({ variant: 'outline', size: 'sm' })}
                     href={event.google_maps_url}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -251,6 +272,41 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                 )}
               </div>
             )}
+
+            {/* PLAN §5 lists this beside the navigation buttons; it had never been
+                built. A guest who confirms three months out has nowhere to put the
+                date except their own memory. */}
+            <div className="mt-4">
+              <AddToCalendar
+                uid={event.public_id!}
+                title={`${preset.label} — ${event.honoree_display_name}`}
+                date={event.event_date!}
+                time={event.ceremony_time}
+                venueName={event.venue_name!}
+                address={event.address!}
+              />
+            </div>
+
+            {/* On a phone the card is taller than the viewport, so the guest arrives
+                at an invitation with no visible indication that there is anything to
+                do. This is the call to action, and it is the only element on the card
+                that is filled rather than outlined. */}
+            <div className="mt-9 flex justify-center">
+              <a href="#rsvp" className={buttonClass({ size: 'lg' })}>
+                {UI_MESSAGES.rsvp.submit}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 5v14M19 12l-7 7-7-7" />
+                </svg>
+              </a>
+            </div>
 
             {event.contact_phone !== null && (
               <p className="text-muted-foreground mt-7 text-center text-sm">

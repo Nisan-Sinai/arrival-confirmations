@@ -1,9 +1,12 @@
 'use client';
 
-import { useActionState, useId } from 'react';
+import { useActionState, useState } from 'react';
 
 import type { EventFormState } from '@/app/actions/manageEvent';
-import { listEventTypePresets } from '@/config/eventTypes';
+import { Button } from '@/components/ui/button';
+import { CheckboxField, Field, Input, Select, Textarea } from '@/components/ui/field';
+import { Alert } from '@/components/ui/feedback';
+import { getEventTypePreset, listEventTypePresets } from '@/config/eventTypes';
 
 /**
  * Create and edit an event (§8).
@@ -11,6 +14,17 @@ import { listEventTypePresets } from '@/config/eventTypes';
  * One component for both, because the two differ only in their defaults and which
  * action they post to. Keeping them identical means a field added for creation is
  * automatically editable, which is the failure this shape prevents.
+ *
+ * Two things changed here beyond the styling.
+ *
+ * Every control now sits inside `<Field>`, so an error is bound to its input by
+ * `aria-describedby` and marked with `aria-invalid`. Before this the errors rendered
+ * as loose paragraphs: a sighted user saw red text under the right box, and a screen
+ * reader user was moved to a rejected field and told nothing.
+ *
+ * The form also redraws with what was typed. React resets an uncontrolled form once
+ * its action resolves, so a host who left the venue blank previously lost the date,
+ * both times, the map links and the invitation note along with it.
  */
 
 const INITIAL: EventFormState = { status: 'idle', message: '', fieldErrors: {} };
@@ -41,227 +55,177 @@ interface EventFormProps {
   readonly defaults?: Partial<EventFormValues>;
 }
 
-function Field({
-  id,
-  label,
-  error,
-  children,
-  hint,
-}: {
-  id: string;
-  label: string;
-  error?: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
+/** A hairline heading that groups the fields below it. */
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-semibold">
-        {label}
-      </label>
-      {children}
-      {hint !== undefined && <p className="text-muted-foreground mt-1 text-xs">{hint}</p>}
-      {error !== undefined && (
-        <p role="alert" className="text-destructive mt-1 text-sm">
-          {error}
-        </p>
-      )}
-    </div>
+    <fieldset className="border-border border-t pt-7 first:border-t-0 first:pt-0">
+      <legend className="text-eyebrow text-accent-strong -mt-2.5 pe-3 font-semibold">
+        {title}
+      </legend>
+      <div className="space-y-5">{children}</div>
+    </fieldset>
   );
 }
 
-const inputClass = 'border-input mt-1.5 w-full rounded-lg border px-3 py-2.5 text-base';
-
 export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL);
-  const uid = useId();
   const presets = listEventTypePresets();
   const err = (field: string) => state.fieldErrors[field];
 
+  // Values the server echoed back after a rejection win over the row loaded from the
+  // database: they are what the host last typed.
+  const submitted = state.values;
+  const value = <K extends keyof EventFormValues>(key: K): string => {
+    const fromSubmission = submitted?.[key as keyof typeof submitted];
+    if (fromSubmission !== undefined && fromSubmission !== null) return String(fromSubmission);
+    const fromDefaults = defaults[key];
+    return fromDefaults === undefined || fromDefaults === null ? '' : String(fromDefaults);
+  };
+
+  /**
+   * The chosen type, tracked only so the two side-label hints can name that type's
+   * defaults. Showing "ריק = ברירת המחדל" told a host nothing; showing "ריק = צד
+   * החתן" tells them exactly what the guest will see.
+   */
+  const [eventType, setEventType] = useState(() => value('event_type') || 'other');
+  const preset = getEventTypePreset(eventType);
+
+  const isPublished =
+    submitted?.is_active ?? (defaults.is_active === undefined ? true : defaults.is_active);
+
   return (
-    <form action={formAction} className="space-y-5" noValidate>
+    <form action={formAction} className="space-y-8" noValidate>
       {defaults.id !== undefined && <input type="hidden" name="eventId" value={defaults.id} />}
 
-      <Field id={`${uid}-type`} label="סוג האירוע" error={err('eventType')}>
-        <select
-          id={`${uid}-type`}
-          name="eventType"
-          defaultValue={defaults.event_type ?? 'other'}
-          className={inputClass}
+      <Group title="האירוע">
+        <Field label="סוג האירוע" required error={err('eventType')}>
+          <Select
+            name="eventType"
+            defaultValue={value('event_type') || 'other'}
+            onChange={(event) => setEventType(event.target.value)}
+          >
+            {presets.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <Field
+          label="כותרת פנימית"
+          required
+          error={err('title')}
+          hint="לזיהוי בדשבורד בלבד; האורחים לא רואים אותה."
         >
-          {presets.map((p) => (
-            <option key={p.value} value={p.value}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field
-        id={`${uid}-title`}
-        label="כותרת פנימית"
-        error={err('title')}
-        hint="לזיהוי בדשבורד בלבד; האורחים לא רואים אותה."
-      >
-        <input
-          id={`${uid}-title`}
-          name="title"
-          defaultValue={defaults.title ?? ''}
-          className={inputClass}
-        />
-      </Field>
-
-      <Field id={`${uid}-hosts`} label="שמות המארחים" error={err('hostsNames')}>
-        <input
-          id={`${uid}-hosts`}
-          name="hostsNames"
-          defaultValue={defaults.hosts_names ?? ''}
-          className={inputClass}
-        />
-      </Field>
-
-      <Field id={`${uid}-honoree`} label="שם החוגג/ת" error={err('honoreeDisplayName')}>
-        <input
-          id={`${uid}-honoree`}
-          name="honoreeDisplayName"
-          defaultValue={defaults.honoree_display_name ?? ''}
-          className={inputClass}
-        />
-      </Field>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field id={`${uid}-date`} label="תאריך" error={err('eventDate')}>
-          <input
-            id={`${uid}-date`}
-            name="eventDate"
-            type="date"
-            defaultValue={defaults.event_date ?? ''}
-            className={inputClass}
-          />
+          <Input name="title" defaultValue={value('title')} placeholder="הברית של יונתן" />
         </Field>
-        <Field id={`${uid}-ceremony`} label="שעת הטקס">
-          <input
-            id={`${uid}-ceremony`}
-            name="ceremonyTime"
-            type="time"
-            defaultValue={defaults.ceremony_time?.slice(0, 5) ?? ''}
-            className={inputClass}
-          />
+
+        <Field label={preset.hostsLabel} required error={err('hostsNames')}>
+          <Input name="hostsNames" defaultValue={value('hosts_names')} />
         </Field>
-        <Field id={`${uid}-reception`} label="קבלת פנים">
-          <input
-            id={`${uid}-reception`}
-            name="receptionTime"
-            type="time"
-            defaultValue={defaults.reception_time?.slice(0, 5) ?? ''}
-            className={inputClass}
-          />
+
+        <Field label={preset.honoreeLabel} required error={err('honoreeDisplayName')}>
+          <Input name="honoreeDisplayName" defaultValue={value('honoree_display_name')} />
         </Field>
-      </div>
+      </Group>
 
-      <Field id={`${uid}-venue`} label="שם המקום" error={err('venueName')}>
-        <input
-          id={`${uid}-venue`}
-          name="venueName"
-          defaultValue={defaults.venue_name ?? ''}
-          className={inputClass}
-        />
-      </Field>
+      <Group title="מתי">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="תאריך" required error={err('eventDate')}>
+            <Input name="eventDate" type="date" defaultValue={value('event_date')} />
+          </Field>
+          <Field label={preset.ceremonyTimeLabel}>
+            <Input
+              name="ceremonyTime"
+              type="time"
+              defaultValue={value('ceremony_time').slice(0, 5)}
+            />
+          </Field>
+          <Field label="קבלת פנים">
+            <Input
+              name="receptionTime"
+              type="time"
+              defaultValue={value('reception_time').slice(0, 5)}
+            />
+          </Field>
+        </div>
+      </Group>
 
-      <Field id={`${uid}-address`} label="כתובת" error={err('address')}>
-        <input
-          id={`${uid}-address`}
-          name="address"
-          defaultValue={defaults.address ?? ''}
-          className={inputClass}
-        />
-      </Field>
+      <Group title="איפה">
+        <Field label="שם המקום" required error={err('venueName')}>
+          <Input name="venueName" defaultValue={value('venue_name')} placeholder="אולמי הדר" />
+        </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field id={`${uid}-waze`} label="קישור Waze" hint="חייב להתחיל ב-https://">
-          <input
-            id={`${uid}-waze`}
-            name="wazeUrl"
+        <Field label="כתובת" required error={err('address')}>
+          <Input name="address" defaultValue={value('address')} placeholder="הרצל 12, פתח תקווה" />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="קישור Waze" hint="חייב להתחיל ב-https://">
+            <Input
+              name="wazeUrl"
+              type="url"
+              dir="ltr"
+              className="text-start"
+              defaultValue={value('waze_url')}
+            />
+          </Field>
+          <Field label="קישור Google Maps" hint="חייב להתחיל ב-https://">
+            <Input
+              name="googleMapsUrl"
+              type="url"
+              dir="ltr"
+              className="text-start"
+              defaultValue={value('google_maps_url')}
+            />
+          </Field>
+        </div>
+      </Group>
+
+      <Group title="פרטים להזמנה">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="תווית צד א׳" hint={`ריק = ${preset.defaultSideALabel}`}>
+            <Input name="sideALabel" defaultValue={value('side_a_label')} />
+          </Field>
+          <Field label="תווית צד ב׳" hint={`ריק = ${preset.defaultSideBLabel}`}>
+            <Input name="sideBLabel" defaultValue={value('side_b_label')} />
+          </Field>
+        </div>
+
+        <Field label="טלפון לבירורים" hint="מוצג לאורחים בתחתית ההזמנה">
+          <Input
+            name="contactPhone"
+            type="tel"
             dir="ltr"
-            defaultValue={defaults.waze_url ?? ''}
-            className={inputClass}
+            className="text-start"
+            placeholder="050-1234567"
+            defaultValue={value('contact_phone')}
           />
         </Field>
-        <Field id={`${uid}-maps`} label="קישור Google Maps" hint="חייב להתחיל ב-https://">
-          <input
-            id={`${uid}-maps`}
-            name="googleMapsUrl"
-            dir="ltr"
-            defaultValue={defaults.google_maps_url ?? ''}
-            className={inputClass}
-          />
+
+        <Field label="הערה להזמנה" hint="למשל: חניה חינם במקום, או קוד לבוש">
+          <Textarea name="description" rows={3} defaultValue={value('description')} />
         </Field>
-      </div>
+      </Group>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field id={`${uid}-sidea`} label="תווית צד א׳" hint="ריק = ברירת המחדל של סוג האירוע">
-          <input
-            id={`${uid}-sidea`}
-            name="sideALabel"
-            defaultValue={defaults.side_a_label ?? ''}
-            className={inputClass}
-          />
-        </Field>
-        <Field id={`${uid}-sideb`} label="תווית צד ב׳" hint="ריק = ברירת המחדל של סוג האירוע">
-          <input
-            id={`${uid}-sideb`}
-            name="sideBLabel"
-            defaultValue={defaults.side_b_label ?? ''}
-            className={inputClass}
-          />
-        </Field>
-      </div>
-
-      <Field id={`${uid}-phone`} label="טלפון לבירורים">
-        <input
-          id={`${uid}-phone`}
-          name="contactPhone"
-          dir="ltr"
-          defaultValue={defaults.contact_phone ?? ''}
-          className={inputClass}
-        />
-      </Field>
-
-      <Field id={`${uid}-desc`} label="הערה להזמנה">
-        <textarea
-          id={`${uid}-desc`}
-          name="description"
-          rows={3}
-          defaultValue={defaults.description ?? ''}
-          className={inputClass}
-        />
-      </Field>
-
-      <label className="flex cursor-pointer items-start gap-3">
-        <input
-          type="checkbox"
-          name="isActive"
-          defaultChecked={defaults.is_active ?? true}
-          className="accent-primary mt-1 size-4 shrink-0"
-        />
-        <span className="text-muted-foreground text-sm">
-          פרסום ההזמנה. כשהתיבה מסומנת הקישור פתוח לאורחים; אחרת הוא מחזיר 404.
-        </span>
-      </label>
+      <Group title="פרסום">
+        <CheckboxField name="isActive" defaultChecked={isPublished}>
+          פרסום ההזמנה. כשהתיבה מסומנת הקישור פתוח לאורחים; אחרת הוא מחזיר 404, ואף אחד לא יכול לאשר
+          הגעה.
+        </CheckboxField>
+      </Group>
 
       {state.status === 'error' && state.message !== '' && (
-        <p role="alert" className="text-destructive text-center text-sm">
-          {state.message}
-        </p>
+        <Alert tone="error">{state.message}</Alert>
+      )}
+      {state.status === 'error' && state.message === '' && (
+        <Alert tone="error">יש שדות חסרים או שגויים. הם מסומנים למעלה.</Alert>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="bg-primary text-primary-foreground w-full rounded-lg px-6 py-3 text-base font-semibold disabled:opacity-60"
-      >
+      <Button type="submit" size="lg" block disabled={isPending}>
         {isPending ? 'שומר…' : submitLabel}
-      </button>
+      </Button>
     </form>
   );
 }

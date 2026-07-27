@@ -10,16 +10,20 @@ export const metadata: Metadata = {
 
 export default function ForgotPasswordPage() {
   return (
-    <main id="main" className="flex flex-1 items-center justify-center px-4 py-16">
+    <main
+      id="main"
+      className="from-secondary/30 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
+    >
       <AuthForm
         action={requestPasswordResetAction}
+        mode="requestReset"
         title="שחזור סיסמה"
+        subtitle="הזינו את כתובת האימייל של החשבון ונשלח אליה קישור לבחירת סיסמה חדשה."
         submitLabel="שליחת קישור איפוס"
         pendingLabel="שולח…"
         footerPrompt="נזכרתם?"
         footerHref="/login"
         footerLinkLabel="חזרה לכניסה"
-        emailOnly
       />
     </main>
   );

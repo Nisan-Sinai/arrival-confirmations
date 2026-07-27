@@ -8,6 +8,8 @@ import { createUserClient } from '@/lib/server/supabase';
 import { generateRawToken } from '@/lib/server/tokens';
 import type { Database } from '@/types/database.types';
 
+type EventWrite = Database['public']['Tables']['events']['Update'];
+
 /**
  * Creating and editing an event (§8).
  *
@@ -22,6 +24,13 @@ export interface EventFormState {
   readonly status: 'idle' | 'error';
   readonly message: string;
   readonly fieldErrors: Record<string, string>;
+  /**
+   * The parsed row, echoed back on failure so the form redraws with what the host
+   * typed. React resets an uncontrolled form once its action resolves, so without
+   * this a missing venue name emptied the date, the times, the map links and the
+   * invitation note along with it.
+   */
+  readonly values?: EventWrite;
 }
 
 /** Trimmed, or null when the field was left empty. */
@@ -37,8 +46,6 @@ function safeUrl(value: FormDataEntryValue | null): string | null {
   // host's own invitation, and the database CHECK enforces the same rule.
   return text !== null && /^https:\/\//.test(text) ? text : null;
 }
-
-type EventWrite = Database['public']['Tables']['events']['Update'];
 
 interface ParsedEvent {
   // The generated row type rather than a loose record, so a column renamed in a
@@ -97,7 +104,7 @@ export async function createEventAction(
 ): Promise<EventFormState> {
   const { values, errors } = parseEventForm(formData);
   if (Object.keys(errors).length > 0) {
-    return { status: 'error', message: '', fieldErrors: errors };
+    return { status: 'error', message: '', fieldErrors: errors, values };
   }
 
   const supabase = await createUserClient();
@@ -119,7 +126,7 @@ export async function createEventAction(
     .single();
 
   if (error || data === null) {
-    return { status: 'error', message: 'היצירה נכשלה. נסו שוב.', fieldErrors: {} };
+    return { status: 'error', message: 'היצירה נכשלה. נסו שוב.', fieldErrors: {}, values };
   }
 
   revalidatePath('/dashboard');
@@ -137,14 +144,36 @@ export async function updateEventAction(
 
   const { values, errors } = parseEventForm(formData);
   if (Object.keys(errors).length > 0) {
-    return { status: 'error', message: '', fieldErrors: errors };
+    return { status: 'error', message: '', fieldErrors: errors, values };
   }
 
   const supabase = await createUserClient();
-  const { error } = await supabase.from('events').update(values).eq('id', eventId);
+
+  /**
+   * `.select('id')` is not decoration. An UPDATE filtered by an id the policy does not
+   * admit matches zero rows and returns no error at all — so the previous version
+   * redirected to the event page announcing a save that never happened. Asking for the
+   * affected rows back turns "the policy refused this" into something this function
+   * can actually see.
+   */
+  const { data: updated, error } = await supabase
+    .from('events')
+    .update(values)
+    .eq('id', eventId)
+    .select('id');
 
   if (error) {
-    return { status: 'error', message: 'השמירה נכשלה. נסו שוב.', fieldErrors: {} };
+    return { status: 'error', message: 'השמירה נכשלה. נסו שוב.', fieldErrors: {}, values };
+  }
+  if (updated === null || updated.length === 0) {
+    // Either the event was deleted from another tab, or it belongs to somebody else.
+    // One message for both: which of the two it is, is not the caller's business.
+    return {
+      status: 'error',
+      message: 'האירוע לא נמצא, או שאין לכם הרשאה לערוך אותו.',
+      fieldErrors: {},
+      values,
+    };
   }
 
   // The invitation is cached for a minute; a host who just corrected the venue

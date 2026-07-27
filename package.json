@@ -32,10 +32,7 @@
     "deadcode": "knip",
     "supabase:start": "tsx scripts/supabase-local-notice.ts",
     "supabase:stop": "tsx scripts/supabase-local-notice.ts",
-    "supabase:reset": "tsx scripts/db-reset.ts",
-    "supabase:seed": "tsx scripts/db-seed.ts",
     "supabase:types": "tsx scripts/gen-types.ts",
-    "data:retention:cleanup": "tsx scripts/data-retention-cleanup.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck",
     "ci": "pnpm check && pnpm test:coverage && pnpm build && pnpm scan:secrets && pnpm test:e2e"
   },

@@ -124,6 +124,17 @@ export function tryNormalizeIsraeliPhone(
     return { ok: true, value: normalizeIsraeliPhone(input) };
   } catch (error) {
     if (error instanceof PhoneNormalizationError) return { ok: false, reason: error.reason };
+    /*
+     * Anything else is a bug in the normaliser rather than a bad number, and it must
+     * surface as one. Swallowing it here would report a perfectly valid phone number
+     * to the guest as invalid, and they would retype it forever.
+     *
+     * v8 ignore: unreachable from outside the module — `normalizeIsraeliPhone` throws
+     * only `PhoneNormalizationError`, and it is called directly rather than through a
+     * seam a test could replace. Covering it would mean adding indirection that exists
+     * for no reason but the coverage number.
+     */
+    /* v8 ignore next */
     throw error;
   }
 }

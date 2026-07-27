@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { signInAction } from '@/app/actions/auth';
+import { Alert } from '@/components/ui/feedback';
 import { AuthForm } from '@/features/auth/AuthForm';
 
 export const metadata: Metadata = {
@@ -9,17 +10,36 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  // `/auth/callback` sends the browser here with ?error=auth when a one-time code is
+  // expired or already spent. Without this the user lands on a plain login form with
+  // no indication that their reset link failed, and tries the same link again.
+  const { error } = await searchParams;
+
   return (
-    <main id="main" className="flex flex-1 items-center justify-center px-4 py-16">
+    <main
+      id="main"
+      className="from-secondary/30 flex flex-1 flex-col items-center justify-center gap-5 bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
+    >
+      {error === 'auth' && (
+        <Alert tone="error" className="w-full max-w-md">
+          הקישור אינו תקין או שכבר נעשה בו שימוש. בקשו קישור חדש.
+        </Alert>
+      )}
       <AuthForm
         action={signInAction}
+        mode="signIn"
         title="כניסה לחשבון"
+        subtitle="נהלו את האירועים שלכם ואת אישורי ההגעה שהתקבלו."
         submitLabel="כניסה"
         pendingLabel="נכנס…"
         footerPrompt="אין לכם חשבון?"
         footerHref="/signup"
-        footerLinkLabel="הרשמה"
+        footerLinkLabel="הרשמה חינם"
       />
     </main>
   );

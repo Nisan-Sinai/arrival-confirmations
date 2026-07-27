@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { createEventAction } from '@/app/actions/manageEvent';
+import { Card } from '@/components/ui/card';
+import { Container } from '@/components/ui/layout';
 import { EventForm } from '@/features/admin/EventForm';
 import { createUserClient } from '@/lib/server/supabase';
 
@@ -20,13 +23,39 @@ export default async function NewEventPage() {
   if (user === null) redirect('/login');
 
   return (
-    <main id="main" className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
-      <h1 className="text-primary font-[family-name:var(--font-display)] text-3xl font-bold">
-        אירוע חדש
-      </h1>
-      <div className="bg-card mt-6 rounded-2xl border p-6">
-        <EventForm action={createEventAction} submitLabel="יצירת האירוע" />
-      </div>
+    <main id="main" className="flex-1 py-10 sm:py-14">
+      <Container width="card">
+        <Link
+          href="/dashboard"
+          className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 rounded-sm text-sm"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-4"
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+          כל האירועים
+        </Link>
+
+        <div className="mt-4">
+          <p className="text-eyebrow text-accent-strong font-semibold">אירוע</p>
+          <h1 className="text-h1 text-primary mt-2 font-bold">אירוע חדש</h1>
+          <p className="text-muted-foreground mt-3 leading-relaxed">
+            מלאו את הפרטים ונייצר עבורכם הזמנה מעוצבת וקישור פרטי לשליחה. אפשר לשנות הכול אחר כך.
+          </p>
+        </div>
+
+        <Card padding="lg" className="mt-8">
+          <EventForm action={createEventAction} submitLabel="יצירת האירוע" />
+        </Card>
+      </Container>
     </main>
   );
 }

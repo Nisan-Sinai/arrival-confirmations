@@ -30,7 +30,35 @@ async function fillRequiredFields(page: Page, phone: string, name = 'בודק א
   await page.getByRole('checkbox').check();
 }
 
-test.skip(EVENT_PUBLIC_ID === '', 'E2E_EVENT_PUBLIC_ID is not set');
+/**
+ * Only the specs that address a seeded event need the id.
+ *
+ * This used to be a bare `test.skip(EVENT_PUBLIC_ID === '')` at module scope, which
+ * skips *every* test in the file — including the landing page, the legal pages, the
+ * 404, the overflow guards and the axe scans, none of which need an event to exist.
+ * With the variable unset, which is the default everywhere except a fully configured
+ * CI run, the entire end-to-end and accessibility suite reported success having
+ * executed nothing at all.
+ */
+const requiresSeededEvent = () =>
+  test.skip(EVENT_PUBLIC_ID === '', 'E2E_EVENT_PUBLIC_ID is not set');
+
+/** Widths from §18 of the design brief that the layout must survive. */
+const VIEWPORTS = [
+  { name: '320px — the narrowest phone still in use', width: 320, height: 720 },
+  { name: '375px — iPhone SE', width: 375, height: 812 },
+  { name: '390px — iPhone 14', width: 390, height: 844 },
+  { name: '430px — iPhone Pro Max', width: 430, height: 932 },
+  { name: '768px — tablet portrait', width: 768, height: 1024 },
+  { name: '1024px — tablet landscape', width: 1024, height: 768 },
+  { name: '1280px — laptop', width: 1280, height: 800 },
+  { name: '1440px — desktop', width: 1440, height: 900 },
+] as const;
+
+const hasHorizontalOverflow = (page: Page) =>
+  page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+  );
 
 test.describe('the landing page', () => {
   test('states the product and links to both legal pages', async ({ page }) => {
@@ -40,17 +68,74 @@ test.describe('the landing page', () => {
     await expect(page.getByRole('link', { name: 'הצהרת נגישות' })).toBeVisible();
   });
 
-  test('does not scroll sideways', async ({ page }) => {
+  test('offers a route to sign in and to sign up', async ({ page }) => {
     await page.goto('/');
-    // The bug this guards: absolutely positioned ornament widening the document.
-    const overflows = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-    );
-    expect(overflows).toBe(false);
+    // The header did not exist before the redesign; there was no navigation at all.
+    await expect(page.getByRole('navigation', { name: 'ניווט ראשי' })).toBeVisible();
+  });
+
+  // The bug this guards: an absolutely positioned ornament widening the document.
+  for (const viewport of VIEWPORTS) {
+    test(`does not scroll sideways at ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+      expect(await hasHorizontalOverflow(page)).toBe(false);
+    });
+  }
+});
+
+test.describe('routes that used to 404', () => {
+  /**
+   * Both of these were reachable only from an email the application itself sends, and
+   * both returned 404 — password recovery could not be completed and the OAuth
+   * exchange had nowhere to land.
+   */
+  test('the password reset page exists and explains an expired link', async ({ page }) => {
+    const response = await page.goto('/reset-password');
+    expect(response?.status()).toBe(200);
+    // Visiting without a recovery session is the expired-link case, not a redirect.
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('פג תוקף');
+  });
+
+  test('the auth callback rejects a request with no code instead of 404ing', async ({ page }) => {
+    await page.goto('/auth/callback');
+    // Redirected to the login page, which now explains what went wrong.
+    await expect(page).toHaveURL(/\/login\?error=auth/);
+    // Matched by its text, not by role alone: Next.js keeps a permanently mounted
+    // `role="alert"` route announcer in the document, so a bare role query resolves
+    // to two elements and fails Playwright's strict mode.
+    await expect(page.getByRole('alert').filter({ hasText: 'הקישור אינו תקין' })).toBeVisible();
+  });
+
+  test('an unknown path renders the Hebrew 404, not the built-in English one', async ({ page }) => {
+    const response = await page.goto('/no-such-page');
+    expect(response?.status()).toBe(404);
+    // The built-in page reads "This page could not be found." and sets its own title.
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('לא נמצא');
+    await expect(page.locator('body')).not.toContainText('This page could not be found');
+  });
+});
+
+test.describe('security headers', () => {
+  test('every response carries the headers that were entirely absent', async ({ page }) => {
+    const response = await page.goto('/');
+    const headers = response?.headers() ?? {};
+
+    expect(headers['x-content-type-options']).toBe('nosniff');
+    expect(headers['x-frame-options']).toBe('DENY');
+    expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+    expect(headers['permissions-policy']).toContain('geolocation=()');
+    // An invitation carries names, a venue and a phone number; framing it is a
+    // clickjack setup and there is no legitimate reason to embed one.
+    expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+    expect(headers['content-security-policy']).toContain("object-src 'none'");
+    expect(headers['content-security-policy']).toContain("base-uri 'self'");
   });
 });
 
 test.describe('the invitation', () => {
+  requiresSeededEvent();
+
   test('renders the event and its Hebrew date', async ({ page }) => {
     await page.goto(eventPath);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -83,6 +168,8 @@ test.describe('the invitation', () => {
 });
 
 test.describe('submitting an RSVP', () => {
+  requiresSeededEvent();
+
   test('accepts a complete submission and confirms it', async ({ page }) => {
     await page.goto(eventPath);
     await fillRequiredFields(page, uniquePhone());
@@ -136,17 +223,33 @@ test.describe('@a11y accessibility', () => {
     return results.violations;
   };
 
-  test('the landing page has zero violations', async ({ page }) => {
-    // §9 makes this a hard gate, not a warning.
-    expect(await scan(page, '/')).toEqual([]);
-  });
+  /**
+   * Every page that can be reached without a seeded event, scanned individually.
+   *
+   * Previously only the landing page and the invitation were covered, and both were
+   * skipped whenever E2E_EVENT_PUBLIC_ID was unset — so in practice §9's "hard gate"
+   * scanned nothing. The legal pages in particular are the ones a regulator looks at.
+   */
+  const PUBLIC_PATHS = [
+    ['the landing page', '/'],
+    ['the privacy notice', '/privacy'],
+    ['the accessibility statement', '/accessibility'],
+    ['the sign-in page', '/login'],
+    ['the sign-up page', '/signup'],
+    ['the password recovery page', '/forgot-password'],
+    ['the expired-reset-link page', '/reset-password'],
+    ['the 404 page', '/no-such-page'],
+  ] as const;
 
-  test('the invitation has zero violations', async ({ page }) => {
-    expect(await scan(page, eventPath)).toEqual([]);
-  });
+  for (const [label, path] of PUBLIC_PATHS) {
+    test(`${label} has zero violations`, async ({ page }) => {
+      // §9 makes this a hard gate, not a warning.
+      expect(await scan(page, path)).toEqual([]);
+    });
+  }
 
-  test('the invitation is usable by keyboard alone', async ({ page }) => {
-    await page.goto(eventPath);
+  test('the landing page is usable by keyboard alone', async ({ page }) => {
+    await page.goto('/');
     await page.keyboard.press('Tab');
     // §9 requires the skip link to be first in the tab order.
     const focused = await page.evaluate(() => document.activeElement?.textContent ?? '');
@@ -154,8 +257,28 @@ test.describe('@a11y accessibility', () => {
   });
 
   test('declares Hebrew and right-to-left', async ({ page }) => {
-    await page.goto(eventPath);
+    await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'he');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  });
+
+  test('stays readable and free of overflow at 200% zoom', async ({ page }) => {
+    // WCAG 1.4.4. Emulated by halving the viewport, which is what a 200% zoom does
+    // to the CSS pixel budget the layout has to work within.
+    await page.setViewportSize({ width: 640, height: 512 });
+    await page.goto('/');
+    expect(await hasHorizontalOverflow(page)).toBe(false);
+  });
+});
+
+test.describe('@a11y the invitation', () => {
+  requiresSeededEvent();
+
+  test('has zero violations', async ({ page }) => {
+    await page.goto(eventPath);
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(results.violations).toEqual([]);
   });
 });
