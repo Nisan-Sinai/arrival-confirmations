@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * End-to-end coverage of the guest-facing flow (§10.5, §9).
@@ -13,6 +14,12 @@ const EVENT_PUBLIC_ID = process.env.E2E_EVENT_PUBLIC_ID ?? '';
 const eventPath = `/e/${EVENT_PUBLIC_ID}`;
 
 /**
+ * Every number this run handed out, so the teardown can remove exactly the rows it
+ * caused and nothing else.
+ */
+const submittedPhones = new Set<string>();
+
+/**
  * A phone number no real guest holds, unique per run so reruns never collide.
  *
  * An Israeli mobile is a two-digit prefix plus seven subscriber digits — ten
@@ -21,7 +28,46 @@ const eventPath = `/e/${EVENT_PUBLIC_ID}`;
  * advertisement for the validator and a bad one for the test.
  */
 function uniquePhone(): string {
-  return `050${String(Date.now()).slice(-7)}`;
+  const phone = `050${String(Date.now()).slice(-7)}`;
+  submittedPhones.add(phone);
+  return phone;
+}
+
+/**
+ * Removes the RSVPs this run submitted.
+ *
+ * These specs post real forms to a real database, and the database they were pointed
+ * at is the live one — so every CI run left two more guests called "בודק אוטומטי" on
+ * a real family's invitation, permanently, with nothing to distinguish them from
+ * arrivals the hosts have to cater for. Four had accumulated before anyone looked.
+ *
+ * Keyed on the numbers this process generated rather than on the name, because a
+ * delete driven by a display name is one careless duplicate away from removing a
+ * guest. `service_role` is required: the anon key cannot delete an RSVP, which is
+ * exactly the policy that ought to hold.
+ *
+ * A failure here fails the run. Cleanup that reports success while leaving rows
+ * behind is how this went unnoticed for as long as it did.
+ */
+async function deleteSubmittedRsvps(): Promise<void> {
+  if (submittedPhones.size === 0) return;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (url === undefined || serviceRoleKey === undefined) {
+    throw new Error('E2E submitted RSVPs with no service-role credentials to remove them.');
+  }
+
+  // The column stores E.164, and every number above is a local Israeli mobile.
+  const normalized = [...submittedPhones].map((phone) => `+972${phone.slice(1)}`);
+
+  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+  const { error } = await admin.from('rsvps').delete().in('phone_normalized', normalized);
+  if (error !== null) {
+    throw new Error(`E2E cleanup could not remove its own RSVPs: ${error.message}`);
+  }
+
+  submittedPhones.clear();
 }
 
 async function fillRequiredFields(page: Page, phone: string, name = 'בודק אוטומטי') {
@@ -279,6 +325,8 @@ test.describe('the invitation', () => {
 
 test.describe('submitting an RSVP', () => {
   requiresSeededEvent();
+
+  test.afterAll(deleteSubmittedRsvps);
 
   test('accepts a complete submission and confirms it', async ({ page }) => {
     await page.goto(eventPath);
