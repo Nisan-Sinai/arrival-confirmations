@@ -27,6 +27,10 @@ import type { PublicEvent } from '@/repositories/eventRepository';
  * Reading from disk rather than fetching from Google at render time is also
  * deliberate: a preview crawler will not wait, and an external request is a way for
  * the invitation card to fail that has nothing to do with the invitation.
+ *
+ * A font is only half of what Satori is missing for Hebrew — it also has no
+ * bidirectional algorithm and draws glyphs in memory order. Nothing here may reach the
+ * renderer as a plain string; see `lib/ogText.ts`.
  */
 
 /** WhatsApp, Facebook and iMessage all crop to roughly 1.91:1. This is that ratio. */

@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 
 import { appConfig } from '@/config/event.config';
 import { OG_PALETTE, OgFlourish, OgFrame } from '@/features/og/OgFrame';
+import { OgText } from '@/features/og/OgText';
 import { OG_IMAGE_CONTENT_TYPE, OG_IMAGE_SIZE, loadOgFonts } from '@/lib/server/ogImage';
 
 /**
@@ -20,56 +21,33 @@ export const contentType = OG_IMAGE_CONTENT_TYPE;
 export default async function OpengraphImage() {
   return new ImageResponse(
     <OgFrame>
-      <div
-        style={{
-          display: 'flex',
-          fontSize: 26,
-          letterSpacing: 8,
-          color: OG_PALETTE.gold,
-        }}
-      >
+      <OgText fontSize={26} style={{ letterSpacing: 8, color: OG_PALETTE.gold }}>
         הזמנה דיגיטלית
-      </div>
+      </OgText>
 
-      <div
+      <OgText
+        fontSize={104}
         style={{
-          display: 'flex',
           marginTop: 18,
           fontFamily: 'Frank Ruhl Libre',
           fontWeight: 700,
-          fontSize: 104,
           color: OG_PALETTE.ivory,
         }}
       >
         {appConfig.siteName}
-      </div>
+      </OgText>
 
       <div style={{ display: 'flex', marginTop: 26 }}>
         <OgFlourish />
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          marginTop: 26,
-          fontSize: 34,
-          color: OG_PALETTE.goldSoft,
-        }}
-      >
+      <OgText fontSize={34} style={{ marginTop: 26, color: OG_PALETTE.goldSoft }}>
         {appConfig.siteDescription}
-      </div>
+      </OgText>
 
-      <div
-        style={{
-          display: 'flex',
-          marginTop: 14,
-          fontSize: 30,
-          fontWeight: 700,
-          color: OG_PALETTE.gold,
-        }}
-      >
+      <OgText fontSize={30} style={{ marginTop: 14, fontWeight: 700, color: OG_PALETTE.gold }}>
         חינם, בלי מנוי ובלי תשלום לפי אורח
-      </div>
+      </OgText>
     </OgFrame>,
     { ...size, fonts: await loadOgFonts() },
   );

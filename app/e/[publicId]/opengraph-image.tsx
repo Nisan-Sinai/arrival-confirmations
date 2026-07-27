@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { notFound } from 'next/navigation';
 
 import { OG_PALETTE, OgFlourish, OgFrame } from '@/features/og/OgFrame';
+import { OgText } from '@/features/og/OgText';
 import {
   OG_IMAGE_CONTENT_TYPE,
   OG_IMAGE_SIZE,
@@ -36,6 +37,8 @@ interface OpengraphImageProps {
   readonly params: Promise<{ publicId: string }>;
 }
 
+const FACT_FONT_SIZE = 30;
+
 /**
  * One fact in the bottom row, with the gold dot that separates it from the fact before
  * it. `row-reverse` puts that dot on the fact's right — its *leading* edge in Hebrew.
@@ -56,7 +59,7 @@ function Fact({ children, first }: { children: string; first: boolean }) {
           }}
         />
       )}
-      <div style={{ display: 'flex' }}>{children}</div>
+      <OgText fontSize={FACT_FONT_SIZE}>{children}</OgText>
     </div>
   );
 }
@@ -74,34 +77,26 @@ export default async function InvitationOpengraphImage({ params }: OpengraphImag
 
   return new ImageResponse(
     <OgFrame>
-      <div style={{ display: 'flex', fontSize: 24, letterSpacing: 6, color: OG_PALETTE.gold }}>
+      <OgText fontSize={24} style={{ letterSpacing: 6, color: OG_PALETTE.gold }}>
         {fields.blessing}
-      </div>
+      </OgText>
 
-      <div
-        style={{
-          display: 'flex',
-          marginTop: 16,
-          fontSize: 32,
-          color: OG_PALETTE.goldSoft,
-        }}
-      >
+      <OgText fontSize={32} style={{ marginTop: 16, color: OG_PALETTE.goldSoft }}>
         {fields.invitation}
-      </div>
+      </OgText>
 
-      <div
+      <OgText
+        fontSize={fields.honoreeSize}
         style={{
-          display: 'flex',
           marginTop: 10,
           fontFamily: 'Frank Ruhl Libre',
           fontWeight: 700,
-          fontSize: fields.honoreeSize,
           lineHeight: 1.15,
           color: OG_PALETTE.ivory,
         }}
       >
         {fields.honoree}
-      </div>
+      </OgText>
 
       <div style={{ display: 'flex', marginTop: 22 }}>
         <OgFlourish />
@@ -110,15 +105,15 @@ export default async function InvitationOpengraphImage({ params }: OpengraphImag
       {facts.length === 0 ? null : (
         <div
           style={{
-            // Logical order right-to-left without relying on the renderer's bidi:
-            // the children are listed weekday, date, time and laid out reversed, so
-            // a Hebrew weekday beside Latin digits cannot come out shuffled.
+            // The facts are separate boxes because of the dots between them, so the
+            // row does its own right-to-left ordering: listed weekday, date, time and
+            // laid out reversed. `OgText` handles the order *inside* each one.
             display: 'flex',
             flexDirection: 'row-reverse',
             alignItems: 'center',
             gap: 16,
             marginTop: 22,
-            fontSize: 30,
+            fontSize: FACT_FONT_SIZE,
             color: OG_PALETTE.ivory,
           }}
         >
@@ -131,16 +126,9 @@ export default async function InvitationOpengraphImage({ params }: OpengraphImag
       )}
 
       {fields.venue === '' ? null : (
-        <div
-          style={{
-            display: 'flex',
-            marginTop: 10,
-            fontSize: 27,
-            color: OG_PALETTE.goldSoft,
-          }}
-        >
+        <OgText fontSize={27} style={{ marginTop: 10, color: OG_PALETTE.goldSoft }}>
           {fields.venue}
-        </div>
+        </OgText>
       )}
     </OgFrame>,
     { ...size, fonts: await loadOgFonts() },
