@@ -162,3 +162,19 @@ Inspection.
 
 **אזהרת workspace root מ-Next.js** — כבר מטופלת דרך `turbopack.root` ב-`next.config.ts`.
 אם היא חוזרת, כנראה נוסף lockfile חדש בתיקיית אב.
+
+**`Leaked Password Protection Disabled` מיועץ האבטחה של Supabase** — ידוע, מקובל,
+ואי אפשר לסגור אותו. הבדיקה מול HaveIBeenPwned היא פיצ'ר של מסלול Pro; ניסיון להפעיל
+אותה במסלול החינמי מוחזר עם `Configuring leaked password protection via
+HaveIBeenPwned.org is available on Pro Plans and up`. המוצר הזה בנוי כדי להיכנס
+למסלול החינמי, ולכן האזהרה נשארת.
+
+מה שקיים במקומה: מינימום עשרה תווים לסיסמה, נאכף גם בשרת ב-`app/actions/auth.ts` וגם
+בטופס ב-`features/auth/AuthForm.tsx` — מעל ברירת המחדל של Supabase, שהיא שישה. וחשוב
+מזה, לאורח אין סיסמה בכלל: טופס אישור ההגעה אנונימי, ומי שכן מחזיק סיסמה הוא בעל
+שמחה שרואה רק את האירועים שלו, מה שבידוד ה-RLS אוכף ו-`tests/rls/` מוכיח. הסיכון
+שנותר הוא סיסמה של בעל שמחה שדלפה במקום אחר, והמענה לו הוא מנהל סיסמאות.
+
+שאר הפריטים שהיועץ מדווח הם `INFO` על טבלאות פנימיות עם RLS ובלי policy — כלומר
+דחייה גורפת, שזו הכוונה — ו-`WARN` על פונקציות `SECURITY DEFINER` שנקראות בכוונה
+מבחוץ, כמו `get_public_event_by_public_id` שהוא כל מנגנון קריאת ההזמנה.
