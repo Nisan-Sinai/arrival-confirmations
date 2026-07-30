@@ -193,8 +193,8 @@ export default function LandingPage() {
                   <span className="text-accent-strong block">בחינם</span>
                 </h1>
                 <p className="text-lead text-muted-foreground mt-6 max-w-xl leading-relaxed lg:mx-0">
-                  צרו הזמנה דיגיטלית מעוצבת ואספו אישורי הגעה לכל אירוע. ללא כרטיס אשראי, ללא
-                  הגבלת אורחים וקל לשיתוף בוואטסאפ.
+                  צרו הזמנה דיגיטלית מעוצבת ואספו אישורי הגעה לכל אירוע. ללא כרטיס אשראי, ללא הגבלת
+                  אורחים וקל לשיתוף בוואטסאפ.
                 </p>
                 <div className="mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
                   <Link href="/signup" className={buttonClass({ size: 'lg' })}>
