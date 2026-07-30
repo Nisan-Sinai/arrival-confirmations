@@ -13,6 +13,7 @@
     "lint": "eslint --max-warnings 0",
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",
+    "format:homepage": "prettier --write app/page.tsx",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit --project component",
