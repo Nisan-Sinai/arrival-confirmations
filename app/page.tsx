@@ -26,17 +26,17 @@ import { SITE_ORIGIN } from '@/lib/seo';
  */
 
 export const metadata: Metadata = {
-  title: { absolute: 'אישורי הגעה חינם לכל אירוע' },
+  title: { absolute: 'אישורי הגעה לאירועים בחינם | ניסן סיני טכנולוגיות' },
   description:
-    'מערכת חינמית ליצירת הזמנות דיגיטליות ואישורי הגעה לכל סוג אירוע. בלי מנוי, בלי כרטיס אשראי ובלי תשלום לפי אורח.',
+    'צרו הזמנה דיגיטלית ואספו אישורי הגעה לכל אירוע. חינם, ללא כרטיס אשראי, ללא הגבלת אורחים וקל לשיתוף בוואטסאפ.',
   alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
     locale: 'he_IL',
     siteName: appConfig.siteName,
-    title: 'אישורי הגעה חינם לכל אירוע',
+    title: 'אישורי הגעה לאירועים בחינם | ניסן סיני טכנולוגיות',
     description:
-      'הזמנות דיגיטליות ואישורי הגעה חינם לכל סוג אירוע. בלי מנוי ובלי תשלום לפי אורח.',
+      'צרו הזמנה דיגיטלית ואספו אישורי הגעה לכל אירוע. חינם, ללא כרטיס אשראי וקל לשיתוף בוואטסאפ.',
     url: '/',
   },
 };
@@ -186,15 +186,15 @@ export default function LandingPage() {
               <div className="animate-rise text-center lg:text-start">
                 <p className="text-eyebrow text-accent-strong inline-flex items-center gap-2.5 font-semibold">
                   <span aria-hidden="true" className="bg-accent h-px w-6" />
-                  חינם לחלוטין
+                  הזמנות דיגיטליות
                 </p>
                 <h1 className="text-display text-primary mt-5 font-bold">
-                  אישורי הגעה
-                  <span className="text-accent-strong block">לאירוע שלכם</span>
+                  אישורי הגעה לאירועים
+                  <span className="text-accent-strong block">בחינם</span>
                 </h1>
                 <p className="text-lead text-muted-foreground mt-6 max-w-xl leading-relaxed lg:mx-0">
-                  הזמנה דיגיטלית מעוצבת וטופס אישור הגעה, לכל סוג אירוע. בלי מנוי, בלי תשלום לפי
-                  אורח ובלי הגבלה על מספר ההזמנות.
+                  צרו הזמנה דיגיטלית מעוצבת ואספו אישורי הגעה לכל אירוע. ללא כרטיס אשראי, ללא
+                  הגבלת אורחים וקל לשיתוף בוואטסאפ.
                 </p>
                 <div className="mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
                   <Link href="/signup" className={buttonClass({ size: 'lg' })}>
