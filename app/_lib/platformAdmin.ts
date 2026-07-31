@@ -6,7 +6,7 @@ import { createUserClient } from '@/lib/server/supabase';
 
 export const PLATFORM_OWNER_EMAIL = 'nisan.sinai5@gmail.com' as const;
 
-export async function getPlatformOwner() {
+async function getPlatformOwner() {
   const supabase = await createUserClient();
   const {
     data: { user },
@@ -15,7 +15,7 @@ export async function getPlatformOwner() {
   if (
     user === null ||
     user.email?.toLowerCase() !== PLATFORM_OWNER_EMAIL ||
-    user.email_confirmed_at === undefined
+    typeof user.email_confirmed_at !== 'string'
   ) {
     return null;
   }
