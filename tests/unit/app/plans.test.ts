@@ -6,7 +6,9 @@ import {
   PLAN_CODES,
   formatPlanPrice,
   getPlanDefinition,
+  getPlanLabel,
   isMonetizedEvent,
+  type PlanCode,
 } from '@/app/_lib/plans';
 
 describe('event plans', () => {
@@ -23,6 +25,17 @@ describe('event plans', () => {
 
   it('limits trial events to ten responses', () => {
     expect(getPlanDefinition('trial')?.attendeeLimit).toBe(10);
+  });
+
+  it('handles legacy and unknown plan definitions safely', () => {
+    expect(getPlanDefinition('legacy')).toBeNull();
+    expect(getPlanDefinition('unknown' as PlanCode)).toBeNull();
+  });
+
+  it('returns readable labels for active, legacy and unexpected values', () => {
+    expect(getPlanLabel('basic')).toBe('Basic');
+    expect(getPlanLabel('legacy')).toBe('אירוע קיים — ללא חיוב');
+    expect(getPlanLabel('unknown' as PlanCode)).toBe('לא ידוע');
   });
 
   it('grandfathers events created before monetization', () => {
