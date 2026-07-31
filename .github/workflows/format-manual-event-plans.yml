@@ -1,0 +1,53 @@
+name: Format manual event plans branch
+
+on:
+  push:
+    branches:
+      - feature/manual-event-plans
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ !contains(github.event.head_commit.message, '[formatted]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/manual-event-plans
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format changed files
+        run: >-
+          pnpm exec prettier --write
+          app/admin/layout.tsx
+          app/admin/plans/page.tsx
+          app/dashboard/layout.tsx
+          app/dashboard/page.tsx
+          app/page.tsx
+          app/pricing/page.tsx
+
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/admin/layout.tsx app/admin/plans/page.tsx app/dashboard/layout.tsx app/dashboard/page.tsx app/page.tsx app/pricing/page.tsx
+          if git diff --cached --quiet; then
+            echo "No formatting changes"
+            exit 0
+          fi
+          git commit -m "chore: format manual event plans [formatted]"
+          git push origin HEAD:feature/manual-event-plans
