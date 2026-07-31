@@ -22,7 +22,27 @@ describe('parseClientEnv', () => {
     expect(parseClientEnv(valid)).toEqual(valid);
   });
 
-  it('rejects a missing variable and names it', () => {
+  it('uses Vercel production URL when the explicit site URL is absent in Preview', () => {
+    expect(
+      parseClientEnv({
+        ...valid,
+        NEXT_PUBLIC_SITE_URL: undefined,
+        NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL: 'arrival-confirmations.vercel.app',
+      }).NEXT_PUBLIC_SITE_URL,
+    ).toBe('https://arrival-confirmations.vercel.app');
+  });
+
+  it('falls back to the current Vercel deployment URL', () => {
+    expect(
+      parseClientEnv({
+        ...valid,
+        NEXT_PUBLIC_SITE_URL: undefined,
+        NEXT_PUBLIC_VERCEL_URL: 'arrival-confirmations-git-qa-example.vercel.app',
+      }).NEXT_PUBLIC_SITE_URL,
+    ).toBe('https://arrival-confirmations-git-qa-example.vercel.app');
+  });
+
+  it('rejects a missing site URL when no Vercel fallback exists', () => {
     const call = () => parseClientEnv({ ...valid, NEXT_PUBLIC_SITE_URL: undefined });
     expect(call).toThrow(EnvValidationError);
     expect(call).toThrow(/NEXT_PUBLIC_SITE_URL/);

@@ -133,10 +133,26 @@ export default async function DashboardPage() {
                   <div className="border-border mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                     <Link
                       href={`/e/${event.public_id}`}
-                      className="text-primary rounded-sm text-sm underline underline-offset-4"
-                      dir="ltr"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      prefetch={false}
+                      aria-label={`פתיחת ההזמנה של ${event.title} בכרטיסייה חדשה`}
+                      className="text-primary inline-flex items-center gap-1.5 rounded-sm text-sm underline underline-offset-4"
                     >
-                      /e/{event.public_id}
+                      <span dir="ltr">/e/{event.public_id}</span>
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="size-3.5 shrink-0"
+                      >
+                        <path d="M14 3h7v7M10 14 21 3" />
+                        <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+                      </svg>
                     </Link>
                     <Link
                       href={`/dashboard/events/${event.id}`}
