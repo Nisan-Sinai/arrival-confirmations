@@ -1,6 +1,11 @@
 import 'server-only';
 
-import { getPlanDefinition, type LicenseStatus, type PaymentMethod, type PlanCode } from '@/app/_lib/plans';
+import {
+  getPlanDefinition,
+  type LicenseStatus,
+  type PaymentMethod,
+  type PlanCode,
+} from '@/app/_lib/plans';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import type { Json } from '@/types/database.types';
 
@@ -59,7 +64,7 @@ function isPaymentMethod(value: string | null): value is PaymentMethod {
   );
 }
 
-export function legacyEventLicense(eventId: string): EventLicenseSnapshot {
+function legacyEventLicense(eventId: string): EventLicenseSnapshot {
   return {
     eventId,
     plan: 'legacy',
@@ -115,7 +120,10 @@ export async function getEventLicenses(
 ): Promise<Map<string, EventLicenseSnapshot>> {
   const result = new Map<string, EventLicenseSnapshot>();
   for (const eventId of eventIds) {
-    result.set(eventId, fallback === 'trial' ? trialEventLicense(eventId) : legacyEventLicense(eventId));
+    result.set(
+      eventId,
+      fallback === 'trial' ? trialEventLicense(eventId) : legacyEventLicense(eventId),
+    );
   }
   if (eventIds.length === 0) return result;
 
@@ -148,7 +156,10 @@ export async function getEventLicense(
   fallback: 'legacy' | 'trial' = 'legacy',
 ): Promise<EventLicenseSnapshot> {
   const licenses = await getEventLicenses([eventId], fallback);
-  return licenses.get(eventId) ?? (fallback === 'trial' ? trialEventLicense(eventId) : legacyEventLicense(eventId));
+  return (
+    licenses.get(eventId) ??
+    (fallback === 'trial' ? trialEventLicense(eventId) : legacyEventLicense(eventId))
+  );
 }
 
 export async function recordEventLicense(input: {
@@ -181,17 +192,25 @@ export async function recordEventLicense(input: {
   if (error) throw new Error(`event license write failed: ${error.code}`);
 }
 
-export function attendeeLimitForLicense(license: EventLicenseSnapshot): number {
+function attendeeLimitForLicense(license: EventLicenseSnapshot): number {
   if (license.plan === 'legacy') return 5_000;
   return getPlanDefinition(license.plan)?.attendeeLimit ?? 0;
 }
 
-export function canAcceptRsvp(license: EventLicenseSnapshot, currentRsvpCount: number): boolean {
-  if (license.status === 'cancelled' || license.status === 'refunded' || license.status === 'pending_payment') {
+export function canAcceptRsvp(
+  license: EventLicenseSnapshot,
+  currentRsvpCount: number,
+  alreadyExists: boolean,
+): boolean {
+  if (
+    license.status === 'cancelled' ||
+    license.status === 'refunded' ||
+    license.status === 'pending_payment'
+  ) {
     return false;
   }
   if (license.status === 'active' && license.plan !== 'basic' && license.plan !== 'premium') {
     return false;
   }
-  return currentRsvpCount < attendeeLimitForLicense(license);
+  return alreadyExists || currentRsvpCount < attendeeLimitForLicense(license);
 }
