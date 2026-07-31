@@ -110,7 +110,9 @@ jobs:
         run: supabase db start
 
       - name: Export local database connection
-        run: supabase status -o env >> "$GITHUB_ENV"
+        run: |
+          eval "$(supabase status -o env)"
+          echo "DB_URL=$DB_URL" >> "$GITHUB_ENV"
 
       - name: Compare repository migrations with applied history
         run: pnpm check:schema-drift
