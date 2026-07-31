@@ -3,23 +3,11 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { signOutAction } from '@/app/actions/auth';
+import { PLATFORM_OWNER_EMAIL } from '@/app/_lib/platformAdmin';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
 import { createUserClient } from '@/lib/server/supabase';
 
-/**
- * The host area's shell (§13 of the design brief).
- *
- * A top bar rather than a sidebar. A sidebar is the right answer for a product with a
- * dozen destinations; this one has two — the event list and the event you are looking
- * at — and a permanent 240px rail to hold them would cost the table its width on a
- * laptop and fold into a drawer on a phone that nobody would open twice.
- *
- * The identity check here is a convenience, not the control. §4.4 requires every route
- * to check for itself and every page below still does, because a layout is not a
- * security boundary: Next.js does not re-run it for every navigation, and RLS is what
- * actually scopes the rows.
- */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = await createUserClient();
   const {
@@ -27,10 +15,12 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   } = await supabase.auth.getUser();
   if (user === null) redirect('/login');
 
+  const isPlatformOwner = user.email?.toLowerCase() === PLATFORM_OWNER_EMAIL;
+
   return (
     <>
       <header className="border-border/70 bg-background/85 sticky top-0 z-[--z-header] border-b backdrop-blur-md">
-        <Container width="wide" className="flex h-16 items-center justify-between gap-4">
+        <Container width="wide" className="flex min-h-16 items-center justify-between gap-3 py-2">
           <Link
             href="/dashboard"
             className="text-primary flex items-center gap-2.5 rounded-md font-[family-name:var(--font-display)] text-lg font-bold"
@@ -55,15 +45,21 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <span className="hidden sm:inline">אישורי הגעה</span>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* The address is the only reliable way to tell two accounts apart on a
-                shared machine, so it stays visible rather than hiding in a menu. */}
+          <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3">
             <span
-              className="text-muted-foreground hidden max-w-[16rem] truncate text-sm sm:inline"
+              className="text-muted-foreground hidden max-w-[14rem] truncate text-sm lg:inline"
               dir="ltr"
             >
               {user.email}
             </span>
+            {isPlatformOwner && (
+              <Link
+                href="/admin/plans"
+                className={buttonClass({ variant: 'outline', size: 'sm' })}
+              >
+                ניהול מסלולים
+              </Link>
+            )}
             <Link
               href="/dashboard/events/new"
               className={buttonClass({ size: 'sm', className: 'whitespace-nowrap' })}
