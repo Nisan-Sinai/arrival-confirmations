@@ -35,10 +35,7 @@ function migrationName(fileName: string): string | null {
 }
 
 async function main(): Promise<void> {
-  const url =
-    process.env.TEST_DATABASE_URL ||
-    process.env.SUPABASE_DB_URL ||
-    process.env.DB_URL;
+  const url = process.env.TEST_DATABASE_URL || process.env.SUPABASE_DB_URL || process.env.DB_URL;
   if (url === undefined || url === '') {
     console.error(
       'חסר URL למסד — יש להגדיר TEST_DATABASE_URL, SUPABASE_DB_URL או DB_URL כדי להשוות.',
