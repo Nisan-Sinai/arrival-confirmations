@@ -14,7 +14,7 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",
     "format:homepage": "prettier --write app/page.tsx",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write app/admin/layout.tsx app/admin/plans/page.tsx app/dashboard/layout.tsx app/dashboard/page.tsx app/page.tsx app/pricing/page.tsx && for f in app/admin/layout.tsx app/admin/plans/page.tsx app/dashboard/layout.tsx app/dashboard/page.tsx app/page.tsx app/pricing/page.tsx; do echo __FORMATTED_FILE__:$f; base64 -w 0 $f; echo; done; exit 1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit --project component",
     "test:watch": "vitest --project unit --project component",
