@@ -30,9 +30,7 @@ export class EnvValidationError extends Error {
 function asHttpsOrigin(hostOrUrl: string | undefined): string | undefined {
   if (hostOrUrl === undefined || hostOrUrl.trim() === '') return undefined;
   const value = hostOrUrl.trim();
-  return value.startsWith('http://') || value.startsWith('https://')
-    ? value
-    : `https://${value}`;
+  return value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
 }
 
 /**
@@ -69,7 +67,6 @@ export const clientEnv: ClientEnv = parseClientEnv({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-  NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL:
-    process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
+  NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL: process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
   NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
 });
