@@ -21,6 +21,7 @@ export function SiteHeader({
       <Container className="flex min-h-16 items-center justify-between gap-3 py-2 sm:min-h-18">
         <Link
           href="/"
+          aria-label="דף הבית — אישורי הגעה"
           className="text-primary flex items-center gap-2.5 rounded-md font-[family-name:var(--font-display)] text-lg font-bold sm:text-xl"
         >
           <span
@@ -41,7 +42,7 @@ export function SiteHeader({
               <path d="M12 8V4M9.5 5.5 12 4l2.5 1.5" />
             </svg>
           </span>
-          <span className="hidden xs:inline">אישורי הגעה</span>
+          <span className="hidden sm:inline">אישורי הגעה</span>
         </Link>
 
         {!minimal && (
