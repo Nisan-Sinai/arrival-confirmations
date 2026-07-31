@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { PLAN_CATALOG, formatPlanPrice } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardBody, CardTitle } from '@/components/ui/card';
 import { appConfig } from '@/config/event.config';
 import { cn } from '@/lib/utils';
 
@@ -33,14 +33,16 @@ export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
           )}
 
           <div>
-            <p className="text-accent-strong text-sm font-semibold">{plan.name}</p>
+            <CardTitle as="h3" className="text-accent-strong text-sm">
+              {plan.name}
+            </CardTitle>
             <p className="text-primary mt-3 font-[family-name:var(--font-display)] text-4xl font-bold">
               {formatPlanPrice(plan.priceAgorot)}
             </p>
             <p className="text-muted-foreground mt-1 text-sm">
               {plan.code === 'trial' ? 'ללא כרטיס אשראי' : 'תשלום חד-פעמי לאירוע'}
             </p>
-            <p className="text-foreground mt-5 leading-relaxed">{plan.description}</p>
+            <CardBody className="text-foreground mt-5">{plan.description}</CardBody>
           </div>
 
           <ul className="text-muted-foreground mt-6 flex-1 space-y-3 text-sm">
