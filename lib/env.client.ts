@@ -27,8 +27,33 @@ export class EnvValidationError extends Error {
   }
 }
 
+function asHttpsOrigin(hostOrUrl: string | undefined): string | undefined {
+  if (hostOrUrl === undefined || hostOrUrl.trim() === '') return undefined;
+  const value = hostOrUrl.trim();
+  return value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
+}
+
+/**
+ * Vercel Preview deployments have their own generated URL, while canonical metadata
+ * should continue to point at production. When NEXT_PUBLIC_SITE_URL is not explicitly
+ * copied to the Preview environment, Vercel exposes the production project URL (and,
+ * as a final fallback, the current deployment URL) through framework-prefixed system
+ * variables. Using them here keeps Preview builds from failing only because this one
+ * public URL was scoped to Production in the dashboard.
+ */
+function resolveSiteUrl(source: Record<string, string | undefined>): string | undefined {
+  return (
+    asHttpsOrigin(source.NEXT_PUBLIC_SITE_URL) ??
+    asHttpsOrigin(source.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) ??
+    asHttpsOrigin(source.NEXT_PUBLIC_VERCEL_URL)
+  );
+}
+
 export function parseClientEnv(source: Record<string, string | undefined>): ClientEnv {
-  const result = clientEnvSchema.safeParse(source);
+  const result = clientEnvSchema.safeParse({
+    ...source,
+    NEXT_PUBLIC_SITE_URL: resolveSiteUrl(source),
+  });
   if (!result.success) {
     throw new EnvValidationError(
       'client',
@@ -42,4 +67,7 @@ export const clientEnv: ClientEnv = parseClientEnv({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL:
+    process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
+  NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
 });
