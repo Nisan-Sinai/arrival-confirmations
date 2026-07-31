@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { updateEventLicenseAction } from '@/app/actions/manageLicense';
-import { getEventLicenses } from '@/app/_lib/eventLicenses';
+import { getEventLicenses, trialEventLicense } from '@/app/_lib/eventLicenses';
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
@@ -9,6 +9,7 @@ import {
   formatPlanPrice,
   getPlanDefinition,
   getPlanLabel,
+  isMonetizedEvent,
   type LicenseStatus,
 } from '@/app/_lib/plans';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
   const [{ data: events, error }, { data: usersData }] = await Promise.all([
     privileged
       .from('events')
-      .select('id, owner_user_id, title, event_date, contact_phone, public_id, is_active')
+      .select('id, owner_user_id, title, event_date, contact_phone, public_id, is_active, created_at')
       .order('created_at', { ascending: false }),
     privileged.auth.admin.listUsers({ page: 1, perPage: 1_000 }),
   ]);
@@ -68,6 +69,12 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
   );
   const eventRows = events ?? [];
   const licenses = await getEventLicenses(eventRows.map((event) => event.id));
+  for (const event of eventRows) {
+    const current = licenses.get(event.id);
+    if (current?.changedAt === null && isMonetizedEvent(event.created_at)) {
+      licenses.set(event.id, trialEventLicense(event.id));
+    }
+  }
 
   const filtered = eventRows.filter((event) => {
     if (query === '') return true;
