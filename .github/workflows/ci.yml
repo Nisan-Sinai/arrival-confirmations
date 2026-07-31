@@ -68,17 +68,6 @@ jobs:
       - name: Dead code and unused exports
         run: pnpm deadcode
 
-      # Catches a migration the database has run and the repository does not carry,
-      # which is unreproducible by definition. That is exactly how this project came to
-      # call `get_public_event_by_public_id` with no migration creating it — every
-      # other check passed, because they all ran against the live schema where the
-      # function existed. Needs a connection string, so it is skipped on a fork.
-      - name: Migration drift between the repo and the database
-        if: env.TEST_DATABASE_URL != ''
-        env:
-          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-        run: pnpm check:schema-drift
-
       - name: Secret scan over source and build output
         # Runs after the build on purpose: §4.5's browser-bundle grep has nothing to
         # inspect until .next exists.
@@ -89,6 +78,48 @@ jobs:
         # release that does not reach the vulnerable path. It is still reported.
         run: pnpm audit --audit-level high
         continue-on-error: true
+
+  migrations:
+    name: Migrations reproduce from scratch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # A fresh local Supabase database is safer and more deterministic than an
+      # optional remote connection string. Every migration is replayed in order, so a
+      # missing object or an invalid migration fails the pull request without secrets.
+      - uses: supabase/setup-cli@v2
+        with:
+          version: 2.101.0
+          github-token: ${{ github.token }}
+
+      - name: Initialize local Supabase configuration
+        run: supabase init
+
+      - name: Start clean database and apply every migration
+        run: supabase db start
+
+      - name: Export local database connection
+        run: |
+          eval "$(supabase status -o env)"
+          echo "DB_URL=$DB_URL" >> "$GITHUB_ENV"
+
+      - name: Compare repository migrations with applied history
+        run: pnpm check:schema-drift
+
+      - name: Stop local database
+        if: always()
+        run: supabase stop --no-backup
 
   e2e:
     name: End-to-end and accessibility
