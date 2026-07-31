@@ -1,0 +1,58 @@
+name: Update pricing E2E expectations
+
+on:
+  push:
+    branches:
+      - feature/manual-event-plans
+
+permissions:
+  contents: write
+
+jobs:
+  update-tests:
+    if: ${{ !contains(github.event.head_commit.message, '[e2e-updated]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/manual-event-plans
+
+      - name: Update expectations for paid plans
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('e2e/invitation.spec.ts')
+          text = path.read_text()
+          replacements = {
+              "await expect(page.getByRole('heading', { level: 1 })).toContainText('אישורי הגעה');":
+                  "await expect(page.getByRole('heading', { level: 1 })).toContainText('מנהלים את המוזמנים');",
+              "test('lists exactly the three pages that carry no personal data', async ({ request }) => {":
+                  "test('lists exactly the public pages that carry no personal data', async ({ request }) => {",
+              "expect(paths).toEqual(['/', '/privacy', '/accessibility']);":
+                  "expect(paths).toEqual(['/', '/pricing', '/privacy', '/accessibility']);",
+              "test('describes itself as a free web application', async ({ page }) => {":
+                  "test('describes its one-time paid plans', async ({ page }) => {",
+              "expect(app?.offers).toMatchObject({ price: '0', priceCurrency: 'ILS' });":
+                  "expect(app?.offers).toMatchObject([\n      { name: 'Basic', price: '99', priceCurrency: 'ILS' },\n      { name: 'Premium', price: '199', priceCurrency: 'ILS' },\n    ]);",
+          }
+
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'Missing expected text: {old}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+
+      - name: Format the test
+        run: npx prettier@3.9.6 --write e2e/invitation.spec.ts
+
+      - name: Commit updated expectations
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add e2e/invitation.spec.ts
+          git commit -m "test(e2e): align expectations with paid plans [e2e-updated]"
+          git push origin HEAD:feature/manual-event-plans
