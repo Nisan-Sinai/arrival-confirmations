@@ -41,11 +41,8 @@ jobs:
         # Frozen: a lockfile CI is allowed to update is a lockfile that proves nothing.
         run: pnpm install --frozen-lockfile
 
-      - name: Prettier diagnostic
-        run: |
-          pnpm exec prettier --write app/privacy/page.tsx
-          git diff -- app/privacy/page.tsx
-          exit 1
+      - name: Prettier
+        run: pnpm format:check
 
       - name: ESLint
         run: pnpm lint
