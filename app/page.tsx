@@ -107,7 +107,9 @@ export default function LandingPage() {
           <Container width="wide">
             <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="text-center lg:text-start">
-                <p className="text-eyebrow text-accent-strong font-semibold">אישורי הגעה לאירועים</p>
+                <p className="text-eyebrow text-accent-strong font-semibold">
+                  אישורי הגעה לאירועים
+                </p>
                 <h1 className="text-display text-primary mt-5 font-bold">
                   מנהלים את המוזמנים
                   <span className="text-accent-strong block">בלי לרדוף אחרי תשובות</span>
@@ -120,10 +122,7 @@ export default function LandingPage() {
                   <Link href="/signup" className={buttonClass({ size: 'lg' })}>
                     יצירת אירוע לבדיקה
                   </Link>
-                  <Link
-                    href="/pricing"
-                    className={buttonClass({ variant: 'outline', size: 'lg' })}
-                  >
+                  <Link href="/pricing" className={buttonClass({ variant: 'outline', size: 'lg' })}>
                     צפייה במסלולים
                   </Link>
                 </div>
@@ -182,7 +181,9 @@ export default function LandingPage() {
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">מסלולים</p>
-              <h2 className="text-h1 text-primary mt-3 font-bold">מתחילים בחינם, מפעילים כשמוכנים</h2>
+              <h2 className="text-h1 text-primary mt-3 font-bold">
+                מתחילים בחינם, מפעילים כשמוכנים
+              </h2>
               <p className="text-muted-foreground mt-4 leading-relaxed">
                 Basic ב-99 ₪ או Premium ב-199 ₪ — תשלום חד-פעמי לאירוע.
               </p>
@@ -196,7 +197,9 @@ export default function LandingPage() {
         <section className="py-16 sm:py-20">
           <Container>
             <div className="mx-auto max-w-3xl">
-              <p className="text-eyebrow text-accent-strong text-center font-semibold">שאלות נפוצות</p>
+              <p className="text-eyebrow text-accent-strong text-center font-semibold">
+                שאלות נפוצות
+              </p>
               <h2 className="text-h1 text-primary mt-3 text-center font-bold">לפני שמתחילים</h2>
               <div className="mt-9 space-y-3">
                 {FAQ.map((item) => (

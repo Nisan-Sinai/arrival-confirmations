@@ -57,7 +57,9 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
   const [{ data: events, error }, { data: usersData }] = await Promise.all([
     privileged
       .from('events')
-      .select('id, owner_user_id, title, event_date, contact_phone, public_id, is_active, created_at')
+      .select(
+        'id, owner_user_id, title, event_date, contact_phone, public_id, is_active, created_at',
+      )
       .order('created_at', { ascending: false }),
     privileged.auth.admin.listUsers({ page: 1, perPage: 1_000 }),
   ]);
@@ -78,7 +80,8 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
 
   const filtered = eventRows.filter((event) => {
     if (query === '') return true;
-    const ownerEmail = event.owner_user_id === null ? '' : ownerEmails.get(event.owner_user_id) ?? '';
+    const ownerEmail =
+      event.owner_user_id === null ? '' : (ownerEmails.get(event.owner_user_id) ?? '');
     return [event.id, event.public_id, event.title, event.contact_phone ?? '', ownerEmail]
       .join(' ')
       .toLowerCase()
@@ -93,8 +96,8 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
             <p className="text-eyebrow text-accent-strong font-semibold">ניהול ידני</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">מסלולים ותשלומים</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              לאחר קבלת תשלום בטלפון, ב-Bit או בהעברה, בוחרים מסלול ומפעילים אותו לאירוע.
-              כל שינוי נשמר ביומן פעולות בלתי מחיק.
+              לאחר קבלת תשלום בטלפון, ב-Bit או בהעברה, בוחרים מסלול ומפעילים אותו לאירוע. כל שינוי
+              נשמר ביומן פעולות בלתי מחיק.
             </p>
           </div>
           <Badge tone="outline">{eventRows.length} אירועים במערכת</Badge>
@@ -134,7 +137,7 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
               const ownerEmail =
                 event.owner_user_id === null
                   ? 'ללא בעלים'
-                  : ownerEmails.get(event.owner_user_id) ?? event.owner_user_id;
+                  : (ownerEmails.get(event.owner_user_id) ?? event.owner_user_id);
 
               return (
                 <li key={event.id}>
@@ -186,12 +189,19 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                       </div>
                     </dl>
 
-                    <form action={updateEventLicenseAction} className="mt-6 grid gap-4 lg:grid-cols-6">
+                    <form
+                      action={updateEventLicenseAction}
+                      className="mt-6 grid gap-4 lg:grid-cols-6"
+                    >
                       <input type="hidden" name="eventId" value={event.id} />
 
                       <label className="text-foreground text-sm font-medium">
                         מסלול
-                        <select name="plan" defaultValue={formPlan} className={`${fieldClass} mt-1.5`}>
+                        <select
+                          name="plan"
+                          defaultValue={formPlan}
+                          className={`${fieldClass} mt-1.5`}
+                        >
                           {PLAN_CATALOG.map((plan) => (
                             <option key={plan.code} value={plan.code}>
                               {plan.name} — {formatPlanPrice(plan.priceAgorot)}
@@ -207,13 +217,19 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                           defaultValue={currentStatus === 'legacy' ? 'active' : currentStatus}
                           className={`${fieldClass} mt-1.5`}
                         >
-                          {(['trial', 'pending_payment', 'active', 'cancelled', 'refunded'] as LicenseStatus[]).map(
-                            (status) => (
-                              <option key={status} value={status}>
-                                {statusLabel(status)}
-                              </option>
-                            ),
-                          )}
+                          {(
+                            [
+                              'trial',
+                              'pending_payment',
+                              'active',
+                              'cancelled',
+                              'refunded',
+                            ] as LicenseStatus[]
+                          ).map((status) => (
+                            <option key={status} value={status}>
+                              {statusLabel(status)}
+                            </option>
+                          ))}
                         </select>
                       </label>
 

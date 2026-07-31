@@ -22,8 +22,8 @@ export default function PricingPage() {
             <p className="text-eyebrow text-accent-strong font-semibold">מחיר פשוט וברור</p>
             <h1 className="text-display text-primary mt-4 font-bold">תשלום חד-פעמי לכל אירוע</h1>
             <p className="text-lead text-muted-foreground mt-5 leading-relaxed">
-              מתחילים בבדיקה חינמית. רק כשמחליטים לפרסם ולקבל אישורי הגעה אמיתיים בוחרים
-              מסלול ומשלמים בטלפון, ב-Bit או בהעברה.
+              מתחילים בבדיקה חינמית. רק כשמחליטים לפרסם ולקבל אישורי הגעה אמיתיים בוחרים מסלול
+              ומשלמים בטלפון, ב-Bit או בהעברה.
             </p>
           </div>
 

@@ -146,7 +146,8 @@ export default async function DashboardPage() {
                       <div className="flex gap-2">
                         <dt className="text-muted-foreground">מתי:</dt>
                         <dd className="text-foreground font-medium">
-                          יום {formatEventWeekday(event.event_date)}, {formatEventDate(event.event_date)}
+                          יום {formatEventWeekday(event.event_date)},{' '}
+                          {formatEventDate(event.event_date)}
                           <span className="text-muted-foreground font-normal">
                             {' · '}
                             {describeTimeUntilEvent(event.event_date)}
