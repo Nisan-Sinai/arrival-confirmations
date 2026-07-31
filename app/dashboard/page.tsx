@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { getEventLicenses } from '@/app/_lib/eventLicenses';
-import { getPlanLabel } from '@/app/_lib/plans';
+import { getEventLicenses, trialEventLicense } from '@/app/_lib/eventLicenses';
+import { getPlanLabel, isMonetizedEvent } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge, EmptyState } from '@/components/ui/feedback';
@@ -51,11 +51,18 @@ export default async function DashboardPage() {
 
   const { data: events } = await supabase
     .from('events')
-    .select('id, public_id, title, event_type, event_date, venue_name, is_active')
+    .select('id, public_id, title, event_type, event_date, venue_name, is_active, created_at')
     .order('event_date', { ascending: true });
 
   const rows = events ?? [];
   const licenses = await getEventLicenses(rows.map((event) => event.id));
+  for (const event of rows) {
+    const current = licenses.get(event.id);
+    if (current?.changedAt === null && isMonetizedEvent(event.created_at)) {
+      licenses.set(event.id, trialEventLicense(event.id));
+    }
+  }
+
   const whatsappUrl = `https://wa.me/${whatsappPhone(appConfig.supportPhone)}?text=${encodeURIComponent(
     'שלום ניסן, אני רוצה להפעיל מסלול לאירוע שיצרתי במערכת אישורי הגעה.',
   )}`;
