@@ -2,30 +2,45 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { getEventLicenses } from '@/app/_lib/eventLicenses';
+import { getPlanLabel } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
+import { appConfig } from '@/config/event.config';
 import { getEventTypePreset } from '@/config/eventTypes';
 import { describeTimeUntilEvent, formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { createUserClient } from '@/lib/server/supabase';
-
-/**
- * The host's event list (§8).
- *
- * Authorisation happens here, in the server render, not in a layout and not in
- * middleware alone — §4.4 is explicit that every route performs its own check,
- * because hiding a link is not access control. RLS is the third layer: even a bug
- * here returns nothing, since the policies scope every row to the caller.
- */
 
 export const metadata: Metadata = {
   title: 'האירועים שלי',
   robots: { index: false, follow: false },
 };
 
-// A host who just edited an event must see the edit, so nothing here is cached.
 export const dynamic = 'force-dynamic';
+
+function whatsappPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  return digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
+}
+
+function licenseTone(status: string): 'success' | 'warning' | 'danger' | 'gold' | 'neutral' {
+  if (status === 'active' || status === 'legacy') return 'success';
+  if (status === 'trial') return 'gold';
+  if (status === 'pending_payment') return 'warning';
+  if (status === 'cancelled' || status === 'refunded') return 'danger';
+  return 'neutral';
+}
+
+function licenseStatusLabel(status: string): string {
+  if (status === 'active') return 'פעיל';
+  if (status === 'trial') return 'בדיקה';
+  if (status === 'pending_payment') return 'ממתין לתשלום';
+  if (status === 'cancelled') return 'בוטל';
+  if (status === 'refunded') return 'הוחזר';
+  return 'פעיל ללא חיוב';
+}
 
 export default async function DashboardPage() {
   const supabase = await createUserClient();
@@ -34,14 +49,16 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (user === null) redirect('/login');
 
-  // No .eq('owner_user_id', ...) needed — the policy already restricts this to the
-  // caller's rows. Adding it would only hide a policy failure from the tests.
   const { data: events } = await supabase
     .from('events')
     .select('id, public_id, title, event_type, event_date, venue_name, is_active')
     .order('event_date', { ascending: true });
 
   const rows = events ?? [];
+  const licenses = await getEventLicenses(rows.map((event) => event.id));
+  const whatsappUrl = `https://wa.me/${whatsappPhone(appConfig.supportPhone)}?text=${encodeURIComponent(
+    'שלום ניסן, אני רוצה להפעיל מסלול לאירוע שיצרתי במערכת אישורי הגעה.',
+  )}`;
 
   return (
     <main id="main" className="flex-1 py-10 sm:py-14">
@@ -76,7 +93,7 @@ export default async function DashboardPage() {
               </svg>
             }
             title="עדיין אין לכם אירועים"
-            description="צרו את האירוע הראשון, וקבלו קישור פרטי מוכן לשליחה בוואטסאפ."
+            description="צרו את האירוע הראשון, עצבו אותו ובדקו עד 10 אישורי הגעה ללא תשלום."
             action={
               <Link href="/dashboard/events/new" className={buttonClass({ size: 'lg' })}>
                 יצירת האירוע הראשון
@@ -85,85 +102,119 @@ export default async function DashboardPage() {
           />
         ) : (
           <ul className="mt-10 grid gap-4 sm:grid-cols-2">
-            {rows.map((event) => (
-              <li key={event.id}>
-                <Card interactive padding="md" className="flex h-full flex-col">
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="text-h3 text-primary font-semibold">
-                      {/* The whole card lifts on hover, but only the title is the
-                          link: a card-wide anchor would swallow the invitation link
-                          nested inside it. */}
+            {rows.map((event) => {
+              const license = licenses.get(event.id);
+              const plan = license?.plan ?? 'legacy';
+              const status = license?.status ?? 'legacy';
+              const needsActivation = status === 'trial' || status === 'pending_payment';
+
+              return (
+                <li key={event.id}>
+                  <Card interactive padding="md" className="flex h-full flex-col">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-h3 text-primary font-semibold">
+                          <Link
+                            href={`/dashboard/events/${event.id}`}
+                            className="rounded-sm underline-offset-4 hover:underline"
+                          >
+                            {event.title}
+                          </Link>
+                        </h2>
+                        <p className="text-muted-foreground mt-1 text-sm">
+                          {getEventTypePreset(event.event_type).label}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge tone={event.is_active ? 'success' : 'warning'}>
+                          {event.is_active ? 'מפורסם' : 'טיוטה'}
+                        </Badge>
+                        <Badge tone={licenseTone(status)}>
+                          {getPlanLabel(plan)} · {licenseStatusLabel(status)}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <dl className="mt-5 space-y-1.5 text-sm">
+                      <div className="flex gap-2">
+                        <dt className="text-muted-foreground">מתי:</dt>
+                        <dd className="text-foreground font-medium">
+                          יום {formatEventWeekday(event.event_date)}, {formatEventDate(event.event_date)}
+                          <span className="text-muted-foreground font-normal">
+                            {' · '}
+                            {describeTimeUntilEvent(event.event_date)}
+                          </span>
+                        </dd>
+                      </div>
+                      <div className="flex gap-2">
+                        <dt className="text-muted-foreground">איפה:</dt>
+                        <dd className="text-foreground font-medium">{event.venue_name}</dd>
+                      </div>
+                    </dl>
+
+                    {needsActivation && (
+                      <div className="border-accent-strong/25 bg-warning-soft mt-5 rounded-xl border p-4 text-sm">
+                        <p className="text-accent-foreground font-semibold">
+                          {status === 'trial' ? 'האירוע במצב בדיקה' : 'ממתין להפעלת מסלול'}
+                        </p>
+                        <p className="text-muted-foreground mt-1 leading-relaxed">
+                          בדיקה חינמית מוגבלת ל-10 אישורי הגעה. להפעלה מלאה בחרו Basic או Premium
+                          וצרו קשר לתשלום.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Link
+                            href="/pricing"
+                            className={buttonClass({ variant: 'outline', size: 'sm' })}
+                          >
+                            השוואת מסלולים
+                          </Link>
+                          <a
+                            href={whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={buttonClass({ size: 'sm' })}
+                          >
+                            הפעלה ב-WhatsApp
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-border mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                      <Link
+                        href={`/e/${event.public_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        prefetch={false}
+                        aria-label={`פתיחת ההזמנה של ${event.title} בכרטיסייה חדשה`}
+                        className="text-primary inline-flex items-center gap-1.5 rounded-sm text-sm underline underline-offset-4"
+                      >
+                        <span dir="ltr">/e/{event.public_id}</span>
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="size-3.5 shrink-0"
+                        >
+                          <path d="M14 3h7v7M10 14 21 3" />
+                          <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+                        </svg>
+                      </Link>
                       <Link
                         href={`/dashboard/events/${event.id}`}
-                        className="rounded-sm underline-offset-4 hover:underline"
+                        className={buttonClass({ variant: 'outline', size: 'sm' })}
                       >
-                        {event.title}
+                        אישורי הגעה
                       </Link>
-                    </h2>
-                    {event.is_active ? (
-                      <Badge tone="success">מפורסם</Badge>
-                    ) : (
-                      <Badge tone="warning">טיוטה</Badge>
-                    )}
-                  </div>
-
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {getEventTypePreset(event.event_type).label}
-                  </p>
-
-                  <dl className="mt-5 space-y-1.5 text-sm">
-                    <div className="flex gap-2">
-                      <dt className="text-muted-foreground">מתי:</dt>
-                      <dd className="text-foreground font-medium">
-                        {/* Not the raw `2026-09-04` this used to print on an RTL page. */}
-                        יום {formatEventWeekday(event.event_date)},{' '}
-                        {formatEventDate(event.event_date)}
-                        <span className="text-muted-foreground font-normal">
-                          {' · '}
-                          {describeTimeUntilEvent(event.event_date)}
-                        </span>
-                      </dd>
                     </div>
-                    <div className="flex gap-2">
-                      <dt className="text-muted-foreground">איפה:</dt>
-                      <dd className="text-foreground font-medium">{event.venue_name}</dd>
-                    </div>
-                  </dl>
-
-                  <div className="border-border mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                    <Link
-                      href={`/e/${event.public_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      prefetch={false}
-                      aria-label={`פתיחת ההזמנה של ${event.title} בכרטיסייה חדשה`}
-                      className="text-primary inline-flex items-center gap-1.5 rounded-sm text-sm underline underline-offset-4"
-                    >
-                      <span dir="ltr">/e/{event.public_id}</span>
-                      <svg
-                        aria-hidden="true"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="size-3.5 shrink-0"
-                      >
-                        <path d="M14 3h7v7M10 14 21 3" />
-                        <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
-                      </svg>
-                    </Link>
-                    <Link
-                      href={`/dashboard/events/${event.id}`}
-                      className={buttonClass({ variant: 'outline', size: 'sm' })}
-                    >
-                      אישורי הגעה
-                    </Link>
-                  </div>
-                </Card>
-              </li>
-            ))}
+                  </Card>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Container>
