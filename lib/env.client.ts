@@ -30,7 +30,9 @@ export class EnvValidationError extends Error {
 function asHttpsOrigin(hostOrUrl: string | undefined): string | undefined {
   if (hostOrUrl === undefined || hostOrUrl.trim() === '') return undefined;
   const value = hostOrUrl.trim();
-  return value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
+  return value.startsWith('http://') || value.startsWith('https://')
+    ? value
+    : `https://${value}`;
 }
 
 /**
