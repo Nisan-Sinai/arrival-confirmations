@@ -10,6 +10,9 @@ export const LICENSE_STATUSES = [
 ] as const;
 export type LicenseStatus = (typeof LICENSE_STATUSES)[number];
 
+/** Existing events stay active without charge; events created after this point start in trial. */
+export const MONETIZATION_LAUNCH_AT = '2026-07-31T10:41:00.000Z' as const;
+
 export interface PlanDefinition {
   readonly code: Exclude<PlanCode, 'legacy'>;
   readonly name: string;
@@ -86,4 +89,8 @@ export function getPlanDefinition(code: PlanCode): PlanDefinition | null {
 export function getPlanLabel(code: PlanCode): string {
   if (code === 'legacy') return 'אירוע קיים — ללא חיוב';
   return getPlanDefinition(code)?.name ?? 'לא ידוע';
+}
+
+export function isMonetizedEvent(createdAt: string): boolean {
+  return createdAt >= MONETIZATION_LAUNCH_AT;
 }
