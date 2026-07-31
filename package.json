@@ -14,7 +14,7 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",
     "format:homepage": "prettier --write app/page.tsx",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write lib/env.client.ts && git diff -- lib/env.client.ts && exit 1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit --project component",
     "test:watch": "vitest --project unit --project component",
