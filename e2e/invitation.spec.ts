@@ -109,7 +109,7 @@ const hasHorizontalOverflow = (page: Page) =>
 test.describe('the landing page', () => {
   test('states the product and links to both legal pages', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('אישורי הגעה');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('מנהלים את המוזמנים');
     await expect(page.getByRole('link', { name: 'מדיניות פרטיות' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'הצהרת נגישות' })).toBeVisible();
   });
@@ -205,7 +205,7 @@ test.describe('the crawlable surface', () => {
     expect(body).toMatch(/Sitemap: https?:\/\/\S+\/sitemap\.xml/);
   });
 
-  test('lists exactly the three pages that carry no personal data', async ({ request }) => {
+  test('lists exactly the public pages that carry no personal data', async ({ request }) => {
     const response = await request.get('/sitemap.xml');
     const body = await response.text();
 
@@ -213,7 +213,7 @@ test.describe('the crawlable surface', () => {
     const paths = [...body.matchAll(/<loc>(?<url>[^<]+)<\/loc>/g)].map((match) =>
       new URL(match[1]!).pathname.replace(/(.)\/$/, '$1'),
     );
-    expect(paths).toEqual(['/', '/privacy', '/accessibility']);
+    expect(paths).toEqual(['/', '/pricing', '/privacy', '/accessibility']);
   });
 
   test('the landing page declares a canonical URL and a share card', async ({ page }) => {
@@ -230,13 +230,16 @@ test.describe('the crawlable surface', () => {
     );
   });
 
-  test('describes itself as a free web application', async ({ page }) => {
+  test('describes its one-time paid plans', async ({ page }) => {
     await page.goto('/');
     const raw = await page.locator('script[type="application/ld+json"]').innerText();
     const graph = (JSON.parse(raw) as { '@graph': Record<string, unknown>[] })['@graph'];
 
     const app = graph.find((node) => node['@type'] === 'WebApplication');
-    expect(app?.offers).toMatchObject({ price: '0', priceCurrency: 'ILS' });
+    expect(app?.offers).toMatchObject([
+      { name: 'Basic', price: '99', priceCurrency: 'ILS' },
+      { name: 'Premium', price: '199', priceCurrency: 'ILS' },
+    ]);
 
     /**
      * Google treats FAQ markup describing questions absent from the page as a
