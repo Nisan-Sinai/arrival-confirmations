@@ -3,22 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 
+import { canAcceptRsvp, getEventLicense } from '@/app/_lib/eventLicenses';
+import { isMonetizedEvent } from '@/app/_lib/plans';
 import { appConfig } from '@/config/event.config';
 import { UI_MESSAGES } from '@/config/messages';
 import { resolveClientIpHash } from '@/lib/server/ip';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import { hashIdentity, issueToken, TOKEN_PURPOSES } from '@/lib/server/tokens';
 import { parseRsvpSubmission, toFieldErrors } from '@/schemas/rsvp';
-
-/**
- * The Server Action behind the public RSVP form (§6.1, §6.2).
- *
- * It is a thin orchestrator on purpose. Everything that could go wrong in an
- * interesting way lives somewhere already tested: validation in `schemas/rsvp.ts`,
- * identity hashing in `lib/server/tokens.ts`, and the whole create-versus-update
- * decision inside `submit_rsvp`, where it is one transaction. This function's job is
- * to run §6.1's gate in the right order and to translate the result into Hebrew.
- */
 
 /** What the guest typed, echoed back verbatim so a rejection does not empty the form. */
 export interface RsvpFormValues {
@@ -37,22 +29,12 @@ export interface RsvpFormState {
   readonly status: 'idle' | 'success' | 'error';
   readonly message: string;
   readonly fieldErrors: Record<string, string>;
-  /**
-   * Present on every rejection.
-   *
-   * React resets an uncontrolled form once its action resolves, so before this a
-   * mistyped phone number cost the guest everything else they had entered — name,
-   * head counts, dietary note — with the error pointing at the one field they had got
-   * wrong. On the surface this product exists to serve, that is the difference between
-   * a correction and an abandonment.
-   */
   readonly values?: RsvpFormValues;
 }
 
 const RATE_LIMIT_PER_WINDOW = 5;
 const RATE_LIMIT_WINDOW_SECONDS = 300;
 
-/** Raw form text, never the parsed value: the guest must see what they typed. */
 const raw = (formData: FormData, key: string): string => {
   const value = formData.get(key);
   return typeof value === 'string' ? value : '';
@@ -72,7 +54,6 @@ function submittedValues(formData: FormData): RsvpFormValues {
   };
 }
 
-/** Success copy depends on the answer — "we'll see you there" is wrong for a decline. */
 function successMessage(status: string): string {
   if (status === 'attending') return UI_MESSAGES.rsvp.successAttending;
   if (status === 'not_attending') return UI_MESSAGES.rsvp.successNotAttending;
@@ -83,18 +64,12 @@ export async function submitRsvpAction(
   _previous: RsvpFormState,
   formData: FormData,
 ): Promise<RsvpFormState> {
-  // Captured before anything can reject: every early return below hands these back.
   const values = submittedValues(formData);
-
-  // Which event this submission belongs to. Carried in the form rather than resolved
-  // from 'the active event', which no longer exists — many events are live at once.
   const eventId = formData.get('eventId');
   if (typeof eventId !== 'string' || eventId === '') {
     return { status: 'error', message: UI_MESSAGES.errors.genericBody, fieldErrors: {}, values };
   }
 
-  // §6.1 step 1: re-validate on the server. The client already ran this schema; that
-  // run was a convenience and this one is the control.
   const parsed = parseRsvpSubmission({
     fullName: formData.get('fullName'),
     phone: formData.get('phone'),
@@ -118,23 +93,47 @@ export async function submitRsvpAction(
     };
   }
   const submission = parsed.data;
-
   const supabase = createPrivilegedClient();
 
-  // Re-read the event server-side rather than trusting the id from the form: an
-  // unpublished or unknown id must not reach submit_rsvp at all.
-  const { data: event } = await supabase
+  const { data: event, error: eventError } = await supabase
     .from('events')
-    .select('id')
+    .select('id, created_at')
     .eq('id', eventId)
     .eq('is_active', true)
     .maybeSingle();
-  if (event === null) {
+  if (eventError || event === null) {
     return { status: 'error', message: UI_MESSAGES.errors.genericBody, fieldErrors: {}, values };
   }
 
-  // §6.1 step 2: distributed rate limit, keyed on the resolved IP *and* the phone, so
-  // neither a single address nor a single number can be hammered independently.
+  const fallback = isMonetizedEvent(event.created_at) ? 'trial' : 'legacy';
+  const [license, countResult, existingResult] = await Promise.all([
+    getEventLicense(event.id, fallback),
+    supabase.from('rsvps').select('id', { count: 'exact', head: true }).eq('event_id', event.id),
+    supabase
+      .from('rsvps')
+      .select('id')
+      .eq('event_id', event.id)
+      .eq('phone_normalized', submission.phone)
+      .maybeSingle(),
+  ]);
+
+  if (countResult.error || existingResult.error) {
+    console.error('event plan check failed', {
+      countCode: countResult.error?.code,
+      existingCode: existingResult.error?.code,
+    });
+    return { status: 'error', message: UI_MESSAGES.rsvp.unknownError, fieldErrors: {}, values };
+  }
+
+  if (!canAcceptRsvp(license, countResult.count ?? 0, existingResult.data !== null)) {
+    return {
+      status: 'error',
+      message: 'האירוע אינו מקבל כרגע אישורי הגעה נוספים. יש לפנות לבעלי האירוע.',
+      fieldErrors: {},
+      values,
+    };
+  }
+
   const { hash: ipHash } = resolveClientIpHash(await headers());
   const bucket = `rsvp:${ipHash}:${hashIdentity(submission.phone, TOKEN_PURPOSES.rateLimit)}`;
 
@@ -148,12 +147,6 @@ export async function submitRsvpAction(
     return { status: 'error', message: UI_MESSAGES.rsvp.rateLimited, fieldErrors: {}, values };
   }
 
-  /**
-   * §6.3: the idempotency key. Derived from the submission rather than supplied by
-   * the browser, because a double-clicked button sends the identical body twice and
-   * that is exactly the case this has to collapse into one row. The fingerprint
-   * covers the answer itself, so a genuine later change is a different request.
-   */
   const fingerprint = hashIdentity(
     JSON.stringify([
       submission.phone,
@@ -168,9 +161,6 @@ export async function submitRsvpAction(
     `${event.id}:${submission.phone}:${fingerprint}`,
     TOKEN_PURPOSES.idempotency,
   );
-
-  // Minted here so the raw value never leaves the server: this submission is
-  // anonymous, so nothing is authorised to receive an edit credential (§6.4).
   const updateToken = issueToken(TOKEN_PURPOSES.update);
 
   const { data: result, error } = await supabase.rpc('submit_rsvp', {
@@ -197,8 +187,6 @@ export async function submitRsvpAction(
   });
 
   if (error) {
-    // §13: the database error may name columns and constraints. It is logged
-    // server-side by the platform; the guest gets a sentence they can act on.
     console.error('submit_rsvp failed', { code: error.code });
     return { status: 'error', message: UI_MESSAGES.rsvp.unknownError, fieldErrors: {}, values };
   }
@@ -212,9 +200,6 @@ export async function submitRsvpAction(
 
   return {
     status: 'success',
-    // 'accepted' is what §6.4 returns to an unauthenticated caller whether the row
-    // was created or the phone was already taken. The guest sees one honest
-    // acknowledgement either way; only the host learns which it was.
     message: successMessage(submission.attendanceStatus),
     fieldErrors: {},
   };
