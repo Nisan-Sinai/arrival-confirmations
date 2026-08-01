@@ -74,10 +74,7 @@ export function PremiumWhatsAppCampaign({
     getProgressSnapshot,
     () => EMPTY_PROGRESS,
   );
-  const sentGuestIdList = useMemo(
-    () => parseStoredProgress(progressSnapshot),
-    [progressSnapshot],
-  );
+  const sentGuestIdList = useMemo(() => parseStoredProgress(progressSnapshot), [progressSnapshot]);
   const sentGuestIds = useMemo(() => new Set(sentGuestIdList), [sentGuestIdList]);
   const filteredGuests = useMemo(
     () => filterPremiumCampaignGuests(guests, scope, sentGuestIds, query),
