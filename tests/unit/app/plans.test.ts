@@ -55,4 +55,13 @@ describe('event plans', () => {
       ]),
     );
   });
+
+  it('describes Premium WhatsApp as personal, free and API-free', () => {
+    const premium = PLAN_CATALOG.find((plan) => plan.code === 'premium');
+    const features = premium?.features.join(' ') ?? '';
+    expect(features).toContain('WhatsApp האישי');
+    expect(features).toContain('ללא עלות הודעות');
+    expect(features).toContain('ללא צורך בחשבון WhatsApp Business');
+    expect(features).not.toContain('אוטומטי');
+  });
 });
