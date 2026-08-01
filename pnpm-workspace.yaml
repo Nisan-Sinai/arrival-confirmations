@@ -8,8 +8,9 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 # Security overrides for transitive dependencies that direct dependencies do not
-# expose yet. Keep each override on the smallest compatible maintenance line and
-# verify it with `pnpm audit`, the production build and the complete CI suite.
+# expose yet. Each override stays on the smallest compatible maintenance line:
+# Next.js -> sharp, ESLint/minimatch -> brace-expansion, and Stryker -> qs.
+# Verify every change with `pnpm audit`, the production build and the complete CI suite.
 overrides:
   postcss: '^8.5.18'
   'next>sharp': '0.35.3'
