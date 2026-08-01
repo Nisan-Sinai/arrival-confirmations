@@ -7,27 +7,10 @@ onlyBuiltDependencies:
   - sharp
   - unrs-resolver
 
-# Transitive advisories that the direct dependencies cannot resolve on their own.
-#
-# `pnpm audit` reported four high findings, all of them reached through `next` or
-# `eslint` rather than through anything this project imports. Only one is both fixable
-# and safe to fix here:
-#
-#   postcss — Next.js bundles 8.4.31, which carries two sourceMappingURL advisories
-#   (arbitrary .map file disclosure). The fix is a patch inside the same major, and
-#   Tailwind and Vite already resolve 8.5.x independently, so pinning the floor simply
-#   brings Next's copy up to the version the rest of the tree is on.
-#
-# Deliberately NOT overridden, with the reasoning recorded rather than left implicit:
-#
-#   sharp (<0.35.0, via next) — libvips CVEs that require processing an
-#   attacker-supplied image. This application accepts no uploads and renders no
-#   `next/image`, so the vulnerable path is not reachable. Overriding a native module
-#   that Next pins is a real risk of breaking the build for no gain here.
-#
-#   brace-expansion (<=5.0.7, via eslint → minimatch@3) — a DoS in a linter, reachable
-#   only by whoever is already running the linter on their own machine. The patched
-#   line is 5.x and minimatch@3 depends on 1.x, so this cannot be fixed without
-#   replacing ESLint's own dependency tree.
+# Security overrides for transitive dependencies that direct dependencies do not
+# expose yet. Keep each override on the smallest compatible maintenance line and
+# verify it with `pnpm audit`, the production build and the complete CI suite.
 overrides:
   postcss: '^8.5.18'
+  'next>sharp': '0.35.3'
+  'brace-expansion@<1.1.17': '1.1.17'
