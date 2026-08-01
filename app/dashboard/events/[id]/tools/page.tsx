@@ -9,6 +9,8 @@ import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Container } from '@/components/ui/layout';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
+import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
+import { resolveRequestOrigin } from '@/lib/server/origin';
 import { createUserClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
@@ -20,14 +22,13 @@ export const dynamic = 'force-dynamic';
 
 interface EventToolsRow {
   readonly id: string;
+  readonly public_id: string;
   readonly title: string;
   readonly created_at: string;
   readonly brand_primary_color: string;
   readonly brand_accent_color: string;
   readonly brand_logo_url: string | null;
   readonly invitation_style: string;
-  readonly whatsapp_template_name: string;
-  readonly whatsapp_language_code: string;
 }
 
 interface GuestToolsRow {
@@ -37,6 +38,11 @@ interface GuestToolsRow {
   readonly party_size: number;
   readonly table_name: string | null;
   readonly seat_number: string | null;
+}
+
+interface RsvpToolsRow {
+  readonly guest_id: string | null;
+  readonly attendance_status: Exclude<PremiumAttendanceStatus, null>;
 }
 
 export default async function EventToolsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -51,7 +57,7 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
   const { data: rawEvent } = await db
     .from('events')
     .select(
-      'id, title, created_at, brand_primary_color, brand_accent_color, brand_logo_url, invitation_style, whatsapp_template_name, whatsapp_language_code',
+      'id, public_id, title, created_at, brand_primary_color, brand_accent_color, brand_logo_url, invitation_style',
     )
     .eq('id', id)
     .maybeSingle();
@@ -65,18 +71,22 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
   const enabled =
     license.plan === 'legacy' || (license.plan === 'premium' && license.status === 'active');
 
-  const [{ data: rawGuests }, { data: rawMessages }] = await Promise.all([
+  const [{ data: rawGuests }, { data: rawRsvps }] = await Promise.all([
     db
       .from('guests')
       .select('id, full_name, phone, party_size, table_name, seat_number')
       .eq('event_id', id)
       .eq('is_active', true)
       .order('full_name'),
-    db.from('event_messages').select('status').eq('event_id', id),
+    db.from('rsvps').select('guest_id, attendance_status').eq('event_id', id),
   ]);
 
   const guests = (rawGuests ?? []) as GuestToolsRow[];
-  const statuses = (rawMessages ?? []).map((row) => String((row as { status: string }).status));
+  const attendanceByGuest = new Map<string, PremiumAttendanceStatus>();
+  for (const rsvp of (rawRsvps ?? []) as RsvpToolsRow[]) {
+    if (rsvp.guest_id !== null) attendanceByGuest.set(rsvp.guest_id, rsvp.attendance_status);
+  }
+  const inviteUrl = `${await resolveRequestOrigin()}/e/${event.public_id}`;
 
   return (
     <main id="main" className="flex-1 py-10 sm:py-14">
@@ -104,8 +114,8 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
           <p className="text-eyebrow text-accent-strong font-semibold">Premium</p>
           <h1 className="text-h1 text-primary mt-2 font-bold">כלים מתקדמים · {event.title}</h1>
           <p className="text-muted-foreground mt-3 max-w-3xl leading-relaxed">
-            יבוא מוזמנים מ-Excel, מיתוג ההזמנה, ניהול הושבה ותזמון WhatsApp נמצאים במקום אחד
-            ומחוברים לנתוני האירוע האמיתיים.
+            יבוא מוזמנים מ-Excel, מרכז שליחה חכם מה-WhatsApp האישי, מעקב התקדמות, מיתוג מתקדם
+            וניהול הושבה — מחוברים לנתוני האירוע האמיתיים במקום אחד.
           </p>
         </div>
 
@@ -123,6 +133,8 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
           <div className="mt-8">
             <PremiumToolsPanel
               eventId={event.id}
+              eventTitle={event.title}
+              inviteUrl={inviteUrl}
               guests={guests.map((guest) => ({
                 id: guest.id,
                 fullName: guest.full_name,
@@ -130,23 +142,14 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
                 partySize: guest.party_size,
                 tableName: guest.table_name,
                 seatNumber: guest.seat_number,
+                attendanceStatus: attendanceByGuest.get(guest.id) ?? null,
               }))}
               branding={{
                 primaryColor: event.brand_primary_color,
                 accentColor: event.brand_accent_color,
                 logoUrl: event.brand_logo_url,
                 invitationStyle: event.invitation_style,
-                templateName: event.whatsapp_template_name,
-                languageCode: event.whatsapp_language_code,
               }}
-              pendingMessages={statuses.filter((status) => status === 'pending').length}
-              sentMessages={statuses.filter((status) => status === 'sent').length}
-              failedMessages={statuses.filter((status) => status === 'failed').length}
-              providerConfigured={
-                process.env.WHATSAPP_ACCESS_TOKEN !== undefined &&
-                process.env.WHATSAPP_PHONE_NUMBER_ID !== undefined &&
-                process.env.CRON_SECRET !== undefined
-              }
             />
           </div>
         )}
