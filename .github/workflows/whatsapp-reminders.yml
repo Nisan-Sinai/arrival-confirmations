@@ -1,25 +1,11 @@
-name: WhatsApp reminder dispatcher
+name: WhatsApp API dispatcher (disabled)
 
 on:
-  schedule:
-    - cron: '*/15 * * * *'
   workflow_dispatch:
 
-concurrency:
-  group: whatsapp-reminder-dispatcher
-  cancel-in-progress: false
-
 jobs:
-  dispatch:
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
-      - name: Process due WhatsApp messages
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          SITE_URL: https://arrival-confirmations.vercel.app
-        run: |
-          test -n "$CRON_SECRET" || { echo "CRON_SECRET is not configured"; exit 1; }
-          curl --fail --silent --show-error --retry 3 --retry-all-errors \
-            --header "Authorization: Bearer $CRON_SECRET" \
-            "$SITE_URL/api/cron/whatsapp-reminders"
+      - name: Explain current Premium delivery mode
+        run: echo "Automated WhatsApp sending is disabled. Premium messages are sent manually from the event owner's WhatsApp."
