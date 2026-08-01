@@ -83,6 +83,19 @@ describe('premium event tools', () => {
       logoUrl: null,
       invitationStyle: 'minimal',
     });
+    expect(
+      parsePublicBranding({
+        primary_color: '#010203',
+        accent_color: 42,
+        logo_url: null,
+        invitation_style: 42,
+      }),
+    ).toEqual({
+      primaryColor: '#010203',
+      accentColor: DEFAULT_EVENT_BRANDING.accentColor,
+      logoUrl: null,
+      invitationStyle: DEFAULT_EVENT_BRANDING.invitationStyle,
+    });
   });
 
   it('builds the Meta WhatsApp template payload', () => {
