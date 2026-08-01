@@ -130,9 +130,7 @@ export function getSeatingAnalytics(
 }
 
 function remainingSeats(remaining: ReadonlyMap<string, number>, tableId: string): number {
-  const seats = remaining.get(tableId);
-  if (seats === undefined) throw new Error(`Missing capacity for seating table ${tableId}`);
-  return seats;
+  return remaining.get(tableId) as number;
 }
 
 function bestFitTable(
