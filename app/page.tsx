@@ -3,9 +3,10 @@ import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Container } from '@/components/ui/layout';
+import { Container, Rule } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
+import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
 import { SITE_ORIGIN } from '@/lib/seo';
@@ -136,29 +137,61 @@ export default function LandingPage() {
                 </ul>
               </div>
 
-              <Card variant="ink" padding="lg" className="overflow-hidden">
-                <p className="text-accent text-sm font-semibold">מה קורה אחרי ששולחים את הקישור?</p>
-                <div className="mt-7 space-y-6">
-                  {[
-                    ['01', 'האורח פותח מה-WhatsApp', 'אין צורך בהרשמה או בהתקנת אפליקציה.'],
-                    ['02', 'ממלא אישור הגעה', 'שם, טלפון, מספר מגיעים והעדפות חשובות.'],
-                    ['03', 'התשובה מופיעה בדשבורד', 'הנתונים מתעדכנים מיד ומוכנים לסיכום ולייצוא.'],
-                  ].map(([number, title, body]) => (
-                    <div key={number} className="flex gap-4">
-                      <span className="border-accent/50 text-accent flex size-10 shrink-0 items-center justify-center rounded-full border text-sm font-bold">
-                        {number}
-                      </span>
-                      <div>
-                        <h2 className="font-semibold">{title}</h2>
-                        <p className="mt-1 text-sm leading-relaxed text-white/70">{body}</p>
-                      </div>
+              <div aria-hidden="true" className="animate-rise relative mx-auto w-full max-w-sm">
+                <div className="border-accent/60 bg-card shadow-lifted rotate-[-1.5deg] rounded-2xl border-2 p-2.5">
+                  <div className="border-accent/35 from-secondary/25 rounded-xl border bg-gradient-to-b via-white/90 to-white/90 px-6 py-9 text-center">
+                    <p className="text-muted-foreground text-xs">ב״ה</p>
+                    <p className="text-foreground mt-5 text-sm leading-relaxed">
+                      בשבח והודיה לה׳ יתברך
+                      <br />
+                      שמחים להזמינכם לחתונה של
+                    </p>
+                    <p className="text-primary mt-4 font-[family-name:var(--font-display)] text-3xl font-bold">
+                      חתונה
+                    </p>
+                    <Rule className="my-6" />
+                    <div className="text-primary flex justify-center gap-5 text-xs font-semibold">
+                      {[
+                        { k: 'תאריך', v: 'י״ד באלול' },
+                        { k: 'שעה', v: '19:00' },
+                        { k: 'מקום', v: 'אולמי הדר' },
+                      ].map((cell) => (
+                        <div key={cell.k}>
+                          <span className="text-muted-foreground block font-normal">{cell.k}</span>
+                          {cell.v}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                    <Rule className="my-6" />
+                    <div className="flex justify-center gap-2" dir="ltr">
+                      {[
+                        ['42', 'ימים'],
+                        ['06', 'שעות'],
+                        ['18', 'דקות'],
+                      ].map(([n, l]) => (
+                        <div
+                          key={l}
+                          className="border-accent/40 from-secondary/40 min-w-12 rounded-lg border bg-gradient-to-b to-white/60 py-1.5"
+                        >
+                          <span className="text-primary block font-[family-name:var(--font-display)] text-lg leading-none font-bold">
+                            {n}
+                          </span>
+                          <span className="text-muted-foreground text-[10px]">{l}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </Card>
+                <div className="border-border bg-card/85 shadow-raised absolute start-0 -bottom-5 rounded-xl border px-4 py-2.5 backdrop-blur-sm">
+                  <p className="text-muted-foreground text-[11px]">כך נראית ההזמנה</p>
+                  <p className="text-primary text-sm font-semibold">שנשלחת בוואטסאפ</p>
+                </div>
+              </div>
             </div>
           </Container>
         </section>
+
+        <RsvpFlowSteps />
 
         <section className="py-16 sm:py-20">
           <Container width="wide">
