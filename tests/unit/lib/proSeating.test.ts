@@ -106,7 +106,7 @@ describe('Pro seating', () => {
       [
         guest({ id: 'a', fullName: 'א', partySize: 3, seatingGroup: 'גדולה' }),
         guest({ id: 'b', fullName: 'ב', partySize: 3, seatingGroup: 'גדולה' }),
-        guest({ id: 'c', fullName: 'ג', partySize: 2, priority: 10 }),
+        guest({ id: 'c', fullName: 'ג', partySize: 4, priority: 10 }),
       ],
     );
 
