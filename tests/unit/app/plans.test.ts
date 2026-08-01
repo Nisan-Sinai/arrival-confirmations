@@ -43,8 +43,16 @@ describe('event plans', () => {
     expect(isMonetizedEvent(MONETIZATION_LAUNCH_AT)).toBe(true);
   });
 
-  it('labels unfinished Premium integrations honestly', () => {
+  it('publishes every completed Premium capability without coming-soon copy', () => {
     const premium = PLAN_CATALOG.find((plan) => plan.code === 'premium');
-    expect(premium?.features.filter((feature) => feature.includes('בקרוב'))).toHaveLength(3);
+    expect(premium?.features.some((feature) => feature.includes('בקרוב'))).toBe(false);
+    expect(premium?.features).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Excel'),
+        expect.stringContaining('WhatsApp'),
+        expect.stringContaining('מיתוג'),
+        expect.stringContaining('שולחנות'),
+      ]),
+    );
   });
 });
