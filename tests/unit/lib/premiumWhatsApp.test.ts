@@ -64,7 +64,9 @@ describe('Premium personal WhatsApp campaigns', () => {
 
   it('creates a direct WhatsApp URL only for a valid phone', () => {
     const url = buildWhatsAppSendUrl('050-1234567', 'שלום עולם');
-    expect(url).toBe('https://api.whatsapp.com/send?phone=972501234567&text=%D7%A9%D7%9C%D7%95%D7%9D%20%D7%A2%D7%95%D7%9C%D7%9D');
+    expect(url).toBe(
+      'https://api.whatsapp.com/send?phone=972501234567&text=%D7%A9%D7%9C%D7%95%D7%9D%20%D7%A2%D7%95%D7%9C%D7%9D',
+    );
     expect(buildWhatsAppSendUrl('invalid', 'שלום')).toBeNull();
   });
 
