@@ -1,0 +1,25 @@
+/home/runner/work/arrival-confirmations/arrival-confirmations/lib/guestImport.ts
+  statements: 102
+  branch: line 82 type=binary-expr counts=[9, 0]
+  branch: line 100 type=binary-expr counts=[1009, 0]
+  branch: line 101 type=binary-expr counts=[1009, 0]
+  branch: line 102 type=if counts=[0, 1009]
+  branch: line 102 type=binary-expr counts=[1009, 0]
+  branch: line 130 type=binary-expr counts=[6, 0]
+  branch: line 153 type=binary-expr counts=[175, 0]
+  branch: line 171 type=if counts=[6, 0]
+  branch: line 171 type=binary-expr counts=[6, 0]
+  branch: line 178 type=if counts=[8, 0]
+  branch: line 234 type=binary-expr counts=[36, 0]
+  branch: line 243 type=binary-expr counts=[16, 0]
+  branch: line 244 type=binary-expr counts=[18, 0]
+  branch: line 255 type=binary-expr counts=[6, 0]
+  branch: line 256 type=binary-expr counts=[36, 0]
+  branch: line 257 type=binary-expr counts=[36, 0]
+  branch: line 264 type=binary-expr counts=[16, 0]
+  branch: line 270 type=binary-expr counts=[36, 0]
+/home/runner/work/arrival-confirmations/arrival-confirmations/lib/phone.ts
+  branch: line 126 type=if counts=[8, 0]
+/home/runner/work/arrival-confirmations/arrival-confirmations/lib/premiumEventTools.ts
+  branch: line 82 type=cond-expr counts=[4, 0]
+  branch: line 84 type=cond-expr counts=[4, 0]
