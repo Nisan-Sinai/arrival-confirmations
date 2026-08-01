@@ -53,15 +53,15 @@ async function requireOwnedPremiumEvent(eventId: string): Promise<OwnedPremiumCo
     event.id,
     isMonetizedEvent(event.created_at) ? 'trial' : 'legacy',
   );
-  const enabled =
-    license.plan === 'legacy' || (license.plan === 'premium' && license.status === 'active');
+  const paidTools = license.plan === 'premium' || license.plan === 'pro';
+  const enabled = license.plan === 'legacy' || (paidTools && license.status === 'active');
   return enabled ? { db, event } : null;
 }
 
 function denied(): PremiumToolState {
   return {
     status: 'error',
-    message: 'הכלים המתקדמים זמינים באירוע Premium פעיל בלבד.',
+    message: 'הכלים המתקדמים זמינים באירוע Premium או Pro פעיל בלבד.',
   };
 }
 
