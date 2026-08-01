@@ -3,9 +3,7 @@
 import { useActionState } from 'react';
 
 import {
-  cancelPendingMessagesAction,
   importGuestsAction,
-  queueWhatsAppAction,
   saveBrandingAction,
   saveSeatingAction,
   type PremiumToolState,
@@ -14,7 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { PremiumWhatsAppCampaign } from '@/features/admin/PremiumWhatsAppCampaign';
 import { seatingSummary } from '@/lib/premiumEventTools';
+import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
 
 const INITIAL: PremiumToolState = { status: 'idle', message: '' };
 
@@ -25,6 +25,7 @@ export interface PremiumGuestRow {
   readonly partySize: number;
   readonly tableName: string | null;
   readonly seatNumber: string | null;
+  readonly attendanceStatus: PremiumAttendanceStatus;
 }
 
 export interface PremiumBrandingDefaults {
@@ -32,8 +33,6 @@ export interface PremiumBrandingDefaults {
   readonly accentColor: string;
   readonly logoUrl: string | null;
   readonly invitationStyle: string;
-  readonly templateName: string;
-  readonly languageCode: string;
 }
 
 function Result({ state }: { state: PremiumToolState }) {
@@ -54,20 +53,16 @@ function Result({ state }: { state: PremiumToolState }) {
 
 export function PremiumToolsPanel({
   eventId,
+  eventTitle,
+  inviteUrl,
   guests,
   branding,
-  pendingMessages,
-  sentMessages,
-  failedMessages,
-  providerConfigured,
 }: {
   eventId: string;
+  eventTitle: string;
+  inviteUrl: string;
   guests: readonly PremiumGuestRow[];
   branding: PremiumBrandingDefaults;
-  pendingMessages: number;
-  sentMessages: number;
-  failedMessages: number;
-  providerConfigured: boolean;
 }) {
   const [importState, importAction, importing] = useActionState(importGuestsAction, INITIAL);
   const [brandingState, brandingAction, savingBranding] = useActionState(
@@ -75,7 +70,6 @@ export function PremiumToolsPanel({
     INITIAL,
   );
   const [seatingState, seatingAction, savingSeating] = useActionState(saveSeatingAction, INITIAL);
-  const [messageState, messageAction, scheduling] = useActionState(queueWhatsAppAction, INITIAL);
   const tables = seatingSummary(guests);
 
   return (
@@ -112,6 +106,13 @@ export function PremiumToolsPanel({
           הורדת תבנית מוכנה ל-Excel
         </a>
       </Card>
+
+      <PremiumWhatsAppCampaign
+        eventId={eventId}
+        eventTitle={eventTitle}
+        inviteUrl={inviteUrl}
+        guests={guests}
+      />
 
       <Card padding="lg">
         <p className="text-eyebrow text-accent-strong font-semibold">עיצוב</p>
@@ -226,77 +227,6 @@ export function PremiumToolsPanel({
             <Result state={seatingState} />
           </form>
         )}
-      </Card>
-
-      <Card padding="lg">
-        <p className="text-eyebrow text-accent-strong font-semibold">אוטומציה</p>
-        <h2 className="text-h2 text-primary mt-2 font-bold">WhatsApp ותזכורות</h2>
-        <p className="text-muted-foreground mt-3 leading-relaxed">
-          יוצרים תור של הזמנות או תזכורות לכל המוזמנים, או רק למי שעדיין לא ענה. השליחה מתבצעת דרך
-          WhatsApp Cloud API מתבנית עסקית מאושרת.
-        </p>
-
-        <div className="mt-5 grid grid-cols-3 gap-3 text-center text-sm">
-          <div className="bg-secondary/35 rounded-xl p-3">
-            <span className="text-primary block text-2xl font-bold">{pendingMessages}</span>
-            ממתינות
-          </div>
-          <div className="bg-secondary/35 rounded-xl p-3">
-            <span className="text-primary block text-2xl font-bold">{sentMessages}</span>
-            נשלחו
-          </div>
-          <div className="bg-secondary/35 rounded-xl p-3">
-            <span className="text-primary block text-2xl font-bold">{failedMessages}</span>
-            נכשלו
-          </div>
-        </div>
-
-        {pendingMessages > 0 && (
-          <form action={cancelPendingMessagesAction} className="mt-4">
-            <input type="hidden" name="eventId" value={eventId} />
-            <Button type="submit" variant="outline">
-              ביטול כל ההודעות הממתינות
-            </Button>
-          </form>
-        )}
-
-        {!providerConfigured && (
-          <Alert tone="warning" className="mt-5">
-            מנגנון התזמון פעיל, אך כדי לשלוח בפועל יש להגדיר ב-Vercel את WHATSAPP_ACCESS_TOKEN,
-            WHATSAPP_PHONE_NUMBER_ID ו-CRON_SECRET.
-          </Alert>
-        )}
-
-        <form action={messageAction} className="mt-6 space-y-5">
-          <input type="hidden" name="eventId" value={eventId} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="סוג הודעה">
-              <Select name="messageKind" defaultValue="reminder">
-                <option value="invitation">הזמנה ראשונה</option>
-                <option value="reminder">תזכורת</option>
-              </Select>
-            </Field>
-            <Field label="נמענים">
-              <Select name="scope" defaultValue="unanswered">
-                <option value="unanswered">רק מי שלא ענה</option>
-                <option value="all">כל המוזמנים</option>
-              </Select>
-            </Field>
-          </div>
-          <Field label="שם תבנית מאושרת ב-Meta">
-            <Input name="templateName" dir="ltr" defaultValue={branding.templateName} required />
-          </Field>
-          <Field label="קוד שפה">
-            <Input name="languageCode" dir="ltr" defaultValue={branding.languageCode} required />
-          </Field>
-          <Field label="מועד שליחה" required>
-            <Input name="scheduledFor" type="datetime-local" required />
-          </Field>
-          <Button type="submit" disabled={scheduling || guests.length === 0}>
-            {scheduling ? 'מתזמן…' : 'יצירת תור שליחה'}
-          </Button>
-          <Result state={messageState} />
-        </form>
       </Card>
     </div>
   );
