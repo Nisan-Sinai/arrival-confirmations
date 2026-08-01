@@ -109,6 +109,15 @@ describe('guest spreadsheet import', () => {
     ]);
   });
 
+  it('handles empty delimited input, lone carriage returns and a trailing delimiter', () => {
+    expect(parseDelimitedText('')).toEqual([]);
+    expect(parseDelimitedText('a,b\rc,d')).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ]);
+    expect(parseDelimitedText('a,b,')).toEqual([['a', 'b', '']]);
+  });
+
   it('maps Hebrew and English columns, sides, defaults and optional values', () => {
     expect(
       rowsToImportedGuests([
@@ -169,6 +178,22 @@ describe('guest spreadsheet import', () => {
     ).toThrow('לא נמצאו');
   });
 
+  it('covers sparse required cells and rows containing only optional data', () => {
+    const missingName: string[] = [];
+    missingName[1] = '0501234567';
+    expect(() => rowsToImportedGuests([['name', 'phone'], missingName])).toThrow('בכל שורה');
+
+    const missingPhone: string[] = ['Guest'];
+    expect(() => rowsToImportedGuests([['name', 'phone'], missingPhone])).toThrow('בכל שורה');
+
+    expect(() =>
+      rowsToImportedGuests([
+        ['name', 'phone', 'notes'],
+        ['', '', 'optional data only'],
+      ]),
+    ).toThrow('לא נמצאו');
+  });
+
   it('enforces the 1,000-row import limit', () => {
     const rows = [
       ['name', 'phone'],
@@ -211,6 +236,17 @@ describe('guest spreadsheet import', () => {
       ['name', 'phone'],
       ['Test Guest', '0521234567'],
     ]);
+  });
+
+  it('fills XLSX column holes and an absent shared-string index with empty text', () => {
+    const sheet = `<?xml version="1.0"?><worksheet><sheetData>
+      <row><c r="A1" t="s"><v>99</v></c><c r="C1" t="inlineStr"><is><t>third</t></is></c></row>
+    </sheetData></worksheet>`;
+    const workbook = makeZip([
+      { name: 'xl/sharedStrings.xml', content: sharedStrings },
+      { name: 'xl/worksheets/sheet1.xml', content: sheet },
+    ]);
+    expect(parseXlsxRows(workbook)).toEqual([['', '', 'third']]);
   });
 
   it('imports UTF-8 BOM CSV and supports TSV and TXT extensions', () => {
