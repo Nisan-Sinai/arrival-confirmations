@@ -92,7 +92,7 @@ export function PremiumToolsPanel({
           <Field
             label="קובץ מוזמנים"
             required
-            hint={`עד ${attendeeLimit.toLocaleString('he-IL')} שורות ועד 5MB`}
+            hint={`עד 1,000 שורות בקובץ ועד 5MB · קיבולת המסלול: ${attendeeLimit.toLocaleString('he-IL')} מוזמנים`}
           >
             <Input name="guestFile" type="file" accept=".xlsx,.csv,.tsv,.txt" required />
           </Field>
