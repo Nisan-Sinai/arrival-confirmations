@@ -66,8 +66,9 @@ export interface AutoSeatingResult {
 }
 
 function cleanGroup(value: string | null): string | null {
-  const normalized = value?.trim();
-  return normalized === undefined || normalized === '' ? null : normalized;
+  if (value === null) return null;
+  const normalized = value.trim();
+  return normalized === '' ? null : normalized;
 }
 
 function sortedTables(tables: readonly ProSeatingTable[]): ProSeatingTable[] {
@@ -128,15 +129,21 @@ export function getSeatingAnalytics(
   };
 }
 
+function remainingSeats(remaining: ReadonlyMap<string, number>, tableId: string): number {
+  const seats = remaining.get(tableId);
+  if (seats === undefined) throw new Error(`Missing capacity for seating table ${tableId}`);
+  return seats;
+}
+
 function bestFitTable(
   tables: readonly ProSeatingTable[],
   remaining: ReadonlyMap<string, number>,
   people: number,
 ): ProSeatingTable | null {
-  const candidates = tables.filter((table) => (remaining.get(table.id) ?? 0) >= people);
+  const candidates = tables.filter((table) => remainingSeats(remaining, table.id) >= people);
   candidates.sort((left, right) => {
-    const leftAfter = (remaining.get(left.id) ?? 0) - people;
-    const rightAfter = (remaining.get(right.id) ?? 0) - people;
+    const leftAfter = remainingSeats(remaining, left.id) - people;
+    const rightAfter = remainingSeats(remaining, right.id) - people;
     return leftAfter - rightAfter || left.sortOrder - right.sortOrder;
   });
   return candidates[0] ?? null;
@@ -158,7 +165,7 @@ export function autoAssignGuests(
     const table = tableById.get(guest.tableId);
     if (table === undefined) continue;
     assignments.push({ guestId: guest.id, tableId: table.id, tableName: table.name });
-    remaining.set(table.id, (remaining.get(table.id) ?? 0) - guest.partySize);
+    remaining.set(table.id, remainingSeats(remaining, table.id) - guest.partySize);
   }
 
   const grouped = new Map<string, ProSeatingGuest[]>();
@@ -197,7 +204,10 @@ export function autoAssignGuests(
           tableName: wholeGroupTable.name,
         });
       }
-      remaining.set(wholeGroupTable.id, (remaining.get(wholeGroupTable.id) ?? 0) - groupPeople);
+      remaining.set(
+        wholeGroupTable.id,
+        remainingSeats(remaining, wholeGroupTable.id) - groupPeople,
+      );
       continue;
     }
 
@@ -209,7 +219,7 @@ export function autoAssignGuests(
         continue;
       }
       assignments.push({ guestId: guest.id, tableId: table.id, tableName: table.name });
-      remaining.set(table.id, (remaining.get(table.id) ?? 0) - guest.partySize);
+      remaining.set(table.id, remainingSeats(remaining, table.id) - guest.partySize);
       usedTables.add(table.id);
     }
     if (groupKey.startsWith('group:') && usedTables.size > 1) {
@@ -224,9 +234,11 @@ export function autoAssignGuests(
   };
 }
 
-function csvCell(value: string | number | boolean | null): string {
-  const text = value === null ? '' : String(value);
-  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+function csvCell(value: string | number | null): string {
+  if (value === null) return '';
+  const text = String(value);
+  if (!/[",\n\r]/.test(text)) return text;
+  return `"${text.replaceAll('"', '""')}"`;
 }
 
 export function buildSeatingCsv(
