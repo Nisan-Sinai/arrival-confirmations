@@ -52,10 +52,7 @@ function guest(
 
 describe('Pro seating', () => {
   it('calculates repeat occupancy, locked seats, unknown tables and name tie sorting', () => {
-    const sameOrderTables = [
-      table('table-b', 'ב', 5, 0),
-      table('table-a', 'א', 5, 0),
-    ];
+    const sameOrderTables = [table('table-b', 'ב', 5, 0), table('table-a', 'א', 5, 0)];
     const result = getSeatingAnalytics(sameOrderTables, [
       guest({
         id: 'a',
@@ -86,9 +83,10 @@ describe('Pro seating', () => {
   });
 
   it('detects over-capacity tables and clamps negative empty-seat values', () => {
-    const result = getSeatingAnalytics([table('small', 'קטן', 2, 0)], [
-      guest({ id: 'a', fullName: 'א', partySize: 3, tableId: 'small', tableName: 'קטן' }),
-    ]);
+    const result = getSeatingAnalytics(
+      [table('small', 'קטן', 2, 0)],
+      [guest({ id: 'a', fullName: 'א', partySize: 3, tableId: 'small', tableName: 'קטן' })],
+    );
 
     expect(result.emptySeats).toBe(0);
     expect(result.overCapacityTables).toHaveLength(1);
@@ -101,26 +99,29 @@ describe('Pro seating', () => {
   });
 
   it('preserves valid locks while safely regrouping null and stale locks', () => {
-    const result = autoAssignGuests([table('main', 'מרכזי', 10, 0)], [
-      guest({
-        id: 'valid-lock',
-        fullName: 'סבתא',
-        partySize: 2,
-        tableId: 'main',
-        tableName: 'מרכזי',
-        seatLocked: true,
-      }),
-      guest({
-        id: 'stale-lock',
-        fullName: 'דוד',
-        tableId: 'missing',
-        seatLocked: true,
-        seatingGroup: '   ',
-        familySide: 'צד א',
-      }),
-      guest({ id: 'null-lock', fullName: 'דודה', tableId: null, seatLocked: true }),
-      guest({ id: 'normal', fullName: 'חבר', seatingGroup: 'חברים' }),
-    ]);
+    const result = autoAssignGuests(
+      [table('main', 'מרכזי', 10, 0)],
+      [
+        guest({
+          id: 'valid-lock',
+          fullName: 'סבתא',
+          partySize: 2,
+          tableId: 'main',
+          tableName: 'מרכזי',
+          seatLocked: true,
+        }),
+        guest({
+          id: 'stale-lock',
+          fullName: 'דוד',
+          tableId: 'missing',
+          seatLocked: true,
+          seatingGroup: '   ',
+          familySide: 'צד א',
+        }),
+        guest({ id: 'null-lock', fullName: 'דודה', tableId: null, seatLocked: true }),
+        guest({ id: 'normal', fullName: 'חבר', seatingGroup: 'חברים' }),
+      ],
+    );
 
     expect(result.assignments).toHaveLength(4);
     expect(result.assignments.find((item) => item.guestId === 'valid-lock')).toMatchObject({
@@ -144,17 +145,20 @@ describe('Pro seating', () => {
   });
 
   it('orders independent groups by priority and then by total party size', () => {
-    const result = autoAssignGuests([table('main', 'מרכזי', 20, 0)], [
-      guest({ id: 'small', fullName: 'קטן', partySize: 1, seatingGroup: 'קטן' }),
-      guest({ id: 'big', fullName: 'גדול', partySize: 3, seatingGroup: 'גדול' }),
-      guest({
-        id: 'priority',
-        fullName: 'חשוב',
-        partySize: 1,
-        seatingGroup: 'חשובים',
-        priority: 10,
-      }),
-    ]);
+    const result = autoAssignGuests(
+      [table('main', 'מרכזי', 20, 0)],
+      [
+        guest({ id: 'small', fullName: 'קטן', partySize: 1, seatingGroup: 'קטן' }),
+        guest({ id: 'big', fullName: 'גדול', partySize: 3, seatingGroup: 'גדול' }),
+        guest({
+          id: 'priority',
+          fullName: 'חשוב',
+          partySize: 1,
+          seatingGroup: 'חשובים',
+          priority: 10,
+        }),
+      ],
+    );
 
     expect(result.assignments.map((item) => item.guestId)).toEqual(['priority', 'big', 'small']);
   });
@@ -221,10 +225,13 @@ describe('Pro seating', () => {
   });
 
   it('does not report a split when only part of a group can be seated', () => {
-    const result = autoAssignGuests([table('only', 'יחיד', 2, 0)], [
-      guest({ id: 'a', fullName: 'א', partySize: 2, seatingGroup: 'משפחה' }),
-      guest({ id: 'b', fullName: 'ב', partySize: 2, seatingGroup: 'משפחה' }),
-    ]);
+    const result = autoAssignGuests(
+      [table('only', 'יחיד', 2, 0)],
+      [
+        guest({ id: 'a', fullName: 'א', partySize: 2, seatingGroup: 'משפחה' }),
+        guest({ id: 'b', fullName: 'ב', partySize: 2, seatingGroup: 'משפחה' }),
+      ],
+    );
 
     expect(result.assignments).toHaveLength(1);
     expect(result.unassignedGuestIds).toHaveLength(1);
@@ -241,7 +248,10 @@ describe('Pro seating', () => {
   });
 
   it('exports all table and guest fallbacks in an Excel-compatible UTF-8 CSV', () => {
-    const csvTables = [table('with-zone', 'שולחן משפחה', 5, 0, 'משפחה'), table('no-zone', 'שולחן שקט', 5, 1)];
+    const csvTables = [
+      table('with-zone', 'שולחן משפחה', 5, 0, 'משפחה'),
+      table('no-zone', 'שולחן שקט', 5, 1),
+    ];
     const csv = buildSeatingCsv(
       [
         guest({
