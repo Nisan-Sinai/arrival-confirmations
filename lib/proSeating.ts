@@ -232,8 +232,7 @@ export function autoAssignGuests(
   };
 }
 
-function csvCell(value: string | number | null): string {
-  if (value === null) return '';
+function csvCell(value: string | number): string {
   const text = String(value);
   if (!/[",\n\r]/.test(text)) return text;
   return `"${text.replaceAll('"', '""')}"`;
