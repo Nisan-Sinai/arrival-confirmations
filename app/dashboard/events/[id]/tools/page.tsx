@@ -114,8 +114,8 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
           <p className="text-eyebrow text-accent-strong font-semibold">Premium</p>
           <h1 className="text-h1 text-primary mt-2 font-bold">כלים מתקדמים · {event.title}</h1>
           <p className="text-muted-foreground mt-3 max-w-3xl leading-relaxed">
-            יבוא מוזמנים מ-Excel, מרכז שליחה חכם מה-WhatsApp האישי, מעקב התקדמות, מיתוג מתקדם
-            וניהול הושבה — מחוברים לנתוני האירוע האמיתיים במקום אחד.
+            יבוא מוזמנים מ-Excel, מרכז שליחה חכם מה-WhatsApp האישי, מעקב התקדמות, מיתוג מתקדם וניהול
+            הושבה — מחוברים לנתוני האירוע האמיתיים במקום אחד.
           </p>
         </div>
 
