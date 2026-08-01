@@ -7,14 +7,7 @@ import { getEventLicense } from '@/app/_lib/eventLicenses';
 import { isMonetizedEvent } from '@/app/_lib/plans';
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
-import {
-  isHexColor,
-  isInvitationStyle,
-  isWhatsAppLanguageCode,
-  isWhatsAppTemplateName,
-  normalizeHttpsUrl,
-  parseScheduleDate,
-} from '@/lib/premiumEventTools';
+import { isHexColor, isInvitationStyle, normalizeHttpsUrl } from '@/lib/premiumEventTools';
 import { createUserClient } from '@/lib/server/supabase';
 
 export interface PremiumToolState {
@@ -228,99 +221,4 @@ export async function saveSeatingAction(
 
   revalidatePath(`/dashboard/events/${eventId}/tools`);
   return { status: 'success', message: 'מפת ההושבה נשמרה.' };
-}
-
-export async function queueWhatsAppAction(
-  _previous: PremiumToolState,
-  formData: FormData,
-): Promise<PremiumToolState> {
-  const eventId = text(formData, 'eventId');
-  const context = await requireOwnedPremiumEvent(eventId);
-  if (context === null) return denied();
-
-  const templateName = text(formData, 'templateName');
-  const languageCode = text(formData, 'languageCode');
-  const messageKind = text(formData, 'messageKind') === 'invitation' ? 'invitation' : 'reminder';
-  const scope = text(formData, 'scope');
-  const scheduled = parseScheduleDate(text(formData, 'scheduledFor'));
-
-  if (!isWhatsAppTemplateName(templateName)) {
-    return {
-      status: 'error',
-      message: 'שם תבנית WhatsApp יכול להכיל אותיות קטנות, מספרים וקו תחתון בלבד.',
-    };
-  }
-  if (!isWhatsAppLanguageCode(languageCode)) {
-    return { status: 'error', message: 'קוד השפה של תבנית WhatsApp אינו תקין.' };
-  }
-  if (scheduled === null) {
-    return { status: 'error', message: 'יש לבחור מועד תקין שאינו בעבר.' };
-  }
-
-  const [{ data: guests, error: guestsError }, { data: rsvps, error: rsvpError }] =
-    await Promise.all([
-      context.db
-        .from('guests')
-        .select('id, phone_normalized')
-        .eq('event_id', eventId)
-        .eq('is_active', true),
-      context.db.from('rsvps').select('phone_normalized').eq('event_id', eventId),
-    ]);
-  if (guestsError || rsvpError) return { status: 'error', message: 'טעינת המוזמנים נכשלה.' };
-
-  const answered = new Set(
-    (rsvps ?? []).map((row) => String((row as { phone_normalized: string }).phone_normalized)),
-  );
-  const recipients = (guests ?? []).filter((row) => {
-    const phone = String((row as { phone_normalized: string }).phone_normalized);
-    return scope !== 'unanswered' || !answered.has(phone);
-  });
-  if (recipients.length === 0) {
-    return { status: 'error', message: 'לא נמצאו מוזמנים מתאימים לשליחה.' };
-  }
-
-  const queueRows = recipients.map((row) => {
-    const guest = row as { id: string; phone_normalized: string };
-    return {
-      event_id: eventId,
-      guest_id: guest.id,
-      recipient_phone: guest.phone_normalized,
-      message_kind: messageKind,
-      template_name: templateName,
-      language_code: languageCode,
-      scheduled_for: scheduled.toISOString(),
-      status: 'pending',
-    };
-  });
-
-  const [{ error: queueError }, { error: eventError }] = await Promise.all([
-    context.db.from('event_messages').insert(queueRows),
-    context.db
-      .from('events')
-      .update({
-        whatsapp_template_name: templateName,
-        whatsapp_language_code: languageCode,
-      })
-      .eq('id', eventId),
-  ]);
-  if (queueError || eventError) return { status: 'error', message: 'יצירת תור ההודעות נכשלה.' };
-
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
-  return {
-    status: 'success',
-    message: `${recipients.length} הודעות נוספו לתור וישלחו במועד שנבחר.`,
-  };
-}
-
-export async function cancelPendingMessagesAction(formData: FormData): Promise<void> {
-  const eventId = text(formData, 'eventId');
-  const context = await requireOwnedPremiumEvent(eventId);
-  if (context === null) return;
-
-  await context.db
-    .from('event_messages')
-    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-    .eq('event_id', eventId)
-    .eq('status', 'pending');
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
 }
