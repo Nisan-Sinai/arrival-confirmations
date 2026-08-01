@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import {
+  cancelPendingMessagesAction,
   importGuestsAction,
   queueWhatsAppAction,
   saveBrandingAction,
@@ -249,6 +250,15 @@ export function PremiumToolsPanel({
             נכשלו
           </div>
         </div>
+
+        {pendingMessages > 0 && (
+          <form action={cancelPendingMessagesAction} className="mt-4">
+            <input type="hidden" name="eventId" value={eventId} />
+            <Button type="submit" variant="outline">
+              ביטול כל ההודעות הממתינות
+            </Button>
+          </form>
+        )}
 
         {!providerConfigured && (
           <Alert tone="warning" className="mt-5">
