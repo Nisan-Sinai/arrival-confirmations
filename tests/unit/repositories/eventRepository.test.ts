@@ -133,12 +133,13 @@ describe('getEventBrandingByPublicId', () => {
     );
   });
 
-  it('surfaces only the branding RPC error code', async () => {
+  it('keeps invitations available while the branding migration is rolling out', async () => {
     rpc.mockResolvedValue({
       data: null,
-      error: { code: 'PGRST301', message: 'secret database information' },
+      error: { code: 'PGRST202', message: 'function does not exist yet' },
     });
-    await expect(getEventBrandingByPublicId('abcdefghij12')).rejects.toThrow('PGRST301');
-    await expect(getEventBrandingByPublicId('abcdefghij12')).rejects.not.toThrow(/secret database/);
+    await expect(getEventBrandingByPublicId('abcdefghij12')).resolves.toEqual(
+      DEFAULT_EVENT_BRANDING,
+    );
   });
 });
