@@ -35,7 +35,8 @@ export function buildPremiumWhatsAppMessage({
   eventTitle: string;
   inviteUrl: string;
 }): string {
-  const opening = kind === 'invitation' ? `נשמח להזמין אותך ל${eventTitle}` : `תזכורת לגבי ${eventTitle}`;
+  const opening =
+    kind === 'invitation' ? `נשמח להזמין אותך ל${eventTitle}` : `תזכורת לגבי ${eventTitle}`;
 
   return [
     `שלום ${guestName} 👋`,
