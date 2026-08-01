@@ -1,36 +1,11 @@
-name: Temporary Prettier formatter
+name: WhatsApp API dispatcher (disabled)
 
 on:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
-  format-files:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Format changed files
-        run: |
-          pnpm exec prettier --write \
-            'app/dashboard/events/[id]/tools/page.tsx' \
-            features/admin/PremiumWhatsAppCampaign.tsx \
-            lib/premiumWhatsApp.ts \
-            tests/unit/lib/premiumWhatsApp.test.ts
-      - name: Collect formatted files
-        run: |
-          mkdir -p formatted/app/dashboard/events/'[id]'/tools
-          mkdir -p formatted/features/admin formatted/lib formatted/tests/unit/lib
-          cp 'app/dashboard/events/[id]/tools/page.tsx' 'formatted/app/dashboard/events/[id]/tools/page.tsx'
-          cp features/admin/PremiumWhatsAppCampaign.tsx formatted/features/admin/
-          cp lib/premiumWhatsApp.ts formatted/lib/
-          cp tests/unit/lib/premiumWhatsApp.test.ts formatted/tests/unit/lib/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: prettier-formatted-premium-files
-          path: formatted/
-          retention-days: 1
+      - name: Explain current Premium delivery mode
+        run: echo "Automated WhatsApp sending is disabled. Premium messages are sent manually from the event owner's WhatsApp."
