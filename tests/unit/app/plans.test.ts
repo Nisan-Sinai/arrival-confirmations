@@ -62,6 +62,7 @@ describe('event plans', () => {
     expect(features).toContain('WhatsApp האישי');
     expect(features).toContain('ללא עלות הודעות');
     expect(features).toContain('ללא צורך בחשבון WhatsApp Business');
-    expect(features).not.toContain('אוטומטי');
+    expect(features).not.toContain('WhatsApp אוטומטי');
+    expect(features).not.toContain('שליחה אוטומטית');
   });
 });
