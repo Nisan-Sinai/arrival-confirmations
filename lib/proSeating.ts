@@ -197,10 +197,7 @@ export function autoAssignGuests(
           tableName: wholeGroupTable.name,
         });
       }
-      remaining.set(
-        wholeGroupTable.id,
-        (remaining.get(wholeGroupTable.id) ?? 0) - groupPeople,
-      );
+      remaining.set(wholeGroupTable.id, (remaining.get(wholeGroupTable.id) ?? 0) - groupPeople);
       continue;
     }
 

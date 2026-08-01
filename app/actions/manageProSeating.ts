@@ -300,8 +300,7 @@ export async function autoSeatGuestsAction(
         seatNumber: typeof row['seat_number'] === 'string' ? row['seat_number'] : null,
         seatingGroup: typeof row['seating_group'] === 'string' ? row['seating_group'] : null,
         familySide: typeof row['family_side'] === 'string' ? row['family_side'] : null,
-        mealPreference:
-          typeof row['meal_preference'] === 'string' ? row['meal_preference'] : null,
+        mealPreference: typeof row['meal_preference'] === 'string' ? row['meal_preference'] : null,
         accessibilityNeeds:
           typeof row['accessibility_needs'] === 'string' ? row['accessibility_needs'] : null,
         priority: Number(row['seating_priority']),
@@ -372,7 +371,8 @@ export async function saveSeatingSnapshotAction(
   const context = await requireOwnedProEvent(eventId);
   if (context === null) return denied();
 
-  const label = boundedText(text(formData, 'snapshotLabel'), 120) ??
+  const label =
+    boundedText(text(formData, 'snapshotLabel'), 120) ??
     `סידור ${new Intl.DateTimeFormat('he-IL', { dateStyle: 'short', timeStyle: 'short' }).format(new Date())}`;
   const [{ data: tables, error: tablesError }, { data: guests, error: guestsError }] =
     await Promise.all([

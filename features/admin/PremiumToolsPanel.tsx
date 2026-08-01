@@ -89,7 +89,11 @@ export function PremiumToolsPanel({
 
         <form action={importAction} className="mt-6 space-y-4">
           <input type="hidden" name="eventId" value={eventId} />
-          <Field label="קובץ מוזמנים" required hint={`עד ${attendeeLimit.toLocaleString('he-IL')} שורות ועד 5MB`}>
+          <Field
+            label="קובץ מוזמנים"
+            required
+            hint={`עד ${attendeeLimit.toLocaleString('he-IL')} שורות ועד 5MB`}
+          >
             <Input name="guestFile" type="file" accept=".xlsx,.csv,.tsv,.txt" required />
           </Field>
           <Button type="submit" disabled={importing}>

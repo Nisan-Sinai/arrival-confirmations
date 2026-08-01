@@ -114,7 +114,11 @@ export function ProSeatingStudio({
             </p>
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
-            <a href={csvHref} download="סידור-הושבה.csv" className="border-border-strong text-primary rounded-xl border px-4 py-2 text-sm font-semibold">
+            <a
+              href={csvHref}
+              download="סידור-הושבה.csv"
+              className="border-border-strong text-primary rounded-xl border px-4 py-2 text-sm font-semibold"
+            >
               ייצוא ל-Excel
             </a>
             <button
@@ -218,7 +222,9 @@ export function ProSeatingStudio({
                   <div className="bg-secondary mt-3 h-2 overflow-hidden rounded-full">
                     <div
                       className="bg-primary h-full rounded-full"
-                      style={{ width: `${Math.min(100, (table.occupied / table.capacity) * 100)}%` }}
+                      style={{
+                        width: `${Math.min(100, (table.occupied / table.capacity) * 100)}%`,
+                      }}
                     />
                   </div>
                   <p className="text-muted-foreground mt-2 text-xs">
@@ -368,7 +374,8 @@ export function ProSeatingStudio({
                 </thead>
                 <tbody>
                   {visibleGuests.map((guest) => {
-                    const assignedTable = guest.tableId === null ? undefined : tableById.get(guest.tableId);
+                    const assignedTable =
+                      guest.tableId === null ? undefined : tableById.get(guest.tableId);
                     return (
                       <tr key={guest.id} className="border-border border-t align-top">
                         <td className="px-3 py-3 font-medium">
@@ -376,7 +383,9 @@ export function ProSeatingStudio({
                           <input type="hidden" name="guestId" value={guest.id} />
                           <p className="text-muted-foreground mt-1 text-xs">
                             {guest.familySide ?? 'ללא צד'}
-                            {assignedTable?.zone === undefined ? '' : ` · ${assignedTable.zone ?? 'ללא אזור'}`}
+                            {assignedTable?.zone === undefined
+                              ? ''
+                              : ` · ${assignedTable.zone ?? 'ללא אזור'}`}
                           </p>
                         </td>
                         <td className="px-3 py-3 tabular-nums">{guest.partySize}</td>

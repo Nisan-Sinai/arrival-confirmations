@@ -29,7 +29,9 @@ const tables: readonly ProSeatingTable[] = [
   },
 ];
 
-function guest(overrides: Partial<ProSeatingGuest> & Pick<ProSeatingGuest, 'id' | 'fullName'>): ProSeatingGuest {
+function guest(
+  overrides: Partial<ProSeatingGuest> & Pick<ProSeatingGuest, 'id' | 'fullName'>,
+): ProSeatingGuest {
   return {
     id: overrides.id,
     fullName: overrides.fullName,
@@ -88,7 +90,9 @@ describe('Pro seating', () => {
     expect(result.assignments.find((item) => item.guestId === 'locked')).toMatchObject({
       tableId: 'table-a',
     });
-    const grouped = result.assignments.filter((item) => item.guestId === 'g1' || item.guestId === 'g2');
+    const grouped = result.assignments.filter(
+      (item) => item.guestId === 'g1' || item.guestId === 'g2',
+    );
     expect(new Set(grouped.map((item) => item.tableId)).size).toBe(1);
     expect(result.unassignedGuestIds).toEqual([]);
   });
