@@ -245,7 +245,10 @@ describe('guest spreadsheet import', () => {
   it('handles the defensive missing-sheet read branch', () => {
     const workbook = makeZip([{ name: 'xl/worksheets/sheet1.xml', content: inlineSheet }]);
     const original = Map.prototype.get;
-    const spy = vi.spyOn(Map.prototype, 'get').mockImplementation(function (key) {
+    const spy = vi.spyOn(Map.prototype, 'get').mockImplementation(function <K, V>(
+      this: Map<K, V>,
+      key: K,
+    ): V | undefined {
       if (key === 'xl/worksheets/sheet1.xml') return undefined;
       return original.call(this, key);
     });

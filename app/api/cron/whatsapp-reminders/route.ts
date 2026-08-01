@@ -52,7 +52,7 @@ export async function GET(request: Request) {
   const graphVersion = process.env.WHATSAPP_GRAPH_VERSION ?? 'v23.0';
 
   for (const raw of data ?? []) {
-    const message = raw as DueMessageRow;
+    const message = raw as unknown as DueMessageRow;
     if (message.events === null || message.guests === null) {
       await db
         .from('event_messages')
