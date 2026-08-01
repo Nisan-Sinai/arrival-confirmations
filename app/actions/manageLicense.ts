@@ -20,7 +20,9 @@ function optionalText(value: FormDataEntryValue | null): string | null {
 }
 
 function planValue(value: FormDataEntryValue | null): Exclude<PlanCode, 'legacy'> | null {
-  return value === 'trial' || value === 'basic' || value === 'premium' ? value : null;
+  return value === 'trial' || value === 'basic' || value === 'premium' || value === 'pro'
+    ? value
+    : null;
 }
 
 function statusValue(value: FormDataEntryValue | null): LicenseStatus | null {
@@ -77,5 +79,6 @@ export async function updateEventLicenseAction(formData: FormData): Promise<void
   revalidatePath('/admin/plans');
   revalidatePath('/dashboard');
   revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/tools`);
   revalidatePath('/e', 'layout');
 }
