@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -20,16 +20,37 @@ const STATUS_LABELS: Record<Exclude<PremiumCampaignGuest['attendanceStatus'], nu
   not_attending: 'לא מגיע/ה',
   maybe: 'אולי',
 };
+const PROGRESS_CHANGE_EVENT = 'premium-whatsapp-progress-change';
+const EMPTY_PROGRESS = '[]';
 
-function readStoredProgress(storageKey: string): string[] {
+function subscribeToProgress(onStoreChange: () => void): () => void {
+  window.addEventListener('storage', onStoreChange);
+  window.addEventListener(PROGRESS_CHANGE_EVENT, onStoreChange);
+  return () => {
+    window.removeEventListener('storage', onStoreChange);
+    window.removeEventListener(PROGRESS_CHANGE_EVENT, onStoreChange);
+  };
+}
+
+function readProgressSnapshot(storageKey: string): string {
   try {
-    const value = window.localStorage.getItem(storageKey);
-    if (value === null) return [];
-    const parsed: unknown = JSON.parse(value);
+    return window.localStorage.getItem(storageKey) ?? EMPTY_PROGRESS;
+  } catch {
+    return EMPTY_PROGRESS;
+  }
+}
+
+function parseStoredProgress(snapshot: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(snapshot);
     return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
   } catch {
     return [];
   }
+}
+
+function announceProgressChange(): void {
+  window.dispatchEvent(new Event(PROGRESS_CHANGE_EVENT));
 }
 
 export function PremiumWhatsAppCampaign({
@@ -46,13 +67,17 @@ export function PremiumWhatsAppCampaign({
   const [kind, setKind] = useState<PremiumMessageKind>('invitation');
   const [scope, setScope] = useState<PremiumCampaignScope>('unanswered');
   const [query, setQuery] = useState('');
-  const [sentGuestIdList, setSentGuestIdList] = useState<string[]>([]);
   const storageKey = `premium-whatsapp-progress:${eventId}:${kind}`;
-
-  useEffect(() => {
-    setSentGuestIdList(readStoredProgress(storageKey));
-  }, [storageKey]);
-
+  const getProgressSnapshot = useCallback(() => readProgressSnapshot(storageKey), [storageKey]);
+  const progressSnapshot = useSyncExternalStore(
+    subscribeToProgress,
+    getProgressSnapshot,
+    () => EMPTY_PROGRESS,
+  );
+  const sentGuestIdList = useMemo(
+    () => parseStoredProgress(progressSnapshot),
+    [progressSnapshot],
+  );
   const sentGuestIds = useMemo(() => new Set(sentGuestIdList), [sentGuestIdList]);
   const filteredGuests = useMemo(
     () => filterPremiumCampaignGuests(guests, scope, sentGuestIds, query),
@@ -62,24 +87,21 @@ export function PremiumWhatsAppCampaign({
   const answeredCount = guests.length - unansweredCount;
 
   const markSent = (guestId: string) => {
-    setSentGuestIdList((current) => {
-      if (current.includes(guestId)) return current;
-      const next = [...current, guestId];
-      try {
-        window.localStorage.setItem(storageKey, JSON.stringify(next));
-      } catch {
-        // The campaign still works when storage is blocked; only remembered progress is unavailable.
-      }
-      return next;
-    });
+    if (sentGuestIds.has(guestId)) return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify([...sentGuestIdList, guestId]));
+      announceProgressChange();
+    } catch {
+      // The campaign still opens WhatsApp when browser storage is unavailable.
+    }
   };
 
   const resetProgress = () => {
-    setSentGuestIdList([]);
     try {
       window.localStorage.removeItem(storageKey);
+      announceProgressChange();
     } catch {
-      // See markSent: storage is an enhancement, not a requirement for sending.
+      // Storage is an enhancement, not a requirement for sending.
     }
   };
 
