@@ -1,17 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_EVENT_BRANDING } from '@/lib/premiumEventTools';
+
 /**
  * The public read path (§4.6).
  *
  * This module is the entire surface by which an anonymous visitor reaches event data,
- * and it had no test. The two behaviours below are both security properties rather
- * than conveniences:
- *
- *   - the shape check rejects a malformed id before a database round trip, so the
- *     endpoint cannot be used as a free query generator;
- *   - a missing event and an unpublished one both return null, because the caller
- *     renders the same 404 for either and distinguishing them would make the id space
- *     enumerable one probe at a time.
+ * and it had no test. The behaviours below are security properties rather than
+ * conveniences: malformed ids never reach the database, and unpublished records are
+ * indistinguishable from missing ones.
  */
 
 const rpc = vi.fn();
@@ -20,7 +17,9 @@ vi.mock('@/lib/server/supabase', () => ({
   createAnonymousClient: () => ({ rpc }),
 }));
 
-const { getEventByPublicId } = await import('@/repositories/eventRepository');
+const { getEventBrandingByPublicId, getEventByPublicId } = await import(
+  '@/repositories/eventRepository'
+);
 
 const event = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -70,17 +69,11 @@ describe('getEventByPublicId', () => {
     for (const [label, id] of malformed) {
       it(label, async () => {
         await expect(getEventByPublicId(id)).resolves.toBeNull();
-        // The point of the guard: no round trip at all.
         expect(rpc).not.toHaveBeenCalled();
       });
     }
   });
 
-  /**
-   * The composite type comes back with every field null when nothing matched, rather
-   * than as SQL NULL — so a bare null check on `data` would return an object full of
-   * nulls and the invitation page would render an empty card instead of a 404.
-   */
   it('treats an all-null composite as not found', async () => {
     rpc.mockResolvedValue({ data: { ...event, id: null }, error: null });
     await expect(getEventByPublicId('abcdefghij12')).resolves.toBeNull();
@@ -91,11 +84,6 @@ describe('getEventByPublicId', () => {
     await expect(getEventByPublicId('abcdefghij12')).resolves.toBeNull();
   });
 
-  /**
-   * §13: the Supabase error carries connection detail. The thrown message names the
-   * code and nothing else, so a stack trace reaching a log cannot leak the host or
-   * the credentials along with it.
-   */
   it('throws without repeating the driver’s message', async () => {
     rpc.mockResolvedValue({
       data: null,
@@ -104,5 +92,54 @@ describe('getEventByPublicId', () => {
 
     await expect(getEventByPublicId('abcdefghij12')).rejects.toThrow('PGRST202');
     await expect(getEventByPublicId('abcdefghij12')).rejects.not.toThrow(/secret-ref/);
+  });
+});
+
+describe('getEventBrandingByPublicId', () => {
+  beforeEach(() => {
+    rpc.mockReset();
+  });
+
+  it('rejects malformed ids without a database call', async () => {
+    await expect(getEventBrandingByPublicId('bad')).resolves.toEqual(DEFAULT_EVENT_BRANDING);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('returns the safe branding shape from the public RPC', async () => {
+    rpc.mockResolvedValue({
+      data: {
+        primary_color: '#112233',
+        accent_color: '#AABBCC',
+        logo_url: 'https://example.com/logo.png',
+        invitation_style: 'modern',
+      },
+      error: null,
+    });
+
+    await expect(getEventBrandingByPublicId('abcdefghij12')).resolves.toEqual({
+      primaryColor: '#112233',
+      accentColor: '#AABBCC',
+      logoUrl: 'https://example.com/logo.png',
+      invitationStyle: 'modern',
+    });
+    expect(rpc).toHaveBeenCalledWith('get_public_event_branding', {
+      p_public_id: 'abcdefghij12',
+    });
+  });
+
+  it('uses defaults when the RPC returns no branding', async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    await expect(getEventBrandingByPublicId('abcdefghij12')).resolves.toEqual(
+      DEFAULT_EVENT_BRANDING,
+    );
+  });
+
+  it('surfaces only the branding RPC error code', async () => {
+    rpc.mockResolvedValue({
+      data: null,
+      error: { code: 'PGRST301', message: 'secret database information' },
+    });
+    await expect(getEventBrandingByPublicId('abcdefghij12')).rejects.toThrow('PGRST301');
+    await expect(getEventBrandingByPublicId('abcdefghij12')).rejects.not.toThrow(/secret database/);
   });
 });
