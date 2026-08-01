@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
@@ -35,6 +37,7 @@ export function ShareInvitation({
   honoree: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const pathname = usePathname();
 
   // Clear the confirmation after a moment so the button does not sit on "copied"
   // for the rest of the session and stop looking like a control.
@@ -146,6 +149,13 @@ export function ShareInvitation({
           תצוגה מקדימה
           <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
         </a>
+
+        <Link
+          href={`${pathname}/tools`}
+          className={buttonClass({ variant: 'outline', size: 'sm' })}
+        >
+          מרכז Premium: שליחה חכמה, Excel, מיתוג והושבה
+        </Link>
       </div>
 
       {/* Announced only when it changes, so the confirmation reaches a screen reader

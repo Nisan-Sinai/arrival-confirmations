@@ -1,0 +1,11 @@
+name: WhatsApp API dispatcher (disabled)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain current Premium delivery mode
+        run: echo "Automated WhatsApp sending is disabled. Premium messages are sent manually from the event owner's WhatsApp."

@@ -1,10 +1,13 @@
+/* eslint-disable @next/next/no-img-element */
+import type { CSSProperties } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { getEventTypePreset } from '@/config/eventTypes';
 import { InvitationCard } from '@/features/invite/InvitationCard';
 import { RsvpForm } from '@/features/rsvp/RsvpForm';
-import { getEventByPublicId } from '@/repositories/eventRepository';
+import { brandingCssVariables } from '@/lib/premiumEventTools';
+import { getEventBrandingByPublicId, getEventByPublicId } from '@/repositories/eventRepository';
 
 /**
  * One guest's view of one invitation (§5, §7).
@@ -71,19 +74,57 @@ export async function generateMetadata({ params }: EventPageProps): Promise<Meta
 
 export default async function EventPage({ params }: EventPageProps) {
   const { publicId } = await params;
-  const event = await getEventByPublicId(publicId);
+  const [event, branding] = await Promise.all([
+    getEventByPublicId(publicId),
+    getEventBrandingByPublicId(publicId),
+  ]);
   if (event === null) notFound();
 
   // The event's own labels win over the type preset, so a host can rename a side
   // without the preset knowing anything about their family (§3).
   const preset = getEventTypePreset(event.event_type);
+  const style = {
+    ...brandingCssVariables(branding),
+    backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${branding.accentColor} 18%, transparent), transparent 42%)`,
+  } as CSSProperties;
+  const shellClass =
+    branding.invitationStyle === 'minimal'
+      ? 'border-transparent bg-transparent p-0'
+      : branding.invitationStyle === 'modern'
+        ? 'rounded-[2.5rem] border-2 bg-white/70 p-3 shadow-xl backdrop-blur-sm sm:p-5'
+        : 'rounded-3xl border-2 bg-white/55 p-3 shadow-lg backdrop-blur-sm sm:p-4';
 
   return (
     <main
       id="main"
-      className="from-secondary/35 relative flex flex-1 flex-col items-center gap-10 bg-gradient-to-b to-transparent px-3 py-8 sm:px-4 sm:py-16"
+      style={style}
+      data-invitation-style={branding.invitationStyle}
+      className="relative flex flex-1 flex-col items-center gap-10 px-3 py-8 sm:px-4 sm:py-16"
     >
-      <InvitationCard event={event} />
+      <section
+        className={`w-full max-w-3xl ${shellClass}`}
+        style={{ borderColor: branding.accentColor }}
+        aria-label="הזמנה ממותגת"
+      >
+        {branding.logoUrl !== null && (
+          <div className="mb-5 flex justify-center">
+            <img
+              src={branding.logoUrl}
+              alt="לוגו האירוע"
+              width={96}
+              height={96}
+              className="size-24 rounded-2xl object-contain shadow-sm"
+            />
+          </div>
+        )}
+        <div
+          className="mx-auto h-1 w-24 rounded-full"
+          style={{ backgroundColor: branding.primaryColor }}
+        />
+        <div className="mt-5">
+          <InvitationCard event={event} />
+        </div>
+      </section>
 
       {/* The form is the point of the page, so it is anchored and linked to from the
           card above rather than left to be found by scrolling. */}

@@ -1,5 +1,12 @@
 import 'server-only';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import {
+  DEFAULT_EVENT_BRANDING,
+  parsePublicBranding,
+  type EventBranding,
+} from '@/lib/premiumEventTools';
 import { createAnonymousClient } from '@/lib/server/supabase';
 import type { Database } from '@/types/database.types';
 
@@ -39,4 +46,21 @@ export async function getEventByPublicId(publicId: string): Promise<PublicEvent 
   // The composite comes back with every field null when nothing matched.
   if (data === null || data.id === null) return null;
   return data;
+}
+
+/**
+ * Fixed, public-safe branding for one published invitation.
+ *
+ * Branding is an optional enhancement, so deployments stay backwards-compatible
+ * while the accompanying database migration is being rolled out. If the RPC is not
+ * installed yet or Supabase cannot serve it temporarily, the invitation still opens
+ * with the stable default theme instead of turning a cosmetic feature into an outage.
+ */
+export async function getEventBrandingByPublicId(publicId: string): Promise<EventBranding> {
+  if (!/^[A-Za-z0-9_-]{10,32}$/.test(publicId)) return DEFAULT_EVENT_BRANDING;
+
+  const db = createAnonymousClient() as unknown as SupabaseClient;
+  const { data, error } = await db.rpc('get_public_event_branding', { p_public_id: publicId });
+  if (error) return DEFAULT_EVENT_BRANDING;
+  return parsePublicBranding(data);
 }

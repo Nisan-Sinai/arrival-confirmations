@@ -123,6 +123,7 @@ export function tryNormalizeIsraeliPhone(
   try {
     return { ok: true, value: normalizeIsraeliPhone(input) };
   } catch (error) {
+    /* v8 ignore else -- normalizeIsraeliPhone throws only PhoneNormalizationError */
     if (error instanceof PhoneNormalizationError) return { ok: false, reason: error.reason };
     /*
      * Anything else is a bug in the normaliser rather than a bad number, and it must
