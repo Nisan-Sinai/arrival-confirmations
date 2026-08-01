@@ -88,9 +88,9 @@ export function PremiumWhatsAppCampaign({
       <p className="text-eyebrow text-accent-strong font-semibold">בלעדי ל-Premium</p>
       <h2 className="text-h2 text-primary mt-2 font-bold">מרכז שליחה חכם ב-WhatsApp</h2>
       <p className="text-muted-foreground mt-3 leading-relaxed">
-        ההודעות נפתחות ב-WhatsApp הפרטי של בעל האירוע, עם שם המוזמן והקישור כבר בתוך ההודעה.
-        המערכת מסננת מי שכבר ענה, זוכרת למי שלחת ומאפשרת להמשיך בדיוק מהמקום שבו עצרת — ללא
-        חיבור API וללא עלות הודעות.
+        ההודעות נפתחות ב-WhatsApp הפרטי של בעל האירוע, עם שם המוזמן והקישור כבר בתוך ההודעה. המערכת
+        מסננת מי שכבר ענה, זוכרת למי שלחת ומאפשרת להמשיך בדיוק מהמקום שבו עצרת — ללא חיבור API וללא
+        עלות הודעות.
       </p>
 
       <Alert tone="info" className="mt-5">
