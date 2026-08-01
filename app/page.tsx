@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Container, Rule } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
+import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
 import { SITE_ORIGIN } from '@/lib/seo';
@@ -189,6 +190,8 @@ export default function LandingPage() {
             </div>
           </Container>
         </section>
+
+        <RsvpFlowSteps />
 
         <section className="py-16 sm:py-20">
           <Container width="wide">
