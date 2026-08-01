@@ -1,0 +1,2 @@
+Post-merge QA trigger for main commit 3f71f28023c8b1c8b2d65164ec859321dc2cf098.
+This inert file is not used by the application and exists only to trigger the full pull-request CI suite.
