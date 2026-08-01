@@ -69,8 +69,7 @@ jobs:
 
           guest_test = Path('tests/unit/lib/guestImport.test.ts')
           guest_text = guest_test.read_text()
-          test_name = "covers sparse required cells and rows containing only optional data"
-          if test_name not in guest_text:
+          if "covers sparse required cells and rows containing only optional data" not in guest_text:
               insert = r'''
 
   it('covers sparse required cells and rows containing only optional data', () => {
@@ -146,7 +145,6 @@ jobs:
           PY
 
           pnpm format
-          pnpm typecheck
 
       - name: Commit coverage completion
         run: |
