@@ -150,7 +150,10 @@ export function ShareInvitation({
           <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
         </a>
 
-        <Link href={`${pathname}/tools`} className={buttonClass({ variant: 'outline', size: 'sm' })}>
+        <Link
+          href={`${pathname}/tools`}
+          className={buttonClass({ variant: 'outline', size: 'sm' })}
+        >
           Excel, WhatsApp, מיתוג והושבה
         </Link>
       </div>

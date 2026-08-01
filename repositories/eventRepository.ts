@@ -2,7 +2,11 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { DEFAULT_EVENT_BRANDING, parsePublicBranding, type EventBranding } from '@/lib/premiumEventTools';
+import {
+  DEFAULT_EVENT_BRANDING,
+  parsePublicBranding,
+  type EventBranding,
+} from '@/lib/premiumEventTools';
 import { createAnonymousClient } from '@/lib/server/supabase';
 import type { Database } from '@/types/database.types';
 

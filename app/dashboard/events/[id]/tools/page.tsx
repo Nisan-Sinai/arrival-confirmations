@@ -58,7 +58,10 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
   if (rawEvent === null) notFound();
 
   const event = rawEvent as EventToolsRow;
-  const license = await getEventLicense(event.id, isMonetizedEvent(event.created_at) ? 'trial' : 'legacy');
+  const license = await getEventLicense(
+    event.id,
+    isMonetizedEvent(event.created_at) ? 'trial' : 'legacy',
+  );
   const enabled =
     license.plan === 'legacy' || (license.plan === 'premium' && license.status === 'active');
 
@@ -101,8 +104,8 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
           <p className="text-eyebrow text-accent-strong font-semibold">Premium</p>
           <h1 className="text-h1 text-primary mt-2 font-bold">כלים מתקדמים · {event.title}</h1>
           <p className="text-muted-foreground mt-3 max-w-3xl leading-relaxed">
-            יבוא מוזמנים מ-Excel, מיתוג ההזמנה, ניהול הושבה ותזמון WhatsApp נמצאים במקום
-            אחד ומחוברים לנתוני האירוע האמיתיים.
+            יבוא מוזמנים מ-Excel, מיתוג ההזמנה, ניהול הושבה ותזמון WhatsApp נמצאים במקום אחד
+            ומחוברים לנתוני האירוע האמיתיים.
           </p>
         </div>
 
@@ -110,8 +113,7 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
           <Card padding="lg" className="mt-8">
             <h2 className="text-h2 text-primary font-bold">נדרש מסלול Premium פעיל</h2>
             <p className="text-muted-foreground mt-3 leading-relaxed">
-              האירוע נשאר זמין לניהול אישורי הגעה. הכלים המתקדמים נפתחים לאחר הפעלת
-              Premium לאירוע.
+              האירוע נשאר זמין לניהול אישורי הגעה. הכלים המתקדמים נפתחים לאחר הפעלת Premium לאירוע.
             </p>
             <Link href="/pricing" className={`${buttonClass({ size: 'lg' })} mt-6`}>
               צפייה במסלולים

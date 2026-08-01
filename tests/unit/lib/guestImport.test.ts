@@ -155,10 +155,18 @@ describe('guest spreadsheet import', () => {
   it('reports empty files, missing headers, incomplete rows and files without guests', () => {
     expect(() => rowsToImportedGuests([])).toThrow('הקובץ ריק');
     expect(() => rowsToImportedGuests([['email']])).toThrow('שם וטלפון');
-    expect(() => rowsToImportedGuests([['name', 'phone'], ['Only name', '']])).toThrow(
-      'בכל שורה',
-    );
-    expect(() => rowsToImportedGuests([['name', 'phone'], ['', '']])).toThrow('לא נמצאו');
+    expect(() =>
+      rowsToImportedGuests([
+        ['name', 'phone'],
+        ['Only name', ''],
+      ]),
+    ).toThrow('בכל שורה');
+    expect(() =>
+      rowsToImportedGuests([
+        ['name', 'phone'],
+        ['', ''],
+      ]),
+    ).toThrow('לא נמצאו');
   });
 
   it('enforces the 1,000-row import limit', () => {

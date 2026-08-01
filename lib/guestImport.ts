@@ -73,7 +73,9 @@ function headerIndex(headers: readonly string[], key: HeaderKey): number {
   return headers.findIndex((header) => aliases.includes(normalizeHeader(header)));
 }
 
-export function rowsToImportedGuests(rows: readonly (readonly string[])[]): readonly ImportedGuest[] {
+export function rowsToImportedGuests(
+  rows: readonly (readonly string[])[],
+): readonly ImportedGuest[] {
   const nonEmpty = rows.filter((row) => row.some((cell) => cell.trim() !== ''));
   if (nonEmpty.length === 0) throw new GuestImportError('הקובץ ריק.');
 
@@ -243,7 +245,10 @@ function parseSharedStrings(xml: string | undefined): readonly string[] {
   });
 }
 
-function parseSheetRows(xml: string, sharedStrings: readonly string[]): readonly (readonly string[])[] {
+function parseSheetRows(
+  xml: string,
+  sharedStrings: readonly string[],
+): readonly (readonly string[])[] {
   const rows: string[][] = [];
   for (const rowMatch of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)) {
     const row: string[] = [];

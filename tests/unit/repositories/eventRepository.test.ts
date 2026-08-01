@@ -17,9 +17,8 @@ vi.mock('@/lib/server/supabase', () => ({
   createAnonymousClient: () => ({ rpc }),
 }));
 
-const { getEventBrandingByPublicId, getEventByPublicId } = await import(
-  '@/repositories/eventRepository'
-);
+const { getEventBrandingByPublicId, getEventByPublicId } =
+  await import('@/repositories/eventRepository');
 
 const event = {
   id: '11111111-1111-1111-1111-111111111111',

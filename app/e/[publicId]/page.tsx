@@ -117,7 +117,10 @@ export default async function EventPage({ params }: EventPageProps) {
             />
           </div>
         )}
-        <div className="mx-auto h-1 w-24 rounded-full" style={{ backgroundColor: branding.primaryColor }} />
+        <div
+          className="mx-auto h-1 w-24 rounded-full"
+          style={{ backgroundColor: branding.primaryColor }}
+        />
         <div className="mt-5">
           <InvitationCard event={event} />
         </div>

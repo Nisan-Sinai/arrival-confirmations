@@ -83,9 +83,8 @@ export function PremiumToolsPanel({
         <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
         <h2 className="text-h2 text-primary mt-2 font-bold">יבוא מ-Excel</h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          מעלים XLSX ישירות מ-Excel, או CSV/TSV. עמודות החובה הן שם וטלפון; אפשר לצרף
-          אימייל, צד, כמות, שולחן, מושב והערות. יבוא חוזר מעדכן לפי מספר הטלפון ולא יוצר
-          כפילויות.
+          מעלים XLSX ישירות מ-Excel, או CSV/TSV. עמודות החובה הן שם וטלפון; אפשר לצרף אימייל, צד,
+          כמות, שולחן, מושב והערות. יבוא חוזר מעדכן לפי מספר הטלפון ולא יוצר כפילויות.
         </p>
 
         <form action={importAction} className="mt-6 space-y-4">
@@ -158,14 +157,16 @@ export function PremiumToolsPanel({
         <p className="text-eyebrow text-accent-strong font-semibold">הושבה</p>
         <h2 className="text-h2 text-primary mt-2 font-bold">מפת שולחנות ומושבים</h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          משייכים לכל מוזמן שולחן ומושב. השינויים נשמרים יחד, ומתאימים גם לנתונים שיובאו
-          מהקובץ.
+          משייכים לכל מוזמן שולחן ומושב. השינויים נשמרים יחד, ומתאימים גם לנתונים שיובאו מהקובץ.
         </p>
 
         {tables.length > 0 && (
           <ul className="mt-5 flex flex-wrap gap-2 text-sm">
             {tables.map((table) => (
-              <li key={table.tableName} className="border-border bg-secondary/35 rounded-full border px-3 py-1.5">
+              <li
+                key={table.tableName}
+                className="border-border bg-secondary/35 rounded-full border px-3 py-1.5"
+              >
                 {table.tableName}: {table.seats}
               </li>
             ))}
@@ -230,8 +231,8 @@ export function PremiumToolsPanel({
         <p className="text-eyebrow text-accent-strong font-semibold">אוטומציה</p>
         <h2 className="text-h2 text-primary mt-2 font-bold">WhatsApp ותזכורות</h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          יוצרים תור של הזמנות או תזכורות לכל המוזמנים, או רק למי שעדיין לא ענה. השליחה
-          מתבצעת דרך WhatsApp Cloud API מתבנית עסקית מאושרת.
+          יוצרים תור של הזמנות או תזכורות לכל המוזמנים, או רק למי שעדיין לא ענה. השליחה מתבצעת דרך
+          WhatsApp Cloud API מתבנית עסקית מאושרת.
         </p>
 
         <div className="mt-5 grid grid-cols-3 gap-3 text-center text-sm">
@@ -251,8 +252,8 @@ export function PremiumToolsPanel({
 
         {!providerConfigured && (
           <Alert tone="warning" className="mt-5">
-            מנגנון התזמון פעיל, אך כדי לשלוח בפועל יש להגדיר ב-Vercel את
-            WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID ו-CRON_SECRET.
+            מנגנון התזמון פעיל, אך כדי לשלוח בפועל יש להגדיר ב-Vercel את WHATSAPP_ACCESS_TOKEN,
+            WHATSAPP_PHONE_NUMBER_ID ו-CRON_SECRET.
           </Alert>
         )}
 

@@ -56,7 +56,10 @@ async function requireOwnedPremiumEvent(eventId: string): Promise<OwnedPremiumCo
   if (data === null) return null;
 
   const event = data as OwnedEvent;
-  const license = await getEventLicense(event.id, isMonetizedEvent(event.created_at) ? 'trial' : 'legacy');
+  const license = await getEventLicense(
+    event.id,
+    isMonetizedEvent(event.created_at) ? 'trial' : 'legacy',
+  );
   const enabled =
     license.plan === 'legacy' || (license.plan === 'premium' && license.status === 'active');
   return enabled ? { db, event } : null;
@@ -204,7 +207,11 @@ export async function saveSeatingAction(
     const guestId = guestIds[index];
     const tableName = tableNames[index];
     const seatNumber = seatNumbers[index];
-    if (typeof guestId !== 'string' || typeof tableName !== 'string' || typeof seatNumber !== 'string') {
+    if (
+      typeof guestId !== 'string' ||
+      typeof tableName !== 'string' ||
+      typeof seatNumber !== 'string'
+    ) {
       return { status: 'error', message: 'נתוני ההושבה אינם תקינים.' };
     }
 
@@ -238,7 +245,10 @@ export async function queueWhatsAppAction(
   const scheduled = parseScheduleDate(text(formData, 'scheduledFor'));
 
   if (!isWhatsAppTemplateName(templateName)) {
-    return { status: 'error', message: 'שם תבנית WhatsApp יכול להכיל אותיות קטנות, מספרים וקו תחתון בלבד.' };
+    return {
+      status: 'error',
+      message: 'שם תבנית WhatsApp יכול להכיל אותיות קטנות, מספרים וקו תחתון בלבד.',
+    };
   }
   if (!isWhatsAppLanguageCode(languageCode)) {
     return { status: 'error', message: 'קוד השפה של תבנית WhatsApp אינו תקין.' };
@@ -247,14 +257,15 @@ export async function queueWhatsAppAction(
     return { status: 'error', message: 'יש לבחור מועד תקין שאינו בעבר.' };
   }
 
-  const [{ data: guests, error: guestsError }, { data: rsvps, error: rsvpError }] = await Promise.all([
-    context.db
-      .from('guests')
-      .select('id, phone_normalized')
-      .eq('event_id', eventId)
-      .eq('is_active', true),
-    context.db.from('rsvps').select('phone_normalized').eq('event_id', eventId),
-  ]);
+  const [{ data: guests, error: guestsError }, { data: rsvps, error: rsvpError }] =
+    await Promise.all([
+      context.db
+        .from('guests')
+        .select('id, phone_normalized')
+        .eq('event_id', eventId)
+        .eq('is_active', true),
+      context.db.from('rsvps').select('phone_normalized').eq('event_id', eventId),
+    ]);
   if (guestsError || rsvpError) return { status: 'error', message: 'טעינת המוזמנים נכשלה.' };
 
   const answered = new Set(

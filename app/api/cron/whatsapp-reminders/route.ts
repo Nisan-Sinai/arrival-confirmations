@@ -119,7 +119,8 @@ export async function GET(request: Request) {
         .from('event_messages')
         .update({
           status: 'failed',
-          error_message: sendError instanceof Error ? sendError.message.slice(0, 500) : 'send_failed',
+          error_message:
+            sendError instanceof Error ? sendError.message.slice(0, 500) : 'send_failed',
           updated_at: new Date().toISOString(),
         })
         .eq('id', message.id);
