@@ -1,4 +1,4 @@
-export const PLAN_CODES = ['trial', 'basic', 'premium', 'legacy'] as const;
+export const PLAN_CODES = ['trial', 'basic', 'premium', 'pro', 'legacy'] as const;
 export type PlanCode = (typeof PLAN_CODES)[number];
 
 export const LICENSE_STATUSES = [
@@ -52,7 +52,6 @@ export const PLAN_CATALOG: readonly PlanDefinition[] = [
     priceAgorot: 19_900,
     attendeeLimit: 1_000,
     description: 'מערכת מלאה לניהול חכם, עיצוב ושליחת הזמנות מהטלפון האישי.',
-    highlighted: true,
     features: [
       'כל מה שב-Basic',
       'עד 1,000 מוזמנים',
@@ -62,8 +61,29 @@ export const PLAN_CATALOG: readonly PlanDefinition[] = [
       'סינון אוטומטי של מי שעדיין לא ענה',
       'שמירת התקדמות נפרדת להזמנות ולתזכורות',
       'מיתוג מתקדם עם לוגו, צבעים וסגנונות',
-      'מפת שולחנות ומושבים',
+      'מפת שולחנות ומושבים בסיסית',
       'ללא עלות הודעות וללא צורך בחשבון WhatsApp Business',
+    ],
+  },
+  {
+    code: 'pro',
+    name: 'Pro',
+    priceAgorot: 34_900,
+    attendeeLimit: 2_500,
+    description: 'חבילת הפקה והושבה מתקדמת לאירועים גדולים, אולמות ומפיקים.',
+    highlighted: true,
+    features: [
+      'כל מה שב-Premium',
+      'עד 2,500 מוזמנים',
+      'סטודיו הושבה מתקדם עם שולחנות, אזורים, צורות וקיבולת',
+      'הושבה חכמה אוטומטית לפי קבוצות, צדדים וגודל משפחה',
+      'נעילת מקומות חשובים ומניעת חריגה מקיבולת',
+      'ניהול קבוצות, העדפות אוכל וצרכי נגישות',
+      'עדיפויות הושבה, מושבים מסומנים וזיהוי התנגשויות',
+      'מדדי תפוסה, מקומות פנויים ומוזמנים שטרם שובצו',
+      'שמירת נקודות שחזור והיסטוריית סידורי הושבה',
+      'ייצוא CSV ל-Excel, הדפסה ותצוגת אולם',
+      'ללא API חיצוני, ללא תשלום לפי פעולה וללא עלויות נסתרות',
     ],
   },
 ] as const;
