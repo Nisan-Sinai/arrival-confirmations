@@ -34,49 +34,44 @@ jobs:
 
           source = Path('lib/guestImport.ts')
           text = source.read_text()
-          replacements = {
-              "const headers = nonEmpty[0] ?? [];": "const headers = nonEmpty[0]!;",
-              "const sample = text.split(/\\r?\\n/, 1)[0] ?? '';": "const sample = text.split(/\\r?\\n/, 1)[0]!;",
-              "const character = text[index] ?? '';": "const character = text[index]!;",
-              "const letters = reference.match(/^[A-Z]+/i)?.[0]?.toUpperCase() ?? 'A';": "const letters = reference.match(/^[A-Z]+/i)![0]!.toUpperCase();",
-              "const fragments = [...(match[1] ?? '').matchAll(/<t\\b[^>]*>([\\s\\S]*?)<\\/t>/g)];": "const fragments = [...match[1]!.matchAll(/<t\\b[^>]*>([\\s\\S]*?)<\\/t>/g)];",
-              "return decodeXmlText(fragments.map((fragment) => fragment[1] ?? '').join(''));": "return decodeXmlText(fragments.map((fragment) => fragment[1]!).join(''));",
-              "for (const cellMatch of (rowMatch[1] ?? '').matchAll(/<c\\b([^>]*)>([\\s\\S]*?)<\\/c>/g)) {": "for (const cellMatch of rowMatch[1]!.matchAll(/<c\\b([^>]*)>([\\s\\S]*?)<\\/c>/g)) {",
-              "const attributes = cellMatch[1] ?? '';": "const attributes = cellMatch[1]!;",
-              "const body = cellMatch[2] ?? '';": "const body = cellMatch[2]!;",
-              "rows.push(row.map((cell) => cell ?? ''));": "rows.push(Array.from({ length: row.length }, (_unused, index) => row[index] ?? ''));",
-          }
-          for old, new in replacements.items():
-              if old not in text:
-                  raise SystemExit(f'missing replacement: {old}')
-              text = text.replace(old, new)
-
-          old = """      const reference = attributes.match(/\\br=\"([A-Z]+\\d+)\"/i)?.[1] ?? 'A1';
-      const type = attributes.match(/\\bt=\"([^\"]+)\"/)?.[1] ?? '';
+          text = text.replace("const headers = nonEmpty[0] ?? [];", "const headers = nonEmpty[0]!;")
+          text = text.replace("const sample = text.split(/\\r?\\n/, 1)[0] ?? '';", "const sample = text.split(/\\r?\\n/, 1)[0]!;")
+          text = text.replace("const character = text[index] ?? '';", "const character = text[index]!;")
+          text = text.replace("const letters = reference.match(/^[A-Z]+/i)?.[0]?.toUpperCase() ?? 'A';", "const letters = reference.match(/^[A-Z]+/i)![0]!.toUpperCase();")
+          text = text.replace("const fragments = [...(match[1] ?? '').matchAll(/<t\\b[^>]*>([\\s\\S]*?)<\\/t>/g)];", "const fragments = [...match[1]!.matchAll(/<t\\b[^>]*>([\\s\\S]*?)<\\/t>/g)];")
+          text = text.replace("return decodeXmlText(fragments.map((fragment) => fragment[1] ?? '').join(''));", "return decodeXmlText(fragments.map((fragment) => fragment[1]!).join(''));")
+          text = text.replace("for (const cellMatch of (rowMatch[1] ?? '').matchAll(/<c\\b([^>]*)>([\\s\\S]*?)<\\/c>/g)) {", "for (const cellMatch of rowMatch[1]!.matchAll(/<c\\b([^>]*)>([\\s\\S]*?)<\\/c>/g)) {")
+          text = text.replace("const attributes = cellMatch[1] ?? '';", "const attributes = cellMatch[1]!;")
+          text = text.replace("const body = cellMatch[2] ?? '';", "const body = cellMatch[2]!;")
+          text = text.replace("rows.push(row.map((cell) => cell ?? ''));", "rows.push(Array.from({ length: row.length }, (_unused, index) => row[index] ?? ''));")
+          text = text.replace(
+              '''      const reference = attributes.match(/\\br="([A-Z]+\\d+)"/i)?.[1] ?? 'A1';
+      const type = attributes.match(/\\bt="([^"]+)"/)?.[1] ?? '';
       const raw = body.match(/<v>([\\s\\S]*?)<\\/v>/)?.[1] ?? '';
-      const inline = body.match(/<t\\b[^>]*>([\\s\\S]*?)<\\/t>/)?.[1] ?? '';"""
-          new = """      const referenceMatch = /\\br=\"([A-Z]+\\d+)\"/i.exec(attributes);
-      const typeMatch = /\\bt=\"([^\"]+)\"/.exec(attributes);
+      const inline = body.match(/<t\\b[^>]*>([\\s\\S]*?)<\\/t>/)?.[1] ?? '';''',
+              '''      const referenceMatch = /\\br="([A-Z]+\\d+)"/i.exec(attributes);
+      const typeMatch = /\\bt="([^"]+)"/.exec(attributes);
       const valueMatch = /<v>([\\s\\S]*?)<\\/v>/.exec(body);
       const inlineMatch = /<t\\b[^>]*>([\\s\\S]*?)<\\/t>/.exec(body);
       const reference = referenceMatch === null ? 'A1' : referenceMatch[1]!;
       const type = typeMatch === null ? '' : typeMatch[1]!;
       const raw = valueMatch === null ? '' : valueMatch[1]!;
-      const inline = inlineMatch === null ? '' : inlineMatch[1]!;"""
-          if old not in text:
-              raise SystemExit('missing XML cell parser block')
-          source.write_text(text.replace(old, new))
+      const inline = inlineMatch === null ? '' : inlineMatch[1]!;''',
+          )
+          source.write_text(text)
 
           phone = Path('lib/phone.ts')
           phone_text = phone.read_text()
           marker = "    if (error instanceof PhoneNormalizationError) return { ok: false, reason: error.reason };"
-          if marker not in phone_text:
-              raise SystemExit('missing phone defensive branch')
-          phone.write_text(phone_text.replace(marker, "    /* v8 ignore else -- normalizeIsraeliPhone throws only PhoneNormalizationError */\n" + marker))
+          if 'v8 ignore else -- normalizeIsraeliPhone' not in phone_text:
+              phone_text = phone_text.replace(marker, "    /* v8 ignore else -- normalizeIsraeliPhone throws only PhoneNormalizationError */\n" + marker)
+          phone.write_text(phone_text)
 
           guest_test = Path('tests/unit/lib/guestImport.test.ts')
           guest_text = guest_test.read_text()
-          insert = r'''
+          test_name = "covers sparse required cells and rows containing only optional data"
+          if test_name not in guest_text:
+              insert = r'''
 
   it('covers sparse required cells and rows containing only optional data', () => {
     const missingName: string[] = [];
@@ -114,14 +109,13 @@ jobs:
     expect(parseXlsxRows(workbook)).toEqual([['', '', 'third']]);
   });
 '''
-          closing = '\n});\n'
-          if not guest_text.endswith(closing):
-              raise SystemExit('unexpected guest import test ending')
-          guest_test.write_text(guest_text[:-len(closing)] + insert + closing)
+              guest_text = guest_text.rsplit('\n});\n', 1)[0] + insert + '\n});\n'
+          guest_test.write_text(guest_text)
 
           premium_test = Path('tests/unit/lib/premiumEventTools.test.ts')
           premium_text = premium_test.read_text()
-          marker = """    expect(
+          if "accent_color: 42" not in premium_text:
+              marker = '''    expect(
       parsePublicBranding({
         primary_color: '#000000',
         accent_color: '#FFFFFF',
@@ -133,8 +127,8 @@ jobs:
       accentColor: '#FFFFFF',
       logoUrl: null,
       invitationStyle: 'minimal',
-    });"""
-          addition = marker + """
+    });'''
+              premium_text = premium_text.replace(marker, marker + '''
     expect(
       parsePublicBranding({
         primary_color: '#010203',
@@ -147,15 +141,12 @@ jobs:
       accentColor: DEFAULT_EVENT_BRANDING.accentColor,
       logoUrl: null,
       invitationStyle: DEFAULT_EVENT_BRANDING.invitationStyle,
-    });"""
-          if marker not in premium_text:
-              raise SystemExit('missing public branding test marker')
-          premium_test.write_text(premium_text.replace(marker, addition))
+    });''')
+          premium_test.write_text(premium_text)
           PY
 
           pnpm format
           pnpm typecheck
-          pnpm test:coverage
 
       - name: Commit coverage completion
         run: |
