@@ -154,7 +154,7 @@ export function ShareInvitation({
           href={`${pathname}/tools`}
           className={buttonClass({ variant: 'outline', size: 'sm' })}
         >
-          Excel, WhatsApp, מיתוג והושבה
+          מרכז Premium: שליחה חכמה, Excel, מיתוג והושבה
         </Link>
       </div>
 
