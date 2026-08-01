@@ -8,6 +8,13 @@ export interface EventBranding {
   readonly invitationStyle: InvitationStyle;
 }
 
+export const DEFAULT_EVENT_BRANDING: EventBranding = {
+  primaryColor: '#5B3A29',
+  accentColor: '#B58B4A',
+  logoUrl: null,
+  invitationStyle: 'classic',
+};
+
 export interface WhatsAppTemplateInput {
   readonly templateName: string;
   readonly languageCode: string;
@@ -62,6 +69,26 @@ export function isWhatsAppTemplateName(value: string): boolean {
 
 export function isWhatsAppLanguageCode(value: string): boolean {
   return /^[a-z]{2}(?:_[A-Z]{2})?$/.test(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function parsePublicBranding(value: unknown): EventBranding {
+  if (!isRecord(value)) return DEFAULT_EVENT_BRANDING;
+
+  const primary = typeof value['primary_color'] === 'string' ? value['primary_color'] : '';
+  const accent = typeof value['accent_color'] === 'string' ? value['accent_color'] : '';
+  const logo = typeof value['logo_url'] === 'string' ? normalizeHttpsUrl(value['logo_url']) : null;
+  const style = typeof value['invitation_style'] === 'string' ? value['invitation_style'] : '';
+
+  return {
+    primaryColor: isHexColor(primary) ? primary.toUpperCase() : DEFAULT_EVENT_BRANDING.primaryColor,
+    accentColor: isHexColor(accent) ? accent.toUpperCase() : DEFAULT_EVENT_BRANDING.accentColor,
+    logoUrl: logo,
+    invitationStyle: isInvitationStyle(style) ? style : DEFAULT_EVENT_BRANDING.invitationStyle,
+  };
 }
 
 export function whatsappRecipient(e164: string): string {
