@@ -14,3 +14,4 @@ overrides:
   postcss: '^8.5.18'
   'next>sharp': '0.35.3'
   'brace-expansion@<1.1.17': '1.1.17'
+  'qs@>=6.11.1 <=6.15.1': '6.15.2'
