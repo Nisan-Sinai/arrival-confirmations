@@ -79,7 +79,7 @@ export function rowsToImportedGuests(
   const nonEmpty = rows.filter((row) => row.some((cell) => cell.trim() !== ''));
   if (nonEmpty.length === 0) throw new GuestImportError('הקובץ ריק.');
 
-  const headers = nonEmpty[0] ?? [];
+  const headers = nonEmpty[0]!;
   const indexes: Record<HeaderKey, number> = {
     fullName: headerIndex(headers, 'fullName'),
     phone: headerIndex(headers, 'phone'),
@@ -127,7 +127,7 @@ export function rowsToImportedGuests(
 }
 
 export function parseDelimitedText(text: string): readonly (readonly string[])[] {
-  const sample = text.split(/\r?\n/, 1)[0] ?? '';
+  const sample = text.split(/\r?\n/, 1)[0]!;
   const delimiters = [',', '\t', ';'] as const;
   const delimiter = delimiters.reduce((best, candidate) => {
     const score = sample.split(candidate).length;
@@ -150,7 +150,7 @@ export function parseDelimitedText(text: string): readonly (readonly string[])[]
   };
 
   for (let index = 0; index < text.length; index += 1) {
-    const character = text[index] ?? '';
+    const character = text[index]!;
     if (character === '"') {
       if (quoted && text[index + 1] === '"') {
         cell += '"';
@@ -231,7 +231,7 @@ function decodeXmlText(value: string): string {
 }
 
 function columnIndex(reference: string): number {
-  const letters = reference.match(/^[A-Z]+/i)?.[0]?.toUpperCase() ?? 'A';
+  const letters = reference.match(/^[A-Z]+/i)![0]!.toUpperCase();
   let value = 0;
   for (const letter of letters) value = value * 26 + letter.charCodeAt(0) - 64;
   return value - 1;
@@ -240,8 +240,8 @@ function columnIndex(reference: string): number {
 function parseSharedStrings(xml: string | undefined): readonly string[] {
   if (xml === undefined) return [];
   return [...xml.matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/g)].map((match) => {
-    const fragments = [...(match[1] ?? '').matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)];
-    return decodeXmlText(fragments.map((fragment) => fragment[1] ?? '').join(''));
+    const fragments = [...match[1]!.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)];
+    return decodeXmlText(fragments.map((fragment) => fragment[1]!).join(''));
   });
 }
 
@@ -252,13 +252,17 @@ function parseSheetRows(
   const rows: string[][] = [];
   for (const rowMatch of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)) {
     const row: string[] = [];
-    for (const cellMatch of (rowMatch[1] ?? '').matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>/g)) {
-      const attributes = cellMatch[1] ?? '';
-      const body = cellMatch[2] ?? '';
-      const reference = attributes.match(/\br="([A-Z]+\d+)"/i)?.[1] ?? 'A1';
-      const type = attributes.match(/\bt="([^"]+)"/)?.[1] ?? '';
-      const raw = body.match(/<v>([\s\S]*?)<\/v>/)?.[1] ?? '';
-      const inline = body.match(/<t\b[^>]*>([\s\S]*?)<\/t>/)?.[1] ?? '';
+    for (const cellMatch of rowMatch[1]!.matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>/g)) {
+      const attributes = cellMatch[1]!;
+      const body = cellMatch[2]!;
+      const referenceMatch = /\br="([A-Z]+\d+)"/i.exec(attributes);
+      const typeMatch = /\bt="([^"]+)"/.exec(attributes);
+      const valueMatch = /<v>([\s\S]*?)<\/v>/.exec(body);
+      const inlineMatch = /<t\b[^>]*>([\s\S]*?)<\/t>/.exec(body);
+      const reference = referenceMatch === null ? 'A1' : referenceMatch[1]!;
+      const type = typeMatch === null ? '' : typeMatch[1]!;
+      const raw = valueMatch === null ? '' : valueMatch[1]!;
+      const inline = inlineMatch === null ? '' : inlineMatch[1]!;
       const value =
         type === 's'
           ? (sharedStrings[Number.parseInt(raw, 10)] ?? '')
@@ -267,7 +271,7 @@ function parseSheetRows(
             : decodeXmlText(raw);
       row[columnIndex(reference)] = value;
     }
-    rows.push(row.map((cell) => cell ?? ''));
+    rows.push(Array.from({ length: row.length }, (_unused, index) => row[index] ?? ''));
   }
   return rows;
 }
