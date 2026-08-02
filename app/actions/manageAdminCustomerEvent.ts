@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
 import type { EventFormState } from '@/app/actions/manageEvent';
@@ -9,7 +10,7 @@ import { isEventType } from '@/config/eventTypes';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import type { Database, Json } from '@/types/database.types';
-import type { GuestSupabaseClient, GuestUpdate } from '@/types/guestDatabase.types';
+import type { GuestUpdate } from '@/types/guestDatabase.types';
 
 type EventWrite = Database['public']['Tables']['events']['Update'];
 type GuestWrite = GuestUpdate;
@@ -50,7 +51,7 @@ function adminEventPath(eventId: string, params: Record<string, string> = {}): s
 }
 
 async function requireExistingEvent(eventId: string): Promise<void> {
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { data, error } = await privileged
     .from('events')
     .select('id')
@@ -72,7 +73,7 @@ async function recordAudit({
   entityId: string;
   metadata: Json;
 }): Promise<void> {
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { error } = await privileged.from('audit_logs').insert({
     admin_user_id: adminUserId,
     action,
@@ -145,7 +146,7 @@ export async function adminUpdateCustomerEventAction(
     return { status: 'error', message: '', fieldErrors: errors, values };
   }
 
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { data: updated, error } = await privileged
     .from('events')
     .update(values)
@@ -203,7 +204,7 @@ export async function adminSaveGuestAction(formData: FormData): Promise<void> {
     throw error;
   }
 
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   let duplicateQuery = privileged
     .from('guests')
     .select('id')
@@ -282,7 +283,7 @@ export async function adminDeleteGuestAction(formData: FormData): Promise<void> 
   if (eventId === null || guestId === null) throw new Error('Invalid admin guest deletion');
 
   await requireExistingEvent(eventId);
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { data, error } = await privileged
     .from('guests')
     .update({ is_active: false, token_revoked_at: new Date().toISOString() })
