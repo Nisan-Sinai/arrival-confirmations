@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 import { buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
+import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { createUserClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
@@ -40,6 +41,17 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
   if (event === null) notFound();
   if (guestsError) throw new Error(`Guest list failed: ${guestsError.code}`);
 
+  const guestRows = (guests ?? []).map((guest) => ({
+    id: guest.id,
+    fullName: guest.full_name,
+    phone: guest.phone,
+    email: guest.email,
+    partySize: guest.party_size,
+    tableName: guest.table_name,
+    seatNumber: guest.seat_number,
+    notes: guest.notes,
+  }));
+
   return (
     <main id="main" className="flex-1 py-10 sm:py-14">
       <Container width="wide">
@@ -55,8 +67,8 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">{event.title}</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              הוספה, עריכה ומחיקה ידנית, בחירת אנשי קשר מהטלפון וייבוא קובץ — הכל מחובר לאירוע
-              הזה בלבד.
+              הוספה, עריכה ומחיקה ידנית, בחירת אנשי קשר מהטלפון, ייבוא קובץ ושליחת קישור אישי
+              לכל מוזמן.
             </p>
           </div>
           <Link
@@ -65,24 +77,16 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             rel="noopener noreferrer"
             className={buttonClass({ variant: 'outline' })}
           >
-            צפייה בהזמנה
+            צפייה בקישור הראשי
           </Link>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
+          <PersonalInviteSendList guests={guestRows} />
           <GuestManagementPanel
             mode="owner"
             eventId={event.id}
-            guests={(guests ?? []).map((guest) => ({
-              id: guest.id,
-              fullName: guest.full_name,
-              phone: guest.phone,
-              email: guest.email,
-              partySize: guest.party_size,
-              tableName: guest.table_name,
-              seatNumber: guest.seat_number,
-              notes: guest.notes,
-            }))}
+            guests={guestRows}
             saved={saved}
             error={error}
             count={count}
