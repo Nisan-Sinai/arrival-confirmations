@@ -40,23 +40,10 @@ jobs:
           features/admin/PersonalInviteSendList.tsx
           features/rsvp/PersonalRsvpButtons.tsx
           lib/server/currentInvite.ts
+      - run: >-
+          tar --exclude=node_modules --exclude=.git -czf formatted-source.tgz
+          app features lib
       - uses: actions/upload-artifact@v4
         with:
-          name: formatted-customer-event-access
-          path: |
-            app/actions/adminGuestFileImport.ts
-            app/actions/adminGuestImports.ts
-            app/actions/manageAdminCustomerEvent.ts
-            app/actions/manageGuests.ts
-            app/actions/submitPersonalRsvp.ts
-            app/admin/events/[id]/edit/page.tsx
-            app/admin/events/[id]/page.tsx
-            app/admin/events/page.tsx
-            app/dashboard/events/[id]/guests/page.tsx
-            app/invite/[token]/route.ts
-            app/invite/page.tsx
-            features/admin/GuestFileImportForm.tsx
-            features/admin/GuestManagementPanel.tsx
-            features/admin/PersonalInviteSendList.tsx
-            features/rsvp/PersonalRsvpButtons.tsx
-            lib/server/currentInvite.ts
+          name: formatted-customer-event-access-source
+          path: formatted-source.tgz
