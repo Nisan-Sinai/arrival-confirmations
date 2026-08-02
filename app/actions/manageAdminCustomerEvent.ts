@@ -42,10 +42,7 @@ function eventIdFrom(formData: FormData): string | null {
   return eventId === null ? null : eventId.slice(0, 100);
 }
 
-function adminEventPath(
-  eventId: string,
-  params: Record<string, string> = {},
-): string {
+function adminEventPath(eventId: string, params: Record<string, string> = {}): string {
   const search = new URLSearchParams(params);
   const suffix = search.size === 0 ? '' : `?${search.toString()}`;
   return `/admin/events/${eventId}${suffix}`;
@@ -53,7 +50,11 @@ function adminEventPath(
 
 async function requireExistingEvent(eventId: string): Promise<void> {
   const privileged = createPrivilegedClient();
-  const { data, error } = await privileged.from('events').select('id').eq('id', eventId).maybeSingle();
+  const { data, error } = await privileged
+    .from('events')
+    .select('id')
+    .eq('id', eventId)
+    .maybeSingle();
   if (error || data === null) throw new Error('Customer event not found');
 }
 

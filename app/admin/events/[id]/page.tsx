@@ -161,9 +161,7 @@ export default async function AdminCustomerEventPage({
             </Card>
             <Card padding="md">
               <p className="text-muted-foreground text-sm">תשובות שהתקבלו</p>
-              <p className="text-primary mt-2 text-3xl font-bold tabular-nums">
-                {rsvpRows.length}
-              </p>
+              <p className="text-primary mt-2 text-3xl font-bold tabular-nums">{rsvpRows.length}</p>
             </Card>
             <Card padding="md">
               <p className="text-muted-foreground text-sm">תשובות מגיעים</p>
@@ -235,7 +233,9 @@ export default async function AdminCustomerEventPage({
                     </p>
                     {(response.dietary_requirements !== null || response.notes !== null) && (
                       <p className="text-muted-foreground mt-2 text-sm">
-                        {[response.dietary_requirements, response.notes].filter(Boolean).join(' · ')}
+                        {[response.dietary_requirements, response.notes]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </p>
                     )}
                   </Card>

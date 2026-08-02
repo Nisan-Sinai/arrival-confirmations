@@ -24,7 +24,11 @@ export async function adminImportGuestFileAction(formData: FormData): Promise<vo
   if (eventId === '') throw new Error('Invalid event id');
 
   const privileged = createPrivilegedClient();
-  const { data: event } = await privileged.from('events').select('id').eq('id', eventId).maybeSingle();
+  const { data: event } = await privileged
+    .from('events')
+    .select('id')
+    .eq('id', eventId)
+    .maybeSingle();
   if (event === null) throw new Error('Event not found');
 
   const file = formData.get('guestFile');

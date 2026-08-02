@@ -22,8 +22,8 @@ export function GuestFileImportForm({
       <p className="text-eyebrow text-accent-strong font-semibold">קובץ אנשי קשר</p>
       <h2 className="text-h2 text-primary mt-2 font-bold">ייבוא מהטלפון או מהמחשב</h2>
       <p className="text-muted-foreground mt-3 leading-relaxed">
-        אפשר לבחור קובץ Excel, CSV או TSV שנשמר במכשיר. שם וטלפון הם שדות החובה, וייבוא חוזר
-        מעדכן לפי מספר הטלפון בלי ליצור כפילויות.
+        אפשר לבחור קובץ Excel, CSV או TSV שנשמר במכשיר. שם וטלפון הם שדות החובה, וייבוא חוזר מעדכן
+        לפי מספר הטלפון בלי ליצור כפילויות.
       </p>
       <form action={action} className="mt-6 space-y-4">
         <input type="hidden" name="eventId" value={eventId} />

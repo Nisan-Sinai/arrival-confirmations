@@ -24,7 +24,11 @@ export default async function AdminEditCustomerEventPage({
   await requirePlatformOwner();
   const { id } = await params;
   const privileged = createPrivilegedClient();
-  const { data: event, error } = await privileged.from('events').select('*').eq('id', id).maybeSingle();
+  const { data: event, error } = await privileged
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
   if (error || event === null) notFound();
 
   return (

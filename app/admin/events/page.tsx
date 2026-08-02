@@ -105,7 +105,10 @@ export default async function AdminEventsPage({
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h2 className="text-h3 text-primary font-semibold">
-                          <Link href={adminUrl} className="rounded-sm underline-offset-4 hover:underline">
+                          <Link
+                            href={adminUrl}
+                            className="rounded-sm underline-offset-4 hover:underline"
+                          >
                             {event.title}
                           </Link>
                         </h2>

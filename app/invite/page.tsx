@@ -25,8 +25,8 @@ export default async function PersonalInvitePage() {
         <Card padding="lg" className="max-w-lg text-center">
           <h1 className="text-h1 text-primary font-bold">הקישור האישי אינו תקף</h1>
           <p className="text-muted-foreground mt-4 leading-relaxed">
-            ייתכן שהקישור פג, בוטל או הוחלף בקישור חדש. בקשו מבעלי האירוע לשלוח לכם שוב את
-            ההזמנה האישית.
+            ייתכן שהקישור פג, בוטל או הוחלף בקישור חדש. בקשו מבעלי האירוע לשלוח לכם שוב את ההזמנה
+            האישית.
           </p>
         </Card>
       </main>

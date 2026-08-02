@@ -41,10 +41,8 @@ export async function GET(
           guestId: guest.id,
           eventId: guest.event_id,
           isActive: guest.is_active,
-          tokenExpiresAt:
-            guest.token_expires_at === null ? null : new Date(guest.token_expires_at),
-          tokenRevokedAt:
-            guest.token_revoked_at === null ? null : new Date(guest.token_revoked_at),
+          tokenExpiresAt: guest.token_expires_at === null ? null : new Date(guest.token_expires_at),
+          tokenRevokedAt: guest.token_revoked_at === null ? null : new Date(guest.token_revoked_at),
         },
   );
   if (!validation.valid) return rejected(request);

@@ -23,9 +23,7 @@ const RATE_LIMIT_WINDOW_SECONDS = 300;
 function attendanceStatus(
   value: FormDataEntryValue | null,
 ): 'attending' | 'not_attending' | 'maybe' | null {
-  return value === 'attending' || value === 'not_attending' || value === 'maybe'
-    ? value
-    : null;
+  return value === 'attending' || value === 'not_attending' || value === 'maybe' ? value : null;
 }
 
 function successMessage(status: 'attending' | 'not_attending' | 'maybe'): string {
@@ -66,7 +64,10 @@ export async function submitPersonalRsvpAction(
   const fallback = isMonetizedEvent(eventRow.created_at) ? 'trial' : 'legacy';
   const [license, countResult, existingResult] = await Promise.all([
     getEventLicense(eventRow.id, fallback),
-    privileged.from('rsvps').select('id', { count: 'exact', head: true }).eq('event_id', eventRow.id),
+    privileged
+      .from('rsvps')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', eventRow.id),
     privileged
       .from('rsvps')
       .select('id')
@@ -93,7 +94,11 @@ export async function submitPersonalRsvpAction(
     p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
   });
   if (limit?.[0]?.allowed === false) {
-    return { status: 'error', message: 'בוצעו יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.', selected };
+    return {
+      status: 'error',
+      message: 'בוצעו יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.',
+      selected,
+    };
   }
 
   const adults = selected === 'not_attending' ? 0 : context.guest.partySize;

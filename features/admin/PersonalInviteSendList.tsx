@@ -11,8 +11,8 @@ export function PersonalInviteSendList({
       <p className="text-eyebrow text-accent-strong font-semibold">קישורים אישיים</p>
       <h2 className="text-h2 text-primary mt-2 font-bold">שליחה אישית ב־WhatsApp</h2>
       <p className="text-muted-foreground mt-3 leading-relaxed">
-        כל לחיצה יוצרת לאותו מוזמן קישור ייחודי חדש, מבטלת את הקישור הקודם ופותחת הודעת
-        WhatsApp מוכנה. האורח רואה רק מגיע/ה, לא מגיע/ה או אולי.
+        כל לחיצה יוצרת לאותו מוזמן קישור ייחודי חדש, מבטלת את הקישור הקודם ופותחת הודעת WhatsApp
+        מוכנה. האורח רואה רק מגיע/ה, לא מגיע/ה או אולי.
       </p>
 
       {guests.length === 0 ? (

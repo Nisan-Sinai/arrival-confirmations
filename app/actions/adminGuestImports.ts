@@ -52,7 +52,11 @@ export async function adminImportPhoneContactsAction(formData: FormData): Promis
   if (eventId === '') throw new Error('Invalid event id');
 
   const privileged = createPrivilegedClient();
-  const { data: event } = await privileged.from('events').select('id').eq('id', eventId).maybeSingle();
+  const { data: event } = await privileged
+    .from('events')
+    .select('id')
+    .eq('id', eventId)
+    .maybeSingle();
   if (event === null) throw new Error('Event not found');
 
   const selected = selectedContacts(value(formData, 'contactsJson'));

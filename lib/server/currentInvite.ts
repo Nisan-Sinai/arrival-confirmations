@@ -67,7 +67,9 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
     await Promise.all([
       privileged
         .from('guests')
-        .select('id, event_id, full_name, phone, phone_normalized, party_size, family_side, is_active')
+        .select(
+          'id, event_id, full_name, phone, phone_normalized, party_size, family_side, is_active',
+        )
         .eq('id', validation.guestId)
         .eq('event_id', validation.eventId)
         .maybeSingle(),

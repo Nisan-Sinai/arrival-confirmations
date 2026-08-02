@@ -46,7 +46,11 @@ const fieldClass =
   'border-border-strong bg-background text-foreground min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]';
 const textareaClass = `${fieldClass} min-h-24 resize-y`;
 
-function messageFor(saved: string, error: string, count: string): {
+function messageFor(
+  saved: string,
+  error: string,
+  count: string,
+): {
   tone: 'success' | 'error';
   text: string;
 } | null {
@@ -56,18 +60,23 @@ function messageFor(saved: string, error: string, count: string): {
   if (saved === 'contacts') {
     return { tone: 'success', text: `יובאו ${count || 'מספר'} אנשי קשר מהטלפון.` };
   }
-  if (saved === 'file') return { tone: 'success', text: `יובאו ${count || 'מספר'} מוזמנים מהקובץ.` };
+  if (saved === 'file')
+    return { tone: 'success', text: `יובאו ${count || 'מספר'} מוזמנים מהקובץ.` };
   if (error === 'guest-fields') return { tone: 'error', text: 'יש למלא שם, טלפון וכמות תקינה.' };
   if (error === 'guest-phone') return { tone: 'error', text: 'מספר הטלפון אינו תקין.' };
   if (error === 'guest-duplicate') return { tone: 'error', text: 'כבר קיים מוזמן עם המספר הזה.' };
   if (error === 'guest-save') return { tone: 'error', text: 'שמירת המוזמן נכשלה.' };
   if (error === 'guest-delete') return { tone: 'error', text: 'מחיקת המוזמן נכשלה.' };
-  if (error === 'contacts-empty') return { tone: 'error', text: 'לא נבחרו אנשי קשר ולא הודבקה רשימה.' };
-  if (error === 'contacts-invalid') return { tone: 'error', text: 'לא נמצא מספר טלפון ישראלי תקין.' };
+  if (error === 'contacts-empty')
+    return { tone: 'error', text: 'לא נבחרו אנשי קשר ולא הודבקה רשימה.' };
+  if (error === 'contacts-invalid')
+    return { tone: 'error', text: 'לא נמצא מספר טלפון ישראלי תקין.' };
   if (error === 'contacts-save') return { tone: 'error', text: 'ייבוא אנשי הקשר נכשל.' };
   if (error === 'file-empty') return { tone: 'error', text: 'יש לבחור קובץ.' };
-  if (error === 'file-large') return { tone: 'error', text: 'הקובץ גדול מדי. הגודל המרבי הוא 5MB.' };
-  if (error === 'file-format') return { tone: 'error', text: 'פורמט הקובץ אינו נתמך או שהקובץ אינו תקין.' };
+  if (error === 'file-large')
+    return { tone: 'error', text: 'הקובץ גדול מדי. הגודל המרבי הוא 5MB.' };
+  if (error === 'file-format')
+    return { tone: 'error', text: 'פורמט הקובץ אינו נתמך או שהקובץ אינו תקין.' };
   return null;
 }
 
@@ -251,7 +260,10 @@ export function GuestManagementPanel({
         </form>
 
         {mode === 'owner' && (
-          <form action={importGuestFileAction} className="border-border mt-6 space-y-4 border-t pt-6">
+          <form
+            action={importGuestFileAction}
+            className="border-border mt-6 space-y-4 border-t pt-6"
+          >
             <input type="hidden" name="eventId" value={eventId} />
             <label className="text-foreground block text-sm font-medium">
               קובץ מהטלפון או מהמחשב

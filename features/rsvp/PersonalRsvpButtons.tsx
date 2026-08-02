@@ -2,10 +2,7 @@
 
 import { useActionState } from 'react';
 
-import {
-  submitPersonalRsvpAction,
-  type PersonalRsvpState,
-} from '@/app/actions/submitPersonalRsvp';
+import { submitPersonalRsvpAction, type PersonalRsvpState } from '@/app/actions/submitPersonalRsvp';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';

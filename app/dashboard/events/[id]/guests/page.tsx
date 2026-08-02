@@ -67,8 +67,8 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">{event.title}</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              הוספה, עריכה ומחיקה ידנית, בחירת אנשי קשר מהטלפון, ייבוא קובץ ושליחת קישור אישי
-              לכל מוזמן.
+              הוספה, עריכה ומחיקה ידנית, בחירת אנשי קשר מהטלפון, ייבוא קובץ ושליחת קישור אישי לכל
+              מוזמן.
             </p>
           </div>
           <Link
