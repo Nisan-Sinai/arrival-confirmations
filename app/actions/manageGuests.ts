@@ -37,11 +37,7 @@ async function requireOwnedEvent(eventId: string): Promise<SupabaseClient | null
   if (user === null) return null;
 
   const guestDb = supabase as unknown as SupabaseClient;
-  const { data, error } = await guestDb
-    .from('events')
-    .select('id')
-    .eq('id', eventId)
-    .maybeSingle();
+  const { data, error } = await guestDb.from('events').select('id').eq('id', eventId).maybeSingle();
   return error === null && data !== null ? guestDb : null;
 }
 
