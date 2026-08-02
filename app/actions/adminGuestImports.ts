@@ -2,11 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
-import type { GuestInsert, GuestSupabaseClient } from '@/types/guestDatabase.types';
+import type { GuestInsert } from '@/types/guestDatabase.types';
 
 interface ContactRow {
   readonly name: string;
@@ -51,7 +52,7 @@ export async function adminImportPhoneContactsAction(formData: FormData): Promis
   const eventId = value(formData, 'eventId');
   if (eventId === '') throw new Error('Invalid event id');
 
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { data: event } = await privileged
     .from('events')
     .select('id')
