@@ -12,19 +12,16 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { ProSeatingStudio } from '@/features/admin/ProSeatingStudio';
 import { PremiumWhatsAppCampaign } from '@/features/admin/PremiumWhatsAppCampaign';
 import { seatingSummary } from '@/lib/premiumEventTools';
+import type { ProSeatingGuest, ProSeatingTable } from '@/lib/proSeating';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
 
 const INITIAL: PremiumToolState = { status: 'idle', message: '' };
 
-export interface PremiumGuestRow {
-  readonly id: string;
-  readonly fullName: string;
+export interface PremiumGuestRow extends ProSeatingGuest {
   readonly phone: string;
-  readonly partySize: number;
-  readonly tableName: string | null;
-  readonly seatNumber: string | null;
   readonly attendanceStatus: PremiumAttendanceStatus;
 }
 
@@ -57,12 +54,20 @@ export function PremiumToolsPanel({
   inviteUrl,
   guests,
   branding,
+  isPro,
+  attendeeLimit,
+  seatingTables,
+  snapshotCount,
 }: {
   eventId: string;
   eventTitle: string;
   inviteUrl: string;
   guests: readonly PremiumGuestRow[];
   branding: PremiumBrandingDefaults;
+  isPro: boolean;
+  attendeeLimit: number;
+  seatingTables: readonly ProSeatingTable[];
+  snapshotCount: number;
 }) {
   const [importState, importAction, importing] = useActionState(importGuestsAction, INITIAL);
   const [brandingState, brandingAction, savingBranding] = useActionState(
@@ -84,7 +89,11 @@ export function PremiumToolsPanel({
 
         <form action={importAction} className="mt-6 space-y-4">
           <input type="hidden" name="eventId" value={eventId} />
-          <Field label="קובץ מוזמנים" required hint="עד 1,000 שורות ועד 5MB">
+          <Field
+            label="קובץ מוזמנים"
+            required
+            hint={`עד 1,000 שורות בקובץ ועד 5MB · קיבולת המסלול: ${attendeeLimit.toLocaleString('he-IL')} מוזמנים`}
+          >
             <Input name="guestFile" type="file" accept=".xlsx,.csv,.tsv,.txt" required />
           </Field>
           <Button type="submit" disabled={importing}>
@@ -155,79 +164,89 @@ export function PremiumToolsPanel({
         </form>
       </Card>
 
-      <Card padding="lg">
-        <p className="text-eyebrow text-accent-strong font-semibold">הושבה</p>
-        <h2 className="text-h2 text-primary mt-2 font-bold">מפת שולחנות ומושבים</h2>
-        <p className="text-muted-foreground mt-3 leading-relaxed">
-          משייכים לכל מוזמן שולחן ומושב. השינויים נשמרים יחד, ומתאימים גם לנתונים שיובאו מהקובץ.
-        </p>
+      {isPro ? (
+        <ProSeatingStudio
+          eventId={eventId}
+          guests={guests}
+          tables={seatingTables}
+          snapshotCount={snapshotCount}
+        />
+      ) : (
+        <Card padding="lg">
+          <p className="text-eyebrow text-accent-strong font-semibold">הושבה</p>
+          <h2 className="text-h2 text-primary mt-2 font-bold">מפת שולחנות ומושבים בסיסית</h2>
+          <p className="text-muted-foreground mt-3 leading-relaxed">
+            משייכים לכל מוזמן שולחן ומושב. מסלול Pro מוסיף קיבולת, אזורים, קבוצות, נגישות, הושבה
+            אוטומטית, נעילות, דוחות ונקודות שחזור.
+          </p>
 
-        {tables.length > 0 && (
-          <ul className="mt-5 flex flex-wrap gap-2 text-sm">
-            {tables.map((table) => (
-              <li
-                key={table.tableName}
-                className="border-border bg-secondary/35 rounded-full border px-3 py-1.5"
-              >
-                {table.tableName}: {table.seats}
-              </li>
-            ))}
-          </ul>
-        )}
+          {tables.length > 0 && (
+            <ul className="mt-5 flex flex-wrap gap-2 text-sm">
+              {tables.map((table) => (
+                <li
+                  key={table.tableName}
+                  className="border-border bg-secondary/35 rounded-full border px-3 py-1.5"
+                >
+                  {table.tableName}: {table.seats}
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {guests.length === 0 ? (
-          <p className="text-muted-foreground mt-6">ייבאו מוזמנים כדי להתחיל לבנות הושבה.</p>
-        ) : (
-          <form action={seatingAction} className="mt-6 space-y-4">
-            <input type="hidden" name="eventId" value={eventId} />
-            <div className="border-border overflow-x-auto rounded-xl border">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead className="bg-secondary/35 text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3 text-start">מוזמן</th>
-                    <th className="px-4 py-3 text-start">טלפון</th>
-                    <th className="px-4 py-3 text-start">כמות</th>
-                    <th className="px-4 py-3 text-start">שולחן</th>
-                    <th className="px-4 py-3 text-start">מושב</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {guests.map((guest) => (
-                    <tr key={guest.id} className="border-border border-t">
-                      <td className="px-4 py-3 font-medium">
-                        {guest.fullName}
-                        <input type="hidden" name="guestId" value={guest.id} />
-                      </td>
-                      <td className="px-4 py-3" dir="ltr">
-                        {guest.phone}
-                      </td>
-                      <td className="px-4 py-3">{guest.partySize}</td>
-                      <td className="px-4 py-2">
-                        <Input
-                          name="tableName"
-                          defaultValue={guest.tableName ?? ''}
-                          aria-label={`שולחן עבור ${guest.fullName}`}
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <Input
-                          name="seatNumber"
-                          defaultValue={guest.seatNumber ?? ''}
-                          aria-label={`מושב עבור ${guest.fullName}`}
-                        />
-                      </td>
+          {guests.length === 0 ? (
+            <p className="text-muted-foreground mt-6">ייבאו מוזמנים כדי להתחיל לבנות הושבה.</p>
+          ) : (
+            <form action={seatingAction} className="mt-6 space-y-4">
+              <input type="hidden" name="eventId" value={eventId} />
+              <div className="border-border overflow-x-auto rounded-xl border">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead className="bg-secondary/35 text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 text-start">מוזמן</th>
+                      <th className="px-4 py-3 text-start">טלפון</th>
+                      <th className="px-4 py-3 text-start">כמות</th>
+                      <th className="px-4 py-3 text-start">שולחן</th>
+                      <th className="px-4 py-3 text-start">מושב</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Button type="submit" disabled={savingSeating}>
-              {savingSeating ? 'שומר…' : 'שמירת כל ההושבה'}
-            </Button>
-            <Result state={seatingState} />
-          </form>
-        )}
-      </Card>
+                  </thead>
+                  <tbody>
+                    {guests.map((guest) => (
+                      <tr key={guest.id} className="border-border border-t">
+                        <td className="px-4 py-3 font-medium">
+                          {guest.fullName}
+                          <input type="hidden" name="guestId" value={guest.id} />
+                        </td>
+                        <td className="px-4 py-3" dir="ltr">
+                          {guest.phone}
+                        </td>
+                        <td className="px-4 py-3">{guest.partySize}</td>
+                        <td className="px-4 py-2">
+                          <Input
+                            name="tableName"
+                            defaultValue={guest.tableName ?? ''}
+                            aria-label={`שולחן עבור ${guest.fullName}`}
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Input
+                            name="seatNumber"
+                            defaultValue={guest.seatNumber ?? ''}
+                            aria-label={`מושב עבור ${guest.fullName}`}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Button type="submit" disabled={savingSeating}>
+                {savingSeating ? 'שומר…' : 'שמירת כל ההושבה'}
+              </Button>
+              <Result state={seatingState} />
+            </form>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

@@ -41,7 +41,13 @@ function numberValue(value: Json | undefined): number | null {
 }
 
 function isPlanCode(value: string | null): value is PlanCode {
-  return value === 'trial' || value === 'basic' || value === 'premium' || value === 'legacy';
+  return (
+    value === 'trial' ||
+    value === 'basic' ||
+    value === 'premium' ||
+    value === 'pro' ||
+    value === 'legacy'
+  );
 }
 
 function isLicenseStatus(value: string | null): value is LicenseStatus {
@@ -209,7 +215,12 @@ export function canAcceptRsvp(
   ) {
     return false;
   }
-  if (license.status === 'active' && license.plan !== 'basic' && license.plan !== 'premium') {
+  if (
+    license.status === 'active' &&
+    license.plan !== 'basic' &&
+    license.plan !== 'premium' &&
+    license.plan !== 'pro'
+  ) {
     return false;
   }
   return alreadyExists || currentRsvpCount < attendeeLimitForLicense(license);
