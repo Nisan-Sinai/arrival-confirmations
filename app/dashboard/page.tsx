@@ -10,7 +10,9 @@ import { Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
 import { getEventTypePreset } from '@/config/eventTypes';
+import { EventManagementActions } from '@/features/admin/EventManagementActions';
 import { describeTimeUntilEvent, formatEventDate, formatEventWeekday } from '@/lib/eventDate';
+import { resolveRequestOrigin } from '@/lib/server/origin';
 import { createUserClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
@@ -63,6 +65,7 @@ export default async function DashboardPage() {
     }
   }
 
+  const origin = await resolveRequestOrigin();
   const whatsappUrl = `https://wa.me/${whatsappPhone(appConfig.supportPhone)}?text=${encodeURIComponent(
     'שלום ניסן, אני רוצה להפעיל מסלול לאירוע שיצרתי במערכת אישורי הגעה.',
   )}`;
@@ -74,6 +77,10 @@ export default async function DashboardPage() {
           <div>
             <p className="text-eyebrow text-accent-strong font-semibold">לוח הבקרה</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">האירועים שלי</h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl leading-relaxed">
+              מכל כרטיס אפשר להיכנס לניהול מלא, לערוך את ההזמנה, לצפות בה, להעתיק את הקישור או לפתוח
+              הודעת WhatsApp מוכנה לשליחה.
+            </p>
           </div>
           {rows.length > 0 && (
             <p className="text-muted-foreground text-sm">
@@ -188,36 +195,13 @@ export default async function DashboardPage() {
                       </div>
                     )}
 
-                    <div className="border-border mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                      <Link
-                        href={`/e/${event.public_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        prefetch={false}
-                        aria-label={`פתיחת ההזמנה של ${event.title} בכרטיסייה חדשה`}
-                        className="text-primary inline-flex items-center gap-1.5 rounded-sm text-sm underline underline-offset-4"
-                      >
-                        <span dir="ltr">/e/{event.public_id}</span>
-                        <svg
-                          aria-hidden="true"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="size-3.5 shrink-0"
-                        >
-                          <path d="M14 3h7v7M10 14 21 3" />
-                          <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
-                        </svg>
-                      </Link>
-                      <Link
-                        href={`/dashboard/events/${event.id}`}
-                        className={buttonClass({ variant: 'outline', size: 'sm' })}
-                      >
-                        אישורי הגעה
-                      </Link>
+                    <div className="mt-auto">
+                      <EventManagementActions
+                        eventId={event.id}
+                        eventTitle={event.title}
+                        publicId={event.public_id}
+                        origin={origin}
+                      />
                     </div>
                   </Card>
                 </li>
