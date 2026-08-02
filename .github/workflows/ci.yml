@@ -80,7 +80,7 @@ jobs:
         continue-on-error: true
 
   migrations:
-    name: Migrations reproduce from scratch
+    name: Database, integration, RLS and 50-event matrix
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,9 +113,19 @@ jobs:
         run: |
           eval "$(supabase status -o env)"
           echo "DB_URL=$DB_URL" >> "$GITHUB_ENV"
+          echo "TEST_DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
       - name: Compare repository migrations with applied history
         run: pnpm check:schema-drift
+
+      - name: Integration tests including the 50-event matrix
+        run: pnpm test:integration
+
+      - name: Row-level security tests
+        run: pnpm test:rls
+
+      - name: Security tests
+        run: pnpm test:security
 
       - name: Stop local database
         if: always()
