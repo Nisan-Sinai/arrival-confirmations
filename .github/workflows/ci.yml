@@ -19,7 +19,7 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key-0123456789
   NEXT_PUBLIC_SITE_URL: http://localhost:3000
   SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-0123456789
-  TOKEN_PEPPER: ci-placeholder-token-pepper-0123456789-abcdef
+  TOKEN_PEPPER: ci-placeholder-token-pepper-9876543210-abcdef
   IP_HASH_PEPPER: ci-placeholder-ip-pepper-9876543210-zyxwvu
 
 jobs:
@@ -59,6 +59,10 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Browser bundle security tests
+        # The suite inspects .next/static, so it must run in the same job after Build.
+        run: pnpm test:security
 
       # A hard gate, not advisory. This is how `updatePasswordAction`,
       # `updateRsvpAction` and an entire `/reset-password` flow came to exist with no
@@ -123,9 +127,6 @@ jobs:
 
       - name: Row-level security tests
         run: pnpm test:rls
-
-      - name: Security tests
-        run: pnpm test:security
 
       - name: Stop local database
         if: always()
