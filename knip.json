@@ -10,7 +10,7 @@
     "scripts/*.ts"
   ],
   "project": ["**/*.{ts,tsx,css}", "!node_modules/**", "!.next/**"],
-  "ignoreDependencies": ["tailwindcss", "@stryker-mutator/vitest-runner"],
+  "ignoreDependencies": ["@stryker-mutator/vitest-runner"],
   "ignore": ["types/database.types.ts"],
   "ignoreExportsUsedInFile": true
 }
