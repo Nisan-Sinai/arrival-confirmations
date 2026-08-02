@@ -78,8 +78,8 @@ export default async function DashboardPage() {
             <p className="text-eyebrow text-accent-strong font-semibold">לוח הבקרה</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">האירועים שלי</h1>
             <p className="text-muted-foreground mt-2 max-w-2xl leading-relaxed">
-              מכל כרטיס אפשר להיכנס לניהול מלא, לערוך את ההזמנה, לצפות בה, להעתיק את הקישור
-              או לפתוח הודעת WhatsApp מוכנה לשליחה.
+              מכל כרטיס אפשר להיכנס לניהול מלא, לערוך את ההזמנה, לצפות בה, להעתיק את הקישור או לפתוח
+              הודעת WhatsApp מוכנה לשליחה.
             </p>
           </div>
           {rows.length > 0 && (
@@ -153,7 +153,8 @@ export default async function DashboardPage() {
                       <div className="flex gap-2">
                         <dt className="text-muted-foreground">מתי:</dt>
                         <dd className="text-foreground font-medium">
-                          יום {formatEventWeekday(event.event_date)}, {formatEventDate(event.event_date)}
+                          יום {formatEventWeekday(event.event_date)},{' '}
+                          {formatEventDate(event.event_date)}
                           <span className="text-muted-foreground font-normal">
                             {' · '}
                             {describeTimeUntilEvent(event.event_date)}
