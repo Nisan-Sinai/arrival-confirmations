@@ -87,10 +87,7 @@ async function seedUsers(client: PoolClient): Promise<SeededUser[]> {
        now(),
        now()
      from unnest($1::uuid[], $2::text[]) as seeded(id, email)`,
-    [
-      users.map((user) => user.id),
-      users.map((user) => user.email),
-    ],
+    [users.map((user) => user.id), users.map((user) => user.email)],
   );
 
   return users;
@@ -268,7 +265,9 @@ describe('20-user event subscription matrix', () => {
       );
       expect(licenseRowsResult.rows).toHaveLength(TOTAL_EVENTS);
 
-      const licenseRows = new Map(licenseRowsResult.rows.map((license) => [license.entity_id, license]));
+      const licenseRows = new Map(
+        licenseRowsResult.rows.map((license) => [license.entity_id, license]),
+      );
       for (const event of events) {
         const license = licenseRows.get(event.id);
         expect(license?.admin_user_id).toBe(event.ownerId);
