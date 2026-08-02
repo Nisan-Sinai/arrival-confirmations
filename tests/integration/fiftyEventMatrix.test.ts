@@ -115,9 +115,9 @@ async function seedEvent(
     `insert into public.audit_logs
        (admin_user_id, action, entity_type, entity_id, metadata)
      values
-       ($1, 'event_license_updated', 'event_license', $2,
+       ($1::uuid, 'event_license_updated', 'event_license', $2::uuid,
         jsonb_build_object(
-          'event_id', $2::text,
+          'event_id', ($2::uuid)::text,
           'plan', $3::text,
           'status', 'active',
           'price_agorot', $4::integer,
