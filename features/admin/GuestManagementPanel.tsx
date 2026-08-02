@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { adminImportPhoneContactsAction } from '@/app/actions/adminGuestImports';
 import {
@@ -168,7 +168,6 @@ export function GuestManagementPanel({
   error?: string;
   count?: string;
 }) {
-  const [pickerSupported, setPickerSupported] = useState(false);
   const [pickerMessage, setPickerMessage] = useState('');
   const contactsFormRef = useRef<HTMLFormElement>(null);
   const contactsJsonRef = useRef<HTMLInputElement>(null);
@@ -178,10 +177,6 @@ export function GuestManagementPanel({
   const contactAction =
     mode === 'admin' ? adminImportPhoneContactsAction : importPhoneContactsAction;
   const status = messageFor(saved, error, count);
-
-  useEffect(() => {
-    setPickerSupported(typeof (navigator as NavigatorWithContacts).contacts?.select === 'function');
-  }, []);
 
   const choosePhoneContacts = async () => {
     const contactsApi = (navigator as NavigatorWithContacts).contacts;
@@ -237,14 +232,12 @@ export function GuestManagementPanel({
         <form ref={contactsFormRef} action={contactAction} className="mt-6 space-y-4">
           <input type="hidden" name="eventId" value={eventId} />
           <input ref={contactsJsonRef} type="hidden" name="contactsJson" />
-          <Button type="button" onClick={choosePhoneContacts} disabled={!pickerSupported}>
+          <Button type="button" onClick={choosePhoneContacts}>
             בחירת אנשי קשר מהטלפון
           </Button>
-          {!pickerSupported && (
-            <p className="text-muted-foreground text-sm">
-              בחירה ישירה אינה זמינה בדפדפן הזה; ההדבקה והעלאת הקובץ זמינות תמיד.
-            </p>
-          )}
+          <p className="text-muted-foreground text-sm">
+            במכשיר שאינו תומך בבחירה ישירה תוצג אפשרות להשתמש בהדבקה או בקובץ.
+          </p>
           {pickerMessage !== '' && <p className="text-muted-foreground text-sm">{pickerMessage}</p>}
           <label className="text-foreground block text-sm font-medium">
             הדבקת רשימה
