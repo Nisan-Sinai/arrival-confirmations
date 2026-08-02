@@ -282,21 +282,19 @@ async function expectDatabaseFailure(
 }
 
 describe('50-event QA matrix', () => {
-  it(
-    'creates, isolates, publishes, seats and validates 50 events with different guest counts',
-    async () => {
-      await withRollback(async (client) => {
-        const startedAt = performance.now();
-        const ownerIds = await seedOwners(client);
-        const events: SeededEvent[] = [];
+  it('creates, isolates, publishes, seats and validates 50 events with different guest counts', async () => {
+    await withRollback(async (client) => {
+      const startedAt = performance.now();
+      const ownerIds = await seedOwners(client);
+      const events: SeededEvent[] = [];
 
-        for (let eventNumber = 1; eventNumber <= EVENT_COUNT; eventNumber += 1) {
-          events.push(await seedEvent(client, ownerIds, eventNumber));
-        }
+      for (let eventNumber = 1; eventNumber <= EVENT_COUNT; eventNumber += 1) {
+        events.push(await seedEvent(client, ownerIds, eventNumber));
+      }
 
-        for (const event of events) {
-          const summaryResult = await client.query<MatrixSummary>(
-            `select
+      for (const event of events) {
+        const summaryResult = await client.query<MatrixSummary>(
+          `select
                (select count(*) from public.guests where event_id = $1) as guest_count,
                (select count(*) from public.rsvps where event_id = $1) as rsvp_count,
                (select coalesce(sum(adults_count + children_count + babies_count), 0)
@@ -310,148 +308,142 @@ describe('50-event QA matrix', () => {
                  as snapshot_count,
                (select count(*) from public.event_messages where event_id = $1)
                  as queued_messages`,
-            [event.id],
-          );
-          const summary = summaryResult.rows[0]!;
-          const expectedConfirmed = event.guestCount - Math.floor(event.guestCount / 3);
+          [event.id],
+        );
+        const summary = summaryResult.rows[0]!;
+        const expectedConfirmed = event.guestCount - Math.floor(event.guestCount / 3);
 
-          expect(Number(summary.guest_count)).toBe(event.guestCount);
-          expect(Number(summary.rsvp_count)).toBe(event.guestCount);
-          expect(Number(summary.confirmed_people)).toBe(expectedConfirmed);
-          expect(Number(summary.table_count)).toBe(Math.ceil(event.guestCount / 10));
-          expect(Number(summary.table_capacity)).toBeGreaterThanOrEqual(event.guestCount);
-          expect(Number(summary.seated_guests)).toBe(event.guestCount);
-          expect(Number(summary.snapshot_count)).toBe(1);
-          expect(Number(summary.queued_messages)).toBe(0);
+        expect(Number(summary.guest_count)).toBe(event.guestCount);
+        expect(Number(summary.rsvp_count)).toBe(event.guestCount);
+        expect(Number(summary.confirmed_people)).toBe(expectedConfirmed);
+        expect(Number(summary.table_count)).toBe(Math.ceil(event.guestCount / 10));
+        expect(Number(summary.table_capacity)).toBeGreaterThanOrEqual(event.guestCount);
+        expect(Number(summary.seated_guests)).toBe(event.guestCount);
+        expect(Number(summary.snapshot_count)).toBe(1);
+        expect(Number(summary.queued_messages)).toBe(0);
 
-          const overCapacity = await client.query(
-            `select seating_table.id
+        const overCapacity = await client.query(
+          `select seating_table.id
              from public.event_seating_tables seating_table
              left join public.guests guest on guest.table_id = seating_table.id and guest.is_active
              where seating_table.event_id = $1
              group by seating_table.id, seating_table.capacity
              having coalesce(sum(guest.party_size), 0) > seating_table.capacity`,
-            [event.id],
-          );
-          expect(overCapacity.rows).toEqual([]);
+          [event.id],
+        );
+        expect(overCapacity.rows).toEqual([]);
 
-          const publicProjection = await client.query<{
-            id: string | null;
-            public_id: string | null;
-          }>(
-            `select
+        const publicProjection = await client.query<{
+          id: string | null;
+          public_id: string | null;
+        }>(
+          `select
                (public.get_public_event_by_public_id($1)).id as id,
                (public.get_public_event_by_public_id($1)).public_id as public_id`,
-            [event.publicId],
-          );
-          expect(publicProjection.rows[0]?.id).toBe(event.active ? event.id : null);
-          expect(publicProjection.rows[0]?.public_id).toBe(event.active ? event.publicId : null);
+          [event.publicId],
+        );
+        expect(publicProjection.rows[0]?.id).toBe(event.active ? event.id : null);
+        expect(publicProjection.rows[0]?.public_id).toBe(event.active ? event.publicId : null);
 
-          const brandingResult = await client.query<{ branding: Record<string, unknown> | null }>(
-            'select public.get_public_event_branding($1) as branding',
-            [event.publicId],
-          );
-          expect(brandingResult.rows[0]?.branding === null).toBe(!event.active);
-        }
+        const brandingResult = await client.query<{ branding: Record<string, unknown> | null }>(
+          'select public.get_public_event_branding($1) as branding',
+          [event.publicId],
+        );
+        expect(brandingResult.rows[0]?.branding === null).toBe(!event.active);
+      }
 
-        const licenseDistribution = await client.query<{ plan: string; total: string }>(
-          `select metadata ->> 'plan' as plan, count(*) as total
+      const licenseDistribution = await client.query<{ plan: string; total: string }>(
+        `select metadata ->> 'plan' as plan, count(*) as total
            from public.audit_logs
            where entity_type = 'event_license'
              and entity_id = any($1::uuid[])
            group by metadata ->> 'plan'
            order by plan`,
-          [events.map((event) => event.id)],
-        );
-        expect(
-          licenseDistribution.rows.reduce(
-            (total, row) => total + Number(row.total),
-            0,
-          ),
-        ).toBe(EVENT_COUNT);
-        expect(licenseDistribution.rows.map((row) => row.plan).sort()).toEqual([
-          'basic',
-          'premium',
-          'pro',
-        ]);
+        [events.map((event) => event.id)],
+      );
+      expect(licenseDistribution.rows.reduce((total, row) => total + Number(row.total), 0)).toBe(
+        EVENT_COUNT,
+      );
+      expect(licenseDistribution.rows.map((row) => row.plan).sort()).toEqual([
+        'basic',
+        'premium',
+        'pro',
+      ]);
 
-        const firstEvent = events[0]!;
-        await expectDatabaseFailure(
-          client,
-          () =>
-            client.query(
-              `insert into public.guests
+      const firstEvent = events[0]!;
+      await expectDatabaseFailure(
+        client,
+        () =>
+          client.query(
+            `insert into public.guests
                  (event_id, full_name, phone, phone_normalized, party_size, import_source)
                select event_id, 'כפול', phone, phone_normalized, 1, 'manual'
                from public.guests
                where event_id = $1
                limit 1`,
-              [firstEvent.id],
-            ),
-          /guests_unique_phone_per_event|duplicate key/i,
-        );
+            [firstEvent.id],
+          ),
+        /guests_unique_phone_per_event|duplicate key/i,
+      );
 
-        const secondEvent = events[1]!;
-        await expectDatabaseFailure(
-          client,
-          () =>
-            client.query(
-              `update public.guests
+      const secondEvent = events[1]!;
+      await expectDatabaseFailure(
+        client,
+        () =>
+          client.query(
+            `update public.guests
                set table_id = $1
                where event_id = $2
                  and id = (select id from public.guests where event_id = $2 limit 1)`,
-              [firstEvent.tableIds[0], secondEvent.id],
-            ),
-          /Seating table must belong to the same event/i,
-        );
+            [firstEvent.tableIds[0], secondEvent.id],
+          ),
+        /Seating table must belong to the same event/i,
+      );
 
-        const ownerOneEvents = events.filter((event) => event.ownerId === ownerIds[0]);
-        await becomeUser(client, ownerIds[0]!);
-        const visibleEvents = await client.query<{ id: string }>(
-          'select id from public.events order by created_at, id',
-        );
-        expect(visibleEvents.rows.map((row) => row.id).sort()).toEqual(
-          ownerOneEvents.map((event) => event.id).sort(),
-        );
+      const ownerOneEvents = events.filter((event) => event.ownerId === ownerIds[0]);
+      await becomeUser(client, ownerIds[0]!);
+      const visibleEvents = await client.query<{ id: string }>(
+        'select id from public.events order by created_at, id',
+      );
+      expect(visibleEvents.rows.map((row) => row.id).sort()).toEqual(
+        ownerOneEvents.map((event) => event.id).sort(),
+      );
 
-        const foreignEvent = events.find((event) => event.ownerId !== ownerIds[0])!;
-        const hiddenForeignEvent = await client.query(
-          'select id from public.events where id = $1',
-          [foreignEvent.id],
-        );
-        expect(hiddenForeignEvent.rows).toEqual([]);
-        await client.query('reset role');
+      const foreignEvent = events.find((event) => event.ownerId !== ownerIds[0])!;
+      const hiddenForeignEvent = await client.query('select id from public.events where id = $1', [
+        foreignEvent.id,
+      ]);
+      expect(hiddenForeignEvent.rows).toEqual([]);
+      await client.query('reset role');
 
-        const eventToDelete = events.at(-1)!;
-        await client.query('delete from public.events where id = $1', [eventToDelete.id]);
-        const cascadedRows = await client.query<{ related_rows: string }>(
-          `select
+      const eventToDelete = events.at(-1)!;
+      await client.query('delete from public.events where id = $1', [eventToDelete.id]);
+      const cascadedRows = await client.query<{ related_rows: string }>(
+        `select
              (select count(*) from public.guests where event_id = $1)
              + (select count(*) from public.rsvps where event_id = $1)
              + (select count(*) from public.event_seating_tables where event_id = $1)
              + (select count(*) from public.event_seating_snapshots where event_id = $1)
              + (select count(*) from public.audit_logs where entity_id = $1)
              as related_rows`,
-          [eventToDelete.id],
-        );
-        expect(Number(cascadedRows.rows[0]?.related_rows)).toBe(1);
-        // Audit history deliberately survives event deletion because entity_id is not a foreign key.
-        const survivingAudit = await client.query(
-          `select id from public.audit_logs
+        [eventToDelete.id],
+      );
+      expect(Number(cascadedRows.rows[0]?.related_rows)).toBe(1);
+      // Audit history deliberately survives event deletion because entity_id is not a foreign key.
+      const survivingAudit = await client.query(
+        `select id from public.audit_logs
            where entity_id = $1 and entity_type = 'event_license'`,
-          [eventToDelete.id],
-        );
-        expect(survivingAudit.rows).toHaveLength(1);
+        [eventToDelete.id],
+      );
+      expect(survivingAudit.rows).toHaveLength(1);
 
-        const elapsedMs = Math.round(performance.now() - startedAt);
-        console.log(
-          `✅ 50 events, 1,275 guests, 1,275 RSVPs and ${events.reduce(
-            (total, event) => total + event.tableIds.length,
-            0,
-          )} seating tables validated in ${elapsedMs}ms`,
-        );
-      });
-    },
-    120_000,
-  );
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      console.log(
+        `✅ 50 events, 1,275 guests, 1,275 RSVPs and ${events.reduce(
+          (total, event) => total + event.tableIds.length,
+          0,
+        )} seating tables validated in ${elapsedMs}ms`,
+      );
+    });
+  }, 120_000);
 });
