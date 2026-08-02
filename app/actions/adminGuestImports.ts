@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
-import type { Database } from '@/types/database.types';
+import type { GuestInsert, GuestSupabaseClient } from '@/types/guestDatabase.types';
 
 interface ContactRow {
   readonly name: string;
@@ -51,7 +51,7 @@ export async function adminImportPhoneContactsAction(formData: FormData): Promis
   const eventId = value(formData, 'eventId');
   if (eventId === '') throw new Error('Invalid event id');
 
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   const { data: event } = await privileged
     .from('events')
     .select('id')
@@ -64,7 +64,7 @@ export async function adminImportPhoneContactsAction(formData: FormData): Promis
   const contacts = selected.length > 0 ? selected : pasted;
   if (contacts.length === 0) redirect(path(eventId, { error: 'contacts-empty' }));
 
-  const rows = new Map<string, Database['public']['Tables']['guests']['Insert']>();
+  const rows = new Map<string, GuestInsert>();
   for (const contact of contacts) {
     try {
       const normalized = normalizeIsraeliPhone(contact.phone);

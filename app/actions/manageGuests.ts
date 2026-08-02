@@ -6,10 +6,9 @@ import { redirect } from 'next/navigation';
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createUserClient } from '@/lib/server/supabase';
-import type { TypedSupabaseClient } from '@/lib/server/supabase';
-import type { Database } from '@/types/database.types';
+import type { GuestInsert, GuestSupabaseClient, GuestUpdate } from '@/types/guestDatabase.types';
 
-type GuestWrite = Database['public']['Tables']['guests']['Update'];
+type GuestWrite = GuestUpdate;
 
 function optional(value: FormDataEntryValue | null): string | null {
   const text = typeof value === 'string' ? value.trim() : '';
@@ -29,19 +28,16 @@ function partySize(value: FormDataEntryValue | null): number | null {
   return Number.isInteger(parsed) && parsed > 0 && parsed <= 100 ? parsed : null;
 }
 
-async function requireOwnedEvent(eventId: string): Promise<TypedSupabaseClient | null> {
+async function requireOwnedEvent(eventId: string): Promise<GuestSupabaseClient | null> {
   const supabase = await createUserClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user === null) return null;
 
-  const { data, error } = await supabase
-    .from('events')
-    .select('id')
-    .eq('id', eventId)
-    .maybeSingle();
-  return error === null && data !== null ? supabase : null;
+  const guestDb = supabase as unknown as GuestSupabaseClient;
+  const { data, error } = await guestDb.from('events').select('id').eq('id', eventId).maybeSingle();
+  return error === null && data !== null ? guestDb : null;
 }
 
 async function duplicateExists(
@@ -198,7 +194,7 @@ async function upsertContacts(
   contacts: readonly ImportedContact[],
   source: string,
 ): Promise<{ saved: number; invalid: number }> {
-  const unique = new Map<string, Database['public']['Tables']['guests']['Insert']>();
+  const unique = new Map<string, GuestInsert>();
   let invalid = 0;
   for (const contact of contacts) {
     try {

@@ -7,7 +7,7 @@ import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
-import type { Database } from '@/types/database.types';
+import type { GuestInsert, GuestSupabaseClient } from '@/types/guestDatabase.types';
 
 function value(formData: FormData, key: string): string {
   const entry = formData.get(key);
@@ -23,7 +23,7 @@ export async function adminImportGuestFileAction(formData: FormData): Promise<vo
   const eventId = value(formData, 'eventId');
   if (eventId === '') throw new Error('Invalid event id');
 
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   const { data: event } = await privileged
     .from('events')
     .select('id')
@@ -39,7 +39,7 @@ export async function adminImportGuestFileAction(formData: FormData): Promise<vo
 
   try {
     const parsed = importGuestsFromFile(new Uint8Array(await file.arrayBuffer()), file.name);
-    const rows = new Map<string, Database['public']['Tables']['guests']['Insert']>();
+    const rows = new Map<string, GuestInsert>();
     for (const guest of parsed.rows) {
       try {
         const normalized = normalizeIsraeliPhone(guest.phone);

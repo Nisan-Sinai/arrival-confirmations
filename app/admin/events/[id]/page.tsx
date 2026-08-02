@@ -12,6 +12,7 @@ import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { createPrivilegedClient } from '@/lib/server/supabase';
+import type { GuestSupabaseClient } from '@/types/guestDatabase.types';
 
 export const metadata: Metadata = {
   title: 'ניהול אירוע לקוח',
@@ -44,7 +45,7 @@ export default async function AdminCustomerEventPage({
   await requirePlatformOwner();
   const { id } = await params;
   const { saved = '', error = '', count = '' } = await searchParams;
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
 
   const { data: event, error: eventError } = await privileged
     .from('events')

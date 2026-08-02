@@ -9,6 +9,7 @@ import {
   validateInviteSession,
 } from '@/lib/server/inviteSession';
 import { createPrivilegedClient } from '@/lib/server/supabase';
+import type { GuestSupabaseClient } from '@/types/guestDatabase.types';
 
 export interface ActiveInviteContext {
   readonly sessionId: string;
@@ -46,7 +47,7 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
   const rawSession = cookieStore.get(INVITE_SESSION_COOKIE)?.value;
   if (!isWellFormedRawToken(rawSession)) return null;
 
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   const sessionHash = hashSessionToken(rawSession);
   const { data: session, error: sessionError } = await privileged
     .from('invite_sessions')

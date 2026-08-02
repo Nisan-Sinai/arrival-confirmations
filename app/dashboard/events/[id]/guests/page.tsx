@@ -7,6 +7,7 @@ import { Container } from '@/components/ui/layout';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { createUserClient } from '@/lib/server/supabase';
+import type { GuestSupabaseClient } from '@/types/guestDatabase.types';
 
 export const metadata: Metadata = {
   title: 'ניהול מוזמנים',
@@ -29,9 +30,10 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
   } = await supabase.auth.getUser();
   if (user === null) redirect('/login');
 
+  const guestDb = supabase as unknown as GuestSupabaseClient;
   const [{ data: event }, { data: guests, error: guestsError }] = await Promise.all([
-    supabase.from('events').select('id, title, public_id').eq('id', id).maybeSingle(),
-    supabase
+    guestDb.from('events').select('id, title, public_id').eq('id', id).maybeSingle(),
+    guestDb
       .from('guests')
       .select('id, full_name, phone, email, party_size, table_name, seat_number, notes')
       .eq('event_id', id)

@@ -8,10 +8,11 @@ import type { EventFormState } from '@/app/actions/manageEvent';
 import { isEventType } from '@/config/eventTypes';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
-import type { Database } from '@/types/database.types';
+import type { Database, Json } from '@/types/database.types';
+import type { GuestSupabaseClient, GuestUpdate } from '@/types/guestDatabase.types';
 
 type EventWrite = Database['public']['Tables']['events']['Update'];
-type GuestWrite = Database['public']['Tables']['guests']['Update'];
+type GuestWrite = GuestUpdate;
 
 function optional(value: FormDataEntryValue | null): string | null {
   const text = typeof value === 'string' ? value.trim() : '';
@@ -49,7 +50,7 @@ function adminEventPath(eventId: string, params: Record<string, string> = {}): s
 }
 
 async function requireExistingEvent(eventId: string): Promise<void> {
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   const { data, error } = await privileged
     .from('events')
     .select('id')
@@ -69,9 +70,9 @@ async function recordAudit({
   action: string;
   entityType: string;
   entityId: string;
-  metadata: Record<string, unknown>;
+  metadata: Json;
 }): Promise<void> {
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   const { error } = await privileged.from('audit_logs').insert({
     admin_user_id: adminUserId,
     action,
@@ -144,7 +145,7 @@ export async function adminUpdateCustomerEventAction(
     return { status: 'error', message: '', fieldErrors: errors, values };
   }
 
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   const { data: updated, error } = await privileged
     .from('events')
     .update(values)
@@ -202,7 +203,7 @@ export async function adminSaveGuestAction(formData: FormData): Promise<void> {
     throw error;
   }
 
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   let duplicateQuery = privileged
     .from('guests')
     .select('id')
@@ -281,7 +282,7 @@ export async function adminDeleteGuestAction(formData: FormData): Promise<void> 
   if (eventId === null || guestId === null) throw new Error('Invalid admin guest deletion');
 
   await requireExistingEvent(eventId);
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
   const { data, error } = await privileged
     .from('guests')
     .update({ is_active: false, token_revoked_at: new Date().toISOString() })
