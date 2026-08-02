@@ -19,12 +19,9 @@ export function EventManagementActions({
   const [copied, setCopied] = useState(false);
   const inviteUrl = `${origin}/e/${publicId}`;
   const whatsappUrl = useMemo(() => {
-    const message = [
-      `נשמח להזמין אתכם ל${eventTitle}`,
-      '',
-      'לפרטים ולאישור הגעה:',
-      inviteUrl,
-    ].join('\n');
+    const message = [`נשמח להזמין אתכם ל${eventTitle}`, '', 'לפרטים ולאישור הגעה:', inviteUrl].join(
+      '\n',
+    );
 
     return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   }, [eventTitle, inviteUrl]);
