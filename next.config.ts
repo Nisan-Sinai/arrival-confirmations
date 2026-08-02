@@ -1,3 +1,4 @@
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { NextConfig } from 'next';
@@ -7,8 +8,12 @@ import type { NextConfig } from 'next';
  * settle on one outside the project — a stray `package-lock.json` in the user's home
  * directory, for instance — which changes how modules resolve. Pinning the root here
  * makes the build identical on a developer machine, in CI, and on Vercel.
+ *
+ * `dirname()` intentionally removes the trailing slash from the module directory.
+ * Vercel injects `outputFileTracingRoot` without that slash; Next.js requires it and
+ * `turbopack.root` to resolve to the exact same string.
  */
-const projectRoot = fileURLToPath(new URL('.', import.meta.url));
+const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 const isDev = process.env.NODE_ENV === 'development';
 
