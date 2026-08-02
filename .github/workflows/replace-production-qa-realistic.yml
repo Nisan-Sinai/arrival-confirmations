@@ -24,28 +24,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Adapt temporary script to the schema currently deployed in Production
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          path = Path('scripts/replace-production-qa-realistic.ts')
-          content = path.read_text()
-          content = re.sub(
-              r"\n      brand_primary_color: PRIMARY_COLORS\[\(globalIndex - 1\) % PRIMARY_COLORS\.length\],\n"
-              r"      brand_accent_color: ACCENT_COLORS\[\(globalIndex - 1\) % ACCENT_COLORS\.length\],\n"
-              r"      invitation_style:\n"
-              r"        globalIndex % 3 === 0 \? 'minimal' : globalIndex % 2 === 0 \? 'modern' : 'classic',",
-              '',
-              content,
-          )
-          path.write_text(content)
-          PY
-
       - name: Replace and verify realistic Production QA data
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: pnpm exec tsx scripts/replace-production-qa-realistic.ts
+        run: pnpm exec tsx scripts/replace-production-qa-compatible.ts
