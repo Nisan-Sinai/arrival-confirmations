@@ -1,4 +1,4 @@
-name: Sync guest database types
+name: Apply guest type compatibility
 
 on:
   pull_request:
@@ -22,158 +22,81 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Synchronize generated guest columns
+      - name: Apply extended guest types
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          types = Path('types/database.types.ts')
-          source = types.read_text()
-          old = '''      guests: {
-        Row: {
-          created_at: string;
-          event_id: string;
-          family_side: Database['public']['Enums']['family_side'] | null;
-          full_name: string;
-          id: string;
-          invite_token_hash: string | null;
-          is_active: boolean;
-          phone: string;
-          phone_normalized: string;
-          token_expires_at: string | null;
-          token_revoked_at: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          event_id: string;
-          family_side?: Database['public']['Enums']['family_side'] | null;
-          full_name: string;
-          id?: string;
-          invite_token_hash?: string | null;
-          is_active?: boolean;
-          phone: string;
-          phone_normalized: string;
-          token_expires_at?: string | null;
-          token_revoked_at?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          event_id?: string;
-          family_side?: Database['public']['Enums']['family_side'] | null;
-          full_name?: string;
-          id?: string;
-          invite_token_hash?: string | null;
-          is_active?: boolean;
-          phone?: string;
-          phone_normalized?: string;
-          token_expires_at?: string | null;
-          token_revoked_at?: string | null;
-          updated_at?: string;
-        };
-'''
-          new = '''      guests: {
-        Row: {
-          accessibility_needs: string | null;
-          created_at: string;
-          email: string | null;
-          event_id: string;
-          family_side: Database['public']['Enums']['family_side'] | null;
-          full_name: string;
-          id: string;
-          import_source: string | null;
-          invite_token_hash: string | null;
-          is_active: boolean;
-          meal_preference: string | null;
-          notes: string | null;
-          party_size: number;
-          phone: string;
-          phone_normalized: string;
-          seat_locked: boolean;
-          seat_number: string | null;
-          seating_group: string | null;
-          seating_priority: number;
-          table_id: string | null;
-          table_name: string | null;
-          token_expires_at: string | null;
-          token_revoked_at: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          accessibility_needs?: string | null;
-          created_at?: string;
-          email?: string | null;
-          event_id: string;
-          family_side?: Database['public']['Enums']['family_side'] | null;
-          full_name: string;
-          id?: string;
-          import_source?: string | null;
-          invite_token_hash?: string | null;
-          is_active?: boolean;
-          meal_preference?: string | null;
-          notes?: string | null;
-          party_size?: number;
-          phone: string;
-          phone_normalized: string;
-          seat_locked?: boolean;
-          seat_number?: string | null;
-          seating_group?: string | null;
-          seating_priority?: number;
-          table_id?: string | null;
-          table_name?: string | null;
-          token_expires_at?: string | null;
-          token_revoked_at?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          accessibility_needs?: string | null;
-          created_at?: string;
-          email?: string | null;
-          event_id?: string;
-          family_side?: Database['public']['Enums']['family_side'] | null;
-          full_name?: string;
-          id?: string;
-          import_source?: string | null;
-          invite_token_hash?: string | null;
-          is_active?: boolean;
-          meal_preference?: string | null;
-          notes?: string | null;
-          party_size?: number;
-          phone?: string;
-          phone_normalized?: string;
-          seat_locked?: boolean;
-          seat_number?: string | null;
-          seating_group?: string | null;
-          seating_priority?: number;
-          table_id?: string | null;
-          table_name?: string | null;
-          token_expires_at?: string | null;
-          token_revoked_at?: string | null;
-          updated_at?: string;
-        };
-'''
-          if old not in source:
-              raise SystemExit('guest type block not found')
-          types.write_text(source.replace(old, new))
+          def patch(path: str, replacements: list[tuple[str, str]]) -> None:
+              file = Path(path)
+              source = file.read_text()
+              for old, new in replacements:
+                  if old not in source:
+                      raise SystemExit(f'missing replacement in {path}: {old[:80]!r}')
+                  source = source.replace(old, new)
+              file.write_text(source)
 
-          action = Path('app/actions/manageAdminCustomerEvent.ts')
-          action_source = action.read_text()
-          action_source = action_source.replace(
-              "import type { Database } from '@/types/database.types';",
-              "import type { Database, Json } from '@/types/database.types';",
-          )
-          action_source = action_source.replace('  metadata: Record<string, unknown>;', '  metadata: Json;')
-          action.write_text(action_source)
+          patch('app/actions/adminGuestFileImport.ts', [
+              ("import type { Database } from '@/types/database.types';", "import type { GuestInsert, GuestSupabaseClient } from '@/types/guestDatabase.types';"),
+              ('const privileged = createPrivilegedClient();', 'const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;'),
+              ("Database['public']['Tables']['guests']['Insert']", 'GuestInsert'),
+          ])
+
+          patch('app/actions/adminGuestImports.ts', [
+              ("import type { Database } from '@/types/database.types';", "import type { GuestInsert, GuestSupabaseClient } from '@/types/guestDatabase.types';"),
+              ('const privileged = createPrivilegedClient();', 'const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;'),
+              ("Database['public']['Tables']['guests']['Insert']", 'GuestInsert'),
+          ])
+
+          patch('app/actions/manageAdminCustomerEvent.ts', [
+              ("import type { Database } from '@/types/database.types';", "import type { Database, Json } from '@/types/database.types';\nimport type { GuestSupabaseClient, GuestUpdate } from '@/types/guestDatabase.types';"),
+              ("type GuestWrite = Database['public']['Tables']['guests']['Update'];", 'type GuestWrite = GuestUpdate;'),
+              ('  metadata: Record<string, unknown>;', '  metadata: Json;'),
+              ('const privileged = createPrivilegedClient();', 'const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;'),
+          ])
+
+          patch('app/actions/manageGuests.ts', [
+              ("import type { TypedSupabaseClient } from '@/lib/server/supabase';\nimport type { Database } from '@/types/database.types';", "import type { GuestInsert, GuestSupabaseClient, GuestUpdate } from '@/types/guestDatabase.types';"),
+              ("type GuestWrite = Database['public']['Tables']['guests']['Update'];", 'type GuestWrite = GuestUpdate;'),
+              ('async function requireOwnedEvent(eventId: string): Promise<TypedSupabaseClient | null> {', 'async function requireOwnedEvent(eventId: string): Promise<GuestSupabaseClient | null> {'),
+              ("  const { data, error } = await supabase\n    .from('events')", "  const guestDb = supabase as unknown as GuestSupabaseClient;\n  const { data, error } = await guestDb\n    .from('events')"),
+              ('  return error === null && data !== null ? supabase : null;', '  return error === null && data !== null ? guestDb : null;'),
+              ("Database['public']['Tables']['guests']['Insert']", 'GuestInsert'),
+          ])
+
+          patch('app/admin/events/[id]/page.tsx', [
+              ("import { createPrivilegedClient } from '@/lib/server/supabase';", "import { createPrivilegedClient } from '@/lib/server/supabase';\nimport type { GuestSupabaseClient } from '@/types/guestDatabase.types';"),
+              ('  const privileged = createPrivilegedClient();', '  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;'),
+          ])
+
+          patch('app/dashboard/events/[id]/guests/page.tsx', [
+              ("import { createUserClient } from '@/lib/server/supabase';", "import { createUserClient } from '@/lib/server/supabase';\nimport type { GuestSupabaseClient } from '@/types/guestDatabase.types';"),
+              ("  const [{ data: event }, { data: guests, error: guestsError }] = await Promise.all([\n    supabase.from('events')", "  const guestDb = supabase as unknown as GuestSupabaseClient;\n  const [{ data: event }, { data: guests, error: guestsError }] = await Promise.all([\n    guestDb.from('events')"),
+              ("    supabase\n      .from('guests')", "    guestDb\n      .from('guests')"),
+          ])
+
+          patch('lib/server/currentInvite.ts', [
+              ("import { createPrivilegedClient } from '@/lib/server/supabase';", "import { createPrivilegedClient } from '@/lib/server/supabase';\nimport type { GuestSupabaseClient } from '@/types/guestDatabase.types';"),
+              ('  const privileged = createPrivilegedClient();', '  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;'),
+          ])
           PY
-      - run: pnpm exec prettier --write types/database.types.ts app/actions/manageAdminCustomerEvent.ts
-      - name: Commit synchronized types
+      - run: >-
+          pnpm exec prettier --write
+          app/actions/adminGuestFileImport.ts
+          app/actions/adminGuestImports.ts
+          app/actions/manageAdminCustomerEvent.ts
+          app/actions/manageGuests.ts
+          app/admin/events/[id]/page.tsx
+          app/dashboard/events/[id]/guests/page.tsx
+          lib/server/currentInvite.ts
+          types/guestDatabase.types.ts
+      - name: Commit compatibility changes
         run: |
           if git diff --quiet; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add types/database.types.ts app/actions/manageAdminCustomerEvent.ts
-          git commit -m "fix: sync guest database types"
+          git add app lib types/guestDatabase.types.ts
+          git commit -m "fix: use extended guest database types"
           git push origin HEAD:${{ github.head_ref }}
