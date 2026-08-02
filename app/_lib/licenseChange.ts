@@ -1,8 +1,4 @@
-import {
-  getPlanDefinition,
-  type LicenseStatus,
-  type PlanCode,
-} from '@/app/_lib/plans';
+import { getPlanDefinition, type LicenseStatus, type PlanCode } from '@/app/_lib/plans';
 
 export type EditablePlan = Exclude<PlanCode, 'legacy'>;
 

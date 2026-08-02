@@ -215,11 +215,7 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                     >
                       <input type="hidden" name="eventId" value={event.id} />
                       <input type="hidden" name="currentPlan" value={formPlan} />
-                      <input
-                        type="hidden"
-                        name="currentPriceAgorot"
-                        value={String(defaultPrice)}
-                      />
+                      <input type="hidden" name="currentPriceAgorot" value={String(defaultPrice)} />
                       <input type="hidden" name="q" value={q} />
 
                       <label className="text-foreground text-sm font-medium">
