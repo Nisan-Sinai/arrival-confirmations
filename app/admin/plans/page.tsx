@@ -46,11 +46,11 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
 }
 
 interface AdminPlansPageProps {
-  readonly searchParams: Promise<{ q?: string }>;
+  readonly searchParams: Promise<{ q?: string; updated?: string }>;
 }
 
 export default async function AdminPlansPage({ searchParams }: AdminPlansPageProps) {
-  const { q = '' } = await searchParams;
+  const { q = '', updated = '' } = await searchParams;
   const query = q.trim().toLowerCase();
   const privileged = createPrivilegedClient();
 
@@ -77,6 +77,9 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
       licenses.set(event.id, trialEventLicense(event.id));
     }
   }
+
+  const updatedEvent = updated === '' ? undefined : eventRows.find((event) => event.id === updated);
+  const updatedLicense = updatedEvent === undefined ? undefined : licenses.get(updatedEvent.id);
 
   const filtered = eventRows.filter((event) => {
     if (query === '') return true;
@@ -119,6 +122,19 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
           </Button>
         </form>
 
+        {updatedEvent !== undefined && updatedLicense !== undefined && (
+          <div
+            role="status"
+            className="border-success/30 bg-success-soft text-foreground mt-6 rounded-2xl border px-5 py-4"
+          >
+            <p className="font-semibold">המסלול נשמר והמסכים עודכנו בהצלחה.</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {updatedEvent.title}: {getPlanLabel(updatedLicense.plan)} ·{' '}
+              {statusLabel(updatedLicense.status)} · {formatPlanPrice(updatedLicense.priceAgorot)}
+            </p>
+          </div>
+        )}
+
         {filtered.length === 0 ? (
           <EmptyState
             className="mt-10"
@@ -153,7 +169,11 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Badge tone={currentPlan === 'premium' ? 'gold' : 'neutral'}>
+                        <Badge
+                          tone={
+                            currentPlan === 'premium' || currentPlan === 'pro' ? 'gold' : 'neutral'
+                          }
+                        >
                           {getPlanLabel(currentPlan)}
                         </Badge>
                         <Badge tone={statusTone(currentStatus)}>{statusLabel(currentStatus)}</Badge>
@@ -194,6 +214,13 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                       className="mt-6 grid gap-4 lg:grid-cols-6"
                     >
                       <input type="hidden" name="eventId" value={event.id} />
+                      <input type="hidden" name="currentPlan" value={formPlan} />
+                      <input
+                        type="hidden"
+                        name="currentPriceAgorot"
+                        value={String(defaultPrice)}
+                      />
+                      <input type="hidden" name="q" value={q} />
 
                       <label className="text-foreground text-sm font-medium">
                         מסלול
@@ -208,6 +235,10 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                             </option>
                           ))}
                         </select>
+                        <span className="text-muted-foreground mt-1.5 block text-xs font-normal">
+                          מעבר ממצב בדיקה למסלול בתשלום מפעיל אותו אוטומטית ומעדכן למחיר המחירון,
+                          אלא אם הזנת מחיר אחר.
+                        </span>
                       </label>
 
                       <label className="text-foreground text-sm font-medium">
@@ -240,7 +271,7 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                           type="number"
                           min="0"
                           max="10000"
-                          step="1"
+                          step="0.01"
                           defaultValue={defaultPrice / 100}
                           className={`${fieldClass} mt-1.5`}
                         />
