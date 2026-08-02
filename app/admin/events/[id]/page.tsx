@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { requirePlatformOwner } from '@/app/_lib/platformAdmin';
 import { buttonClass } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { createPrivilegedClient } from '@/lib/server/supabase';
-import type { GuestSupabaseClient } from '@/types/guestDatabase.types';
 
 export const metadata: Metadata = {
   title: 'ניהול אירוע לקוח',
@@ -45,7 +45,7 @@ export default async function AdminCustomerEventPage({
   await requirePlatformOwner();
   const { id } = await params;
   const { saved = '', error = '', count = '' } = await searchParams;
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
 
   const { data: event, error: eventError } = await privileged
     .from('events')
