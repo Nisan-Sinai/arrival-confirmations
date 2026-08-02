@@ -53,6 +53,12 @@ export function EventManagementActions({
           ניהול האירוע ואישורי ההגעה
         </Link>
         <Link
+          href={`/dashboard/events/${eventId}/guests`}
+          className={buttonClass({ variant: 'secondary', size: 'sm' })}
+        >
+          ניהול מוזמנים וייבוא מהטלפון
+        </Link>
+        <Link
           href={`/dashboard/events/${eventId}/edit`}
           className={buttonClass({ variant: 'outline', size: 'sm' })}
         >
