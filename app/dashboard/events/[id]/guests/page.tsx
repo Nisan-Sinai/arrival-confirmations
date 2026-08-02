@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { createUserClient } from '@/lib/server/supabase';
-import type { GuestSupabaseClient } from '@/types/guestDatabase.types';
 
 export const metadata: Metadata = {
   title: 'ניהול מוזמנים',
@@ -30,7 +30,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
   } = await supabase.auth.getUser();
   if (user === null) redirect('/login');
 
-  const guestDb = supabase as unknown as GuestSupabaseClient;
+  const guestDb = supabase as unknown as SupabaseClient;
   const [{ data: event }, { data: guests, error: guestsError }] = await Promise.all([
     guestDb.from('events').select('id, title, public_id').eq('id', id).maybeSingle(),
     guestDb
