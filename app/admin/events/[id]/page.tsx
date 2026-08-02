@@ -9,6 +9,7 @@ import { Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
 import { GuestFileImportForm } from '@/features/admin/GuestFileImportForm';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
+import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 
@@ -78,7 +79,16 @@ export default async function AdminCustomerEventPage({
     ownerEmail = ownerData.user?.email ?? event.owner_user_id;
   }
 
-  const guestRows = guests ?? [];
+  const guestRows = (guests ?? []).map((guest) => ({
+    id: guest.id,
+    fullName: guest.full_name,
+    phone: guest.phone,
+    email: guest.email,
+    partySize: guest.party_size,
+    tableName: guest.table_name,
+    seatNumber: guest.seat_number,
+    notes: guest.notes,
+  }));
   const rsvpRows = rsvps ?? [];
   const attendingReplies = rsvpRows.filter(
     (response) => response.attendance_status === 'attending',
@@ -92,7 +102,7 @@ export default async function AdminCustomerEventPage({
     <main id="main" className="flex-1 py-10 sm:py-14">
       <Container width="wide">
         <Link
-          href="/admin/plans"
+          href="/admin/events"
           className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 rounded-sm text-sm"
         >
           חזרה לכל הלקוחות והאירועים
@@ -130,7 +140,7 @@ export default async function AdminCustomerEventPage({
               rel="noopener noreferrer"
               className={buttonClass({ variant: 'outline' })}
             >
-              צפייה בהזמנה
+              צפייה בקישור הראשי
             </Link>
             <Link href="/admin/plans" className={buttonClass({ variant: 'ghost' })}>
               מסלול ותשלום
@@ -170,30 +180,20 @@ export default async function AdminCustomerEventPage({
           </div>
         </section>
 
-        <section aria-labelledby="admin-guests" className="mt-10">
+        <section aria-labelledby="admin-guests" className="mt-10 space-y-6">
           <h2 id="admin-guests" className="sr-only">
             ניהול מוזמנים
           </h2>
+          <PersonalInviteSendList guests={guestRows} />
           <GuestManagementPanel
             mode="admin"
             eventId={event.id}
-            guests={guestRows.map((guest) => ({
-              id: guest.id,
-              fullName: guest.full_name,
-              phone: guest.phone,
-              email: guest.email,
-              partySize: guest.party_size,
-              tableName: guest.table_name,
-              seatNumber: guest.seat_number,
-              notes: guest.notes,
-            }))}
+            guests={guestRows}
             saved={saved}
             error={error}
             count={count}
           />
-          <div className="mt-6">
-            <GuestFileImportForm mode="admin" eventId={event.id} />
-          </div>
+          <GuestFileImportForm mode="admin" eventId={event.id} />
         </section>
 
         <section aria-labelledby="admin-rsvps" className="mt-12">
