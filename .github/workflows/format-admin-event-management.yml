@@ -1,0 +1,31 @@
+name: Format admin event management
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    if: github.head_ref == 'feature/admin-event-management'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write app/dashboard/page.tsx features/admin/EventManagementActions.tsx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-admin-event-management
+          path: |
+            app/dashboard/page.tsx
+            features/admin/EventManagementActions.tsx
