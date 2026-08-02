@@ -248,3 +248,83 @@ jobs:
           else
             echo "Selected safe migration path: none"
           fi
+
+      - name: Inspect live Production schema through PostgREST
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          url = os.environ['SUPABASE_URL'].rstrip('/') + '/rest/v1/'
+          key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+          request = urllib.request.Request(
+              url,
+              headers={
+                  'apikey': key,
+                  'Authorization': f'Bearer {key}',
+                  'Accept': 'application/openapi+json',
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              document = json.load(response)
+
+          schemas = document.get('definitions') or document.get('components', {}).get('schemas', {})
+          paths = document.get('paths', {})
+
+          expected = {
+              'events': [
+                  'owner_user_id',
+                  'public_id',
+                  'expected_guests',
+                  'brand_primary_color',
+                  'brand_accent_color',
+                  'invitation_style',
+              ],
+              'guests': [
+                  'email',
+                  'party_size',
+                  'table_id',
+                  'table_name',
+                  'seat_number',
+                  'seating_group',
+                  'meal_preference',
+                  'accessibility_needs',
+                  'seating_priority',
+                  'seat_locked',
+                  'import_source',
+                  'notes',
+              ],
+              'event_messages': [],
+              'event_seating_tables': [],
+              'event_seating_snapshots': [],
+          }
+
+          missing = []
+          for table, columns in expected.items():
+              schema = schemas.get(table)
+              if not isinstance(schema, dict):
+                  print(f'❌ table {table} is missing')
+                  missing.append(f'table:{table}')
+                  continue
+              print(f'✅ table {table} exists')
+              properties = schema.get('properties', {})
+              for column in columns:
+                  if column in properties:
+                      print(f'  ✅ column {table}.{column}')
+                  else:
+                      print(f'  ❌ column {table}.{column} is missing')
+                      missing.append(f'column:{table}.{column}')
+
+          rpc_names = sorted(path.removeprefix('/rpc/') for path in paths if path.startswith('/rpc/'))
+          print(f'RPC count exposed to service role: {len(rpc_names)}')
+          sql_like = [name for name in rpc_names if any(token in name.lower() for token in ('sql', 'query', 'exec'))]
+          print('SQL-like RPC candidates: ' + (', '.join(sql_like) if sql_like else 'none'))
+
+          print(f'Missing required Production objects: {len(missing)}')
+          for item in missing:
+              print(f'MISSING {item}')
+          PY
