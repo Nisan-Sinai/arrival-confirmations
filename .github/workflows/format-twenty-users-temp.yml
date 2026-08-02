@@ -1,0 +1,35 @@
+name: Temporary format 20-user QA matrix
+
+on:
+  push:
+    branches: [qa/20-users-200-events-plans]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/20-users-200-events-plans
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write tests/integration/twentyUsersEventPlansMatrix.test.ts
+      - run: rm .github/workflows/format-twenty-users-temp.yml
+
+      - name: Commit formatted test and remove this temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/integration/twentyUsersEventPlansMatrix.test.ts .github/workflows/format-twenty-users-temp.yml
+          git commit -m "style: format 20-user QA matrix"
+          git push origin HEAD:qa/20-users-200-events-plans
