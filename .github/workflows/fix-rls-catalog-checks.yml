@@ -1,0 +1,106 @@
+name: Fix RLS catalog checks
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.head_ref == 'qa/50-event-matrix' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Replace destructive denied-call probes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/rls/tenantIsolation.test.ts')
+          text = path.read_text()
+          old = """  it('cannot call the rate limiter', async () => {
+    await withRollback(async (client) => {
+      await becomeAnon(client);
+      await expect(client.query(`select public.consume_rate_limit('k', 1, 60)`)).rejects.toThrow(
+        /permission denied/i,
+      );
+    });
+  });
+
+  it('cannot call the retention purge', async () => {
+    await withRollback(async (client) => {
+      await becomeAnon(client);
+      await expect(
+        client.query('select public.purge_expired_guest_data(365, 365, true)'),
+      ).rejects.toThrow(/permission denied/i);
+    });
+  });
+
+  /** Retired in 20260726001200 — it returned an arbitrary active event with no id. */
+  it('has no unaddressed get_public_event() to fall back on', async () => {
+    await withRollback(async (client) => {
+      await becomeAnon(client);
+      await expect(client.query('select public.get_public_event()')).rejects.toThrow(
+        /does not exist|permission denied/i,
+      );
+    });
+  });"""
+          new = """  it('cannot call the rate limiter', async () => {
+    await withRollback(async (client) => {
+      const { rows } = await client.query<{ can_execute: boolean }>(
+        `select has_function_privilege(
+           'anon',
+           'public.consume_rate_limit(text, integer, integer)',
+           'EXECUTE'
+         ) as can_execute`,
+      );
+      expect(rows[0]?.can_execute).toBe(false);
+    });
+  });
+
+  it('cannot call the retention purge', async () => {
+    await withRollback(async (client) => {
+      const { rows } = await client.query<{ can_execute: boolean }>(
+        `select has_function_privilege(
+           'anon',
+           'public.purge_expired_guest_data(integer, integer, boolean)',
+           'EXECUTE'
+         ) as can_execute`,
+      );
+      expect(rows[0]?.can_execute).toBe(false);
+    });
+  });
+
+  /** Retired in 20260726001200 — it returned an arbitrary active event with no id. */
+  it('has no unaddressed get_public_event() to fall back on', async () => {
+    await withRollback(async (client) => {
+      const { rows } = await client.query<{ routine: string | null }>(
+        `select to_regprocedure('public.get_public_event()')::text as routine`,
+      );
+      expect(rows[0]?.routine).toBeNull();
+    });
+  });"""
+          if old not in text:
+              raise SystemExit('Expected RLS test block was not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prettier --write tests/rls/tenantIsolation.test.ts
+      - name: Commit deterministic RLS checks
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/rls/tenantIsolation.test.ts
+          git diff --cached --quiet && exit 0
+          git commit -m "test: verify denied RPC grants through catalog"
+          git push origin HEAD:${{ github.head_ref }}
