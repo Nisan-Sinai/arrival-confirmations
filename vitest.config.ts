@@ -1,7 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
 const serverOnlyStub = fileURLToPath(new URL('./tests/stubs/server-only.ts', import.meta.url));
@@ -14,8 +13,9 @@ const serverOnlyStub = fileURLToPath(new URL('./tests/stubs/server-only.ts', imp
  * single-file, single-fork: they share one database and must not interleave.
  */
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
+  plugins: [react()],
   resolve: {
+    tsconfigPaths: true,
     alias: { 'server-only': serverOnlyStub },
   },
   test: {
