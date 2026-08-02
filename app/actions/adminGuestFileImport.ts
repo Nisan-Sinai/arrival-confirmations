@@ -2,12 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
-import type { GuestInsert, GuestSupabaseClient } from '@/types/guestDatabase.types';
+import type { GuestInsert } from '@/types/guestDatabase.types';
 
 function value(formData: FormData, key: string): string {
   const entry = formData.get(key);
@@ -23,7 +24,7 @@ export async function adminImportGuestFileAction(formData: FormData): Promise<vo
   const eventId = value(formData, 'eventId');
   if (eventId === '') throw new Error('Invalid event id');
 
-  const privileged = createPrivilegedClient() as unknown as GuestSupabaseClient;
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { data: event } = await privileged
     .from('events')
     .select('id')
