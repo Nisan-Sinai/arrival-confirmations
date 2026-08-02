@@ -1,0 +1,51 @@
+name: Temporary final warning cleanup
+
+on:
+  push:
+    branches:
+      - fix/build-warning-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/build-warning-cleanup
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Update action runtimes and Knip configuration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/ci.yml')
+          text = workflow.read_text()
+          text = text.replace('actions/checkout@v4', 'actions/checkout@v6')
+          text = text.replace('pnpm/action-setup@v4', 'pnpm/action-setup@v6')
+          text = text.replace('actions/setup-node@v4', 'actions/setup-node@v6')
+          text = text.replace('actions/upload-artifact@v4', 'actions/upload-artifact@v7')
+          workflow.write_text(text)
+
+          knip = Path('knip.json')
+          text = knip.read_text().replace(
+              '"ignoreDependencies": ["tailwindcss", "@stryker-mutator/vitest-runner"]',
+              '"ignoreDependencies": ["@stryker-mutator/vitest-runner"]',
+          )
+          knip.write_text(text)
+          PY
+          pnpm exec prettier --write .github/workflows/ci.yml knip.json
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/ci.yml knip.json
+          git diff --cached --quiet || git commit -m "fix(ci): move actions to Node 24 runtimes"
+          git push origin HEAD:fix/build-warning-cleanup
