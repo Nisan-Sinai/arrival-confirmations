@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "tsx scripts/probe-production-management-api.ts && next build",
+    "build": "tsx scripts/apply-production-schema-release.ts && next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
     "lint:fix": "eslint --fix",
