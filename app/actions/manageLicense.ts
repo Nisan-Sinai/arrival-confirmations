@@ -1,12 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
+import { normalizeLicenseChange } from '@/app/_lib/licenseChange';
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
 import {
   LICENSE_STATUSES,
   PAYMENT_METHODS,
-  getPlanDefinition,
   type LicenseStatus,
   type PaymentMethod,
   type PlanCode,
@@ -37,11 +38,16 @@ function paymentMethodValue(value: FormDataEntryValue | null): PaymentMethod | n
     : null;
 }
 
-function priceValue(value: FormDataEntryValue | null, fallbackAgorot: number): number {
-  if (typeof value !== 'string' || value.trim() === '') return fallbackAgorot;
-  const shekels = Number(value);
-  if (!Number.isFinite(shekels) || shekels < 0 || shekels > 10_000) return fallbackAgorot;
-  return Math.round(shekels * 100);
+function nonNegativeIntegerValue(value: FormDataEntryValue | null): number | null {
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function successRedirectPath(eventId: string, query: string | null): string {
+  const search = new URLSearchParams({ updated: eventId });
+  if (query !== null) search.set('q', query.slice(0, 200));
+  return `/admin/plans?${search.toString()}`;
 }
 
 export async function updateEventLicenseAction(formData: FormData): Promise<void> {
@@ -49,8 +55,8 @@ export async function updateEventLicenseAction(formData: FormData): Promise<void
 
   const eventId = optionalText(formData.get('eventId'));
   const plan = planValue(formData.get('plan'));
-  const status = statusValue(formData.get('status'));
-  if (eventId === null || plan === null || status === null) {
+  const submittedStatus = statusValue(formData.get('status'));
+  if (eventId === null || plan === null || submittedStatus === null) {
     throw new Error('Invalid event license request');
   }
 
@@ -62,16 +68,22 @@ export async function updateEventLicenseAction(formData: FormData): Promise<void
     .maybeSingle();
   if (error || event === null) throw new Error('Event not found');
 
-  const defaultPrice = getPlanDefinition(plan)?.priceAgorot ?? 0;
-  const paymentMethod = paymentMethodValue(formData.get('paymentMethod'));
+  const normalized = normalizeLicenseChange({
+    plan,
+    submittedStatus,
+    submittedPrice:
+      typeof formData.get('price') === 'string' ? (formData.get('price') as string) : null,
+    previousPlan: planValue(formData.get('currentPlan')),
+    previousPriceAgorot: nonNegativeIntegerValue(formData.get('currentPriceAgorot')),
+  });
 
   await recordEventLicense({
     eventId,
     adminUserId: admin.id,
     plan,
-    status,
-    priceAgorot: priceValue(formData.get('price'), defaultPrice),
-    paymentMethod,
+    status: normalized.status,
+    priceAgorot: normalized.priceAgorot,
+    paymentMethod: paymentMethodValue(formData.get('paymentMethod')),
     paymentReference: optionalText(formData.get('paymentReference')),
     notes: optionalText(formData.get('notes')),
   });
@@ -81,4 +93,6 @@ export async function updateEventLicenseAction(formData: FormData): Promise<void
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/tools`);
   revalidatePath('/e', 'layout');
+
+  redirect(successRedirectPath(eventId, optionalText(formData.get('q'))));
 }
