@@ -14,7 +14,7 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",
     "format:homepage": "prettier --write app/page.tsx",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write scripts/apply-production-schema-release.ts && prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit --project component",
     "test:watch": "vitest --project unit --project component",
