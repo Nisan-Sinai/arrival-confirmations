@@ -60,6 +60,10 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Browser bundle security tests
+        # The suite inspects .next/static, so it must run in the same job after Build.
+        run: pnpm test:security
+
       # A hard gate, not advisory. This is how `updatePasswordAction`,
       # `updateRsvpAction` and an entire `/reset-password` flow came to exist with no
       # caller and no route, and how six unused production dependencies — including
@@ -80,7 +84,7 @@ jobs:
         continue-on-error: true
 
   migrations:
-    name: Migrations reproduce from scratch
+    name: Database, integration, RLS and 50-event matrix
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,9 +117,16 @@ jobs:
         run: |
           eval "$(supabase status -o env)"
           echo "DB_URL=$DB_URL" >> "$GITHUB_ENV"
+          echo "TEST_DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
       - name: Compare repository migrations with applied history
         run: pnpm check:schema-drift
+
+      - name: Integration tests including the 50-event matrix
+        run: pnpm test:integration
+
+      - name: Row-level security tests
+        run: pnpm test:rls
 
       - name: Stop local database
         if: always()

@@ -226,29 +226,37 @@ describe('the anonymous surface', () => {
 
   it('cannot call the rate limiter', async () => {
     await withRollback(async (client) => {
-      await becomeAnon(client);
-      await expect(client.query(`select public.consume_rate_limit('k', 1, 60)`)).rejects.toThrow(
-        /permission denied/i,
+      const { rows } = await client.query<{ can_execute: boolean }>(
+        `select has_function_privilege(
+           'anon',
+           'public.consume_rate_limit(text, integer, integer)',
+           'EXECUTE'
+         ) as can_execute`,
       );
+      expect(rows[0]?.can_execute).toBe(false);
     });
   });
 
   it('cannot call the retention purge', async () => {
     await withRollback(async (client) => {
-      await becomeAnon(client);
-      await expect(
-        client.query('select public.purge_expired_guest_data(365, 365, true)'),
-      ).rejects.toThrow(/permission denied/i);
+      const { rows } = await client.query<{ can_execute: boolean }>(
+        `select has_function_privilege(
+           'anon',
+           'public.purge_expired_guest_data(integer, integer, boolean)',
+           'EXECUTE'
+         ) as can_execute`,
+      );
+      expect(rows[0]?.can_execute).toBe(false);
     });
   });
 
   /** Retired in 20260726001200 — it returned an arbitrary active event with no id. */
   it('has no unaddressed get_public_event() to fall back on', async () => {
     await withRollback(async (client) => {
-      await becomeAnon(client);
-      await expect(client.query('select public.get_public_event()')).rejects.toThrow(
-        /does not exist|permission denied/i,
+      const { rows } = await client.query<{ routine: string | null }>(
+        `select to_regprocedure('public.get_public_event()')::text as routine`,
       );
+      expect(rows[0]?.routine).toBeNull();
     });
   });
 });
