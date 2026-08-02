@@ -13,7 +13,7 @@ import { Alert } from '@/components/ui/feedback';
 const INITIAL_STATE: PersonalRsvpState = { status: 'idle', message: '' };
 
 const OPTIONS = [
-  { value: 'attending', label: 'מגיע/ה', description: 'נגיע בשמחה', variant: 'default' },
+  { value: 'attending', label: 'מגיע/ה', description: 'נגיע בשמחה', variant: 'primary' },
   { value: 'not_attending', label: 'לא מגיע/ה', description: 'לא נוכל להגיע', variant: 'outline' },
   { value: 'maybe', label: 'אולי', description: 'עדיין לא בטוחים', variant: 'secondary' },
 ] as const;
