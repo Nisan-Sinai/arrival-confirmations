@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -40,10 +40,13 @@ jobs:
           features/admin/PersonalInviteSendList.tsx
           features/rsvp/PersonalRsvpButtons.tsx
           lib/server/currentInvite.ts
-      - run: >-
-          tar --exclude=node_modules --exclude=.git -czf formatted-source.tgz
-          app features lib
-      - uses: actions/upload-artifact@v4
-        with:
-          name: formatted-customer-event-access-source
-          path: formatted-source.tgz
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app features lib
+          git commit -m "style: format customer event access"
+          git push origin HEAD:${{ github.head_ref }}
