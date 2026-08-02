@@ -1,0 +1,179 @@
+name: Sync guest database types
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.head_ref == 'feature/admin-customer-event-access'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Synchronize generated guest columns
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          types = Path('types/database.types.ts')
+          source = types.read_text()
+          old = '''      guests: {
+        Row: {
+          created_at: string;
+          event_id: string;
+          family_side: Database['public']['Enums']['family_side'] | null;
+          full_name: string;
+          id: string;
+          invite_token_hash: string | null;
+          is_active: boolean;
+          phone: string;
+          phone_normalized: string;
+          token_expires_at: string | null;
+          token_revoked_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          event_id: string;
+          family_side?: Database['public']['Enums']['family_side'] | null;
+          full_name: string;
+          id?: string;
+          invite_token_hash?: string | null;
+          is_active?: boolean;
+          phone: string;
+          phone_normalized: string;
+          token_expires_at?: string | null;
+          token_revoked_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          event_id?: string;
+          family_side?: Database['public']['Enums']['family_side'] | null;
+          full_name?: string;
+          id?: string;
+          invite_token_hash?: string | null;
+          is_active?: boolean;
+          phone?: string;
+          phone_normalized?: string;
+          token_expires_at?: string | null;
+          token_revoked_at?: string | null;
+          updated_at?: string;
+        };
+'''
+          new = '''      guests: {
+        Row: {
+          accessibility_needs: string | null;
+          created_at: string;
+          email: string | null;
+          event_id: string;
+          family_side: Database['public']['Enums']['family_side'] | null;
+          full_name: string;
+          id: string;
+          import_source: string | null;
+          invite_token_hash: string | null;
+          is_active: boolean;
+          meal_preference: string | null;
+          notes: string | null;
+          party_size: number;
+          phone: string;
+          phone_normalized: string;
+          seat_locked: boolean;
+          seat_number: string | null;
+          seating_group: string | null;
+          seating_priority: number;
+          table_id: string | null;
+          table_name: string | null;
+          token_expires_at: string | null;
+          token_revoked_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          accessibility_needs?: string | null;
+          created_at?: string;
+          email?: string | null;
+          event_id: string;
+          family_side?: Database['public']['Enums']['family_side'] | null;
+          full_name: string;
+          id?: string;
+          import_source?: string | null;
+          invite_token_hash?: string | null;
+          is_active?: boolean;
+          meal_preference?: string | null;
+          notes?: string | null;
+          party_size?: number;
+          phone: string;
+          phone_normalized: string;
+          seat_locked?: boolean;
+          seat_number?: string | null;
+          seating_group?: string | null;
+          seating_priority?: number;
+          table_id?: string | null;
+          table_name?: string | null;
+          token_expires_at?: string | null;
+          token_revoked_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          accessibility_needs?: string | null;
+          created_at?: string;
+          email?: string | null;
+          event_id?: string;
+          family_side?: Database['public']['Enums']['family_side'] | null;
+          full_name?: string;
+          id?: string;
+          import_source?: string | null;
+          invite_token_hash?: string | null;
+          is_active?: boolean;
+          meal_preference?: string | null;
+          notes?: string | null;
+          party_size?: number;
+          phone?: string;
+          phone_normalized?: string;
+          seat_locked?: boolean;
+          seat_number?: string | null;
+          seating_group?: string | null;
+          seating_priority?: number;
+          table_id?: string | null;
+          table_name?: string | null;
+          token_expires_at?: string | null;
+          token_revoked_at?: string | null;
+          updated_at?: string;
+        };
+'''
+          if old not in source:
+              raise SystemExit('guest type block not found')
+          types.write_text(source.replace(old, new))
+
+          action = Path('app/actions/manageAdminCustomerEvent.ts')
+          action_source = action.read_text()
+          action_source = action_source.replace(
+              "import type { Database } from '@/types/database.types';",
+              "import type { Database, Json } from '@/types/database.types';",
+          )
+          action_source = action_source.replace('  metadata: Record<string, unknown>;', '  metadata: Json;')
+          action.write_text(action_source)
+          PY
+      - run: pnpm exec prettier --write types/database.types.ts app/actions/manageAdminCustomerEvent.ts
+      - name: Commit synchronized types
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add types/database.types.ts app/actions/manageAdminCustomerEvent.ts
+          git commit -m "fix: sync guest database types"
+          git push origin HEAD:${{ github.head_ref }}
