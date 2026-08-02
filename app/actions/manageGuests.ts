@@ -2,11 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createUserClient } from '@/lib/server/supabase';
-import type { GuestInsert, GuestSupabaseClient, GuestUpdate } from '@/types/guestDatabase.types';
+import type { GuestInsert, GuestUpdate } from '@/types/guestDatabase.types';
 
 type GuestWrite = GuestUpdate;
 
@@ -28,20 +29,24 @@ function partySize(value: FormDataEntryValue | null): number | null {
   return Number.isInteger(parsed) && parsed > 0 && parsed <= 100 ? parsed : null;
 }
 
-async function requireOwnedEvent(eventId: string): Promise<GuestSupabaseClient | null> {
+async function requireOwnedEvent(eventId: string): Promise<SupabaseClient | null> {
   const supabase = await createUserClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user === null) return null;
 
-  const guestDb = supabase as unknown as GuestSupabaseClient;
-  const { data, error } = await guestDb.from('events').select('id').eq('id', eventId).maybeSingle();
+  const guestDb = supabase as unknown as SupabaseClient;
+  const { data, error } = await guestDb
+    .from('events')
+    .select('id')
+    .eq('id', eventId)
+    .maybeSingle();
   return error === null && data !== null ? guestDb : null;
 }
 
 async function duplicateExists(
-  supabase: TypedSupabaseClient,
+  supabase: SupabaseClient,
   eventId: string,
   normalized: string,
   excludedGuestId: string | null,
@@ -189,7 +194,7 @@ function parseSelectedContacts(value: string): ImportedContact[] {
 }
 
 async function upsertContacts(
-  supabase: TypedSupabaseClient,
+  supabase: SupabaseClient,
   eventId: string,
   contacts: readonly ImportedContact[],
   source: string,
