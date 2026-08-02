@@ -17,8 +17,7 @@ interface NormalizedLicenseChange {
 
 const MAX_PRICE_SHEKELS = 10_000;
 
-function normalizedStatus(plan: EditablePlan, submittedStatus: LicenseStatus): LicenseStatus {
-  if (plan === 'trial') return 'trial';
+function normalizedPaidStatus(submittedStatus: LicenseStatus): LicenseStatus {
   return submittedStatus === 'trial' ? 'active' : submittedStatus;
 }
 
@@ -36,7 +35,7 @@ export function normalizeLicenseChange(
     return { status: 'trial', priceAgorot: 0 };
   }
 
-  const defaultPriceAgorot = getPlanDefinition(input.plan)?.priceAgorot ?? 0;
+  const defaultPriceAgorot = getPlanDefinition(input.plan)!.priceAgorot;
   const submittedPriceAgorot = parsedPriceAgorot(input.submittedPrice);
   const priceWasNotEditedAfterPlanChange =
     input.previousPlan !== null &&
@@ -45,7 +44,7 @@ export function normalizeLicenseChange(
     submittedPriceAgorot === input.previousPriceAgorot;
 
   return {
-    status: normalizedStatus(input.plan, input.submittedStatus),
+    status: normalizedPaidStatus(input.submittedStatus),
     priceAgorot:
       submittedPriceAgorot === null || priceWasNotEditedAfterPlanChange
         ? defaultPriceAgorot
