@@ -19,7 +19,7 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key-0123456789
   NEXT_PUBLIC_SITE_URL: http://localhost:3000
   SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-0123456789
-  TOKEN_PEPPER: ci-placeholder-token-pepper-9876543210-abcdef
+  TOKEN_PEPPER: ci-placeholder-token-pepper-0123456789-abcdef
   IP_HASH_PEPPER: ci-placeholder-ip-pepper-9876543210-zyxwvu
 
 jobs:
