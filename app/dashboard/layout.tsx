@@ -81,10 +81,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
               <span className="hidden sm:inline">דף הבית שלי</span>
             </Link>
             {isPlatformOwner && (
-              <Link
-                href="/admin/plans"
-                className={buttonClass({ variant: 'outline', size: 'sm' })}
-              >
+              <Link href="/admin/plans" className={buttonClass({ variant: 'outline', size: 'sm' })}>
                 ניהול מסלולים
               </Link>
             )}
