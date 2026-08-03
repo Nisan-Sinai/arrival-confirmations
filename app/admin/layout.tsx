@@ -16,16 +16,19 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           className="flex min-h-16 flex-wrap items-center justify-between gap-3 py-3"
         >
           <div>
-            <Link href="/admin/plans" className="text-primary text-lg font-bold">
+            <Link href="/admin/events" className="text-primary text-lg font-bold">
               ניהול המערכת
             </Link>
             <p className="text-muted-foreground text-xs" dir="ltr">
               {owner.email}
             </p>
           </div>
-          <nav aria-label="ניווט ניהול" className="flex items-center gap-2">
+          <nav aria-label="ניווט ניהול" className="flex flex-wrap items-center gap-2">
             <Link href="/dashboard" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
               האירועים שלי
+            </Link>
+            <Link href="/admin/events" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+              לקוחות ואירועים
             </Link>
             <Link href="/admin/plans" className={buttonClass({ variant: 'outline', size: 'sm' })}>
               מסלולים ותשלומים
