@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 
 import { Card } from '@/components/ui/card';
 import { InvitationCard } from '@/features/invite/InvitationCard';
+import { PersonalInviteOpenTracker } from '@/features/rsvp/PersonalInviteOpenTracker';
 import { PersonalRsvpButtons } from '@/features/rsvp/PersonalRsvpButtons';
 import { brandingCssVariables } from '@/lib/premiumEventTools';
 import { getActiveInviteContext } from '@/lib/server/currentInvite';
@@ -76,6 +77,8 @@ export default async function PersonalInvitePage() {
       data-invitation-style={branding.invitationStyle}
       className="relative flex flex-1 flex-col items-center gap-10 px-3 py-8 sm:px-4 sm:py-16"
     >
+      <PersonalInviteOpenTracker />
+
       <section
         className={`w-full max-w-3xl ${shellClass}`}
         style={{ borderColor: branding.accentColor }}
