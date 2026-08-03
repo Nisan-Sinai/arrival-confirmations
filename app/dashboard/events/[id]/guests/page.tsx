@@ -35,7 +35,9 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
     guestDb.from('events').select('id, title, public_id').eq('id', id).maybeSingle(),
     guestDb
       .from('guests')
-      .select('id, full_name, phone, email, party_size, table_name, seat_number, notes')
+      .select(
+        'id, full_name, phone, email, party_size, table_name, seat_number, notes, invite_link_issued_at, invite_first_opened_at, invite_last_opened_at, invite_open_count, invite_last_response_at, invite_last_response_status',
+      )
       .eq('event_id', id)
       .eq('is_active', true)
       .order('full_name'),
@@ -52,6 +54,12 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
     tableName: guest.table_name,
     seatNumber: guest.seat_number,
     notes: guest.notes,
+    inviteLinkIssuedAt: guest.invite_link_issued_at,
+    inviteFirstOpenedAt: guest.invite_first_opened_at,
+    inviteLastOpenedAt: guest.invite_last_opened_at,
+    inviteOpenCount: guest.invite_open_count,
+    inviteLastResponseAt: guest.invite_last_response_at,
+    inviteLastResponseStatus: guest.invite_last_response_status,
   }));
 
   return (
@@ -69,8 +77,8 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">{event.title}</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              הוספה, עריכה ומחיקה ידנית, בחירת אנשי קשר מהטלפון, ייבוא קובץ ושליחת קישור אישי לכל
-              מוזמן.
+              הוספה, עריכה ומחיקה ידנית, בחירת אנשי קשר מהטלפון, ייבוא קובץ, שליחת קישור אישי ומעקב
+              אחרי פתיחה ואישור הגעה של כל מוזמן.
             </p>
           </div>
           <Link
