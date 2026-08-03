@@ -21,7 +21,7 @@ export default function SignupPage() {
           action={signUpAction}
           mode="signUp"
           title="יצירת חשבון"
-          subtitle="חינם, בלי כרטיס אשראי ובלי הגבלה על מספר האורחים."
+          subtitle="חינם, בלי כרטיס אשראי, עם עד 10 אישורי הגעה לבדיקה."
           submitLabel="יצירת חשבון"
           pendingLabel="יוצר…"
           footerPrompt="כבר יש לכם חשבון?"
