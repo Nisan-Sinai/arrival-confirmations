@@ -95,7 +95,7 @@ async function verify() {
 
   const forgotPassword = await text('/forgot-password');
   assert(
-    forgotPassword.body.includes('איפוס סיסמה'),
+    forgotPassword.body.includes('שחזור סיסמה'),
     '/forgot-password does not render the recovery screen',
   );
 
