@@ -46,7 +46,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <span className="hidden sm:inline">אישורי הגעה</span>
           </Link>
 
-          <nav aria-label="ניווט באזור הלקוח" className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3">
+          <nav
+            aria-label="ניווט באזור הלקוח"
+            className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3"
+          >
             <span
               className="text-muted-foreground hidden max-w-[14rem] truncate text-sm lg:inline"
               dir="ltr"
@@ -78,7 +81,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
               <span className="hidden sm:inline">דף הבית שלי</span>
             </Link>
             {isPlatformOwner && (
-              <Link href="/admin/plans" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+              <Link
+                href="/admin/plans"
+                className={buttonClass({ variant: 'outline', size: 'sm' })}
+              >
                 ניהול מסלולים
               </Link>
             )}
