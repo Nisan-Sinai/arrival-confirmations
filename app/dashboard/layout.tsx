@@ -8,6 +8,9 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
 import { createUserClient } from '@/lib/server/supabase';
 
+const MOBILE_HEADER_BUTTON_CLASS =
+  'h-10 shrink-0 gap-1 px-1.5 text-xs sm:gap-2 sm:px-4 sm:text-sm';
+
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = await createUserClient();
   const {
@@ -20,7 +23,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <>
       <header className="border-border/70 bg-background/85 sticky top-0 z-[--z-header] border-b backdrop-blur-md">
-        <Container width="wide" className="flex min-h-16 items-center justify-between gap-3 py-2">
+        <Container
+          width="wide"
+          className="flex min-h-16 flex-nowrap items-center justify-between gap-1 px-2 py-2 sm:gap-3 sm:px-8"
+        >
           <Link
             href="/dashboard"
             aria-label="דף הבית של הלקוח"
@@ -28,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           >
             <span
               aria-hidden="true"
-              className="border-accent-strong/40 text-accent-strong flex size-8 shrink-0 items-center justify-center rounded-full border"
+              className="border-accent-strong/40 text-accent-strong flex size-7 shrink-0 items-center justify-center rounded-full border sm:size-8"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -48,7 +54,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
           <nav
             aria-label="ניווט באזור הלקוח"
-            className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3"
+            className="flex min-w-0 flex-1 flex-nowrap items-center justify-between gap-0.5 sm:flex-none sm:justify-end sm:gap-3"
           >
             <span
               className="text-muted-foreground hidden max-w-[14rem] truncate text-sm lg:inline"
@@ -61,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
               className={buttonClass({
                 variant: 'ghost',
                 size: 'sm',
-                className: 'shrink-0 whitespace-nowrap',
+                className: MOBILE_HEADER_BUTTON_CLASS,
               })}
             >
               <svg
@@ -81,18 +87,33 @@ export default async function DashboardLayout({ children }: { children: ReactNod
               <span className="hidden sm:inline">דף הבית שלי</span>
             </Link>
             {isPlatformOwner && (
-              <Link href="/admin/plans" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+              <Link
+                href="/admin/plans"
+                className={buttonClass({
+                  variant: 'outline',
+                  size: 'sm',
+                  className: MOBILE_HEADER_BUTTON_CLASS,
+                })}
+              >
                 ניהול מסלולים
               </Link>
             )}
             <Link
               href="/dashboard/events/new"
-              className={buttonClass({ size: 'sm', className: 'whitespace-nowrap' })}
+              className={buttonClass({
+                size: 'sm',
+                className: MOBILE_HEADER_BUTTON_CLASS,
+              })}
             >
               אירוע חדש
             </Link>
-            <form action={signOutAction}>
-              <Button type="submit" variant="ghost" size="sm">
+            <form action={signOutAction} className="shrink-0">
+              <Button
+                type="submit"
+                variant="ghost"
+                size="sm"
+                className={MOBILE_HEADER_BUTTON_CLASS}
+              >
                 התנתקות
               </Button>
             </form>
