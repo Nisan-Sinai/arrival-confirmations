@@ -103,10 +103,7 @@ async function verify() {
   assert(privacy.body.includes('מדיניות פרטיות'), '/privacy does not render its heading');
 
   const accessibility = await text('/accessibility');
-  assert(
-    accessibility.body.includes('הצהרת נגישות'),
-    '/accessibility does not render its heading',
-  );
+  assert(accessibility.body.includes('הצהרת נגישות'), '/accessibility does not render its heading');
 
   const notFound = await text('/qa-production-smoke-not-found', 404);
   assert(notFound.body.includes('לא נמצא'), 'The public 404 page is not localized to Hebrew');
@@ -127,10 +124,7 @@ async function verify() {
   const image = await request('/opengraph-image');
   const imageBytes = Buffer.from(await image.arrayBuffer());
   assert(image.status === 200, `/opengraph-image returned ${image.status}`);
-  assert(
-    image.headers.get('content-type')?.includes('image/png'),
-    '/opengraph-image is not a PNG',
-  );
+  assert(image.headers.get('content-type')?.includes('image/png'), '/opengraph-image is not a PNG');
   assert(imageBytes.byteLength > 10_000, '/opengraph-image appears blank or truncated');
 
   console.log(`Production verified: ${baseUrl} serves release ${health.release}`);
