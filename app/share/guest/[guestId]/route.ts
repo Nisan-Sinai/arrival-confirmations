@@ -54,6 +54,7 @@ export async function GET(
       invite_token_hash: invite.hash,
       token_expires_at: expiresAt,
       token_revoked_at: null,
+      invite_link_issued_at: now,
     })
     .eq('id', guest.id)
     .eq('event_id', event.id);
@@ -79,7 +80,7 @@ export async function GET(
     action: isPlatformOwner ? 'admin_guest_invite_issued' : 'host_guest_invite_issued',
     entity_type: 'guest',
     entity_id: guest.id,
-    metadata: { eventId: event.id, expiresAt },
+    metadata: { eventId: event.id, expiresAt, issuedAt: now },
   });
 
   const origin = new URL(request.url).origin;
