@@ -14,7 +14,7 @@ import { SITE_ORIGIN } from '@/lib/seo';
 export const metadata: Metadata = {
   title: { absolute: 'אישורי הגעה לאירועים | ניסן סיני טכנולוגיות' },
   description:
-    'הזמנה דיגיטלית ואישורי הגעה לאירועים. מתחילים בבדיקה חינמית ובוחרים Basic ב-99 ₪ או Premium ב-199 ₪ בתשלום חד-פעמי.',
+    'הזמנה דיגיטלית ואישורי הגעה לאירועים. מתחילים בבדיקה חינמית ובוחרים Basic ב-99 ₪, Premium ב-199 ₪ או Pro ב-349 ₪ בתשלום חד-פעמי.',
   alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
@@ -60,6 +60,7 @@ const STRUCTURED_DATA = {
       offers: [
         { '@type': 'Offer', name: 'Basic', price: '99', priceCurrency: 'ILS' },
         { '@type': 'Offer', name: 'Premium', price: '199', priceCurrency: 'ILS' },
+        { '@type': 'Offer', name: 'Pro', price: '349', priceCurrency: 'ILS' },
       ],
     },
     {
@@ -218,7 +219,7 @@ export default function LandingPage() {
                 מתחילים בחינם, מפעילים כשמוכנים
               </h2>
               <p className="text-muted-foreground mt-4 leading-relaxed">
-                Basic ב-99 ₪ או Premium ב-199 ₪ — תשלום חד-פעמי לאירוע.
+                Basic ב-99 ₪, Premium ב-199 ₪ או Pro ב-349 ₪ — תשלום חד-פעמי לאירוע.
               </p>
             </div>
             <div className="mt-11">

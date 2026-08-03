@@ -11,11 +11,13 @@ function whatsappPhone(phone: string): string {
   return digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
 }
 
+function whatsappPlanUrl(planName: string): string {
+  const message = `שלום ניסן, אני מעוניין להפעיל את מסלול ${planName} לאירוע במערכת אישורי הגעה.`;
+  return `https://wa.me/${whatsappPhone(appConfig.supportPhone)}?text=${encodeURIComponent(message)}`;
+}
+
 export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
   const plans = showTrial ? PLAN_CATALOG : PLAN_CATALOG.filter((plan) => plan.code !== 'trial');
-  const whatsappUrl = `https://wa.me/${whatsappPhone(appConfig.supportPhone)}?text=${encodeURIComponent(
-    'שלום ניסן, אני מעוניין להפעיל מסלול לאירוע במערכת אישורי הגעה.',
-  )}`;
 
   return (
     <div className={cn('grid gap-5', plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2')}>
@@ -72,7 +74,7 @@ export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
               </Link>
             ) : (
               <a
-                href={whatsappUrl}
+                href={whatsappPlanUrl(plan.name)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass({

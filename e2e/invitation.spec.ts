@@ -239,6 +239,7 @@ test.describe('the crawlable surface', () => {
     expect(app?.offers).toMatchObject([
       { name: 'Basic', price: '99', priceCurrency: 'ILS' },
       { name: 'Premium', price: '199', priceCurrency: 'ILS' },
+      { name: 'Pro', price: '349', priceCurrency: 'ILS' },
     ]);
 
     /**
