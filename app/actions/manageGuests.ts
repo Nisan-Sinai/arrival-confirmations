@@ -235,6 +235,7 @@ export async function importPhoneContactsAction(formData: FormData): Promise<voi
   const contacts = selected.length > 0 ? selected : pasted;
   if (contacts.length === 0) redirect(eventPath(eventId, { error: 'contacts-empty' }));
 
+  let savedCount: number;
   try {
     const result = await upsertContacts(
       supabase,
@@ -242,14 +243,16 @@ export async function importPhoneContactsAction(formData: FormData): Promise<voi
       contacts,
       selected.length > 0 ? 'phone_contacts' : 'pasted_contacts',
     );
-    if (result.saved === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
-    revalidatePath(`/dashboard/events/${eventId}`);
-    revalidatePath(`/dashboard/events/${eventId}/guests`);
-    revalidatePath(`/dashboard/events/${eventId}/tools`);
-    redirect(eventPath(eventId, { saved: 'contacts', count: String(result.saved) }));
+    savedCount = result.saved;
   } catch {
     redirect(eventPath(eventId, { error: 'contacts-save' }));
   }
+
+  if (savedCount === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
+  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
+  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  redirect(eventPath(eventId, { saved: 'contacts', count: String(savedCount) }));
 }
 
 export async function importGuestFileAction(formData: FormData): Promise<void> {
@@ -264,19 +267,22 @@ export async function importGuestFileAction(formData: FormData): Promise<void> {
   }
   if (file.size > 5_000_000) redirect(eventPath(eventId, { error: 'file-large' }));
 
+  let savedCount: number;
   try {
     const parsed = importGuestsFromFile(new Uint8Array(await file.arrayBuffer()), file.name);
     const rows = parsed.rows.map((guest) => ({ name: guest.fullName, phone: guest.phone }));
     const result = await upsertContacts(supabase, eventId, rows, parsed.source);
-    if (result.saved === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
-    revalidatePath(`/dashboard/events/${eventId}`);
-    revalidatePath(`/dashboard/events/${eventId}/guests`);
-    revalidatePath(`/dashboard/events/${eventId}/tools`);
-    redirect(eventPath(eventId, { saved: 'file', count: String(result.saved) }));
+    savedCount = result.saved;
   } catch (error) {
     if (error instanceof GuestImportError) {
       redirect(eventPath(eventId, { error: 'file-format' }));
     }
     redirect(eventPath(eventId, { error: 'contacts-save' }));
   }
+
+  if (savedCount === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
+  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
+  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  redirect(eventPath(eventId, { saved: 'file', count: String(savedCount) }));
 }
