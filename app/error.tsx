@@ -1,34 +1,25 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
 import { Rule } from '@/components/ui/layout';
 import { UI_MESSAGES } from '@/config/messages';
-import Link from 'next/link';
 
 /**
  * The route-level error boundary (§13).
  *
- * There was none, so an exception anywhere below the root layout — a Supabase outage
- * mid-render on the invitation page, say — fell through to Next.js's built-in screen.
- *
- * What is deliberately *not* here: `error.message`. In production Next.js already
- * replaces it with a generic string, but in development it is the raw exception, and
- * this component renders in both. Putting it on screen would mean a stack trace or a
- * Postgres error naming a column is one NODE_ENV mistake away from a guest (§13). The
- * digest is shown instead — it is an opaque hash that correlates to the server log,
- * which is exactly what a support conversation needs and nothing more.
+ * The error itself is deliberately not rendered. The digest is safe to expose and lets
+ * support correlate the screen with the server log without leaking database details.
  */
 export default function ErrorBoundary({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
   useEffect(() => {
-    // The platform captures this; the browser console is where a developer looks first.
     console.error('Unhandled route error', { digest: error.digest });
   }, [error]);
 
@@ -57,12 +48,15 @@ export default function ErrorBoundary({
         <p className="text-muted-foreground text-lead leading-relaxed">
           {UI_MESSAGES.errors.genericBody}
         </p>
-        <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <Button size="lg" onClick={reset}>
-            נסו שוב
+        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          טעינה מחדש פותרת גם מצב שבו הדפדפן שמר קובץ ישן אחרי פריסה חדשה.
+        </p>
+        <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+          <Button size="lg" onClick={() => window.location.reload()}>
+            טעינה מחדש
           </Button>
-          <Link href="/" className={buttonClass({ variant: 'outline', size: 'lg' })}>
-            לדף הבית
+          <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'lg' })}>
+            חזרה ללוח הבקרה
           </Link>
         </div>
         {error.digest !== undefined && (
