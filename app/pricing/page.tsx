@@ -8,7 +8,8 @@ import { PricingCards } from '@/features/pricing/PricingCards';
 
 export const metadata: Metadata = {
   title: 'מחירים לאישורי הגעה לאירועים',
-  description: 'מסלול Basic ב-99 ₪ ומסלול Premium ב-199 ₪, בתשלום חד-פעמי לאירוע.',
+  description:
+    'מסלול Basic ב-99 ₪, Premium ב-199 ₪ או Pro ב-349 ₪, בתשלום חד-פעמי לאירוע.',
   alternates: { canonical: '/pricing' },
 };
 
@@ -45,7 +46,7 @@ export default function PricingPage() {
                 </li>
                 <li>
                   <strong className="text-foreground block">3. המסלול נפתח</strong>
-                  מנהל המערכת מפעיל את Basic או Premium והאירוע ממשיך מיד.
+                  מנהל המערכת מפעיל את Basic, Premium או Pro והאירוע ממשיך מיד.
                 </li>
               </ol>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
