@@ -20,7 +20,6 @@ import {
 } from '@/lib/proSeating';
 
 const INITIAL: ProSeatingState = { status: 'idle', message: '' };
-const UNASSIGNED = 'unassigned';
 
 type AssignmentMap = Readonly<Record<string, string | null>>;
 
@@ -35,18 +34,14 @@ function tableShapeClass(shape: TableShape): string {
   return 'mx-auto min-h-44 w-full rounded-[3rem]';
 }
 
-function stateGuest(
+function withLiveAssignment(
   guest: ProSeatingGuest,
   assignments: AssignmentMap,
   tableById: ReadonlyMap<string, ProSeatingTable>,
 ): ProSeatingGuest {
   const tableId = assignments[guest.id] ?? null;
   const table = tableId === null ? undefined : tableById.get(tableId);
-  return {
-    ...guest,
-    tableId,
-    tableName: table?.name ?? null,
-  };
+  return { ...guest, tableId, tableName: table?.name ?? null };
 }
 
 function Result({ state }: { state: ProSeatingState }) {
@@ -76,7 +71,7 @@ function GuestChip({
         event.dataTransfer.setData('text/plain', guest.id);
       }}
       onClick={() => onSelect(guest.id)}
-      className={`group flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-start transition ${
+      className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-start transition ${
         selected
           ? 'border-primary bg-primary text-primary-foreground shadow-lg'
           : 'border-border bg-card hover:border-primary/50 hover:shadow-md'
@@ -127,7 +122,7 @@ export function VisualSeatingFloor({
     [tables],
   );
   const liveGuests = useMemo(
-    () => guests.map((guest) => stateGuest(guest, assignments, tableById)),
+    () => guests.map((guest) => withLiveAssignment(guest, assignments, tableById)),
     [assignments, guests, tableById],
   );
   const analytics = useMemo(
@@ -148,6 +143,10 @@ export function VisualSeatingFloor({
     }
     return result;
   }, [liveGuests]);
+  const zones = useMemo(
+    () => [...new Set(tables.map((table) => table.zone?.trim() || 'מרכז האולם'))],
+    [tables],
+  );
   const normalizedQuery = query.trim().toLocaleLowerCase('he');
   const unassignedGuests = liveGuests.filter((guest) => {
     if (guest.tableId !== null) return false;
@@ -158,10 +157,6 @@ export function VisualSeatingFloor({
       .toLocaleLowerCase('he')
       .includes(normalizedQuery);
   });
-  const zones = useMemo(() => {
-    const values = new Set(tables.map((table) => table.zone?.trim() || 'מרכז האולם'));
-    return [...values];
-  }, [tables]);
 
   function assignGuest(guestId: string, targetTableId: string | null): void {
     const guest = guestById.get(guestId);
@@ -175,11 +170,12 @@ export function VisualSeatingFloor({
       const table = occupancyById.get(targetTableId);
       if (table === undefined) return;
       const currentTableId = assignments[guestId] ?? null;
-      const currentOccupancy =
+      const occupiedWithoutGuest =
         table.occupied - (currentTableId === targetTableId ? guest.partySize : 0);
-      if (currentOccupancy + guest.partySize > table.capacity) {
+      const remaining = Math.max(0, table.capacity - occupiedWithoutGuest);
+      if (guest.partySize > remaining) {
         setAnnouncement(
-          `אין מספיק מקום ב${table.name}. נדרשים ${guest.partySize} מקומות ונשארו ${Math.max(0, table.capacity - currentOccupancy)}.`,
+          `אין מספיק מקום ב${table.name}. נדרשים ${guest.partySize} מקומות ונשארו ${remaining}.`,
         );
         return;
       }
@@ -187,7 +183,8 @@ export function VisualSeatingFloor({
 
     setAssignments((current) => ({ ...current, [guestId]: targetTableId }));
     setSelectedGuestId(null);
-    const targetName = targetTableId === null ? 'רשימת הלא משובצים' : tableById.get(targetTableId)?.name;
+    const targetName =
+      targetTableId === null ? 'רשימת הלא משובצים' : tableById.get(targetTableId)?.name;
     setAnnouncement(`${guest.fullName} הועבר אל ${targetName ?? 'השולחן שנבחר'}.`);
   }
 
@@ -241,6 +238,7 @@ export function VisualSeatingFloor({
           className="border-border bg-secondary/25 border-b p-4 lg:border-e lg:border-b-0"
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => handleDrop(event, null)}
+          aria-label="רשימת מוזמנים שטרם שובצו"
         >
           <div className="sticky top-4 space-y-4">
             <div>
@@ -291,7 +289,7 @@ export function VisualSeatingFloor({
           </div>
         </aside>
 
-        <section className="bg-card p-4 sm:p-6 lg:p-8">
+        <section className="bg-card p-4 sm:p-6 lg:p-8" aria-label="מפת שולחנות באולם">
           <div className="border-border bg-secondary/20 mb-6 rounded-[2rem] border p-4 text-center">
             <div className="bg-primary text-primary-foreground mx-auto max-w-xl rounded-2xl px-6 py-3 font-black shadow-lg">
               במה · חופה · שולחן כבוד
@@ -309,11 +307,13 @@ export function VisualSeatingFloor({
           )}
 
           <div className="space-y-8">
-            {zones.map((zone) => (
-              <section key={zone} aria-labelledby={`zone-${zone}`}>
+            {zones.map((zone, zoneIndex) => (
+              <section key={zone} aria-labelledby={`seating-zone-${zoneIndex}`}>
                 <div className="mb-4 flex items-center gap-3">
                   <span className="bg-accent h-2.5 w-2.5 rounded-full" aria-hidden="true" />
-                  <h3 id={`zone-${zone}`} className="text-primary text-lg font-black">{zone}</h3>
+                  <h3 id={`seating-zone-${zoneIndex}`} className="text-primary text-lg font-black">
+                    {zone}
+                  </h3>
                   <span className="bg-border h-px flex-1" aria-hidden="true" />
                 </div>
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -325,16 +325,15 @@ export function VisualSeatingFloor({
                       const occupied = occupancy?.occupied ?? 0;
                       const remaining = occupancy?.remaining ?? table.capacity;
                       const fill = Math.min(100, (occupied / table.capacity) * 100);
-                      const isDestination = selectedGuestId !== null;
                       return (
                         <article
                           key={table.id}
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={(event) => handleDrop(event, table.id)}
                           className={`relative overflow-hidden rounded-[2rem] border p-4 transition ${
-                            isDestination
-                              ? 'border-primary shadow-lg ring-2 ring-primary/10'
-                              : 'border-border hover:border-primary/40 hover:shadow-lg'
+                            selectedGuestId === null
+                              ? 'border-border hover:border-primary/40 hover:shadow-lg'
+                              : 'border-primary shadow-lg ring-2 ring-primary/10'
                           } ${occupancy?.overCapacity ? 'border-destructive ring-destructive/20' : ''}`}
                         >
                           <div className="mb-3 flex items-start justify-between gap-3">
@@ -415,11 +414,7 @@ export function VisualSeatingFloor({
             <input type="hidden" name="guestSeatNumber" value={guest.seatNumber ?? ''} />
             <input type="hidden" name="guestGroup" value={guest.seatingGroup ?? ''} />
             <input type="hidden" name="guestMeal" value={guest.mealPreference ?? ''} />
-            <input
-              type="hidden"
-              name="guestAccessibility"
-              value={guest.accessibilityNeeds ?? ''}
-            />
+            <input type="hidden" name="guestAccessibility" value={guest.accessibilityNeeds ?? ''} />
             <input type="hidden" name="guestPriority" value={String(guest.priority)} />
             <input type="hidden" name="guestLocked" value={guest.seatLocked ? 'true' : 'false'} />
           </div>
