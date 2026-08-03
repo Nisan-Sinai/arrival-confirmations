@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
+import type { GuestImportSource } from '@/lib/guestImport';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import type { GuestInsert } from '@/types/guestDatabase.types';
@@ -38,9 +39,11 @@ export async function adminImportGuestFileAction(formData: FormData): Promise<vo
   }
   if (file.size > 5_000_000) redirect(path(eventId, { error: 'file-large' }));
 
+  const rows = new Map<string, GuestInsert>();
+  let source: GuestImportSource;
   try {
     const parsed = importGuestsFromFile(new Uint8Array(await file.arrayBuffer()), file.name);
-    const rows = new Map<string, GuestInsert>();
+    source = parsed.source;
     for (const guest of parsed.rows) {
       try {
         const normalized = normalizeIsraeliPhone(guest.phone);
@@ -62,31 +65,31 @@ export async function adminImportGuestFileAction(formData: FormData): Promise<vo
         if (!(error instanceof PhoneNormalizationError)) throw error;
       }
     }
-
-    if (rows.size === 0) redirect(path(eventId, { error: 'contacts-invalid' }));
-    const { error } = await privileged.from('guests').upsert([...rows.values()], {
-      onConflict: 'event_id,phone_normalized',
-      ignoreDuplicates: false,
-    });
-    if (error) redirect(path(eventId, { error: 'contacts-save' }));
-
-    await privileged.from('audit_logs').insert({
-      admin_user_id: admin.id,
-      action: 'admin_guests_imported',
-      entity_type: 'event',
-      entity_id: eventId,
-      metadata: { count: rows.size, source: parsed.source },
-    });
-
-    revalidatePath(`/admin/events/${eventId}`);
-    revalidatePath(`/dashboard/events/${eventId}`);
-    revalidatePath(`/dashboard/events/${eventId}/guests`);
-    revalidatePath(`/dashboard/events/${eventId}/tools`);
-    redirect(path(eventId, { saved: 'file', count: String(rows.size) }));
   } catch (error) {
     if (error instanceof GuestImportError) {
       redirect(path(eventId, { error: 'file-format' }));
     }
     redirect(path(eventId, { error: 'contacts-save' }));
   }
+
+  if (rows.size === 0) redirect(path(eventId, { error: 'contacts-invalid' }));
+  const { error } = await privileged.from('guests').upsert([...rows.values()], {
+    onConflict: 'event_id,phone_normalized',
+    ignoreDuplicates: false,
+  });
+  if (error) redirect(path(eventId, { error: 'contacts-save' }));
+
+  await privileged.from('audit_logs').insert({
+    admin_user_id: admin.id,
+    action: 'admin_guests_imported',
+    entity_type: 'event',
+    entity_id: eventId,
+    metadata: { count: rows.size, source },
+  });
+
+  revalidatePath(`/admin/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
+  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  redirect(path(eventId, { saved: 'file', count: String(rows.size) }));
 }
