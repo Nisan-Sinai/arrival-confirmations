@@ -151,6 +151,13 @@ export function ShareInvitation({
         </a>
 
         <Link
+          href={`${pathname}/guests`}
+          className={buttonClass({ variant: 'secondary', size: 'sm' })}
+        >
+          ניהול מוזמנים: הוספה ידנית וייבוא מהטלפון
+        </Link>
+
+        <Link
           href={`${pathname}/tools`}
           className={buttonClass({ variant: 'outline', size: 'sm' })}
         >
