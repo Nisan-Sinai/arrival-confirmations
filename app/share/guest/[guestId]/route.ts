@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { PLATFORM_OWNER_EMAIL } from '@/app/_lib/platformAdmin';
 import { appConfig } from '@/config/event.config';
@@ -18,7 +19,7 @@ export async function GET(
   } = await userClient.auth.getUser();
   if (user === null) return NextResponse.redirect(new URL('/login', request.url));
 
-  const privileged = createPrivilegedClient();
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { data: guest, error: guestError } = await privileged
     .from('guests')
     .select('id, event_id, full_name, phone, phone_normalized, is_active')
