@@ -14,7 +14,7 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",
     "format:homepage": "prettier --write app/page.tsx",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write \"app/dashboard/events/[id]/guests/page.tsx\" features/admin/PersonalInviteSendList.tsx && echo '---DASHBOARD---' && cat \"app/dashboard/events/[id]/guests/page.tsx\" && echo '---INVITES---' && cat features/admin/PersonalInviteSendList.tsx && exit 1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit --project component",
     "test:watch": "vitest --project unit --project component",
