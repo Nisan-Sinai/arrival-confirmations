@@ -127,7 +127,7 @@ async function verify() {
   assert(image.headers.get('content-type')?.includes('image/png'), '/opengraph-image is not a PNG');
   assert(imageBytes.byteLength > 10_000, '/opengraph-image appears blank or truncated');
 
-  console.log(`Production verified: ${baseUrl} serves release ${health.release}`);
+  process.stdout.write(`Production verified: ${baseUrl} serves release ${health.release}\n`);
 }
 
 let lastError;
