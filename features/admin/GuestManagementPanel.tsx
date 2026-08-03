@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { adminImportPhoneContactsAction } from '@/app/actions/adminGuestImports';
@@ -42,6 +42,16 @@ interface ContactPickerManager {
 }
 
 type NavigatorWithContacts = Navigator & { contacts?: ContactPickerManager };
+
+const subscribeToContactPicker = () => () => undefined;
+
+function getContactPickerSnapshot(): boolean {
+  return (navigator as NavigatorWithContacts).contacts !== undefined;
+}
+
+function getServerContactPickerSnapshot(): boolean {
+  return false;
+}
 type SubmitVariant = 'primary' | 'secondary' | 'outline' | 'destructive';
 
 const fieldClass =
@@ -232,21 +242,21 @@ export function GuestManagementPanel({
   readonly count?: string;
 }) {
   const [pickerMessage, setPickerMessage] = useState('');
-  const [supportsContactPicker, setSupportsContactPicker] = useState<boolean | null>(null);
   const [selectingContacts, setSelectingContacts] = useState(false);
   const [query, setQuery] = useState('');
   const contactsFormRef = useRef<HTMLFormElement>(null);
   const contactsJsonRef = useRef<HTMLInputElement>(null);
+  const supportsContactPicker = useSyncExternalStore(
+    subscribeToContactPicker,
+    getContactPickerSnapshot,
+    getServerContactPickerSnapshot,
+  );
 
   const saveAction = mode === 'admin' ? adminSaveGuestAction : saveGuestAction;
   const deleteAction = mode === 'admin' ? adminDeleteGuestAction : deleteGuestAction;
   const contactAction =
     mode === 'admin' ? adminImportPhoneContactsAction : importPhoneContactsAction;
   const status = messageFor(saved, error, count);
-
-  useEffect(() => {
-    setSupportsContactPicker((navigator as NavigatorWithContacts).contacts !== undefined);
-  }, []);
 
   const totalPeople = useMemo(
     () => guests.reduce((sum, guest) => sum + guest.partySize, 0),
