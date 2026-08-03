@@ -60,7 +60,9 @@ export default async function AdminCustomerEventPage({
     await Promise.all([
       privileged
         .from('guests')
-        .select('id, full_name, phone, email, party_size, table_name, seat_number, notes')
+        .select(
+          'id, full_name, phone, email, party_size, table_name, seat_number, notes, invite_link_issued_at, invite_first_opened_at, invite_last_opened_at, invite_open_count, invite_last_response_at, invite_last_response_status',
+        )
         .eq('event_id', id)
         .eq('is_active', true)
         .order('full_name'),
@@ -89,6 +91,12 @@ export default async function AdminCustomerEventPage({
     tableName: guest.table_name,
     seatNumber: guest.seat_number,
     notes: guest.notes,
+    inviteLinkIssuedAt: guest.invite_link_issued_at,
+    inviteFirstOpenedAt: guest.invite_first_opened_at,
+    inviteLastOpenedAt: guest.invite_last_opened_at,
+    inviteOpenCount: guest.invite_open_count,
+    inviteLastResponseAt: guest.invite_last_response_at,
+    inviteLastResponseStatus: guest.invite_last_response_status,
   }));
   const rsvpRows = rsvps ?? [];
   const attendingReplies = rsvpRows.filter(
