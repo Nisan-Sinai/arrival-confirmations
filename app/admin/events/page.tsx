@@ -61,8 +61,8 @@ export default async function AdminEventsPage({
             <p className="text-eyebrow text-accent-strong font-semibold">ניהול מערכת</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">לקוחות ואירועים</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              לחיצה על שם האירוע, אימייל הלקוח או כפתור הכניסה פותחת את האירוע במצב מנהל־על.
-              תצוגה מקדימה להזמנה פועלת גם כשהאירוע עדיין טיוטה.
+              לחיצה על שם האירוע או על אימייל הלקוח פותחת את האירוע במצב מנהל־על, כולל עריכה,
+              מוזמנים, ייבוא מהטלפון ואישורי הגעה.
             </p>
           </div>
           <Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>
