@@ -5,13 +5,15 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -21,17 +23,17 @@ jobs:
       - name: Format changed files
         run: >-
           pnpm exec prettier --write
-          app/dashboard/events/[id]/guests/page.tsx
+          'app/dashboard/events/[id]/guests/page.tsx'
           app/error.tsx
           features/admin/GuestManagementPanel.tsx
           features/admin/ShareInvitation.tsx
           tests/component/GuestManagementPanel.test.tsx
-      - uses: actions/upload-artifact@v4
-        with:
-          name: formatted-ui-files
-          path: |
-            app/dashboard/events/[id]/guests/page.tsx
-            app/error.tsx
-            features/admin/GuestManagementPanel.tsx
-            features/admin/ShareInvitation.tsx
-            tests/component/GuestManagementPanel.test.tsx
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'app/dashboard/events/[id]/guests/page.tsx' app/error.tsx features/admin/GuestManagementPanel.tsx features/admin/ShareInvitation.tsx tests/component/GuestManagementPanel.test.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m "style: format QA changes"
+            git push
+          fi
