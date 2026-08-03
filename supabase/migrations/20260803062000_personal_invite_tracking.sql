@@ -30,6 +30,27 @@ create index if not exists invite_sessions_unopened_idx
   on public.invite_sessions (id, guest_id, event_id)
   where opened_at is null;
 
+-- Preserve personal-link answers that were submitted before tracking was introduced.
+with latest_personal_response as (
+  select distinct on (event_id, guest_id)
+    event_id,
+    guest_id,
+    attendance_status,
+    updated_at
+  from public.rsvps
+  where source = 'personal_link'
+    and guest_id is not null
+  order by event_id, guest_id, updated_at desc
+)
+update public.guests as guest
+set
+  invite_last_response_at = response.updated_at,
+  invite_last_response_status = response.attendance_status
+from latest_personal_response as response
+where guest.id = response.guest_id
+  and guest.event_id = response.event_id
+  and guest.invite_last_response_at is null;
+
 create or replace function public.record_guest_invite_open(
   p_session_id uuid,
   p_guest_id uuid,
