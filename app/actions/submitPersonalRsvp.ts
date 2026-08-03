@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { canAcceptRsvp, getEventLicense } from '@/app/_lib/eventLicenses';
 import { isMonetizedEvent } from '@/app/_lib/plans';
@@ -147,8 +148,16 @@ export async function submitPersonalRsvpAction(
     return { status: 'error', message: 'לא ניתן לשמור את האישור דרך הקישור הזה.', selected };
   }
 
+  const trackingDb = privileged as unknown as SupabaseClient;
+  await trackingDb.rpc('record_guest_invite_response', {
+    p_guest_id: context.guest.id,
+    p_event_id: context.event.id,
+    p_status: selected,
+  });
+
   revalidatePath('/invite');
   revalidatePath(`/dashboard/events/${context.event.id}`);
+  revalidatePath(`/dashboard/events/${context.event.id}/guests`);
   revalidatePath(`/admin/events/${context.event.id}`);
 
   return { status: 'success', message: successMessage(selected), selected };
