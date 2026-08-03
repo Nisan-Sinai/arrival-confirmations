@@ -61,8 +61,8 @@ export default async function AdminEventsPage({
             <p className="text-eyebrow text-accent-strong font-semibold">ניהול מערכת</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">לקוחות ואירועים</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              לחיצה על שם האירוע או על אימייל הלקוח פותחת את האירוע במצב מנהל־על, כולל עריכה,
-              מוזמנים, ייבוא מהטלפון ואישורי הגעה.
+              לחיצה על שם האירוע, אימייל הלקוח או כפתור הכניסה פותחת את האירוע במצב מנהל־על.
+              תצוגה מקדימה להזמנה פועלת גם כשהאירוע עדיין טיוטה.
             </p>
           </div>
           <Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>
@@ -98,6 +98,7 @@ export default async function AdminEventsPage({
                   ? 'ללא בעלים'
                   : (ownerEmails.get(event.owner_user_id) ?? event.owner_user_id);
               const adminUrl = `/admin/events/${event.id}`;
+              const previewUrl = `/admin/events/${event.id}/preview`;
 
               return (
                 <li key={event.id}>
@@ -149,12 +150,12 @@ export default async function AdminEventsPage({
                         כניסה לאירוע הלקוח
                       </Link>
                       <Link
-                        href={`/e/${event.public_id}`}
+                        href={previewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={buttonClass({ variant: 'outline', size: 'sm' })}
                       >
-                        צפייה בהזמנה
+                        תצוגה מקדימה להזמנה
                       </Link>
                     </div>
                   </Card>
