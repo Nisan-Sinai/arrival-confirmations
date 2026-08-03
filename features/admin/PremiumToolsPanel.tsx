@@ -14,6 +14,7 @@ import { Field, Input, Select } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
 import { ProSeatingStudio } from '@/features/admin/ProSeatingStudio';
 import { PremiumWhatsAppCampaign } from '@/features/admin/PremiumWhatsAppCampaign';
+import { VisualSeatingFloor } from '@/features/admin/VisualSeatingFloor';
 import { seatingSummary } from '@/lib/premiumEventTools';
 import type { ProSeatingGuest, ProSeatingTable } from '@/lib/proSeating';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
@@ -76,6 +77,9 @@ export function PremiumToolsPanel({
   );
   const [seatingState, seatingAction, savingSeating] = useActionState(saveSeatingAction, INITIAL);
   const tables = seatingSummary(guests);
+  const visualSeatingVersion = guests
+    .map((guest) => `${guest.id}:${guest.tableId ?? ''}:${guest.seatLocked ? '1' : '0'}`)
+    .join('|');
 
   return (
     <div className="space-y-6">
@@ -165,12 +169,20 @@ export function PremiumToolsPanel({
       </Card>
 
       {isPro ? (
-        <ProSeatingStudio
-          eventId={eventId}
-          guests={guests}
-          tables={seatingTables}
-          snapshotCount={snapshotCount}
-        />
+        <>
+          <VisualSeatingFloor
+            key={visualSeatingVersion}
+            eventId={eventId}
+            guests={guests}
+            tables={seatingTables}
+          />
+          <ProSeatingStudio
+            eventId={eventId}
+            guests={guests}
+            tables={seatingTables}
+            snapshotCount={snapshotCount}
+          />
+        </>
       ) : (
         <Card padding="lg">
           <p className="text-eyebrow text-accent-strong font-semibold">הושבה</p>
