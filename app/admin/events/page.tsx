@@ -98,6 +98,7 @@ export default async function AdminEventsPage({
                   ? 'ללא בעלים'
                   : (ownerEmails.get(event.owner_user_id) ?? event.owner_user_id);
               const adminUrl = `/admin/events/${event.id}`;
+              const previewUrl = `/admin/events/${event.id}/preview`;
 
               return (
                 <li key={event.id}>
@@ -149,12 +150,12 @@ export default async function AdminEventsPage({
                         כניסה לאירוע הלקוח
                       </Link>
                       <Link
-                        href={`/e/${event.public_id}`}
+                        href={previewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={buttonClass({ variant: 'outline', size: 'sm' })}
                       >
-                        צפייה בהזמנה
+                        תצוגה מקדימה להזמנה
                       </Link>
                     </div>
                   </Card>

@@ -136,12 +136,12 @@ export default async function AdminCustomerEventPage({
               עריכת ההזמנה
             </Link>
             <Link
-              href={`/e/${event.public_id}`}
+              href={`/admin/events/${event.id}/preview`}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClass({ variant: 'outline' })}
             >
-              צפייה בקישור הראשי
+              תצוגה מקדימה להזמנה
             </Link>
             <Link href="/admin/plans" className={buttonClass({ variant: 'ghost' })}>
               מסלול ותשלום
