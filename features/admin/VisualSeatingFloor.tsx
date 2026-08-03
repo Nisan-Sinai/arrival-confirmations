@@ -3,10 +3,7 @@
 import { useActionState, useMemo, useState } from 'react';
 import type { DragEvent } from 'react';
 
-import {
-  saveProGuestSeatingAction,
-  type ProSeatingState,
-} from '@/app/actions/manageProSeating';
+import { saveProGuestSeatingAction, type ProSeatingState } from '@/app/actions/manageProSeating';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/field';
@@ -125,10 +122,7 @@ export function VisualSeatingFloor({
     () => guests.map((guest) => withLiveAssignment(guest, assignments, tableById)),
     [assignments, guests, tableById],
   );
-  const analytics = useMemo(
-    () => getSeatingAnalytics(tables, liveGuests),
-    [liveGuests, tables],
-  );
+  const analytics = useMemo(() => getSeatingAnalytics(tables, liveGuests), [liveGuests, tables]);
   const occupancyById = useMemo(
     () => new Map(analytics.tables.map((table) => [table.id, table] as const)),
     [analytics.tables],
@@ -205,29 +199,31 @@ export function VisualSeatingFloor({
   if (tables.length === 0) return null;
 
   return (
-    <Card padding="none" className="overflow-hidden border-2 border-primary/15 shadow-xl">
-      <div className="bg-primary px-5 py-6 text-primary-foreground sm:px-8">
+    <Card padding="none" className="border-primary/15 overflow-hidden border-2 shadow-xl">
+      <div className="bg-primary text-primary-foreground px-5 py-6 sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div>
-            <p className="text-xs font-bold tracking-[0.22em] text-primary-foreground/70">LIVE FLOOR</p>
+            <p className="text-primary-foreground/70 text-xs font-bold tracking-[0.22em]">
+              LIVE FLOOR
+            </p>
             <h2 className="mt-2 text-3xl font-black sm:text-4xl">מפת האולם החיה</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-primary-foreground/80 sm:text-base">
+            <p className="text-primary-foreground/80 mt-3 max-w-3xl text-sm leading-relaxed sm:text-base">
               גוררים מוזמנים לשולחנות, או לוחצים על מוזמן ואז על שולחן. המערכת מונעת חריגת קיבולת
               ושומרת מקומות נעולים.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-2xl bg-primary-foreground/10 px-3 py-2">
+            <div className="bg-primary-foreground/10 rounded-2xl px-3 py-2">
               <p className="text-2xl font-black tabular-nums">{analytics.assignedPeople}</p>
-              <p className="text-[11px] text-primary-foreground/70">משובצים</p>
+              <p className="text-primary-foreground/70 text-[11px]">משובצים</p>
             </div>
-            <div className="rounded-2xl bg-primary-foreground/10 px-3 py-2">
+            <div className="bg-primary-foreground/10 rounded-2xl px-3 py-2">
               <p className="text-2xl font-black tabular-nums">{analytics.unassignedPeople}</p>
-              <p className="text-[11px] text-primary-foreground/70">ממתינים</p>
+              <p className="text-primary-foreground/70 text-[11px]">ממתינים</p>
             </div>
-            <div className="rounded-2xl bg-primary-foreground/10 px-3 py-2">
+            <div className="bg-primary-foreground/10 rounded-2xl px-3 py-2">
               <p className="text-2xl font-black tabular-nums">{analytics.emptySeats}</p>
-              <p className="text-[11px] text-primary-foreground/70">פנויים</p>
+              <p className="text-primary-foreground/70 text-[11px]">פנויים</p>
             </div>
           </div>
         </div>
@@ -244,7 +240,9 @@ export function VisualSeatingFloor({
             <div>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold tracking-[0.18em] text-accent-strong">WAITING LIST</p>
+                  <p className="text-accent-strong text-xs font-bold tracking-[0.18em]">
+                    WAITING LIST
+                  </p>
                   <h3 className="text-primary mt-1 text-xl font-black">טרם שובצו</h3>
                 </div>
                 <span className="bg-card border-border rounded-full border px-3 py-1 text-sm font-bold tabular-nums">
@@ -263,7 +261,7 @@ export function VisualSeatingFloor({
             <button
               type="button"
               onClick={() => chooseDestination(null)}
-              className="border-border-strong bg-card text-primary w-full rounded-2xl border border-dashed px-4 py-3 text-sm font-bold hover:border-primary"
+              className="border-border-strong bg-card text-primary hover:border-primary w-full rounded-2xl border border-dashed px-4 py-3 text-sm font-bold"
             >
               החזרת המוזמן הנבחר ללא משובצים
             </button>
@@ -271,7 +269,9 @@ export function VisualSeatingFloor({
             <div className="max-h-[520px] space-y-2 overflow-y-auto pe-1">
               {unassignedGuests.length === 0 ? (
                 <div className="border-border bg-card rounded-3xl border p-6 text-center">
-                  <p className="text-4xl" aria-hidden="true">✓</p>
+                  <p className="text-4xl" aria-hidden="true">
+                    ✓
+                  </p>
                   <p className="text-primary mt-3 font-bold">כולם שובצו</p>
                   <p className="text-muted-foreground mt-1 text-xs">האולם מוכן לבדיקה ולשמירה.</p>
                 </div>
@@ -299,7 +299,9 @@ export function VisualSeatingFloor({
             </div>
           </div>
 
-          <p className="sr-only" aria-live="polite">{announcement}</p>
+          <p className="sr-only" aria-live="polite">
+            {announcement}
+          </p>
           {announcement !== '' && (
             <div className="border-border bg-secondary/35 text-primary mb-5 rounded-2xl border px-4 py-3 text-sm font-semibold">
               {announcement}
@@ -333,7 +335,7 @@ export function VisualSeatingFloor({
                           className={`relative overflow-hidden rounded-[2rem] border p-4 transition ${
                             selectedGuestId === null
                               ? 'border-border hover:border-primary/40 hover:shadow-lg'
-                              : 'border-primary shadow-lg ring-2 ring-primary/10'
+                              : 'border-primary ring-primary/10 shadow-lg ring-2'
                           } ${occupancy?.overCapacity ? 'border-destructive ring-destructive/20' : ''}`}
                         >
                           <div className="mb-3 flex items-start justify-between gap-3">
@@ -347,14 +349,16 @@ export function VisualSeatingFloor({
                               <p className="text-primary text-2xl font-black tabular-nums">
                                 {occupied}/{table.capacity}
                               </p>
-                              <p className="text-muted-foreground text-[11px]">{remaining} פנויים</p>
+                              <p className="text-muted-foreground text-[11px]">
+                                {remaining} פנויים
+                              </p>
                             </div>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => chooseDestination(table.id)}
-                            className={`${tableShapeClass(table.shape)} border-border bg-secondary/40 relative flex flex-col items-center justify-center border-2 p-4 text-center shadow-inner transition hover:border-primary`}
+                            className={`${tableShapeClass(table.shape)} border-border bg-secondary/40 hover:border-primary relative flex flex-col items-center justify-center border-2 p-4 text-center shadow-inner transition`}
                             aria-label={`שיבוץ המוזמן הנבחר אל ${table.name}`}
                           >
                             <span className="text-primary text-lg font-black">{table.name}</span>
@@ -393,7 +397,9 @@ export function VisualSeatingFloor({
                           </div>
 
                           {table.notes !== null && (
-                            <p className="text-muted-foreground mt-3 text-xs leading-relaxed">{table.notes}</p>
+                            <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+                              {table.notes}
+                            </p>
                           )}
                         </article>
                       );

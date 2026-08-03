@@ -8,8 +8,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
 import { createUserClient } from '@/lib/server/supabase';
 
-const MOBILE_HEADER_BUTTON_CLASS =
-  'h-10 shrink-0 gap-1 px-1.5 text-xs sm:gap-2 sm:px-4 sm:text-sm';
+const MOBILE_HEADER_BUTTON_CLASS = 'h-10 shrink-0 gap-1 px-1.5 text-xs sm:gap-2 sm:px-4 sm:text-sm';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = await createUserClient();

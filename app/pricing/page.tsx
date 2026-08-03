@@ -8,8 +8,7 @@ import { PricingCards } from '@/features/pricing/PricingCards';
 
 export const metadata: Metadata = {
   title: 'מחירים לאישורי הגעה לאירועים',
-  description:
-    'מסלול Basic ב-99 ₪, Premium ב-199 ₪ או Pro ב-349 ₪, בתשלום חד-פעמי לאירוע.',
+  description: 'מסלול Basic ב-99 ₪, Premium ב-199 ₪ או Pro ב-349 ₪, בתשלום חד-פעמי לאירוע.',
   alternates: { canonical: '/pricing' },
 };
 

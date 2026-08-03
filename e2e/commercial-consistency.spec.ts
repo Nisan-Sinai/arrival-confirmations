@@ -7,7 +7,9 @@ const PAID_PLANS = [
 ] as const;
 
 test.describe('commercial surface consistency', () => {
-  test('the landing page presents every paid plan in copy and structured data', async ({ page }) => {
+  test('the landing page presents every paid plan in copy and structured data', async ({
+    page,
+  }) => {
     await page.goto('/');
 
     await expect(page.locator('body')).toContainText(
@@ -39,7 +41,10 @@ test.describe('commercial surface consistency', () => {
   }) => {
     await page.goto('/pricing');
 
-    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Pro ב-349 ₪/);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      /Pro ב-349 ₪/,
+    );
     await expect(page.locator('body')).toContainText('מפעיל את Basic, Premium או Pro');
   });
 
@@ -47,7 +52,9 @@ test.describe('commercial surface consistency', () => {
     await page.goto('/pricing');
 
     for (const plan of PAID_PLANS) {
-      const href = await page.getByRole('link', { name: `בחירת ${plan.name}` }).getAttribute('href');
+      const href = await page
+        .getByRole('link', { name: `בחירת ${plan.name}` })
+        .getAttribute('href');
       expect(href).not.toBeNull();
 
       const url = new URL(href!);
