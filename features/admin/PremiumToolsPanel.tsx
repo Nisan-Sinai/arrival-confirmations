@@ -221,17 +221,19 @@ export function PremiumToolsPanel({
                         </td>
                         <td className="px-4 py-3">{guest.partySize}</td>
                         <td className="px-4 py-2">
-                          <Input
+                          <input
                             name="tableName"
                             defaultValue={guest.tableName ?? ''}
                             aria-label={`שולחן עבור ${guest.fullName}`}
+                            className="border-input bg-card text-foreground w-full rounded-xl border px-3.5 py-2.5 text-base"
                           />
                         </td>
                         <td className="px-4 py-2">
-                          <Input
+                          <input
                             name="seatNumber"
                             defaultValue={guest.seatNumber ?? ''}
                             aria-label={`מושב עבור ${guest.fullName}`}
+                            className="border-input bg-card text-foreground w-full rounded-xl border px-3.5 py-2.5 text-base"
                           />
                         </td>
                       </tr>
