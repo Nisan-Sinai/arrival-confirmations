@@ -5,11 +5,8 @@ import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
-import {
-  GuestImportError,
-  importGuestsFromFile,
-  type GuestImportSource,
-} from '@/lib/guestImport';
+import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
+import type { GuestImportSource } from '@/lib/guestImport';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import type { GuestInsert } from '@/types/guestDatabase.types';
