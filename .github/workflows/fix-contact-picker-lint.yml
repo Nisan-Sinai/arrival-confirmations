@@ -1,0 +1,76 @@
+name: Fix contact picker lint
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Replace effect with hydration-safe external store
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('features/admin/GuestManagementPanel.tsx')
+          text = path.read_text()
+          text = text.replace(
+              "import { useEffect, useMemo, useRef, useState } from 'react';",
+              "import { useMemo, useRef, useState, useSyncExternalStore } from 'react';",
+          )
+          text = text.replace(
+              "type NavigatorWithContacts = Navigator & { contacts?: ContactPickerManager };\n",
+              "type NavigatorWithContacts = Navigator & { contacts?: ContactPickerManager };\n\n"
+              "const subscribeToContactPicker = () => () => undefined;\n\n"
+              "function getContactPickerSnapshot(): boolean {\n"
+              "  return (navigator as NavigatorWithContacts).contacts !== undefined;\n"
+              "}\n\n"
+              "function getServerContactPickerSnapshot(): boolean {\n"
+              "  return false;\n"
+              "}\n",
+          )
+          text = text.replace(
+              "  const [supportsContactPicker, setSupportsContactPicker] = useState<boolean | null>(null);\n",
+              "",
+          )
+          text = text.replace(
+              "  const contactsJsonRef = useRef<HTMLInputElement>(null);\n",
+              "  const contactsJsonRef = useRef<HTMLInputElement>(null);\n"
+              "  const supportsContactPicker = useSyncExternalStore(\n"
+              "    subscribeToContactPicker,\n"
+              "    getContactPickerSnapshot,\n"
+              "    getServerContactPickerSnapshot,\n"
+              "  );\n",
+          )
+          text = text.replace(
+              "\n  useEffect(() => {\n"
+              "    setSupportsContactPicker((navigator as NavigatorWithContacts).contacts !== undefined);\n"
+              "  }, []);\n",
+              "",
+          )
+          path.write_text(text)
+          PY
+          pnpm exec prettier --write features/admin/GuestManagementPanel.tsx
+          pnpm lint
+      - name: Commit lint fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add features/admin/GuestManagementPanel.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: avoid state update in contact picker effect"
+            git push
+          fi
