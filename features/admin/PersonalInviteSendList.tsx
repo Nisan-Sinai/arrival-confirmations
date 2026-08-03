@@ -83,7 +83,7 @@ function TrackingStatus({ guest }: { readonly guest: PersonalInviteGuest }) {
   if (guest.inviteLinkIssuedAt !== null) {
     return (
       <div className="mt-3 space-y-1.5">
-        <Badge tone="warning">נשלח — טרם נפתח</Badge>
+        <Badge tone="warning">קישור נוצר — טרם נפתח</Badge>
         {issuedAt !== null && (
           <p className="text-muted-foreground text-xs">הקישור נוצר ב־{issuedAt}</p>
         )}
@@ -93,7 +93,7 @@ function TrackingStatus({ guest }: { readonly guest: PersonalInviteGuest }) {
 
   return (
     <div className="mt-3">
-      <Badge tone="outline">טרם נשלח קישור</Badge>
+      <Badge tone="outline">טרם נוצר קישור</Badge>
     </div>
   );
 }
@@ -104,12 +104,12 @@ export function PersonalInviteSendList({ guests }: { guests: readonly PersonalIn
       <p className="text-eyebrow text-accent-strong font-semibold">קישורים אישיים ומעקב</p>
       <h2 className="text-h2 text-primary mt-2 font-bold">שליחה אישית ב־WhatsApp</h2>
       <p className="text-muted-foreground mt-3 leading-relaxed">
-        לכל מוזמן נוצר קישור ייחודי. כאן רואים אם הקישור נוצר, אם ההזמנה נפתחה וכמה פעמים, ומה
-        הייתה הבחירה האחרונה: מגיע/ה, לא מגיע/ה או אולי.
+        לכל מוזמן נוצר קישור ייחודי. כאן רואים אם הקישור נוצר, אם ההזמנה נפתחה וכמה פעמים, ומה הייתה
+        הבחירה האחרונה: מגיע/ה, לא מגיע/ה או אולי.
       </p>
       <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-        יצירת קישור חדש מבטלת את הקישור הקודם. פתיחה נספרת רק לאחר שהעמוד נטען בדפדפן, כדי
-        שתצוגה מקדימה אוטומטית של WhatsApp לא תיחשב לפתיחה.
+        יצירת קישור חדש מבטלת את הקישור הקודם. פתיחה נספרת רק לאחר שהעמוד נטען בדפדפן, כדי שתצוגה
+        מקדימה אוטומטית של WhatsApp לא תיחשב לפתיחה.
       </p>
 
       {guests.length === 0 ? (
