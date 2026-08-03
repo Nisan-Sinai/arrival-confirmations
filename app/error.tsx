@@ -56,7 +56,7 @@ export default function ErrorBoundary({
             טעינה מחדש
           </Button>
           <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'lg' })}>
-            חזרה ללוח הבקרה
+            דף הבית שלי
           </Link>
         </div>
         {error.digest !== undefined && (
