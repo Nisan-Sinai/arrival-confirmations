@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { buttonClass } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Container } from '@/components/ui/layout';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
@@ -19,6 +20,16 @@ export const dynamic = 'force-dynamic';
 interface GuestPageProps {
   readonly params: Promise<{ id: string }>;
   readonly searchParams: Promise<{ saved?: string; error?: string; count?: string }>;
+}
+
+function SummaryCard({ label, value, hint }: { label: string; value: number; hint: string }) {
+  return (
+    <Card padding="md" className="min-w-0">
+      <p className="text-muted-foreground text-sm">{label}</p>
+      <p className="text-primary mt-1 text-3xl font-bold tabular-nums">{value}</p>
+      <p className="text-muted-foreground mt-1 text-xs">{hint}</p>
+    </Card>
+  );
 }
 
 export default async function GuestPage({ params, searchParams }: GuestPageProps) {
@@ -61,6 +72,11 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
     inviteLastResponseAt: guest.invite_last_response_at,
     inviteLastResponseStatus: guest.invite_last_response_status,
   }));
+  const totalPeople = guestRows.reduce((sum, guest) => sum + guest.partySize, 0);
+  const openedInvites = guestRows.filter((guest) => guest.inviteOpenCount > 0).length;
+  const answeredInvites = guestRows.filter(
+    (guest) => guest.inviteLastResponseStatus !== null,
+  ).length;
 
   return (
     <main id="main" className="flex-1 py-10 sm:py-14">
@@ -77,8 +93,8 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
             <h1 className="text-h1 text-primary mt-2 font-bold">{event.title}</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              הוספה, עריכה ומחיקה ידנית, בחירת אנשי קשר מהטלפון, ייבוא קובץ, שליחת קישור אישי ומעקב
-              אחרי פתיחה ואישור הגעה של כל מוזמן.
+              הוספה ועריכה ידנית, ייבוא אנשי קשר מהטלפון או מקובץ, שליחת קישורים אישיים ומעקב
+              אחרי פתיחה ותשובה.
             </p>
           </div>
           <Link
@@ -87,12 +103,21 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             rel="noopener noreferrer"
             className={buttonClass({ variant: 'outline' })}
           >
-            צפייה בקישור הראשי
+            צפייה בהזמנה
           </Link>
         </div>
 
+        <section
+          aria-label="סיכום רשימת המוזמנים"
+          className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4"
+        >
+          <SummaryCard label="רשומות" value={guestRows.length} hint="אנשי קשר פעילים" />
+          <SummaryCard label="סה״כ אנשים" value={totalPeople} hint="לפי הכמות בכל רשומה" />
+          <SummaryCard label="פתחו הזמנה" value={openedInvites} hint="קישור אישי שנפתח" />
+          <SummaryCard label="כבר ענו" value={answeredInvites} hint="מגיעים, לא מגיעים או אולי" />
+        </section>
+
         <div className="mt-8 space-y-6">
-          <PersonalInviteSendList guests={guestRows} />
           <GuestManagementPanel
             mode="owner"
             eventId={event.id}
@@ -101,6 +126,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             error={error}
             count={count}
           />
+          <PersonalInviteSendList guests={guestRows} />
         </div>
       </Container>
     </main>
