@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { signOutAction } from '@/app/actions/auth';
 import { PLATFORM_OWNER_EMAIL } from '@/app/_lib/platformAdmin';
+import { signOutAction } from '@/app/actions/auth';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
 import { createUserClient } from '@/lib/server/supabase';
@@ -23,7 +23,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <Container width="wide" className="flex min-h-16 items-center justify-between gap-3 py-2">
           <Link
             href="/dashboard"
-            className="text-primary flex items-center gap-2.5 rounded-md font-[family-name:var(--font-display)] text-lg font-bold"
+            aria-label="דף הבית של הלקוח"
+            className="text-primary flex shrink-0 items-center gap-2.5 rounded-md font-[family-name:var(--font-display)] text-lg font-bold"
           >
             <span
               aria-hidden="true"
@@ -45,13 +46,37 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <span className="hidden sm:inline">אישורי הגעה</span>
           </Link>
 
-          <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3">
+          <nav aria-label="ניווט באזור הלקוח" className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3">
             <span
               className="text-muted-foreground hidden max-w-[14rem] truncate text-sm lg:inline"
               dir="ltr"
             >
               {user.email}
             </span>
+            <Link
+              href="/dashboard"
+              className={buttonClass({
+                variant: 'ghost',
+                size: 'sm',
+                className: 'shrink-0 whitespace-nowrap',
+              })}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.7}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m3 10 9-7 9 7" />
+                <path d="M5 9v11h14V9" />
+                <path d="M9 20v-6h6v6" />
+              </svg>
+              <span className="sm:hidden">בית</span>
+              <span className="hidden sm:inline">דף הבית שלי</span>
+            </Link>
             {isPlatformOwner && (
               <Link href="/admin/plans" className={buttonClass({ variant: 'outline', size: 'sm' })}>
                 ניהול מסלולים
@@ -68,7 +93,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
                 התנתקות
               </Button>
             </form>
-          </div>
+          </nav>
         </Container>
       </header>
       {children}
