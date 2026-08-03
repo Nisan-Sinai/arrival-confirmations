@@ -47,8 +47,13 @@ describe('GuestManagementPanel', () => {
   it('shows the main workflows and a useful list summary', () => {
     render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} />);
 
-    expect(screen.getByRole('navigation', { name: 'פעולות מהירות לניהול המוזמנים' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'הוספה ידנית' })).toHaveAttribute('href', '#manual-add');
+    expect(
+      screen.getByRole('navigation', { name: 'פעולות מהירות לניהול המוזמנים' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'הוספה ידנית' })).toHaveAttribute(
+      'href',
+      '#manual-add',
+    );
     expect(screen.getByRole('link', { name: 'אנשי קשר מהטלפון' })).toHaveAttribute(
       'href',
       '#phone-import',
@@ -83,9 +88,7 @@ describe('GuestManagementPanel', () => {
   it('explains the fallback before the user tries an unsupported contact picker', async () => {
     render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} />);
 
-    expect(
-      await screen.findByText(/הבחירה הישירה אינה זמינה בדפדפן הזה/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/הבחירה הישירה אינה זמינה בדפדפן הזה/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'בחירת אנשי קשר מהטלפון' })).toBeDisabled();
     expect(screen.getByLabelText('הדבקת רשימה')).toBeInTheDocument();
   });

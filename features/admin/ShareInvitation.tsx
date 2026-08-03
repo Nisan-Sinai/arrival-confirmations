@@ -158,8 +158,8 @@ export function ShareInvitation({
       </div>
 
       <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-        בניהול המוזמנים אפשר להוסיף ידנית ולייבא מהטלפון. במרכז Premium נמצאים Excel, שליחה
-        חכמה, מיתוג והושבה.
+        בניהול המוזמנים אפשר להוסיף ידנית ולייבא מהטלפון. במרכז Premium נמצאים Excel, שליחה חכמה,
+        מיתוג והושבה.
       </p>
 
       <p role="status" aria-live="polite" className="sr-only">

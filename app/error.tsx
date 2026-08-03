@@ -55,10 +55,7 @@ export default function ErrorBoundary({
           <Button size="lg" onClick={() => window.location.reload()}>
             טעינה מחדש
           </Button>
-          <Link
-            href="/dashboard"
-            className={buttonClass({ variant: 'outline', size: 'lg' })}
-          >
+          <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'lg' })}>
             חזרה ללוח הבקרה
           </Link>
         </div>

@@ -88,7 +88,10 @@ function messageFor(
 }
 
 function normalizeSearch(value: string): string {
-  return value.trim().toLocaleLowerCase('he-IL').replace(/[\s()-]/g, '');
+  return value
+    .trim()
+    .toLocaleLowerCase('he-IL')
+    .replace(/[\s()-]/g, '');
 }
 
 function whatsappUrl(phone: string): string {
@@ -121,7 +124,12 @@ function SubmitButton({
       {pending && (
         <svg aria-hidden="true" viewBox="0 0 24 24" className="animate-spin" fill="none">
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
-          <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          <path
+            d="M21 12a9 9 0 0 0-9-9"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
         </svg>
       )}
       {pending ? pendingLabel : idleLabel}
@@ -245,7 +253,8 @@ export function GuestManagementPanel({
     [guests],
   );
   const assignedGuests = useMemo(
-    () => guests.filter((guest) => guest.tableName !== null && guest.tableName.trim() !== '').length,
+    () =>
+      guests.filter((guest) => guest.tableName !== null && guest.tableName.trim() !== '').length,
     [guests],
   );
   const filteredGuests = useMemo(() => {
@@ -491,7 +500,13 @@ export function GuestManagementPanel({
               {filteredGuests.length === 0 ? (
                 <div className="border-border mt-5 rounded-2xl border border-dashed p-6 text-center">
                   <p className="text-primary font-semibold">לא נמצאו מוזמנים מתאימים</p>
-                  <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setQuery('')}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => setQuery('')}
+                  >
                     ניקוי החיפוש
                   </Button>
                 </div>
@@ -503,7 +518,9 @@ export function GuestManagementPanel({
                         <summary className="cursor-pointer list-none rounded-sm">
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-primary truncate font-semibold">{guest.fullName}</p>
+                              <p className="text-primary truncate font-semibold">
+                                {guest.fullName}
+                              </p>
                               <p className="text-muted-foreground mt-1 text-sm" dir="ltr">
                                 {guest.phone}
                               </p>
