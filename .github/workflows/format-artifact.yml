@@ -1,0 +1,37 @@
+name: Format artifact
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format changed files
+        run: >-
+          pnpm exec prettier --write
+          app/dashboard/events/[id]/guests/page.tsx
+          app/error.tsx
+          features/admin/GuestManagementPanel.tsx
+          features/admin/ShareInvitation.tsx
+          tests/component/GuestManagementPanel.test.tsx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-ui-files
+          path: |
+            app/dashboard/events/[id]/guests/page.tsx
+            app/error.tsx
+            features/admin/GuestManagementPanel.tsx
+            features/admin/ShareInvitation.tsx
+            tests/component/GuestManagementPanel.test.tsx
