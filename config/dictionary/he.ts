@@ -1,0 +1,64 @@
+import type { Dictionary } from './types';
+
+/** Hebrew — the original copy, moved here unchanged from `UI_MESSAGES`. */
+export const he: Dictionary = {
+  rsvp: {
+    submitting: 'שולח…',
+    submit: 'שליחת אישור הגעה',
+    successTitle: 'תודה רבה!',
+    successAttending: 'אישור ההגעה שלכם נקלט. מחכים לראותכם!',
+    successNotAttending: 'עדכנתם שלא תוכלו להגיע. תודה שהודעתם.',
+    successMaybe: 'קיבלנו את התשובה. נשמח לעדכון סופי כשתדעו.',
+    updated: 'העדכון נשמר בהצלחה.',
+    genericAcknowledgement: 'התשובה שלכם התקבלה. תודה רבה!',
+    networkError: 'הבקשה לא הושלמה בגלל תקלת רשת. אפשר לנסות שוב.',
+    rateLimited: 'נשלחו יותר מדי בקשות. נסו שוב בעוד מספר דקות.',
+    unknownError: 'אירעה תקלה בשמירת אישור ההגעה. נסו שוב, ואם התקלה חוזרת פנו אלינו.',
+  },
+  invite: {
+    invalidToken: 'הקישור אינו תקין או שפג תוקפו. אנא בקשו קישור מעודכן מבעלי השמחה.',
+    sessionExpired: 'תוקף ההתחברות פג. אנא פתחו שוב את הקישור האישי שקיבלתם.',
+  },
+  admin: {
+    loginFailed: 'פרטי ההתחברות שגויים.',
+    notAuthorized: 'אין לכם הרשאה לצפות בעמוד זה.',
+    saved: 'השינויים נשמרו.',
+    deleted: 'הרשומה נמחקה.',
+    linkCopied: 'הקישור הועתק.',
+    linkRevoked: 'הקישור בוטל.',
+    linkRegenerated: 'נוצר קישור חדש. הקישור הקודם בוטל.',
+    exportEmpty: 'אין נתונים לייצוא.',
+    responseRateUnavailable: 'לא זמין',
+    actionFailed: 'הפעולה נכשלה. נסו שוב.',
+  },
+  validation: {
+    required: 'שדה חובה',
+    fullNameTooShort: 'יש להזין שם מלא (לפחות 2 תווים)',
+    fullNameTooLong: 'השם ארוך מדי',
+    phoneInvalid: 'מספר טלפון ישראלי לא תקין',
+    attendanceRequired: 'יש לבחור אם תגיעו',
+    countNegative: 'לא ניתן להזין מספר שלילי',
+    countTooLarge: 'המספר גבוה מדי',
+    consentRequired: 'יש לאשר את השימוש בפרטים כדי לשלוח',
+    notesTooLong: 'ההערה ארוכה מדי',
+    dietaryTooLong: 'הפירוט ארוך מדי',
+  },
+  errors: {
+    notFoundTitle: 'הדף לא נמצא',
+    notFoundBody: 'ייתכן שהקישור שגוי או שהוסר.',
+    genericTitle: 'משהו השתבש',
+    genericBody: 'אירעה תקלה זמנית. נסו לרענן את הדף.',
+    offlineTitle: 'אין חיבור לאינטרנט',
+    offlineBody: 'הדף יטען מחדש כשהחיבור יחזור.',
+  },
+  a11y: {
+    skipToContent: 'דילוג לתוכן הראשי',
+    loading: 'טוען…',
+    requiredField: 'שדה חובה',
+    externalLink: 'נפתח בחלון חדש',
+  },
+  languageSwitch: {
+    label: 'EN',
+    ariaLabel: 'Switch to English',
+  },
+};
