@@ -19,6 +19,26 @@ function entries(value: unknown, path: string[] = []): Array<[string, string]> {
 
 const HEBREW = /[֐-׿]/;
 
+/**
+ * Entries that are data rather than prose, and so read identically in both languages.
+ *
+ * Listed one by one rather than matched by a rule. "Skip anything containing a digit"
+ * would also excuse `10 free replies`, which is prose and has to be translated, and an
+ * exemption that quietly widens is exactly how an untranslated string reaches a reader.
+ * Every line here is a decision somebody can push back on in review.
+ */
+const LANGUAGE_NEUTRAL = new Set([
+  // A clock time. 19:00 is 19:00 in either language.
+  'landing.invitationPreview.timeValue',
+]);
+
+/** Keys exempt from the alphabet and translation checks, with the reason attached. */
+function isExempt(key: string): boolean {
+  // The switcher is labelled in the language it switches *to*, so the Hebrew
+  // dictionary carries Latin text and the English one carries Hebrew.
+  return key.startsWith('languageSwitch') || LANGUAGE_NEUTRAL.has(key);
+}
+
 describe('dictionary', () => {
   it('serves a dictionary for every locale', () => {
     for (const locale of locales) {
@@ -48,10 +68,8 @@ describe('dictionary', () => {
   });
 
   it('writes Hebrew copy in Hebrew', () => {
-    // The switcher is the deliberate exception: its label is written in the language
-    // it switches *to*, so the Hebrew dictionary carries the Latin 'EN'.
     for (const [key, value] of entries(he)) {
-      if (key.startsWith('languageSwitch')) continue;
+      if (isExempt(key)) continue;
       expect(HEBREW.test(value), `${key}: ${value}`).toBe(true);
     }
   });
@@ -59,16 +77,16 @@ describe('dictionary', () => {
   it('leaves no Hebrew in the English copy except the switcher', () => {
     // An untranslated string is easiest to spot by the alphabet it is written in.
     for (const [key, value] of entries(en)) {
-      if (key.startsWith('languageSwitch')) continue;
+      if (isExempt(key)) continue;
       expect(HEBREW.test(value), `${key}: ${value}`).toBe(false);
     }
   });
 
   it('translates the prose rather than copying it across', () => {
+    const english = new Map(entries(en));
     for (const [key, hebrew] of entries(he)) {
-      if (key.startsWith('languageSwitch')) continue;
-      const english = entries(en).find(([other]) => other === key)?.[1];
-      expect(english, key).not.toBe(hebrew);
+      if (isExempt(key)) continue;
+      expect(english.get(key), key).not.toBe(hebrew);
     }
   });
 

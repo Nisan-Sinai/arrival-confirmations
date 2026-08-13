@@ -86,4 +86,69 @@ export type Dictionary = {
     privacy: string;
     accessibility: string;
   };
+  landing: {
+    meta: {
+      title: string;
+      description: string;
+      ogTitle: string;
+      ogDescription: string;
+    };
+    hero: {
+      eyebrow: string;
+      /** The headline is two lines, the second one accented. */
+      titleLead: string;
+      titleAccent: string;
+      lead: string;
+      ctaPrimary: string;
+      ctaSecondary: string;
+      /** Three short reassurances under the buttons. */
+      facts: readonly [string, string, string];
+    };
+    /**
+     * The mock invitation beside the headline. It is decorative — `aria-hidden` — but
+     * it is the clearest picture of what the product makes, so it is translated rather
+     * than left in Hebrew on an English page.
+     */
+    invitationPreview: {
+      blessing: string;
+      introFirstLine: string;
+      introSecondLine: string;
+      occasion: string;
+      dateLabel: string;
+      dateValue: string;
+      timeLabel: string;
+      timeValue: string;
+      placeLabel: string;
+      placeValue: string;
+      countdownDays: string;
+      countdownHours: string;
+      countdownMinutes: string;
+      captionLead: string;
+      captionAccent: string;
+    };
+    benefits: {
+      eyebrow: string;
+      title: string;
+      items: readonly [
+        { title: string; body: string },
+        { title: string; body: string },
+        { title: string; body: string },
+      ];
+    };
+    plans: {
+      eyebrow: string;
+      title: string;
+      lead: string;
+    };
+    faq: {
+      eyebrow: string;
+      title: string;
+      items: readonly [
+        { question: string; answer: string },
+        { question: string; answer: string },
+        { question: string; answer: string },
+        { question: string; answer: string },
+      ];
+    };
+  };
 };
