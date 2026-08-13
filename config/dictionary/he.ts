@@ -61,4 +61,15 @@ export const he: Dictionary = {
     label: 'EN',
     ariaLabel: 'Switch to English',
   },
+  site: {
+    name: 'אישורי הגעה',
+    description: 'הזמנה דיגיטלית ואישור הגעה לאירוע',
+  },
+  footer: {
+    builtBy: 'האתר עוצב ופותח ע״י',
+    builderName: 'ניסן סיני טכנולוגיות',
+    navAria: 'קישורי חובה',
+    privacy: 'מדיניות פרטיות',
+    accessibility: 'הצהרת נגישות',
+  },
 };

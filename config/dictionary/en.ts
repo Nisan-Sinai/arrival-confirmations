@@ -70,4 +70,15 @@ export const en: Dictionary = {
     label: 'עב',
     ariaLabel: 'מעבר לעברית',
   },
+  site: {
+    name: 'Arrival Confirmations',
+    description: 'A digital invitation and RSVP for your event',
+  },
+  footer: {
+    builtBy: 'Designed and built by',
+    builderName: 'Nisan Sinai Technologies',
+    navAria: 'Required links',
+    privacy: 'Privacy policy',
+    accessibility: 'Accessibility statement',
+  },
 };

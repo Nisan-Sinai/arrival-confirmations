@@ -68,4 +68,22 @@ export type Dictionary = {
     label: string;
     ariaLabel: string;
   };
+  /**
+   * How the product names and describes itself, for the document title, the share
+   * card and the footer. Written natively in each language rather than
+   * transliterated: "Arrival confirmations" is what an English reader would call
+   * this, and a romanised "Ishurei Hagaa" would mean nothing to them.
+   */
+  site: {
+    name: string;
+    description: string;
+  };
+  footer: {
+    /** The prose before the studio name, e.g. "Designed and built by". */
+    builtBy: string;
+    builderName: string;
+    navAria: string;
+    privacy: string;
+    accessibility: string;
+  };
 };
