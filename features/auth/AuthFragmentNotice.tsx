@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 
 import { Alert } from '@/components/ui/feedback';
+import { getDictionary } from '@/config/dictionary';
+import { defaultLocale, type Locale } from '@/lib/i18n';
 
 /**
  * Surfaces an auth failure that Supabase reports in the URL fragment.
@@ -15,20 +17,24 @@ import { Alert } from '@/components/ui/feedback';
  * dead link again.
  *
  * This is the only reason it is a Client Component. It reads the fragment once, states
- * the problem in Hebrew rather than passing through Supabase's English, and clears the
- * hash so a refresh does not re-announce a message the user has already dealt with.
+ * the problem in the reader's own language rather than passing through Supabase's
+ * English, and clears the hash so a refresh does not re-announce a message the user has
+ * already dealt with.
  */
 
-const MESSAGES: Record<string, string> = {
-  otp_expired:
-    'הקישור פג תוקף או שכבר נעשה בו שימוש. קישורי איפוס תקפים לזמן מוגבל ולפעם אחת בלבד.',
-  access_denied: 'הבקשה נדחתה. אם ביקשתם איפוס סיסמה, בקשו קישור חדש.',
-};
-
-export function AuthFragmentNotice() {
+export function AuthFragmentNotice({ locale = defaultLocale }: { locale?: Locale }) {
+  const { authNotice } = getDictionary(locale);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    // Resolved inside the effect so the only dependency is the locale, not a fresh
+    // dictionary object on every render.
+    const notice = getDictionary(locale).authNotice;
+    const messages: Record<string, string> = {
+      otp_expired: notice.otpExpired,
+      access_denied: notice.accessDenied,
+    };
+
     /**
      * Read on the next frame rather than in the effect body.
      *
@@ -47,7 +53,7 @@ export function AuthFragmentNotice() {
       if (error === null) return;
 
       const code = params.get('error_code') ?? '';
-      setMessage(MESSAGES[code] ?? MESSAGES[error] ?? 'אירעה תקלה באימות. נסו שוב.');
+      setMessage(messages[code] ?? messages[error] ?? notice.generic);
 
       // Drop the fragment without adding a history entry, so Back still goes back to
       // wherever the user actually came from.
@@ -56,7 +62,7 @@ export function AuthFragmentNotice() {
 
     const frame = requestAnimationFrame(read);
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [locale]);
 
   if (message === null) return null;
 
@@ -64,7 +70,7 @@ export function AuthFragmentNotice() {
     <Alert tone="error" className="mx-auto w-full max-w-md">
       {message}{' '}
       <a href="/forgot-password" className="font-semibold underline underline-offset-2">
-        בקשת קישור חדש
+        {authNotice.requestNewLink}
       </a>
     </Alert>
   );

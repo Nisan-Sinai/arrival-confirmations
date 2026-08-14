@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/feedback';
+import { getDictionary } from '@/config/dictionary';
+import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 import { createClientSideClient } from '@/lib/supabase.browser';
 
 /**
@@ -26,12 +28,20 @@ import { createClientSideClient } from '@/lib/supabase.browser';
  * a client-side transition would arrive at /reset-password before the server knew a
  * session existed, and the page would render its expired-link state.
  */
-export function HashSessionHandoff({ next }: { next: string }) {
+export function HashSessionHandoff({
+  next,
+  locale = defaultLocale,
+}: {
+  next: string;
+  locale?: Locale;
+}) {
   const [failed, setFailed] = useState(false);
+  const { callback } = getDictionary(locale).auth;
 
   useEffect(() => {
     // Deferred off the effect body: setState synchronously there triggers a second
     // render before paint, which is what react-hooks/set-state-in-effect objects to.
+    const loginPath = localePath(locale, '/login');
     const frame = requestAnimationFrame(() => {
       void (async () => {
         const fragment = window.location.hash.replace(/^#/, '');
@@ -40,14 +50,16 @@ export function HashSessionHandoff({ next }: { next: string }) {
         // Supabase reports an expired or spent link here too, not as a query param.
         if (params.get('error') !== null) {
           const code = params.get('error_code');
-          window.location.replace(`/login?error=${code === 'otp_expired' ? 'expired' : 'auth'}`);
+          window.location.replace(
+            `${loginPath}?error=${code === 'otp_expired' ? 'expired' : 'auth'}`,
+          );
           return;
         }
 
         const accessToken = params.get('access_token');
         const refreshToken = params.get('refresh_token');
         if (accessToken === null || refreshToken === null) {
-          window.location.replace('/login?error=auth');
+          window.location.replace(`${loginPath}?error=auth`);
           return;
         }
 
@@ -59,7 +71,7 @@ export function HashSessionHandoff({ next }: { next: string }) {
 
         if (error) {
           setFailed(true);
-          window.location.replace('/login?error=expired');
+          window.location.replace(`${loginPath}?error=expired`);
           return;
         }
 
@@ -71,7 +83,7 @@ export function HashSessionHandoff({ next }: { next: string }) {
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [next]);
+  }, [next, locale]);
 
   return (
     <Card
@@ -80,12 +92,12 @@ export function HashSessionHandoff({ next }: { next: string }) {
       role="status"
       aria-live="polite"
     >
-      <span className="sr-only">{failed ? 'האימות נכשל' : 'מאמת את הקישור…'}</span>
+      <span className="sr-only">{failed ? callback.failedSr : callback.verifyingSr}</span>
       <p className="text-h3 text-primary font-semibold" aria-hidden="true">
-        רגע אחד…
+        {callback.heading}
       </p>
       <p className="text-muted-foreground mt-2 text-sm" aria-hidden="true">
-        מאמתים את הקישור
+        {callback.subtitle}
       </p>
       <div className="mt-7 space-y-3">
         <Skeleton className="mx-auto h-4 w-3/4" />
@@ -94,9 +106,7 @@ export function HashSessionHandoff({ next }: { next: string }) {
       {/* Without JavaScript the fragment can never be read, so say so rather than
           spinning forever. */}
       <noscript>
-        <p className="text-destructive mt-6 text-sm">
-          השלמת הקישור דורשת JavaScript. הפעילו אותו בדפדפן ופתחו את הקישור שוב.
-        </p>
+        <p className="text-destructive mt-6 text-sm">{callback.noscript}</p>
       </noscript>
     </Card>
   );

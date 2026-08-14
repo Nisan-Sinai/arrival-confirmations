@@ -1,6 +1,8 @@
 import Link from 'next/link';
 
 import { Container } from '@/components/ui/layout';
+import { getDictionary } from '@/config/dictionary';
+import { localePath, type Locale } from '@/lib/i18n';
 
 /**
  * Site footer.
@@ -12,36 +14,42 @@ import { Container } from '@/components/ui/layout';
  * It stays deliberately small on the invitation. A guest opening a link to a simcha is
  * not a visitor to a product's website, and a full sitemap footer under a family's
  * invitation would read as advertising placed on it.
+ *
+ * Both links go through `localePath`, so a reader who arrived on the English side stays
+ * there. Hardcoding `/privacy` would make the footer the one place on the page where
+ * the language changes underneath them.
  */
-export function SiteFooter() {
+export function SiteFooter({ locale }: { locale: Locale }) {
+  const dictionary = getDictionary(locale);
+
   return (
     <footer className="border-border/70 bg-surface-sand/50 mt-auto border-t">
       <Container className="flex flex-col items-center gap-6 py-10 text-center sm:flex-row sm:justify-between sm:text-start">
         <div>
           <p className="text-primary font-[family-name:var(--font-display)] text-base font-bold">
-            אישורי הגעה
+            {dictionary.site.name}
           </p>
           <p className="text-muted-foreground mt-1 text-sm">
-            האתר עוצב ופותח ע״י{' '}
-            <span className="text-foreground font-semibold">ניסן סיני טכנולוגיות</span>
+            {dictionary.footer.builtBy}{' '}
+            <span className="text-foreground font-semibold">{dictionary.footer.builderName}</span>
           </p>
         </div>
 
         <nav
-          aria-label="קישורי חובה"
+          aria-label={dictionary.footer.navAria}
           className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm"
         >
           <Link
             className="hover:text-primary rounded-sm underline underline-offset-4"
-            href="/privacy"
+            href={localePath(locale, '/privacy')}
           >
-            מדיניות פרטיות
+            {dictionary.footer.privacy}
           </Link>
           <Link
             className="hover:text-primary rounded-sm underline underline-offset-4"
-            href="/accessibility"
+            href={localePath(locale, '/accessibility')}
           >
-            הצהרת נגישות
+            {dictionary.footer.accessibility}
           </Link>
         </nav>
       </Container>

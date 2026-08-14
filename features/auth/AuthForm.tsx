@@ -9,6 +9,8 @@ import { Card } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
 import { Rule } from '@/components/ui/layout';
+import { getDictionary } from '@/config/dictionary';
+import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 
 /**
  * Shared shell for every credential form (§8, §9).
@@ -17,6 +19,10 @@ import { Rule } from '@/components/ui/layout';
  * which fields they show and where they post. Keeping them identical is also a
  * security property: a sign-up page that looked or behaved differently from sign-in
  * would give away which addresses already hold an account.
+ *
+ * All copy comes from the dictionary keyed by `mode`, so the page only names the mode
+ * and the locale. The links go through `localePath`, and a hidden `locale` field rides
+ * along with the submission so the server action can answer in the reader's language.
  */
 
 const INITIAL: AuthFormState = { status: 'idle', message: '' };
@@ -26,34 +32,31 @@ type AuthMode = 'signIn' | 'signUp' | 'requestReset' | 'setPassword';
 interface AuthFormProps {
   readonly action: (state: AuthFormState, formData: FormData) => Promise<AuthFormState>;
   readonly mode: AuthMode;
-  readonly title: string;
-  readonly subtitle: string;
-  readonly submitLabel: string;
-  readonly pendingLabel: string;
-  readonly footerPrompt?: string;
-  readonly footerHref?: string;
-  readonly footerLinkLabel?: string;
+  readonly locale?: Locale;
 }
 
 const MIN_PASSWORD_LENGTH = 10;
 
-export function AuthForm({
-  action,
-  mode,
-  title,
-  subtitle,
-  submitLabel,
-  pendingLabel,
-  footerPrompt,
-  footerHref,
-  footerLinkLabel,
-}: AuthFormProps) {
+export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL);
+  const { auth } = getDictionary(locale);
+  const copy = auth.modes[mode];
+  const passwordHint = auth.fields.passwordHint.replace('{min}', String(MIN_PASSWORD_LENGTH));
 
   const showEmail = mode !== 'setPassword';
   const showPassword = mode !== 'requestReset';
-  const isRegistration = mode === 'signUp';
-  const isNewPassword = isRegistration || mode === 'setPassword';
+  const isNewPassword = mode === 'signUp' || mode === 'setPassword';
+
+  // Narrowed by mode so the footer copy is the concrete `AuthModeCopy`, not the union
+  // that includes the footerless `setPassword` variant.
+  const footer =
+    mode === 'signIn'
+      ? { ...auth.modes.signIn, href: localePath(locale, '/signup') }
+      : mode === 'signUp'
+        ? { ...auth.modes.signUp, href: localePath(locale, '/login') }
+        : mode === 'requestReset'
+          ? { ...auth.modes.requestReset, href: localePath(locale, '/login') }
+          : null;
 
   /**
    * Once the mail is away there is nothing useful left on this form — leaving the
@@ -79,14 +82,14 @@ export function AuthForm({
             <path d="m2 7 10 6 10-6" />
           </svg>
         </span>
-        <h1 className="text-h2 text-primary font-bold">בדקו את תיבת הדואר</h1>
+        <h1 className="text-h2 text-primary font-bold">{auth.checkInbox}</h1>
         <p className="text-muted-foreground mt-3 leading-relaxed">{state.message}</p>
         <Rule className="my-7" />
         <Link
-          href="/login"
+          href={localePath(locale, '/login')}
           className="text-primary text-sm font-semibold underline-offset-4 hover:underline"
         >
-          חזרה לכניסה
+          {auth.backToLogin}
         </Link>
       </Card>
     );
@@ -95,15 +98,17 @@ export function AuthForm({
   return (
     <Card padding="lg" className="mx-auto w-full max-w-md">
       <div className="text-center">
-        <h1 className="text-h2 text-primary font-bold">{title}</h1>
-        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{subtitle}</p>
+        <h1 className="text-h2 text-primary font-bold">{copy.title}</h1>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{copy.subtitle}</p>
       </div>
 
       <Rule className="my-7" />
 
       <form action={formAction} className="space-y-5" noValidate>
+        <input type="hidden" name="locale" value={locale} />
+
         {showEmail && (
-          <Field label="כתובת אימייל" required>
+          <Field label={auth.fields.email} required>
             <Input
               name="email"
               type="email"
@@ -119,9 +124,9 @@ export function AuthForm({
 
         {showPassword && (
           <Field
-            label={mode === 'setPassword' ? 'סיסמה חדשה' : 'סיסמה'}
+            label={mode === 'setPassword' ? auth.fields.newPassword : auth.fields.password}
             required
-            hint={isNewPassword ? `לפחות ${MIN_PASSWORD_LENGTH} תווים` : undefined}
+            hint={isNewPassword ? passwordHint : undefined}
           >
             <Input
               name="password"
@@ -137,7 +142,7 @@ export function AuthForm({
         )}
 
         {mode === 'setPassword' && (
-          <Field label="אימות הסיסמה החדשה" required>
+          <Field label={auth.fields.confirmPassword} required>
             <Input
               name="passwordConfirmation"
               type="password"
@@ -152,7 +157,7 @@ export function AuthForm({
         {state.status === 'error' && <Alert tone="error">{state.message}</Alert>}
 
         <Button type="submit" size="lg" block disabled={isPending}>
-          {isPending ? pendingLabel : submitLabel}
+          {isPending ? copy.pending : copy.submit}
         </Button>
       </form>
 
@@ -160,21 +165,21 @@ export function AuthForm({
         <p className="mt-5 text-center text-sm">
           <Link
             className="text-muted-foreground hover:text-primary underline underline-offset-4"
-            href="/forgot-password"
+            href={localePath(locale, '/forgot-password')}
           >
-            שכחתי סיסמה
+            {auth.forgotPassword}
           </Link>
         </p>
       )}
 
-      {footerPrompt !== undefined && footerHref !== undefined && (
+      {footer !== null && (
         <p className="text-muted-foreground border-border mt-7 border-t pt-6 text-center text-sm">
-          {footerPrompt}{' '}
+          {footer.footerPrompt}{' '}
           <Link
             className="text-primary font-semibold underline underline-offset-2"
-            href={footerHref}
+            href={footer.href}
           >
-            {footerLinkLabel}
+            {footer.footerLink}
           </Link>
         </p>
       )}

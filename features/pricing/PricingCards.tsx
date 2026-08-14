@@ -1,9 +1,11 @@
 import Link from 'next/link';
 
-import { PLAN_CATALOG, formatPlanPrice } from '@/app/_lib/plans';
+import { formatPlanPrice, getPlanCatalog } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
 import { Card, CardBody, CardTitle } from '@/components/ui/card';
 import { appConfig } from '@/config/event.config';
+import { getDictionary } from '@/config/dictionary';
+import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 function whatsappPhone(phone: string): string {
@@ -11,13 +13,21 @@ function whatsappPhone(phone: string): string {
   return digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
 }
 
-function whatsappPlanUrl(planName: string): string {
-  const message = `שלום ניסן, אני מעוניין להפעיל את מסלול ${planName} לאירוע במערכת אישורי הגעה.`;
+function whatsappPlanUrl(message: string): string {
   return `https://wa.me/${whatsappPhone(appConfig.supportPhone)}?text=${encodeURIComponent(message)}`;
 }
 
-export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
-  const plans = showTrial ? PLAN_CATALOG : PLAN_CATALOG.filter((plan) => plan.code !== 'trial');
+export function PricingCards({
+  showTrial = true,
+  locale = defaultLocale,
+}: {
+  showTrial?: boolean;
+  locale?: Locale;
+}) {
+  const dictionary = getDictionary(locale);
+  const copy = dictionary.pricing;
+  const catalog = getPlanCatalog(locale);
+  const plans = showTrial ? catalog : catalog.filter((plan) => plan.code !== 'trial');
 
   return (
     <div className={cn('grid gap-5', plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2')}>
@@ -30,7 +40,7 @@ export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
         >
           {plan.highlighted && (
             <span className="bg-primary text-primary-foreground absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-semibold">
-              המסלול המתקדם
+              {copy.highlightedBadge}
             </span>
           )}
 
@@ -42,7 +52,7 @@ export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
               {formatPlanPrice(plan.priceAgorot)}
             </p>
             <p className="text-muted-foreground mt-1 text-sm">
-              {plan.code === 'trial' ? 'ללא כרטיס אשראי' : 'תשלום חד-פעמי לאירוע'}
+              {plan.code === 'trial' ? copy.trialNote : copy.oneTimeNote}
             </p>
             <CardBody className="text-foreground mt-5">{plan.description}</CardBody>
           </div>
@@ -69,12 +79,12 @@ export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
 
           <div className="mt-7">
             {plan.code === 'trial' ? (
-              <Link href="/signup" className={buttonClass({ block: true })}>
-                יצירת אירוע לבדיקה
+              <Link href={localePath(locale, '/signup')} className={buttonClass({ block: true })}>
+                {copy.trialCta}
               </Link>
             ) : (
               <a
-                href={whatsappPlanUrl(plan.name)}
+                href={whatsappPlanUrl(copy.whatsappIntro.replace('{plan}', plan.name))}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass({
@@ -82,7 +92,7 @@ export function PricingCards({ showTrial = true }: { showTrial?: boolean }) {
                   variant: plan.highlighted ? 'primary' : 'outline',
                 })}
               >
-                בחירת {plan.name}
+                {copy.choosePlan.replace('{plan}', plan.name)}
               </a>
             )}
           </div>
