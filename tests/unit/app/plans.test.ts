@@ -5,6 +5,7 @@ import {
   PLAN_CATALOG,
   PLAN_CODES,
   formatPlanPrice,
+  getPlanCatalog,
   getPlanDefinition,
   getPlanLabel,
   isMonetizedEvent,
@@ -51,6 +52,29 @@ describe('event plans', () => {
   it('grandfathers events created before monetization', () => {
     expect(isMonetizedEvent('2026-07-31T10:40:59.999Z')).toBe(false);
     expect(isMonetizedEvent(MONETIZATION_LAUNCH_AT)).toBe(true);
+  });
+
+  it('serves the Hebrew catalogue itself and an English overlay of the same shape', () => {
+    // Hebrew is the source catalogue, returned unchanged so the two never diverge.
+    expect(getPlanCatalog('he')).toBe(PLAN_CATALOG);
+
+    const english = getPlanCatalog('en');
+    // Structural data is shared; only the prose is translated.
+    expect(english.map((plan) => plan.code)).toEqual(PLAN_CATALOG.map((plan) => plan.code));
+    english.forEach((plan, index) => {
+      const source = PLAN_CATALOG[index]!;
+      expect(plan.priceAgorot).toBe(source.priceAgorot);
+      expect(plan.attendeeLimit).toBe(source.attendeeLimit);
+      expect(plan.highlighted).toBe(source.highlighted);
+      // One-to-one feature translation keeps the cards the same length on both sides.
+      expect(plan.features).toHaveLength(source.features.length);
+      expect(plan.description.trim()).not.toBe('');
+      expect(plan.name.trim()).not.toBe('');
+    });
+
+    // The paid plans keep their Latin brand names; only the trial is renamed.
+    expect(english.find((plan) => plan.code === 'basic')?.name).toBe('Basic');
+    expect(english.find((plan) => plan.code === 'trial')?.name).toBe('Free trial');
   });
 
   it('publishes every completed Premium capability without coming-soon copy', () => {

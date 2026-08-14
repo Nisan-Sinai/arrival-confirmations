@@ -259,7 +259,15 @@ test.describe('the crawlable surface', () => {
   });
 
   test('renders the product share card as a real PNG', async ({ request }) => {
-    const response = await request.get('/opengraph-image');
+    // The route lives in the `(he)` group, so Next serves it at a hashed path and
+    // names that path in the `og:image` tag. Reading the URL from the page rather than
+    // hardcoding it is what keeps this test honest about what a crawler actually fetches.
+    const html = await (await request.get('/')).text();
+    const content = html.match(/property="og:image" content="([^"]+)"/)?.[1];
+    expect(content).toBeTruthy();
+    const image = new URL(content!);
+
+    const response = await request.get(`${image.pathname}${image.search}`);
 
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toContain('image/png');
@@ -420,7 +428,9 @@ test.describe('@a11y accessibility', () => {
 
   test('declares Hebrew and right-to-left', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'he');
+    // The BCP 47 tag, not the bare subtag — `languageTag('he')` emits `he-IL` so the
+    // same value serves `lang`, `hreflang` and the `Intl` formatters.
+    await expect(page.locator('html')).toHaveAttribute('lang', 'he-IL');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   });
 

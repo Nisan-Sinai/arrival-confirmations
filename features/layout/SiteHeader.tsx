@@ -2,15 +2,36 @@ import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
+import { getDictionary } from '@/config/dictionary';
+import { LanguageSwitch } from '@/features/layout/LanguageSwitch';
+import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
+/**
+ * The public site header.
+ *
+ * `locale` drives the copy and the brand link; it defaults to Hebrew so the many
+ * Hebrew-only pages that render the header need not name it. `showLanguageSwitch` is off
+ * by default and turned on only where the page has a twin in the other language — the
+ * marketing surface — so the switch never offers a jump to a page that does not exist.
+ *
+ * The account links (`login`, `signup`) point at the Hebrew routes on purpose: the
+ * signed-in application is not yet translated, so an English visitor is funnelled into
+ * the existing flow rather than to a route that would 404.
+ */
 export function SiteHeader({
   className,
   minimal = false,
+  locale = defaultLocale,
+  showLanguageSwitch = false,
 }: {
   className?: string;
   minimal?: boolean;
+  locale?: Locale;
+  showLanguageSwitch?: boolean;
 }) {
+  const dictionary = getDictionary(locale);
+
   return (
     <header
       className={cn(
@@ -20,8 +41,8 @@ export function SiteHeader({
     >
       <Container className="flex min-h-16 items-center justify-between gap-3 py-2 sm:min-h-18">
         <Link
-          href="/"
-          aria-label="דף הבית — אישורי הגעה"
+          href={localePath(locale, '/')}
+          aria-label={dictionary.header.homeAria}
           className="text-primary flex items-center gap-2.5 rounded-md font-[family-name:var(--font-display)] text-lg font-bold sm:text-xl"
         >
           <span
@@ -42,19 +63,23 @@ export function SiteHeader({
               <path d="M12 8V4M9.5 5.5 12 4l2.5 1.5" />
             </svg>
           </span>
-          <span className="hidden sm:inline">אישורי הגעה</span>
+          <span className="hidden sm:inline">{dictionary.site.name}</span>
         </Link>
 
         {!minimal && (
-          <nav aria-label="ניווט ראשי" className="flex items-center gap-1 sm:gap-2">
-            <Link href="/pricing" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
-              מחירים
+          <nav aria-label={dictionary.header.navAria} className="flex items-center gap-1 sm:gap-2">
+            {showLanguageSwitch && <LanguageSwitch locale={locale} />}
+            <Link
+              href={localePath(locale, '/pricing')}
+              className={buttonClass({ variant: 'ghost', size: 'sm' })}
+            >
+              {dictionary.header.pricing}
             </Link>
             <Link href="/login" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
-              כניסה
+              {dictionary.header.login}
             </Link>
             <Link href="/signup" className={buttonClass({ size: 'sm' })}>
-              יצירת אירוע
+              {dictionary.header.signup}
             </Link>
           </nav>
         )}

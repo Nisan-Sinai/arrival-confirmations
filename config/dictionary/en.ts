@@ -66,6 +66,48 @@ export const en: Dictionary = {
     requiredField: 'Required',
     externalLink: 'Opens in a new window',
   },
+  header: {
+    homeAria: 'Home — Arrival Confirmations',
+    navAria: 'Main navigation',
+    pricing: 'Pricing',
+    login: 'Log in',
+    signup: 'Create an event',
+  },
+  flow: {
+    eyebrow: 'What happens after you send the link?',
+    title: 'Three simple steps to an RSVP',
+    steps: [
+      {
+        title: 'Your guest opens it from WhatsApp',
+        body: 'No sign-up and nothing to install.',
+      },
+      {
+        title: 'They fill in a reply',
+        body: 'Name, phone, how many are coming and the preferences that matter.',
+      },
+      {
+        title: 'The reply lands on your dashboard',
+        body: 'Everything updates at once, ready to total up and export.',
+      },
+    ],
+  },
+  pricing: {
+    highlightedBadge: 'The advanced plan',
+    trialNote: 'No credit card',
+    oneTimeNote: 'Paid once, per event',
+    trialCta: 'Create a trial event',
+    choosePlan: 'Choose {plan}',
+    whatsappIntro:
+      'Hi Nisan, I would like to activate the {plan} plan for my event on Arrival Confirmations.',
+  },
+  authNotice: {
+    otpExpired:
+      'This link has expired or has already been used. Reset links work once and only for a limited time.',
+    accessDenied:
+      'The request was denied. If you asked to reset your password, request a new link.',
+    generic: 'Something went wrong during sign-in. Please try again.',
+    requestNewLink: 'Request a new link',
+  },
   languageSwitch: {
     label: 'עב',
     ariaLabel: 'מעבר לעברית',

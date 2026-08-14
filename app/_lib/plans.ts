@@ -1,3 +1,5 @@
+import { type Locale } from '@/lib/i18n';
+
 export const PLAN_CODES = ['trial', 'basic', 'premium', 'pro', 'legacy'] as const;
 export type PlanCode = (typeof PLAN_CODES)[number];
 
@@ -87,6 +89,81 @@ export const PLAN_CATALOG: readonly PlanDefinition[] = [
     ],
   },
 ] as const;
+
+/**
+ * English copy for the plan cards (§12).
+ *
+ * The catalogue above stays the single Hebrew source — `plans.test.ts` reads the
+ * feature prose straight out of it, and the admin and guest surfaces render it
+ * unchanged. Only the public marketing surface needs the reader's own language, so the
+ * translation is an overlay keyed by plan code rather than a second catalogue: the
+ * price, the attendee limit and the highlight flag are shared, and duplicating them is
+ * how the two would drift. Each feature list is translated one-to-one, in the same
+ * order, so a card reads the same on either side.
+ */
+type PlanCopy = Pick<PlanDefinition, 'name' | 'description' | 'features'>;
+
+const PLAN_COPY_EN: Record<Exclude<PlanCode, 'legacy'>, PlanCopy> = {
+  trial: {
+    name: 'Free trial',
+    description: 'Build an event, design it and try it before you decide.',
+    features: ['A complete digital invitation', 'A management dashboard', 'Up to 10 trial replies'],
+  },
+  basic: {
+    name: 'Basic',
+    description: 'Everything you need to run the RSVPs for a single event.',
+    features: [
+      'Up to 300 guests',
+      'Live RSVPs and dashboard',
+      'Waze and Google Maps links',
+      'Send the link by hand from your own WhatsApp',
+      'Manual entry and basic export',
+    ],
+  },
+  premium: {
+    name: 'Premium',
+    description: 'A full toolkit for smart management, branding and sending from your own phone.',
+    features: [
+      'Everything in Basic',
+      'Up to 1,000 guests',
+      'Import and update guests from Excel, CSV and TSV',
+      'A smart send centre from your own WhatsApp',
+      'A personal message ready for each guest in one tap',
+      'Automatic filtering of who has not replied yet',
+      'Separate progress tracking for invitations and reminders',
+      'Advanced branding with a logo, colours and styles',
+      'A basic tables-and-seating map',
+      'No messaging fees and no WhatsApp Business account needed',
+    ],
+  },
+  pro: {
+    name: 'Pro',
+    description:
+      'An advanced production and seating package for large events, venues and planners.',
+    features: [
+      'Everything in Premium',
+      'Up to 2,500 guests',
+      'An advanced seating studio with tables, zones, shapes and capacity',
+      'Automatic smart seating by group, side and family size',
+      'Lock key seats and prevent going over capacity',
+      'Manage groups, dietary preferences and accessibility needs',
+      'Seating priorities, marked seats and clash detection',
+      'Occupancy metrics, free seats and guests not yet placed',
+      'Saved restore points and a seating-arrangement history',
+      'CSV export to Excel, printing and a venue view',
+      'No external API, no per-action fees and no hidden costs',
+    ],
+  },
+};
+
+/**
+ * The plan catalogue for one locale. Hebrew is the source catalogue itself; every other
+ * locale is the shared structural data with its copy replaced.
+ */
+export function getPlanCatalog(locale: Locale): readonly PlanDefinition[] {
+  if (locale === 'he') return PLAN_CATALOG;
+  return PLAN_CATALOG.map((plan) => ({ ...plan, ...PLAN_COPY_EN[plan.code] }));
+}
 
 export const PAYMENT_METHODS = ['phone', 'bit', 'bank_transfer', 'cash', 'other'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];

@@ -62,6 +62,54 @@ export type Dictionary = {
     requiredField: string;
     externalLink: string;
   };
+  /** The public site header — the brand link and the marketing navigation. */
+  header: {
+    /** Accessible name of the logo link back to the home page. */
+    homeAria: string;
+    /** Accessible name of the navigation region. */
+    navAria: string;
+    pricing: string;
+    login: string;
+    signup: string;
+  };
+  /**
+   * The three-step explainer under the hero: what a guest does after the link
+   * reaches them.
+   */
+  flow: {
+    eyebrow: string;
+    title: string;
+    steps: readonly [
+      { title: string; body: string },
+      { title: string; body: string },
+      { title: string; body: string },
+    ];
+  };
+  /** The plan cards — the copy around the catalogue data, not the plans themselves. */
+  pricing: {
+    /** Ribbon on the highlighted plan. */
+    highlightedBadge: string;
+    /** Sub-price line for the free trial. */
+    trialNote: string;
+    /** Sub-price line for a paid plan. */
+    oneTimeNote: string;
+    /** Call to action on the trial card. */
+    trialCta: string;
+    /** Call to action on a paid card. `{plan}` is the plan name. */
+    choosePlan: string;
+    /** The WhatsApp message a paid card opens. `{plan}` is the plan name. */
+    whatsappIntro: string;
+  };
+  /**
+   * The notice that surfaces a Supabase auth failure reported in the URL fragment.
+   * Keyed by the `error` / `error_code` Supabase returns, with a fallback.
+   */
+  authNotice: {
+    otpExpired: string;
+    accessDenied: string;
+    generic: string;
+    requestNewLink: string;
+  };
   /** The control that moves between the two languages. */
   languageSwitch: {
     /** Label on the control, written in the language it switches *to*. */

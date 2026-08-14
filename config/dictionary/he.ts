@@ -57,6 +57,46 @@ export const he: Dictionary = {
     requiredField: 'שדה חובה',
     externalLink: 'נפתח בחלון חדש',
   },
+  header: {
+    homeAria: 'דף הבית — אישורי הגעה',
+    navAria: 'ניווט ראשי',
+    pricing: 'מחירים',
+    login: 'כניסה',
+    signup: 'יצירת אירוע',
+  },
+  flow: {
+    eyebrow: 'מה קורה אחרי ששולחים את הקישור?',
+    title: 'שלושה צעדים פשוטים עד לאישור ההגעה',
+    steps: [
+      {
+        title: 'האורח פותח מה-WhatsApp',
+        body: 'אין צורך בהרשמה או בהתקנת אפליקציה.',
+      },
+      {
+        title: 'ממלא אישור הגעה',
+        body: 'שם, טלפון, מספר מגיעים והעדפות חשובות.',
+      },
+      {
+        title: 'התשובה מופיעה בדשבורד',
+        body: 'הנתונים מתעדכנים מיד ומוכנים לסיכום ולייצוא.',
+      },
+    ],
+  },
+  pricing: {
+    highlightedBadge: 'המסלול המתקדם',
+    trialNote: 'ללא כרטיס אשראי',
+    oneTimeNote: 'תשלום חד-פעמי לאירוע',
+    trialCta: 'יצירת אירוע לבדיקה',
+    choosePlan: 'בחירת {plan}',
+    whatsappIntro: 'שלום ניסן, אני מעוניין להפעיל את מסלול {plan} לאירוע במערכת אישורי הגעה.',
+  },
+  authNotice: {
+    otpExpired:
+      'הקישור פג תוקף או שכבר נעשה בו שימוש. קישורי איפוס תקפים לזמן מוגבל ולפעם אחת בלבד.',
+    accessDenied: 'הבקשה נדחתה. אם ביקשתם איפוס סיסמה, בקשו קישור חדש.',
+    generic: 'אירעה תקלה באימות. נסו שוב.',
+    requestNewLink: 'בקשת קישור חדש',
+  },
   languageSwitch: {
     label: 'EN',
     ariaLabel: 'Switch to English',
