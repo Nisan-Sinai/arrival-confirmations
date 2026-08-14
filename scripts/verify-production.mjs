@@ -121,11 +121,19 @@ async function verify() {
     assert(!sitemap.body.includes(`${baseUrl}${path}`), `sitemap.xml exposes private path ${path}`);
   }
 
-  const image = await request('/opengraph-image');
+  // The share card lives in the `(he)` route group, so Next serves it at a hashed path
+  // and names that path in the `og:image` tag. Follow the URL the page advertises
+  // rather than assuming a fixed one — that is what a crawler actually fetches.
+  const ogImage = home.body
+    .match(/property="og:image" content="([^"]+)"/)?.[1]
+    ?.replace(/&amp;/g, '&');
+  assert(typeof ogImage === 'string' && ogImage.length > 0, 'Landing page declares no og:image');
+  const ogImageUrl = new URL(ogImage);
+  const image = await request(`${ogImageUrl.pathname}${ogImageUrl.search}`);
   const imageBytes = Buffer.from(await image.arrayBuffer());
-  assert(image.status === 200, `/opengraph-image returned ${image.status}`);
-  assert(image.headers.get('content-type')?.includes('image/png'), '/opengraph-image is not a PNG');
-  assert(imageBytes.byteLength > 10_000, '/opengraph-image appears blank or truncated');
+  assert(image.status === 200, `${ogImageUrl.pathname} returned ${image.status}`);
+  assert(image.headers.get('content-type')?.includes('image/png'), 'og:image is not a PNG');
+  assert(imageBytes.byteLength > 10_000, 'og:image appears blank or truncated');
 
   process.stdout.write(`Production verified: ${baseUrl} serves release ${health.release}\n`);
 }
