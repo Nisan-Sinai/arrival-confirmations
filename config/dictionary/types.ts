@@ -1,3 +1,13 @@
+/** The copy one credential form needs: its heading, its buttons and its footer link. */
+export type AuthModeCopy = {
+  title: string;
+  subtitle: string;
+  submit: string;
+  pending: string;
+  footerPrompt: string;
+  footerLink: string;
+};
+
 /**
  * The shape every locale must satisfy (§12).
  *
@@ -109,6 +119,68 @@ export type Dictionary = {
     accessDenied: string;
     generic: string;
     requestNewLink: string;
+  };
+  /**
+   * The credential forms — sign-in, sign-up, password recovery and reset — and the
+   * server-action messages they show. One block because the four pages share a shell;
+   * `{min}` is filled with the minimum password length.
+   */
+  auth: {
+    fields: {
+      email: string;
+      password: string;
+      newPassword: string;
+      confirmPassword: string;
+      /** Hint under a new-password field. `{min}` is the minimum length. */
+      passwordHint: string;
+    };
+    /** The "forgot password" link on the sign-in form. */
+    forgotPassword: string;
+    /** Confirmation-screen heading after a mail has been sent. */
+    checkInbox: string;
+    /** Link back to sign-in from a confirmation screen. */
+    backToLogin: string;
+    /** Per-mode page copy. `setPassword` has no footer link. */
+    modes: {
+      signIn: AuthModeCopy;
+      signUp: AuthModeCopy;
+      requestReset: AuthModeCopy;
+      setPassword: Omit<AuthModeCopy, 'footerPrompt' | 'footerLink'>;
+    };
+    /** Server-action rejections. `{min}` is the minimum password length. */
+    errors: {
+      loginFailed: string;
+      invalidEmail: string;
+      passwordTooShort: string;
+      passwordsMismatch: string;
+      linkExpired: string;
+    };
+    /** Server-action "we sent a mail" acknowledgements, deliberately non-committal. */
+    sent: {
+      signupMaybe: string;
+      signupConfirm: string;
+      resetLink: string;
+    };
+    /** The alerts the sign-in page raises from an `?error=` the callback appended. */
+    loginNotice: {
+      expiredLead: string;
+      expiredLink: string;
+      authFailed: string;
+    };
+    /** The expired-link card the reset page shows without a recovery session. */
+    resetExpired: {
+      title: string;
+      body: string;
+      cta: string;
+    };
+    /** The interstitial that completes an implicit-flow link in the browser. */
+    callback: {
+      heading: string;
+      subtitle: string;
+      verifyingSr: string;
+      failedSr: string;
+      noscript: string;
+    };
   };
   /** The control that moves between the two languages. */
   languageSwitch: {

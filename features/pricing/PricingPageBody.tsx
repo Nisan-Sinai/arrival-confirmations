@@ -115,7 +115,7 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
                 ))}
               </ol>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link href="/signup" className={buttonClass({ size: 'lg' })}>
+                <Link href={localePath(locale, '/signup')} className={buttonClass({ size: 'lg' })}>
                   {content.startCta}
                 </Link>
                 <Link

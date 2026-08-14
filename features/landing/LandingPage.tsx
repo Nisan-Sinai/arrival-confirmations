@@ -124,7 +124,10 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   {hero.lead}
                 </p>
                 <div className="mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
-                  <Link href="/signup" className={buttonClass({ size: 'lg' })}>
+                  <Link
+                    href={localePath(locale, '/signup')}
+                    className={buttonClass({ size: 'lg' })}
+                  >
                     {hero.ctaPrimary}
                   </Link>
                   <Link

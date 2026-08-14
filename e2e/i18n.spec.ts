@@ -9,7 +9,16 @@ import { expect, test, type Page } from '@playwright/test';
  * reader between the two versions of the same page rather than dropping them home.
  */
 
-const ENGLISH_PATHS = ['/en', '/en/pricing', '/en/privacy', '/en/accessibility'] as const;
+const ENGLISH_PATHS = [
+  '/en',
+  '/en/pricing',
+  '/en/privacy',
+  '/en/accessibility',
+  '/en/login',
+  '/en/signup',
+  '/en/forgot-password',
+  '/en/reset-password',
+] as const;
 
 const hasHorizontalOverflow = (page: Page) =>
   page.evaluate(
@@ -67,6 +76,32 @@ test.describe('bilingual public surface', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: 'Accessibility statement' }),
     ).toBeVisible();
+  });
+
+  test('renders the English auth pages in English and keeps them out of the index', async ({
+    page,
+  }) => {
+    await page.goto('/en/login');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Sign in to your account' }),
+    ).toBeVisible();
+    await expect(page.getByLabel('Email address')).toHaveAttribute('autocomplete', 'email');
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+
+    await page.goto('/en/signup');
+    await expect(page.getByRole('heading', { level: 1, name: 'Create an account' })).toBeVisible();
+    await expect(page.getByLabel('Password')).toHaveAttribute('autocomplete', 'new-password');
+
+    await page.goto('/en/forgot-password');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Reset your password' }),
+    ).toBeVisible();
+  });
+
+  test('the English header funnels sign-up into the English flow', async ({ page }) => {
+    await page.goto('/en');
+    await page.getByRole('link', { name: 'Create an event' }).click();
+    await expect(page).toHaveURL(/\/en\/signup$/);
   });
 
   for (const path of ENGLISH_PATHS) {

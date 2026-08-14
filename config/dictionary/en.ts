@@ -108,6 +108,85 @@ export const en: Dictionary = {
     generic: 'Something went wrong during sign-in. Please try again.',
     requestNewLink: 'Request a new link',
   },
+  auth: {
+    fields: {
+      email: 'Email address',
+      password: 'Password',
+      newPassword: 'New password',
+      confirmPassword: 'Confirm the new password',
+      passwordHint: 'At least {min} characters',
+    },
+    forgotPassword: 'Forgot your password?',
+    checkInbox: 'Check your inbox',
+    backToLogin: 'Back to sign in',
+    modes: {
+      signIn: {
+        title: 'Sign in to your account',
+        subtitle: 'Manage your events and the replies that come in.',
+        submit: 'Sign in',
+        pending: 'Signing in…',
+        footerPrompt: 'No account yet?',
+        footerLink: 'Sign up free',
+      },
+      signUp: {
+        title: 'Create an account',
+        subtitle: 'Free, no credit card, with up to 10 trial replies.',
+        submit: 'Create an account',
+        pending: 'Creating…',
+        footerPrompt: 'Already have an account?',
+        footerLink: 'Sign in',
+      },
+      requestReset: {
+        title: 'Reset your password',
+        subtitle:
+          "Enter the account's email address and we'll send a link to choose a new password.",
+        submit: 'Send a reset link',
+        pending: 'Sending…',
+        footerPrompt: 'Remembered it?',
+        footerLink: 'Back to sign in',
+      },
+      setPassword: {
+        title: 'Choose a new password',
+        subtitle: 'Once you save, you will be signed in automatically.',
+        submit: 'Save the password',
+        pending: 'Saving…',
+      },
+    },
+    errors: {
+      loginFailed: 'Those sign-in details are not correct.',
+      invalidEmail: 'That email address is not valid',
+      passwordTooShort: 'The password must be at least {min} characters',
+      passwordsMismatch: 'The two passwords do not match',
+      linkExpired: 'The link has expired. Request a new reset link.',
+    },
+    sent: {
+      signupMaybe:
+        'If the address is available, we have sent it a confirmation email. Check your inbox.',
+      signupConfirm:
+        'We have sent a confirmation email to the address you entered. Confirm it to sign in.',
+      resetLink: 'If an account exists for this address, we have sent it a password-reset link.',
+    },
+    loginNotice: {
+      expiredLead:
+        'This link has expired or has already been used. Reset links work once and only for a limited time —',
+      expiredLink: 'request a new one',
+      authFailed:
+        "We couldn't complete the sign-in. Please try again, and request a new link if it keeps happening.",
+    },
+    resetExpired: {
+      title: 'The link has expired',
+      body: 'Reset links work once and only for a limited time. Request a new one and we will send it again.',
+      cta: 'Request a new link',
+    },
+    callback: {
+      heading: 'One moment…',
+      subtitle: 'Verifying the link',
+      verifyingSr: 'Verifying the link…',
+      failedSr: 'Verification failed',
+      noscript:
+        'Completing the link requires JavaScript. Enable it in your browser and open the link again.',
+    },
+  },
   languageSwitch: {
     label: 'עב',
     ariaLabel: 'מעבר לעברית',

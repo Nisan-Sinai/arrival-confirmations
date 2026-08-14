@@ -5,7 +5,7 @@ import { buttonClass } from '@/components/ui/button';
 import { Card, CardBody, CardTitle } from '@/components/ui/card';
 import { appConfig } from '@/config/event.config';
 import { getDictionary } from '@/config/dictionary';
-import { defaultLocale, type Locale } from '@/lib/i18n';
+import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 function whatsappPhone(phone: string): string {
@@ -79,7 +79,7 @@ export function PricingCards({
 
           <div className="mt-7">
             {plan.code === 'trial' ? (
-              <Link href="/signup" className={buttonClass({ block: true })}>
+              <Link href={localePath(locale, '/signup')} className={buttonClass({ block: true })}>
                 {copy.trialCta}
               </Link>
             ) : (

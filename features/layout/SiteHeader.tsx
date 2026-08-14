@@ -10,14 +10,10 @@ import { cn } from '@/lib/utils';
 /**
  * The public site header.
  *
- * `locale` drives the copy and the brand link; it defaults to Hebrew so the many
+ * `locale` drives the copy and every link; it defaults to Hebrew so the many
  * Hebrew-only pages that render the header need not name it. `showLanguageSwitch` is off
- * by default and turned on only where the page has a twin in the other language — the
- * marketing surface — so the switch never offers a jump to a page that does not exist.
- *
- * The account links (`login`, `signup`) point at the Hebrew routes on purpose: the
- * signed-in application is not yet translated, so an English visitor is funnelled into
- * the existing flow rather than to a route that would 404.
+ * by default and turned on only where the page has a twin in the other language, so the
+ * switch never offers a jump to a page that does not exist.
  */
 export function SiteHeader({
   className,
@@ -75,10 +71,13 @@ export function SiteHeader({
             >
               {dictionary.header.pricing}
             </Link>
-            <Link href="/login" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
+            <Link
+              href={localePath(locale, '/login')}
+              className={buttonClass({ variant: 'ghost', size: 'sm' })}
+            >
               {dictionary.header.login}
             </Link>
-            <Link href="/signup" className={buttonClass({ size: 'sm' })}>
+            <Link href={localePath(locale, '/signup')} className={buttonClass({ size: 'sm' })}>
               {dictionary.header.signup}
             </Link>
           </nav>

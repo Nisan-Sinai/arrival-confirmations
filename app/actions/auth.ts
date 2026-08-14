@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { UI_MESSAGES } from '@/config/messages';
+import { getDictionary } from '@/config/dictionary';
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import { createUserClient } from '@/lib/server/supabase';
 
 /**
@@ -36,15 +37,26 @@ const MIN_PASSWORD_LENGTH = 10;
 /** Never echoed unless it is safe to: a password is not put back into the DOM. */
 const echo = (value: FormDataEntryValue | null): string => (typeof value === 'string' ? value : '');
 
+/**
+ * The locale the form was rendered under, carried in a hidden field. It decides only
+ * which language the reply is written in and where the mail links land — never where a
+ * successful sign-in goes, which is the (Hebrew) application at `/dashboard`.
+ */
+function localeOf(formData: FormData): Locale {
+  const value = formData.get('locale');
+  return typeof value === 'string' && isLocale(value) ? value : defaultLocale;
+}
+
 export async function signInAction(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const { auth } = getDictionary(localeOf(formData));
   const email = formData.get('email');
   const password = formData.get('password');
 
   if (!isValidEmail(email) || typeof password !== 'string' || password === '') {
-    return { status: 'error', message: UI_MESSAGES.admin.loginFailed, email: echo(email) };
+    return { status: 'error', message: auth.errors.loginFailed, email: echo(email) };
   }
 
   const supabase = await createUserClient();
@@ -52,7 +64,7 @@ export async function signInAction(
 
   // One message for every failure mode, on purpose.
   if (error) {
-    return { status: 'error', message: UI_MESSAGES.admin.loginFailed, email };
+    return { status: 'error', message: auth.errors.loginFailed, email };
   }
 
   revalidatePath('/', 'layout');
@@ -63,16 +75,18 @@ export async function signUpAction(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const locale = localeOf(formData);
+  const { auth } = getDictionary(locale);
   const email = formData.get('email');
   const password = formData.get('password');
 
   if (!isValidEmail(email)) {
-    return { status: 'error', message: 'כתובת אימייל לא תקינה', email: echo(email) };
+    return { status: 'error', message: auth.errors.invalidEmail, email: echo(email) };
   }
   if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
     return {
       status: 'error',
-      message: `הסיסמה חייבת להכיל לפחות ${MIN_PASSWORD_LENGTH} תווים`,
+      message: auth.errors.passwordTooShort.replace('{min}', String(MIN_PASSWORD_LENGTH)),
       email,
     };
   }
@@ -83,18 +97,17 @@ export async function signUpAction(
     password,
     // Confirmation mail lands on the exchange route, not on a page that cannot spend
     // the code. Without this the link opens the site root and the account stays
-    // unconfirmed with nothing on screen to say so.
-    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/auth/callback` },
+    // unconfirmed with nothing on screen to say so. The reader's locale is kept so an
+    // English sign-up is completed on the English side.
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}${localePath(locale, '/auth/callback')}`,
+    },
   });
 
   if (error) {
     // Registering an existing address must not confirm that it exists, so the copy
     // below is true either way: check your inbox.
-    return {
-      status: 'sent',
-      message: 'אם הכתובת פנויה, נשלח אליה מייל אימות. בדקו את תיבת הדואר.',
-      email,
-    };
+    return { status: 'sent', message: auth.sent.signupMaybe, email };
   }
 
   /**
@@ -104,11 +117,7 @@ export async function signUpAction(
    * about it. Branch on the session rather than on the absence of an error.
    */
   if (data.session === null) {
-    return {
-      status: 'sent',
-      message: 'שלחנו מייל אימות לכתובת שהזנתם. אשרו אותו כדי להיכנס.',
-      email,
-    };
+    return { status: 'sent', message: auth.sent.signupConfirm, email };
   }
 
   revalidatePath('/', 'layout');
@@ -126,24 +135,24 @@ export async function requestPasswordResetAction(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const locale = localeOf(formData);
+  const { auth } = getDictionary(locale);
   const email = formData.get('email');
   if (!isValidEmail(email)) {
-    return { status: 'error', message: 'כתובת אימייל לא תקינה', email: echo(email) };
+    return { status: 'error', message: auth.errors.invalidEmail, email: echo(email) };
   }
 
   const supabase = await createUserClient();
   await supabase.auth.resetPasswordForEmail(email, {
     // Through the exchange route, not straight at /reset-password. The mail carries a
     // one-time code that has to be spent for a session to exist; a link that landed
-    // on the form directly left the user on a page that could not save anything.
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/auth/callback?next=/reset-password`,
+    // on the form directly left the user on a page that could not save anything. Both
+    // hops keep the reader's locale so the reset is completed on the same side.
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}${localePath(locale, '/auth/callback')}?next=${localePath(locale, '/reset-password')}`,
   });
 
   // The error, if any, is deliberately not surfaced.
-  return {
-    status: 'sent',
-    message: 'אם קיים חשבון עם הכתובת הזו, נשלח אליה קישור לאיפוס סיסמה.',
-  };
+  return { status: 'sent', message: auth.sent.resetLink };
 }
 
 /** Sets a new password for the session the reset link established. */
@@ -151,16 +160,20 @@ export async function updatePasswordAction(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const { auth } = getDictionary(localeOf(formData));
   const password = formData.get('password');
   const confirmation = formData.get('passwordConfirmation');
 
   if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
-    return { status: 'error', message: `הסיסמה חייבת להכיל לפחות ${MIN_PASSWORD_LENGTH} תווים` };
+    return {
+      status: 'error',
+      message: auth.errors.passwordTooShort.replace('{min}', String(MIN_PASSWORD_LENGTH)),
+    };
   }
   // Typed twice because there is nothing to compare against: the user cannot see the
   // value and cannot recover from a typo except by running the whole reset again.
   if (password !== confirmation) {
-    return { status: 'error', message: 'שתי הסיסמאות אינן זהות' };
+    return { status: 'error', message: auth.errors.passwordsMismatch };
   }
 
   const supabase = await createUserClient();
@@ -171,12 +184,12 @@ export async function updatePasswordAction(
     data: { user },
   } = await supabase.auth.getUser();
   if (user === null) {
-    return { status: 'error', message: 'הקישור פג תוקף. בקשו קישור איפוס חדש.' };
+    return { status: 'error', message: auth.errors.linkExpired };
   }
 
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
-    return { status: 'error', message: 'הקישור פג תוקף. בקשו קישור איפוס חדש.' };
+    return { status: 'error', message: auth.errors.linkExpired };
   }
 
   revalidatePath('/', 'layout');

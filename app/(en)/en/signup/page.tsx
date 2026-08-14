@@ -5,10 +5,10 @@ import { getDictionary } from '@/config/dictionary';
 import { SimpleAuthPageBody } from '@/features/auth/SimpleAuthPageBody';
 
 export const metadata: Metadata = {
-  title: getDictionary('he').auth.modes.signUp.title,
+  title: getDictionary('en').auth.modes.signUp.title,
   robots: { index: false, follow: false },
 };
 
-export default function SignupPage() {
-  return <SimpleAuthPageBody locale="he" mode="signUp" action={signUpAction} />;
+export default function EnglishSignupPage() {
+  return <SimpleAuthPageBody locale="en" mode="signUp" action={signUpAction} />;
 }
