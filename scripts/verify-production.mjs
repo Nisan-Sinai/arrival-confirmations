@@ -124,10 +124,9 @@ async function verify() {
   // The share card lives in the `(he)` route group, so Next serves it at a hashed path
   // and names that path in the `og:image` tag. Follow the URL the page advertises
   // rather than assuming a fixed one — that is what a crawler actually fetches.
-  const ogImage = home.body.match(/property="og:image" content="([^"]+)"/)?.[1]?.replace(
-    /&amp;/g,
-    '&',
-  );
+  const ogImage = home.body
+    .match(/property="og:image" content="([^"]+)"/)?.[1]
+    ?.replace(/&amp;/g, '&');
   assert(typeof ogImage === 'string' && ogImage.length > 0, 'Landing page declares no og:image');
   const ogImageUrl = new URL(ogImage);
   const image = await request(`${ogImageUrl.pathname}${ogImageUrl.search}`);
