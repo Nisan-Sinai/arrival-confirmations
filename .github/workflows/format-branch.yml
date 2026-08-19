@@ -1,0 +1,35 @@
+name: Format accessibility branch
+
+on:
+  push:
+    branches:
+      - agent/accessibility-widget
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/accessibility-widget
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write config/dictionary/he.ts features/accessibility/AccessibilityWidget.tsx
+      - name: Commit formatting
+        run: |
+          git add config/dictionary/he.ts features/accessibility/AccessibilityWidget.tsx
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: format accessibility changes"
+          git push origin HEAD:agent/accessibility-widget
