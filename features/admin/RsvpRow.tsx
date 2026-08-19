@@ -6,34 +6,58 @@ import { deleteRsvpAction, updateRsvpAction, type ManageRsvpState } from '@/app/
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert, Badge } from '@/components/ui/feedback';
+import { useAppLocale } from '@/features/i18n/AppLocaleProvider';
 import { formatIsraeliPhoneForDisplay } from '@/lib/phone';
 
-/**
- * One reply, and the controls to correct it (§8).
- *
- * `updateRsvpAction` and `deleteRsvpAction` were written, tested by nobody and called
- * by nothing: the event page rendered a read-only table, so a host who was told over
- * the phone that a family had grown to five had no way to record it. This component
- * is the missing UI.
- *
- * The editor expands in place rather than opening a modal. A dialog would need a focus
- * trap, an escape handler and a scroll lock, and correcting a head count is not a task
- * that deserves to take over the screen. `aria-expanded` and `aria-controls` on the
- * toggle are what make the relationship legible to a screen reader without one.
- */
-
 const INITIAL: ManageRsvpState = { status: 'idle', message: '' };
-
-const STATUS_LABELS = {
-  attending: 'מגיע',
-  not_attending: 'לא מגיע',
-  maybe: 'אולי',
-} as const;
 
 const STATUS_TONES = {
   attending: 'success',
   not_attending: 'danger',
   maybe: 'warning',
+} as const;
+
+const COPY = {
+  he: {
+    name: 'שם',
+    phone: 'טלפון',
+    status: 'סטטוס',
+    count: 'כמות',
+    details: 'תזונה והערות',
+    attending: 'מגיע',
+    notAttending: 'לא מגיע',
+    maybe: 'אולי',
+    edit: 'עריכת התשובה של',
+    delete: 'מחיקת התשובה של',
+    deleteConfirm: 'למחוק?',
+    cancel: 'ביטול',
+    adults: 'מבוגרים',
+    children: 'ילדים',
+    babies: 'תינוקות',
+    saving: 'שומר…',
+    save: 'שמירת השינויים',
+    close: 'סגירה',
+  },
+  en: {
+    name: 'Name',
+    phone: 'Phone',
+    status: 'Status',
+    count: 'Count',
+    details: 'Dietary & notes',
+    attending: 'Attending',
+    notAttending: 'Not attending',
+    maybe: 'Maybe',
+    edit: 'Edit the response from',
+    delete: 'Delete the response from',
+    deleteConfirm: 'Delete?',
+    cancel: 'Cancel',
+    adults: 'Adults',
+    children: 'Children',
+    babies: 'Babies',
+    saving: 'Saving…',
+    save: 'Save changes',
+    close: 'Close',
+  },
 } as const;
 
 export interface RsvpRowData {
@@ -48,7 +72,6 @@ export interface RsvpRowData {
   readonly notes: string | null;
 }
 
-/** A datum plus its label, so the mobile stack is readable without a header row. */
 function Cell({
   label,
   children,
@@ -60,8 +83,6 @@ function Cell({
 }) {
   return (
     <div className={className}>
-      {/* Visible while the row is stacked, hidden once the columns line up under the
-          header at lg — where repeating it in every row would be noise. */}
       <span className="text-muted-foreground block text-xs lg:sr-only">{label}</span>
       <span className="mt-0.5 block lg:mt-0">{children}</span>
     </div>
@@ -69,21 +90,27 @@ function Cell({
 }
 
 export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string }) {
+  const locale = useAppLocale();
+  const copy = COPY[locale];
+  const statusLabels = {
+    attending: copy.attending,
+    not_attending: copy.notAttending,
+    maybe: copy.maybe,
+  } as const;
   const [state, formAction, isPending] = useActionState(updateRsvpAction, INITIAL);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const editorId = useId();
-
   const total = rsvp.adults_count + rsvp.children_count + rsvp.babies_count;
 
   return (
     <li className="border-border bg-card lg:hover:bg-secondary/25 rounded-xl border p-4 transition-colors lg:rounded-none lg:border-x-0 lg:border-t-0 lg:px-3 lg:py-3.5">
       <div className="grid gap-3 lg:grid-cols-[1.4fr_1.1fr_0.8fr_0.9fr_1.5fr_auto] lg:items-center lg:gap-4">
-        <Cell label="שם">
+        <Cell label={copy.name}>
           <span className="text-foreground font-semibold">{rsvp.full_name}</span>
         </Cell>
 
-        <Cell label="טלפון">
+        <Cell label={copy.phone}>
           <a
             href={`tel:${rsvp.phone_normalized.replace(/[^\d+]/g, '')}`}
             className="text-primary rounded-sm underline-offset-4 hover:underline"
@@ -93,13 +120,13 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
           </a>
         </Cell>
 
-        <Cell label="סטטוס">
+        <Cell label={copy.status}>
           <Badge tone={STATUS_TONES[rsvp.attendance_status]}>
-            {STATUS_LABELS[rsvp.attendance_status]}
+            {statusLabels[rsvp.attendance_status]}
           </Badge>
         </Cell>
 
-        <Cell label="כמות">
+        <Cell label={copy.count}>
           {rsvp.attendance_status === 'not_attending' ? (
             <span className="text-muted-foreground">—</span>
           ) : (
@@ -113,7 +140,7 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
           )}
         </Cell>
 
-        <Cell label="תזונה והערות" className="min-w-0">
+        <Cell label={copy.details} className="min-w-0">
           <span className="text-muted-foreground block text-sm break-words">
             {rsvp.dietary_requirements ?? '—'}
             {rsvp.notes !== null && (
@@ -134,7 +161,9 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
             aria-controls={editorId}
             onClick={() => setEditing((open) => !open)}
           >
-            <span className="sr-only">עריכת התשובה של {rsvp.full_name}</span>
+            <span className="sr-only">
+              {copy.edit} {rsvp.full_name}
+            </span>
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"
@@ -150,16 +179,15 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
           </Button>
 
           {confirmingDelete ? (
-            // Two steps, no `window.confirm`: a native dialog is unstyleable, blocks
-            // the main thread and reads in the browser's language, not the page's.
             <form action={deleteRsvpAction} className="flex items-center gap-1">
               <input type="hidden" name="rsvpId" value={rsvp.id} />
               <input type="hidden" name="eventId" value={eventId} />
+              <input type="hidden" name="locale" value={locale} />
               <Button type="submit" variant="destructive" size="sm">
-                למחוק?
+                {copy.deleteConfirm}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)}>
-                ביטול
+              <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmingDelete(false)}>
+                {copy.cancel}
               </Button>
             </form>
           ) : (
@@ -169,7 +197,9 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
               className="text-muted-foreground hover:text-destructive size-9"
               onClick={() => setConfirmingDelete(true)}
             >
-              <span className="sr-only">מחיקת התשובה של {rsvp.full_name}</span>
+              <span className="sr-only">
+                {copy.delete} {rsvp.full_name}
+              </span>
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
@@ -187,29 +217,28 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
         </div>
       </div>
 
-      {/* Full width of the row rather than trapped in the actions column, so the
-          three count inputs sit side by side even on a phone. */}
       {editing && (
         <div id={editorId} className="border-border bg-muted/40 mt-4 rounded-xl border p-4">
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="rsvpId" value={rsvp.id} />
             <input type="hidden" name="eventId" value={eventId} />
+            <input type="hidden" name="locale" value={locale} />
 
             <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-              <Field label="סטטוס">
+              <Field label={copy.status}>
                 <Select name="attendanceStatus" defaultValue={rsvp.attendance_status}>
-                  <option value="attending">מגיע</option>
-                  <option value="maybe">אולי</option>
-                  <option value="not_attending">לא מגיע</option>
+                  <option value="attending">{copy.attending}</option>
+                  <option value="maybe">{copy.maybe}</option>
+                  <option value="not_attending">{copy.notAttending}</option>
                 </Select>
               </Field>
 
               <div className="grid grid-cols-3 gap-3">
                 {(
                   [
-                    ['adultsCount', 'מבוגרים', rsvp.adults_count],
-                    ['childrenCount', 'ילדים', rsvp.children_count],
-                    ['babiesCount', 'תינוקות', rsvp.babies_count],
+                    ['adultsCount', copy.adults, rsvp.adults_count],
+                    ['childrenCount', copy.children, rsvp.children_count],
+                    ['babiesCount', copy.babies, rsvp.babies_count],
                   ] as const
                 ).map(([name, label, value]) => (
                   <Field key={name} label={label}>
@@ -233,10 +262,10 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
 
             <div className="flex gap-2">
               <Button type="submit" size="sm" disabled={isPending}>
-                {isPending ? 'שומר…' : 'שמירת השינויים'}
+                {isPending ? copy.saving : copy.save}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
-                סגירה
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                {copy.close}
               </Button>
             </div>
           </form>
