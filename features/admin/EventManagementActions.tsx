@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
+import { getAppCopy } from '@/config/appCopy';
+import { useAppLocale } from '@/features/i18n/AppLocaleProvider';
+import { localePath } from '@/lib/i18n';
 
 export function EventManagementActions({
   eventId,
@@ -16,15 +19,19 @@ export function EventManagementActions({
   publicId: string;
   origin: string;
 }) {
+  const locale = useAppLocale();
+  const copy = getAppCopy(locale).eventActions;
   const [copied, setCopied] = useState(false);
-  const inviteUrl = `${origin}/e/${publicId}`;
+  const inviteUrl = `${origin}${localePath(locale, `/e/${publicId}`)}`;
   const whatsappUrl = useMemo(() => {
-    const message = [`נשמח להזמין אתכם ל${eventTitle}`, '', 'לפרטים ולאישור הגעה:', inviteUrl].join(
-      '\n',
-    );
-
+    const message = [
+      `${copy.whatsappInvitePrefix}${eventTitle}`,
+      '',
+      copy.whatsappDetails,
+      inviteUrl,
+    ].join('\n');
     return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-  }, [eventTitle, inviteUrl]);
+  }, [copy.whatsappDetails, copy.whatsappInvitePrefix, eventTitle, inviteUrl]);
 
   useEffect(() => {
     if (!copied) return;
@@ -43,26 +50,26 @@ export function EventManagementActions({
 
   return (
     <div className="border-border mt-5 border-t pt-4">
-      <p className="text-primary text-sm font-semibold">ניהול ההזמנה</p>
+      <p className="text-primary text-sm font-semibold">{copy.title}</p>
       <p className="text-muted-foreground mt-1 text-xs" dir="ltr">
         {inviteUrl}
       </p>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <Link href={`/dashboard/events/${eventId}`} className={buttonClass({ size: 'sm' })}>
-          ניהול האירוע ואישורי ההגעה
+        <Link href={localePath(locale, `/dashboard/events/${eventId}`)} className={buttonClass({ size: 'sm' })}>
+          {copy.manage}
         </Link>
         <Link
-          href={`/dashboard/events/${eventId}/guests`}
+          href={localePath(locale, `/dashboard/events/${eventId}/guests`)}
           className={buttonClass({ variant: 'secondary', size: 'sm' })}
         >
-          ניהול מוזמנים וייבוא מהטלפון
+          {copy.guests}
         </Link>
         <Link
-          href={`/dashboard/events/${eventId}/edit`}
+          href={localePath(locale, `/dashboard/events/${eventId}/edit`)}
           className={buttonClass({ variant: 'outline', size: 'sm' })}
         >
-          עריכת ההזמנה
+          {copy.edit}
         </Link>
         <a
           href={inviteUrl}
@@ -70,10 +77,10 @@ export function EventManagementActions({
           rel="noopener noreferrer"
           className={buttonClass({ variant: 'outline', size: 'sm' })}
         >
-          צפייה בהזמנה
+          {copy.preview}
         </a>
         <Button variant="outline" size="sm" onClick={copyInviteUrl}>
-          {copied ? 'הקישור הועתק' : 'העתקת הקישור'}
+          {copied ? copy.copied : copy.copy}
         </Button>
         <a
           href={whatsappUrl}
@@ -81,18 +88,18 @@ export function EventManagementActions({
           rel="noopener noreferrer"
           className={buttonClass({ variant: 'secondary', size: 'sm' })}
         >
-          שליחת ההזמנה ב-WhatsApp
+          {copy.whatsapp}
         </a>
         <Link
-          href={`/dashboard/events/${eventId}/tools`}
+          href={localePath(locale, `/dashboard/events/${eventId}/tools`)}
           className={buttonClass({ variant: 'ghost', size: 'sm' })}
         >
-          כלים מתקדמים
+          {copy.tools}
         </Link>
       </div>
 
       <p role="status" aria-live="polite" className="sr-only">
-        {copied ? 'קישור ההזמנה הועתק ללוח' : ''}
+        {copied ? copy.copiedStatus : ''}
       </p>
     </div>
   );
