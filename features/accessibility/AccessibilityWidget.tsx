@@ -53,6 +53,19 @@ const copy = {
   },
 } as const;
 
+function getInitialSettings(): AccessibilitySettings {
+  if (typeof window === 'undefined') return DEFAULT_SETTINGS;
+
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (!saved) return DEFAULT_SETTINGS;
+
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } as AccessibilitySettings;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
 function applySettings(settings: AccessibilitySettings) {
   const root = document.documentElement;
 
@@ -65,37 +78,18 @@ function applySettings(settings: AccessibilitySettings) {
 
 export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
   const [open, setOpen] = useState(false);
-  const [settings, setSettings] = useState<AccessibilitySettings>(DEFAULT_SETTINGS);
-  const [hydrated, setHydrated] = useState(false);
+  const [settings, setSettings] = useState<AccessibilitySettings>(getInitialSettings);
   const labels = copy[locale];
 
   useEffect(() => {
-    let nextSettings = DEFAULT_SETTINGS;
-
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        nextSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } as AccessibilitySettings;
-      }
-    } catch {
-      // Storage is an enhancement. The widget still works when storage is unavailable.
-    }
-
-    setSettings(nextSettings);
-    applySettings(nextSettings);
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-
     applySettings(settings);
+
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch {
       // Keep the current-session settings even if persistence is blocked.
     }
-  }, [hydrated, settings]);
+  }, [settings]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,7 +118,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
         <section
           id="accessibility-panel"
           aria-labelledby="accessibility-title"
-          className="border-border bg-card text-card-foreground shadow-overlay fixed bottom-20 left-4 z-[60] w-[min(21rem,calc(100vw-2rem))] rounded-2xl border p-4"
+          className="fixed bottom-20 left-4 z-[60] w-[min(21rem,calc(100vw-2rem))] rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-overlay"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 id="accessibility-title" className="text-lg font-bold">
@@ -134,13 +128,13 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
               type="button"
               onClick={() => setOpen(false)}
               aria-label={labels.close}
-              className="border-border bg-background hover:bg-muted flex h-10 w-10 items-center justify-center rounded-full border text-2xl leading-none"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-2xl leading-none hover:bg-muted"
             >
               <span aria-hidden="true">×</span>
             </button>
           </div>
 
-          <div className="border-border bg-background mb-3 rounded-xl border p-3">
+          <div className="mb-3 rounded-xl border border-border bg-background p-3">
             <div className="mb-2 flex items-center justify-between gap-3 text-sm font-semibold">
               <span>{labels.textSize}</span>
               <span aria-live="polite">{settings.fontScale}%</span>
@@ -150,7 +144,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
                 type="button"
                 onClick={() => setFontScale(settings.fontScale + 10)}
                 disabled={settings.fontScale >= 140}
-                className="border-border bg-card hover:bg-muted min-h-11 rounded-lg border px-3 py-2 font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 rounded-lg border border-border bg-card px-3 py-2 font-bold hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
                 A+ · {labels.increaseText}
               </button>
@@ -158,7 +152,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
                 type="button"
                 onClick={() => setFontScale(settings.fontScale - 10)}
                 disabled={settings.fontScale <= 80}
-                className="border-border bg-card hover:bg-muted min-h-11 rounded-lg border px-3 py-2 font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 rounded-lg border border-border bg-card px-3 py-2 font-bold hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
                 A− · {labels.decreaseText}
               </button>
@@ -192,13 +186,13 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
             <button
               type="button"
               onClick={() => setSettings(DEFAULT_SETTINGS)}
-              className="border-border bg-background hover:bg-muted min-h-11 rounded-lg border px-3 py-2 text-sm font-semibold"
+              className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold hover:bg-muted"
             >
               {labels.reset}
             </button>
             <a
               href={statementHref}
-              className="bg-primary text-primary-foreground hover:bg-primary-hover flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-semibold"
+              className="flex min-h-11 items-center justify-center rounded-lg bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               {labels.statement}
             </a>
@@ -212,7 +206,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
         aria-expanded={open}
         aria-controls="accessibility-panel"
         onClick={() => setOpen((current) => !current)}
-        className="bg-primary text-primary-foreground shadow-lifted hover:bg-primary-hover fixed bottom-4 left-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full transition"
+        className="fixed bottom-4 left-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lifted transition hover:bg-primary-hover"
       >
         <svg
           aria-hidden="true"
