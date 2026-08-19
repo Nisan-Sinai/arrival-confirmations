@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
@@ -25,6 +26,7 @@ export function ShareInvitation({
   const locale = useAppLocale();
   const copy = getAppCopy(locale).share;
   const dictionary = getDictionary(locale);
+  const pathname = usePathname();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -81,17 +83,16 @@ export function ShareInvitation({
         </a>
 
         <Link
-          href={localePath(locale, `/dashboard/events/${publicId === '' ? '' : ''}`)}
-          className="hidden"
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-        <Link
-          href={`${localePath(locale, '/dashboard')}/events/${locationEventIdFallback()}`}
-          className="hidden"
-          aria-hidden="true"
-          tabIndex={-1}
-        />
+          href={`${pathname}/guests`}
+          className={buttonClass({
+            variant: 'secondary',
+            size: 'sm',
+            block: true,
+            className: 'lg:w-auto',
+          })}
+        >
+          {copy.guests}
+        </Link>
 
         <Button onClick={copyLink} variant="outline" size="sm" block className="lg:w-auto">
           {copied ? dictionary.admin.linkCopied : copy.copy}
@@ -111,6 +112,18 @@ export function ShareInvitation({
           {copy.preview}
           <span className="sr-only"> ({dictionary.a11y.externalLink})</span>
         </a>
+
+        <Link
+          href={`${pathname}/tools`}
+          className={buttonClass({
+            variant: 'outline',
+            size: 'sm',
+            block: true,
+            className: 'sm:col-span-2 lg:w-auto',
+          })}
+        >
+          {copy.premium}
+        </Link>
       </div>
 
       <p className="text-muted-foreground mt-3 text-xs leading-relaxed">{copy.note}</p>
@@ -119,8 +132,4 @@ export function ShareInvitation({
       </p>
     </div>
   );
-}
-
-function locationEventIdFallback(): string {
-  return '';
 }
