@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
+import { AccessibilityWidget } from '@/features/accessibility/AccessibilityWidget';
 import { localePath, type Locale } from '@/lib/i18n';
 
 /**
@@ -23,36 +24,39 @@ export function SiteFooter({ locale }: { locale: Locale }) {
   const dictionary = getDictionary(locale);
 
   return (
-    <footer className="border-border/70 bg-surface-sand/50 mt-auto border-t">
-      <Container className="flex flex-col items-center gap-6 py-10 text-center sm:flex-row sm:justify-between sm:text-start">
-        <div>
-          <p className="text-primary font-[family-name:var(--font-display)] text-base font-bold">
-            {dictionary.site.name}
-          </p>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {dictionary.footer.builtBy}{' '}
-            <span className="text-foreground font-semibold">{dictionary.footer.builderName}</span>
-          </p>
-        </div>
+    <>
+      <footer className="border-border/70 bg-surface-sand/50 mt-auto border-t">
+        <Container className="flex flex-col items-center gap-6 py-10 text-center sm:flex-row sm:justify-between sm:text-start">
+          <div>
+            <p className="text-primary font-[family-name:var(--font-display)] text-base font-bold">
+              {dictionary.site.name}
+            </p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {dictionary.footer.builtBy}{' '}
+              <span className="text-foreground font-semibold">{dictionary.footer.builderName}</span>
+            </p>
+          </div>
 
-        <nav
-          aria-label={dictionary.footer.navAria}
-          className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm"
-        >
-          <Link
-            className="hover:text-primary rounded-sm underline underline-offset-4"
-            href={localePath(locale, '/privacy')}
+          <nav
+            aria-label={dictionary.footer.navAria}
+            className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm"
           >
-            {dictionary.footer.privacy}
-          </Link>
-          <Link
-            className="hover:text-primary rounded-sm underline underline-offset-4"
-            href={localePath(locale, '/accessibility')}
-          >
-            {dictionary.footer.accessibility}
-          </Link>
-        </nav>
-      </Container>
-    </footer>
+            <Link
+              className="hover:text-primary rounded-sm underline underline-offset-4"
+              href={localePath(locale, '/privacy')}
+            >
+              {dictionary.footer.privacy}
+            </Link>
+            <Link
+              className="hover:text-primary rounded-sm underline underline-offset-4"
+              href={localePath(locale, '/accessibility')}
+            >
+              {dictionary.footer.accessibility}
+            </Link>
+          </nav>
+        </Container>
+      </footer>
+      <AccessibilityWidget locale={locale} />
+    </>
   );
 }
