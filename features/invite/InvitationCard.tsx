@@ -2,9 +2,10 @@ import { TZDate } from '@date-fns/tz';
 import { HDate } from '@hebcal/core';
 
 import { buttonClass } from '@/components/ui/button';
+import { getAppCopy } from '@/config/appCopy';
+import { getDictionary } from '@/config/dictionary';
 import { EVENT_TIMEZONE } from '@/config/event.config';
 import { getEventTypePreset } from '@/config/eventTypes';
-import { UI_MESSAGES } from '@/config/messages';
 import { AddToCalendar } from '@/features/invite/AddToCalendar';
 import { Countdown } from '@/features/invite/Countdown';
 import {
@@ -16,38 +17,30 @@ import {
   TeddyBear,
   WatercolourWash,
 } from '@/features/invite/Ornaments';
+import { defaultLocale, languageTag, type Locale } from '@/lib/i18n';
 import type { PublicEvent } from '@/repositories/eventRepository';
-
-/**
- * The invitation card (§5).
- *
- * Modelled on the printed invitation the host supplied: a double gold rule, ב"ה at
- * the head, the occasion set large in navy, gold flourishes as separators, and the
- * three practical facts — when, what time, where — in a row of medallions.
- *
- * Everything decorative is CSS or inline SVG. No illustration files, for three
- * reasons that all matter here: an invitation opened on cellular data should not wait
- * on half a megabyte of artwork, §12 rules out layout shift, and every ornament stays
- * crisp on a phone screen at any density. It also keeps the page free of external
- * requests, which §4.2 requires of anything that can carry an invitation URL.
- */
 
 const HEBREW_WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'] as const;
 
-/**
- * §5: dates render in Asia/Jerusalem unconditionally, never in the viewer's zone.
- * A relative reading the invitation from abroad must not be told 04:00.
- */
-function formatGregorian(isoDate: string): { weekday: string; date: string } {
+function formatGregorian(
+  isoDate: string,
+  locale: Locale,
+): { weekday: string; date: string } {
   const zoned = new TZDate(`${isoDate}T00:00:00`, EVENT_TIMEZONE);
-  const weekday = HEBREW_WEEKDAYS[zoned.getDay()] ?? '';
-  const date = new Intl.DateTimeFormat('he-IL', {
+  const weekday =
+    locale === 'he'
+      ? HEBREW_WEEKDAYS[zoned.getDay()]!
+      : new Intl.DateTimeFormat(languageTag(locale), {
+          weekday: 'long',
+          timeZone: EVENT_TIMEZONE,
+        }).format(zoned);
+  const date = new Intl.DateTimeFormat(languageTag(locale), {
     day: 'numeric',
     month: 'numeric',
     year: 'numeric',
     timeZone: EVENT_TIMEZONE,
   }).format(zoned);
-  return { weekday: `ביום ${weekday}`, date };
+  return { weekday, date };
 }
 
 function formatHebrewDate(isoDate: string): string {
@@ -58,7 +51,6 @@ function formatHebrewDate(isoDate: string): string {
 const formatTime = (time: string | null): string | null =>
   time === null ? null : time.slice(0, 5);
 
-/** A gold flourish. Decorative only, so it is hidden from assistive technology. */
 function Flourish({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center gap-2 ${className}`} aria-hidden="true">
@@ -71,7 +63,6 @@ function Flourish({ className = '' }: { className?: string }) {
   );
 }
 
-/** One of the three medallions: an icon in a gold ring above its facts. */
 function Medallion({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-2 px-2 text-center">
@@ -99,13 +90,19 @@ const iconProps = {
   role: 'presentation' as const,
 };
 
-export function InvitationCard({ event }: { event: PublicEvent }) {
-  const preset = getEventTypePreset(event.event_type);
-  const { weekday, date } = formatGregorian(event.event_date!);
+export function InvitationCard({
+  event,
+  locale = defaultLocale,
+}: {
+  event: PublicEvent;
+  locale?: Locale;
+}) {
+  const preset = getEventTypePreset(event.event_type, locale);
+  const copy = getAppCopy(locale).invitation;
+  const dictionary = getDictionary(locale);
+  const { weekday, date } = formatGregorian(event.event_date!, locale);
   const ceremonyTime = formatTime(event.ceremony_time);
   const receptionTime = formatTime(event.reception_time);
-  // Resolved here, not in the browser: the countdown must run against Asia/Jerusalem
-  // regardless of where the guest's phone thinks it is.
   const countdownTargetMs = new TZDate(
     `${event.event_date}T${event.ceremony_time ?? '12:00:00'}`,
     EVENT_TIMEZONE,
@@ -114,15 +111,12 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
   return (
     <article className="relative mx-auto w-full max-w-2xl overflow-hidden">
       <WatercolourWash />
-      {/* Outer gold rule, then an inset second rule — the double frame of the print. */}
       <div className="border-accent/70 rounded-lg border-2 p-2 sm:p-3">
         <div className="border-accent/40 from-secondary/20 relative overflow-hidden rounded-md border bg-gradient-to-b via-white/95 to-white/95 px-4 pt-12 pb-20 sm:px-12 sm:pt-14 sm:pb-24">
-          {/* Four corners from one shape, rotated. */}
           <CornerFiligree className="absolute top-1 right-1 size-14 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute top-1 left-1 size-14 -scale-x-100 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute right-1 bottom-1 size-14 -scale-y-100 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute bottom-1 left-1 size-14 -scale-100 opacity-70 sm:size-16" />
-
           <Bunting className="pointer-events-none absolute -top-1 left-1 w-28 opacity-80 sm:w-56 sm:opacity-90" />
           <Balloons className="pointer-events-none absolute top-4 right-0 w-14 opacity-80 sm:top-6 sm:right-1 sm:w-28 sm:opacity-95" />
           <TeddyBear className="pointer-events-none absolute right-1 -bottom-2 w-24 opacity-95 sm:w-32" />
@@ -130,7 +124,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
           <FloralSprig className="pointer-events-none absolute bottom-14 left-0 hidden w-16 opacity-75 sm:block sm:w-20" />
 
           <div className="relative z-10">
-            <p className="text-muted-foreground text-center text-sm">ב״ה</p>
+            <p className="text-muted-foreground text-center text-sm">{copy.bh}</p>
 
             <p className="text-foreground mt-8 text-center text-base leading-relaxed sm:text-lg">
               {preset.blessingLine}
@@ -142,22 +136,12 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
               {preset.label}
             </h1>
 
-            {/*
-              The standalone "של" that used to sit here was a duplicate. Every
-              `invitationLine` already ends with the relation word — "…לברית המילה של
-              בננו" for a brit, "…לחתונה של" for a wedding — so the card read
-              "…של בננו · של · בננו היקר". The presets are written to be followed
-              directly by the honoree, and the same pairing is what `generateMetadata`
-              and the WhatsApp template use.
-            */}
             <p className="text-primary mt-5 text-center font-[family-name:var(--font-display)] text-2xl font-bold sm:text-4xl">
               {event.honoree_display_name}
             </p>
 
             <Flourish className="my-8 sm:my-9" />
 
-            {/* The three practical facts, side by side as on the print. On a narrow
-              phone they stack rather than shrink past legibility (§9, 200% zoom). */}
             <div className="flex flex-col items-stretch gap-8 sm:flex-row sm:gap-4">
               <Medallion
                 icon={
@@ -167,9 +151,13 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                   </svg>
                 }
               >
-                {weekday}
-                <br />
-                {formatHebrewDate(event.event_date!)}
+                {copy.weekdayPrefix} {weekday}
+                {locale === 'he' && (
+                  <>
+                    <br />
+                    {formatHebrewDate(event.event_date!)}
+                  </>
+                )}
                 <br />
                 <span className="text-muted-foreground font-normal">{date}</span>
               </Medallion>
@@ -189,12 +177,12 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                       {preset.ceremonyTimeLabel}
                     </span>
                     <br />
-                    {ceremonyTime}
+                    <span dir="ltr">{ceremonyTime}</span>
                     {receptionTime !== null && (
                       <>
                         <br />
                         <span className="text-muted-foreground font-normal">
-                          קבלת פנים {receptionTime}
+                          {copy.reception} <span dir="ltr">{receptionTime}</span>
                         </span>
                       </>
                     )}
@@ -218,9 +206,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
             </div>
 
             <Flourish className="my-8 sm:my-9" />
-
-            <Countdown targetMs={countdownTargetMs} />
-
+            <Countdown targetMs={countdownTargetMs} locale={locale} />
             <Flourish className="my-8 sm:my-9" />
 
             {event.description !== null && (
@@ -229,7 +215,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
               </p>
             )}
 
-            <p className="text-muted-foreground mt-8 text-center text-base">בברכה,</p>
+            <p className="text-muted-foreground mt-8 text-center text-base">{copy.greeting}</p>
             <p className="text-primary text-center font-[family-name:var(--font-display)] text-2xl font-bold">
               {event.hosts_names}
             </p>
@@ -255,8 +241,8 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                       <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" />
                       <circle cx="12" cy="10" r="2.5" />
                     </svg>
-                    ניווט ב-Waze
-                    <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
+                    {copy.waze}
+                    <span className="sr-only"> ({dictionary.a11y.externalLink})</span>
                   </a>
                 )}
                 {event.google_maps_url !== null && (
@@ -267,15 +253,12 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                     rel="noopener noreferrer"
                   >
                     Google Maps
-                    <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
+                    <span className="sr-only"> ({dictionary.a11y.externalLink})</span>
                   </a>
                 )}
               </div>
             )}
 
-            {/* PLAN §5 lists this beside the navigation buttons; it had never been
-                built. A guest who confirms three months out has nowhere to put the
-                date except their own memory. */}
             <div className="mt-4">
               <AddToCalendar
                 uid={event.public_id!}
@@ -284,16 +267,13 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                 time={event.ceremony_time}
                 venueName={event.venue_name!}
                 address={event.address!}
+                locale={locale}
               />
             </div>
 
-            {/* On a phone the card is taller than the viewport, so the guest arrives
-                at an invitation with no visible indication that there is anything to
-                do. This is the call to action, and it is the only element on the card
-                that is filled rather than outlined. */}
             <div className="mt-9 flex justify-center">
               <a href="#rsvp" className={buttonClass({ size: 'lg' })}>
-                {UI_MESSAGES.rsvp.submit}
+                {dictionary.rsvp.submit}
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 24 24"
@@ -310,7 +290,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
 
             {event.contact_phone !== null && (
               <p className="text-muted-foreground mt-7 text-center text-sm">
-                לשאלות:{' '}
+                {copy.questions}{' '}
                 <a
                   className="text-primary font-semibold underline underline-offset-2"
                   href={`tel:${event.contact_phone.replace(/[^\d+]/g, '')}`}
