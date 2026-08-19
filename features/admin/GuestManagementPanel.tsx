@@ -17,6 +17,8 @@ import {
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
+import { useAppLocale } from '@/features/i18n/AppLocaleProvider';
+import type { Locale } from '@/lib/i18n';
 
 export interface ManagedGuest {
   readonly id: string;
@@ -42,65 +44,202 @@ interface ContactPickerManager {
 }
 
 type NavigatorWithContacts = Navigator & { contacts?: ContactPickerManager };
+type SubmitVariant = 'primary' | 'secondary' | 'outline' | 'destructive';
 
 const subscribeToContactPicker = () => () => undefined;
-
-function getContactPickerSnapshot(): boolean {
-  return (navigator as NavigatorWithContacts).contacts !== undefined;
-}
-
-function getServerContactPickerSnapshot(): boolean {
-  return false;
-}
-type SubmitVariant = 'primary' | 'secondary' | 'outline' | 'destructive';
+const getContactPickerSnapshot = (): boolean =>
+  (navigator as NavigatorWithContacts).contacts !== undefined;
+const getServerContactPickerSnapshot = (): boolean => false;
 
 const fieldClass =
   'border-border-strong bg-background text-foreground min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]';
 const textareaClass = `${fieldClass} min-h-24 resize-y`;
 
+const COPY = {
+  he: {
+    optional: '(לא חובה)',
+    fields: {
+      fullName: 'שם מלא',
+      phone: 'טלפון',
+      partySize: 'כמות',
+      email: 'אימייל',
+      table: 'שולחן',
+      seat: 'מושב',
+      notes: 'הערות',
+    },
+    messages: {
+      added: 'המוזמן נוסף בהצלחה.',
+      updated: 'פרטי המוזמן נשמרו.',
+      deleted: 'המוזמן הוסר מהרשימה.',
+      contacts: (count: string) => `יובאו ${count || 'מספר'} אנשי קשר מהטלפון.`,
+      file: (count: string) => `יובאו ${count || 'מספר'} מוזמנים מהקובץ.`,
+      fields: 'יש למלא שם, טלפון וכמות תקינה.',
+      phone: 'מספר הטלפון אינו תקין.',
+      duplicate: 'כבר קיים מוזמן עם המספר הזה.',
+      save: 'שמירת המוזמן נכשלה.',
+      delete: 'מחיקת המוזמן נכשלה.',
+      contactsEmpty: 'לא נבחרו אנשי קשר ולא הודבקה רשימה.',
+      contactsInvalid: 'לא נמצא מספר טלפון ישראלי תקין.',
+      contactsSave: 'ייבוא אנשי הקשר נכשל.',
+      fileEmpty: 'יש לבחור קובץ.',
+      fileLarge: 'הקובץ גדול מדי. הגודל המרבי הוא 5MB.',
+      fileFormat: 'פורמט הקובץ אינו נתמך או שהקובץ אינו תקין.',
+      pickerUnavailable: 'הדפדפן הזה אינו מאפשר בחירה ישירה. השתמשו בהדבקה או בהעלאת קובץ.',
+      pickerEmpty: 'לא נבחרו אנשי קשר עם מספר טלפון.',
+      pickerFailed: 'לא ניתן היה לפתוח את אנשי הקשר. אפשר להשתמש בהדבקה או בקובץ.',
+    },
+    quickAria: 'פעולות מהירות לניהול המוזמנים',
+    manual: 'הוספה ידנית',
+    phoneImport: 'אנשי קשר מהטלפון',
+    fileImport: 'ייבוא קובץ',
+    list: 'הרשימה',
+    newGuest: 'מוזמן חדש',
+    newGuestIntro: 'ממלאים שם, טלפון וכמות. אימייל, שולחן, מושב והערות הם שדות לא חובה.',
+    addGuest: 'הוספת מוזמן',
+    addingGuest: 'מוסיף מוזמן...',
+    quickImport: 'ייבוא מהיר',
+    phoneImportIntro: 'באנדרואיד ובדפדפן תומך אפשר לבחור כמה אנשי קשר יחד. בכל מכשיר אפשר גם להדביק רשימה.',
+    directUnavailable: 'הבחירה הישירה אינה זמינה בדפדפן הזה. אפשר להדביק רשימה למטה או לייבא קובץ.',
+    openingContacts: 'פותח אנשי קשר...',
+    chooseContacts: 'בחירת אנשי קשר מהטלפון',
+    pasteList: 'הדבקת רשימה',
+    pastePlaceholder: 'ישראל ישראלי, 050-1234567\nשרה כהן, 052-7654321',
+    pasteHelp: 'כל איש קשר בשורה חדשה: שם, פסיק ומספר טלפון.',
+    importPasted: 'ייבוא הרשימה המודבקת',
+    importingContacts: 'מייבא אנשי קשר...',
+    fileIntro: 'נתמכים Excel, CSV, TSV וטקסט, עד 5MB.',
+    chooseFile: 'קובץ מהטלפון או מהמחשב',
+    importingFile: 'מייבא קובץ...',
+    guestList: 'רשימת מוזמנים',
+    manageEdit: 'ניהול ועריכה',
+    records: 'רשומות',
+    people: 'אנשים',
+    assigned: 'שובצו',
+    emptyTitle: 'עדיין אין מוזמנים ברשימה',
+    emptyBody: 'התחילו בהוספה ידנית או בייבוא אנשי קשר מהטלפון.',
+    importPhoneShort: 'ייבוא מהטלפון',
+    search: 'חיפוש ברשימה',
+    searchPlaceholder: 'שם, טלפון, אימייל או שולחן',
+    noResults: 'לא נמצאו מוזמנים מתאימים',
+    clearSearch: 'ניקוי החיפוש',
+    quantity: 'כמות:',
+    tablePrefix: 'שולחן',
+    edit: 'עריכה',
+    call: 'חיוג',
+    saveChanges: 'שמירת שינויים',
+    savingChanges: 'שומר שינויים...',
+    deleteGuest: 'מחיקת המוזמן',
+    deletingGuest: 'מוחק מוזמן...',
+    deleteConfirm: (name: string) => `למחוק את ${name} מרשימת המוזמנים?`,
+  },
+  en: {
+    optional: '(optional)',
+    fields: {
+      fullName: 'Full name',
+      phone: 'Phone',
+      partySize: 'Party size',
+      email: 'Email',
+      table: 'Table',
+      seat: 'Seat',
+      notes: 'Notes',
+    },
+    messages: {
+      added: 'Guest added successfully.',
+      updated: 'Guest details saved.',
+      deleted: 'Guest removed from the list.',
+      contacts: (count: string) => `Imported ${count || 'several'} phone contacts.`,
+      file: (count: string) => `Imported ${count || 'several'} guests from the file.`,
+      fields: 'Enter a name, phone number and valid party size.',
+      phone: 'The phone number is invalid.',
+      duplicate: 'A guest with this phone number already exists.',
+      save: 'We could not save the guest.',
+      delete: 'We could not delete the guest.',
+      contactsEmpty: 'No contacts were selected and no list was pasted.',
+      contactsInvalid: 'No valid Israeli phone number was found.',
+      contactsSave: 'Contact import failed.',
+      fileEmpty: 'Choose a file.',
+      fileLarge: 'The file is too large. Maximum size is 5MB.',
+      fileFormat: 'The file format is unsupported or the file is invalid.',
+      pickerUnavailable: 'This browser cannot open contacts directly. Paste a list or upload a file instead.',
+      pickerEmpty: 'No contacts with phone numbers were selected.',
+      pickerFailed: 'Contacts could not be opened. Paste a list or use a file instead.',
+    },
+    quickAria: 'Quick guest management actions',
+    manual: 'Add manually',
+    phoneImport: 'Phone contacts',
+    fileImport: 'Import file',
+    list: 'Guest list',
+    newGuest: 'New guest',
+    newGuestIntro: 'Enter a name, phone number and party size. Email, table, seat and notes are optional.',
+    addGuest: 'Add guest',
+    addingGuest: 'Adding guest...',
+    quickImport: 'Quick import',
+    phoneImportIntro: 'On Android and supported browsers you can select several contacts at once. You can also paste a list on any device.',
+    directUnavailable: 'Direct contact selection is unavailable in this browser. Paste a list below or import a file.',
+    openingContacts: 'Opening contacts...',
+    chooseContacts: 'Choose phone contacts',
+    pasteList: 'Paste a list',
+    pastePlaceholder: 'Israel Israeli, 050-1234567\nSarah Cohen, 052-7654321',
+    pasteHelp: 'One contact per line: name, comma, phone number.',
+    importPasted: 'Import pasted list',
+    importingContacts: 'Importing contacts...',
+    fileIntro: 'Excel, CSV, TSV and text files are supported, up to 5MB.',
+    chooseFile: 'File from your phone or computer',
+    importingFile: 'Importing file...',
+    guestList: 'Guest list',
+    manageEdit: 'Manage and edit',
+    records: 'records',
+    people: 'people',
+    assigned: 'assigned',
+    emptyTitle: 'There are no guests yet',
+    emptyBody: 'Start by adding a guest manually or importing contacts from your phone.',
+    importPhoneShort: 'Import from phone',
+    search: 'Search guest list',
+    searchPlaceholder: 'Name, phone, email or table',
+    noResults: 'No matching guests found',
+    clearSearch: 'Clear search',
+    quantity: 'Party size:',
+    tablePrefix: 'Table',
+    edit: 'Edit',
+    call: 'Call',
+    saveChanges: 'Save changes',
+    savingChanges: 'Saving changes...',
+    deleteGuest: 'Delete guest',
+    deletingGuest: 'Deleting guest...',
+    deleteConfirm: (name: string) => `Delete ${name} from the guest list?`,
+  },
+} as const;
+
 function messageFor(
+  locale: Locale,
   saved: string,
   error: string,
   count: string,
-): {
-  tone: 'success' | 'error';
-  text: string;
-} | null {
-  if (saved === 'guest-added') return { tone: 'success', text: 'המוזמן נוסף בהצלחה.' };
-  if (saved === 'guest-updated') return { tone: 'success', text: 'פרטי המוזמן נשמרו.' };
-  if (saved === 'guest-deleted') return { tone: 'success', text: 'המוזמן הוסר מהרשימה.' };
-  if (saved === 'contacts') {
-    return { tone: 'success', text: `יובאו ${count || 'מספר'} אנשי קשר מהטלפון.` };
-  }
-  if (saved === 'file') {
-    return { tone: 'success', text: `יובאו ${count || 'מספר'} מוזמנים מהקובץ.` };
-  }
-  if (error === 'guest-fields') return { tone: 'error', text: 'יש למלא שם, טלפון וכמות תקינה.' };
-  if (error === 'guest-phone') return { tone: 'error', text: 'מספר הטלפון אינו תקין.' };
-  if (error === 'guest-duplicate') return { tone: 'error', text: 'כבר קיים מוזמן עם המספר הזה.' };
-  if (error === 'guest-save') return { tone: 'error', text: 'שמירת המוזמן נכשלה.' };
-  if (error === 'guest-delete') return { tone: 'error', text: 'מחיקת המוזמן נכשלה.' };
-  if (error === 'contacts-empty') {
-    return { tone: 'error', text: 'לא נבחרו אנשי קשר ולא הודבקה רשימה.' };
-  }
-  if (error === 'contacts-invalid') {
-    return { tone: 'error', text: 'לא נמצא מספר טלפון ישראלי תקין.' };
-  }
-  if (error === 'contacts-save') return { tone: 'error', text: 'ייבוא אנשי הקשר נכשל.' };
-  if (error === 'file-empty') return { tone: 'error', text: 'יש לבחור קובץ.' };
-  if (error === 'file-large') {
-    return { tone: 'error', text: 'הקובץ גדול מדי. הגודל המרבי הוא 5MB.' };
-  }
-  if (error === 'file-format') {
-    return { tone: 'error', text: 'פורמט הקובץ אינו נתמך או שהקובץ אינו תקין.' };
-  }
+): { tone: 'success' | 'error'; text: string } | null {
+  const messages = COPY[locale].messages;
+  if (saved === 'guest-added') return { tone: 'success', text: messages.added };
+  if (saved === 'guest-updated') return { tone: 'success', text: messages.updated };
+  if (saved === 'guest-deleted') return { tone: 'success', text: messages.deleted };
+  if (saved === 'contacts') return { tone: 'success', text: messages.contacts(count) };
+  if (saved === 'file') return { tone: 'success', text: messages.file(count) };
+  if (error === 'guest-fields') return { tone: 'error', text: messages.fields };
+  if (error === 'guest-phone') return { tone: 'error', text: messages.phone };
+  if (error === 'guest-duplicate') return { tone: 'error', text: messages.duplicate };
+  if (error === 'guest-save') return { tone: 'error', text: messages.save };
+  if (error === 'guest-delete') return { tone: 'error', text: messages.delete };
+  if (error === 'contacts-empty') return { tone: 'error', text: messages.contactsEmpty };
+  if (error === 'contacts-invalid') return { tone: 'error', text: messages.contactsInvalid };
+  if (error === 'contacts-save') return { tone: 'error', text: messages.contactsSave };
+  if (error === 'file-empty') return { tone: 'error', text: messages.fileEmpty };
+  if (error === 'file-large') return { tone: 'error', text: messages.fileLarge };
+  if (error === 'file-format') return { tone: 'error', text: messages.fileFormat };
   return null;
 }
 
-function normalizeSearch(value: string): string {
+function normalizeSearch(value: string, locale: Locale): string {
   return value
     .trim()
-    .toLocaleLowerCase('he-IL')
+    .toLocaleLowerCase(locale === 'he' ? 'he-IL' : 'en-US')
     .replace(/[\s()-]/g, '');
 }
 
@@ -122,7 +261,6 @@ function SubmitButton({
   readonly className?: string;
 }) {
   const { pending } = useFormStatus();
-
   return (
     <Button
       type="submit"
@@ -134,12 +272,7 @@ function SubmitButton({
       {pending && (
         <svg aria-hidden="true" viewBox="0 0 24 24" className="animate-spin" fill="none">
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
-          <path
-            d="M21 12a9 9 0 0 0-9-9"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
+          <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
         </svg>
       )}
       {pending ? pendingLabel : idleLabel}
@@ -147,80 +280,38 @@ function SubmitButton({
   );
 }
 
-function GuestFields({ guest }: { readonly guest?: ManagedGuest }) {
+function GuestFields({ guest, locale }: { readonly guest?: ManagedGuest; readonly locale: Locale }) {
+  const copy = COPY[locale];
+  const optional = <span className="text-muted-foreground font-normal">{copy.optional}</span>;
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <label className="text-foreground text-sm font-medium">
-        שם מלא
-        <input
-          name="fullName"
-          autoComplete="name"
-          required
-          defaultValue={guest?.fullName ?? ''}
-          className={`${fieldClass} mt-1.5`}
-        />
+        {copy.fields.fullName}
+        <input name="fullName" autoComplete="name" required defaultValue={guest?.fullName ?? ''} className={`${fieldClass} mt-1.5`} />
       </label>
       <label className="text-foreground text-sm font-medium">
-        טלפון
-        <input
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          dir="ltr"
-          required
-          defaultValue={guest?.phone ?? ''}
-          className={`${fieldClass} mt-1.5 text-start`}
-        />
+        {copy.fields.phone}
+        <input name="phone" type="tel" inputMode="tel" autoComplete="tel" dir="ltr" required defaultValue={guest?.phone ?? ''} className={`${fieldClass} mt-1.5 text-start`} />
       </label>
       <label className="text-foreground text-sm font-medium">
-        כמות
-        <input
-          name="partySize"
-          type="number"
-          inputMode="numeric"
-          min="1"
-          max="100"
-          required
-          defaultValue={guest?.partySize ?? 1}
-          className={`${fieldClass} mt-1.5`}
-        />
+        {copy.fields.partySize}
+        <input name="partySize" type="number" inputMode="numeric" min="1" max="100" required defaultValue={guest?.partySize ?? 1} className={`${fieldClass} mt-1.5`} />
       </label>
       <label className="text-foreground text-sm font-medium">
-        אימייל <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <input
-          name="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          dir="ltr"
-          defaultValue={guest?.email ?? ''}
-          className={`${fieldClass} mt-1.5 text-start`}
-        />
+        {copy.fields.email} {optional}
+        <input name="email" type="email" inputMode="email" autoComplete="email" dir="ltr" defaultValue={guest?.email ?? ''} className={`${fieldClass} mt-1.5 text-start`} />
       </label>
       <label className="text-foreground text-sm font-medium">
-        שולחן <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <input
-          name="tableName"
-          defaultValue={guest?.tableName ?? ''}
-          className={`${fieldClass} mt-1.5`}
-        />
+        {copy.fields.table} {optional}
+        <input name="tableName" defaultValue={guest?.tableName ?? ''} className={`${fieldClass} mt-1.5`} />
       </label>
       <label className="text-foreground text-sm font-medium">
-        מושב <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <input
-          name="seatNumber"
-          defaultValue={guest?.seatNumber ?? ''}
-          className={`${fieldClass} mt-1.5`}
-        />
+        {copy.fields.seat} {optional}
+        <input name="seatNumber" defaultValue={guest?.seatNumber ?? ''} className={`${fieldClass} mt-1.5`} />
       </label>
       <label className="text-foreground text-sm font-medium sm:col-span-2 lg:col-span-3">
-        הערות <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <textarea
-          name="notes"
-          defaultValue={guest?.notes ?? ''}
-          className={`${textareaClass} mt-1.5`}
-        />
+        {copy.fields.notes} {optional}
+        <textarea name="notes" defaultValue={guest?.notes ?? ''} className={`${textareaClass} mt-1.5`} />
       </label>
     </div>
   );
@@ -241,6 +332,8 @@ export function GuestManagementPanel({
   readonly error?: string;
   readonly count?: string;
 }) {
+  const locale = useAppLocale();
+  const copy = COPY[locale];
   const [pickerMessage, setPickerMessage] = useState('');
   const [selectingContacts, setSelectingContacts] = useState(false);
   const [query, setQuery] = useState('');
@@ -254,44 +347,30 @@ export function GuestManagementPanel({
 
   const saveAction = mode === 'admin' ? adminSaveGuestAction : saveGuestAction;
   const deleteAction = mode === 'admin' ? adminDeleteGuestAction : deleteGuestAction;
-  const contactAction =
-    mode === 'admin' ? adminImportPhoneContactsAction : importPhoneContactsAction;
-  const status = messageFor(saved, error, count);
-
-  const totalPeople = useMemo(
-    () => guests.reduce((sum, guest) => sum + guest.partySize, 0),
-    [guests],
-  );
+  const contactAction = mode === 'admin' ? adminImportPhoneContactsAction : importPhoneContactsAction;
+  const status = messageFor(locale, saved, error, count);
+  const totalPeople = useMemo(() => guests.reduce((sum, guest) => sum + guest.partySize, 0), [guests]);
   const assignedGuests = useMemo(
-    () =>
-      guests.filter((guest) => guest.tableName !== null && guest.tableName.trim() !== '').length,
+    () => guests.filter((guest) => guest.tableName !== null && guest.tableName.trim() !== '').length,
     [guests],
   );
   const filteredGuests = useMemo(() => {
-    const normalizedQuery = normalizeSearch(query);
+    const normalizedQuery = normalizeSearch(query, locale);
     if (normalizedQuery === '') return guests;
-
-    return guests.filter((guest) => {
-      const searchable = [
-        guest.fullName,
-        guest.phone,
-        guest.email ?? '',
-        guest.tableName ?? '',
-        guest.seatNumber ?? '',
-      ]
-        .map(normalizeSearch)
-        .join(' ');
-      return searchable.includes(normalizedQuery);
-    });
-  }, [guests, query]);
+    return guests.filter((guest) =>
+      [guest.fullName, guest.phone, guest.email ?? '', guest.tableName ?? '', guest.seatNumber ?? '']
+        .map((value) => normalizeSearch(value, locale))
+        .join(' ')
+        .includes(normalizedQuery),
+    );
+  }, [guests, locale, query]);
 
   const choosePhoneContacts = async () => {
     const contactsApi = (navigator as NavigatorWithContacts).contacts;
     if (contactsApi === undefined) {
-      setPickerMessage('הדפדפן הזה אינו מאפשר בחירה ישירה. השתמשו בהדבקה או בהעלאת קובץ.');
+      setPickerMessage(copy.messages.pickerUnavailable);
       return;
     }
-
     setSelectingContacts(true);
     setPickerMessage('');
     try {
@@ -304,7 +383,7 @@ export function GuestManagementPanel({
         });
       });
       if (rows.length === 0) {
-        setPickerMessage('לא נבחרו אנשי קשר עם מספר טלפון.');
+        setPickerMessage(copy.messages.pickerEmpty);
         return;
       }
       if (contactsJsonRef.current === null || contactsFormRef.current === null) return;
@@ -312,7 +391,7 @@ export function GuestManagementPanel({
       contactsFormRef.current.requestSubmit();
     } catch (pickerError) {
       if (pickerError instanceof DOMException && pickerError.name === 'AbortError') return;
-      setPickerMessage('לא ניתן היה לפתוח את אנשי הקשר. אפשר להשתמש בהדבקה או בקובץ.');
+      setPickerMessage(copy.messages.pickerFailed);
     } finally {
       setSelectingContacts(false);
     }
@@ -322,136 +401,68 @@ export function GuestManagementPanel({
     <div className="space-y-6">
       {status !== null && <Alert tone={status.tone}>{status.text}</Alert>}
 
-      <nav
-        aria-label="פעולות מהירות לניהול המוזמנים"
-        className="border-border bg-card/95 sticky top-2 z-10 overflow-x-auto rounded-2xl border p-2 shadow-sm backdrop-blur"
-      >
+      <nav aria-label={copy.quickAria} className="border-border bg-card/95 sticky top-2 z-10 overflow-x-auto rounded-2xl border p-2 shadow-sm backdrop-blur">
         <div className="flex min-w-max gap-2">
-          <a href="#manual-add" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
-            הוספה ידנית
-          </a>
-          <a href="#phone-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>
-            אנשי קשר מהטלפון
-          </a>
-          {mode === 'owner' && (
-            <a href="#file-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>
-              ייבוא קובץ
-            </a>
-          )}
-          <a href="#guest-list" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
-            הרשימה ({guests.length})
-          </a>
+          <a href="#manual-add" className={buttonClass({ variant: 'secondary', size: 'sm' })}>{copy.manual}</a>
+          <a href="#phone-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>{copy.phoneImport}</a>
+          {mode === 'owner' && <a href="#file-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>{copy.fileImport}</a>}
+          <a href="#guest-list" className={buttonClass({ variant: 'ghost', size: 'sm' })}>{copy.list} ({guests.length})</a>
         </div>
       </nav>
 
       <section id="manual-add" className="scroll-mt-24" aria-labelledby="manual-add-title">
         <Card padding="lg">
-          <p className="text-eyebrow text-accent-strong font-semibold">הוספה ידנית</p>
-          <h2 id="manual-add-title" className="text-h2 text-primary mt-2 font-bold">
-            מוזמן חדש
-          </h2>
-          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-            ממלאים שם, טלפון וכמות. אימייל, שולחן, מושב והערות הם שדות לא חובה.
-          </p>
+          <p className="text-eyebrow text-accent-strong font-semibold">{copy.manual}</p>
+          <h2 id="manual-add-title" className="text-h2 text-primary mt-2 font-bold">{copy.newGuest}</h2>
+          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{copy.newGuestIntro}</p>
           <form action={saveAction} className="mt-6 space-y-5">
             <input type="hidden" name="eventId" value={eventId} />
-            <GuestFields />
-            <SubmitButton
-              idleLabel="הוספת מוזמן"
-              pendingLabel="מוסיף מוזמן..."
-              className="w-full sm:w-auto"
-            />
+            <input type="hidden" name="locale" value={locale} />
+            <GuestFields locale={locale} />
+            <SubmitButton idleLabel={copy.addGuest} pendingLabel={copy.addingGuest} className="w-full sm:w-auto" />
           </form>
         </Card>
       </section>
 
       <section id="phone-import" className="scroll-mt-24" aria-labelledby="phone-import-title">
         <Card padding="lg">
-          <p className="text-eyebrow text-accent-strong font-semibold">ייבוא מהיר</p>
-          <h2 id="phone-import-title" className="text-h2 text-primary mt-2 font-bold">
-            אנשי קשר מהטלפון
-          </h2>
-          <p className="text-muted-foreground mt-3 leading-relaxed">
-            באנדרואיד ובדפדפן תומך אפשר לבחור כמה אנשי קשר יחד. בכל מכשיר אפשר גם להדביק רשימה.
-          </p>
+          <p className="text-eyebrow text-accent-strong font-semibold">{copy.quickImport}</p>
+          <h2 id="phone-import-title" className="text-h2 text-primary mt-2 font-bold">{copy.phoneImport}</h2>
+          <p className="text-muted-foreground mt-3 leading-relaxed">{copy.phoneImportIntro}</p>
 
           <form ref={contactsFormRef} action={contactAction} className="mt-6 space-y-4">
             <input type="hidden" name="eventId" value={eventId} />
+            <input type="hidden" name="locale" value={locale} />
             <input ref={contactsJsonRef} type="hidden" name="contactsJson" />
-
-            {supportsContactPicker === false && (
-              <Alert tone="warning">
-                הבחירה הישירה אינה זמינה בדפדפן הזה. אפשר להדביק רשימה למטה או לייבא קובץ.
-              </Alert>
-            )}
-
-            <Button
-              type="button"
-              onClick={choosePhoneContacts}
-              disabled={supportsContactPicker !== true || selectingContacts}
-              aria-disabled={supportsContactPicker !== true || selectingContacts}
-              className="w-full sm:w-auto"
-            >
-              {selectingContacts ? 'פותח אנשי קשר...' : 'בחירת אנשי קשר מהטלפון'}
+            {supportsContactPicker === false && <Alert tone="warning">{copy.directUnavailable}</Alert>}
+            <Button type="button" onClick={choosePhoneContacts} disabled={supportsContactPicker !== true || selectingContacts} aria-disabled={supportsContactPicker !== true || selectingContacts} className="w-full sm:w-auto">
+              {selectingContacts ? copy.openingContacts : copy.chooseContacts}
             </Button>
-
-            {pickerMessage !== '' && (
-              <p role="status" className="text-muted-foreground text-sm">
-                {pickerMessage}
-              </p>
-            )}
+            {pickerMessage !== '' && <p role="status" className="text-muted-foreground text-sm">{pickerMessage}</p>}
 
             <div className="border-border border-t pt-5">
               <label className="text-foreground block text-sm font-medium">
-                הדבקת רשימה
-                <textarea
-                  name="pastedContacts"
-                  className={`${textareaClass} mt-1.5`}
-                  placeholder={'ישראל ישראלי, 050-1234567\nשרה כהן, 052-7654321'}
-                  aria-describedby="pasted-contacts-help"
-                />
+                {copy.pasteList}
+                <textarea name="pastedContacts" className={`${textareaClass} mt-1.5`} placeholder={copy.pastePlaceholder} aria-describedby="pasted-contacts-help" />
               </label>
-              <p id="pasted-contacts-help" className="text-muted-foreground mt-2 text-xs">
-                כל איש קשר בשורה חדשה: שם, פסיק ומספר טלפון.
-              </p>
-              <SubmitButton
-                idleLabel="ייבוא הרשימה המודבקת"
-                pendingLabel="מייבא אנשי קשר..."
-                variant="outline"
-                className="mt-4 w-full sm:w-auto"
-              />
+              <p id="pasted-contacts-help" className="text-muted-foreground mt-2 text-xs">{copy.pasteHelp}</p>
+              <SubmitButton idleLabel={copy.importPasted} pendingLabel={copy.importingContacts} variant="outline" className="mt-4 w-full sm:w-auto" />
             </div>
           </form>
 
           {mode === 'owner' && (
-            <form
-              id="file-import"
-              action={importGuestFileAction}
-              className="border-border mt-6 scroll-mt-24 space-y-4 border-t pt-6"
-            >
+            <form id="file-import" action={importGuestFileAction} className="border-border mt-6 scroll-mt-24 space-y-4 border-t pt-6">
               <div>
-                <h3 className="text-primary font-semibold">ייבוא קובץ</h3>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  נתמכים Excel, CSV, TSV וטקסט, עד 5MB.
-                </p>
+                <h3 className="text-primary font-semibold">{copy.fileImport}</h3>
+                <p className="text-muted-foreground mt-1 text-sm">{copy.fileIntro}</p>
               </div>
               <input type="hidden" name="eventId" value={eventId} />
+              <input type="hidden" name="locale" value={locale} />
               <label className="text-foreground block text-sm font-medium">
-                קובץ מהטלפון או מהמחשב
-                <input
-                  name="guestFile"
-                  type="file"
-                  accept=".xlsx,.csv,.tsv,.txt"
-                  required
-                  className={`${fieldClass} mt-1.5 file:me-3 file:rounded-full file:border-0 file:px-3 file:py-1.5`}
-                />
+                {copy.chooseFile}
+                <input name="guestFile" type="file" accept=".xlsx,.csv,.tsv,.txt" required className={`${fieldClass} mt-1.5 file:me-3 file:rounded-full file:border-0 file:px-3 file:py-1.5`} />
               </label>
-              <SubmitButton
-                idleLabel="ייבוא קובץ"
-                pendingLabel="מייבא קובץ..."
-                variant="outline"
-                className="w-full sm:w-auto"
-              />
+              <SubmitButton idleLabel={copy.fileImport} pendingLabel={copy.importingFile} variant="outline" className="w-full sm:w-auto" />
             </form>
           )}
         </Card>
@@ -461,64 +472,35 @@ export function GuestManagementPanel({
         <Card padding="lg">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
-              <h2 id="guest-list-title" className="text-h2 text-primary mt-2 font-bold">
-                ניהול ועריכה
-              </h2>
+              <p className="text-eyebrow text-accent-strong font-semibold">{copy.guestList}</p>
+              <h2 id="guest-list-title" className="text-h2 text-primary mt-2 font-bold">{copy.manageEdit}</h2>
             </div>
             <div className="text-muted-foreground text-sm">
-              <span>{guests.length} רשומות</span>
-              <span aria-hidden="true"> · </span>
-              <span>{totalPeople} אנשים</span>
-              {assignedGuests > 0 && (
-                <>
-                  <span aria-hidden="true"> · </span>
-                  <span>{assignedGuests} שובצו</span>
-                </>
-              )}
+              <span>{guests.length} {copy.records}</span><span aria-hidden="true"> · </span><span>{totalPeople} {copy.people}</span>
+              {assignedGuests > 0 && <><span aria-hidden="true"> · </span><span>{assignedGuests} {copy.assigned}</span></>}
             </div>
           </div>
 
           {guests.length === 0 ? (
             <div className="border-border bg-secondary/20 mt-6 rounded-2xl border border-dashed p-6 text-center">
-              <p className="text-primary font-semibold">עדיין אין מוזמנים ברשימה</p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                התחילו בהוספה ידנית או בייבוא אנשי קשר מהטלפון.
-              </p>
+              <p className="text-primary font-semibold">{copy.emptyTitle}</p>
+              <p className="text-muted-foreground mt-2 text-sm">{copy.emptyBody}</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <a href="#manual-add" className={buttonClass({ size: 'sm' })}>
-                  הוספת מוזמן
-                </a>
-                <a href="#phone-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>
-                  ייבוא מהטלפון
-                </a>
+                <a href="#manual-add" className={buttonClass({ size: 'sm' })}>{copy.addGuest}</a>
+                <a href="#phone-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>{copy.importPhoneShort}</a>
               </div>
             </div>
           ) : (
             <>
               <label className="text-foreground mt-6 block text-sm font-medium">
-                חיפוש ברשימה
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="שם, טלפון, אימייל או שולחן"
-                  className={`${fieldClass} mt-1.5`}
-                />
+                {copy.search}
+                <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchPlaceholder} className={`${fieldClass} mt-1.5`} />
               </label>
 
               {filteredGuests.length === 0 ? (
                 <div className="border-border mt-5 rounded-2xl border border-dashed p-6 text-center">
-                  <p className="text-primary font-semibold">לא נמצאו מוזמנים מתאימים</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => setQuery('')}
-                  >
-                    ניקוי החיפוש
-                  </Button>
+                  <p className="text-primary font-semibold">{copy.noResults}</p>
+                  <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => setQuery('')}>{copy.clearSearch}</Button>
                 </div>
               ) : (
                 <ul className="mt-5 space-y-3">
@@ -528,81 +510,39 @@ export function GuestManagementPanel({
                         <summary className="cursor-pointer list-none rounded-sm">
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-primary truncate font-semibold">
-                                {guest.fullName}
-                              </p>
-                              <p className="text-muted-foreground mt-1 text-sm" dir="ltr">
-                                {guest.phone}
-                              </p>
+                              <p className="text-primary truncate font-semibold">{guest.fullName}</p>
+                              <p className="text-muted-foreground mt-1 text-sm" dir="ltr">{guest.phone}</p>
                               <p className="text-muted-foreground mt-1 text-xs">
-                                כמות: {guest.partySize}
-                                {guest.tableName !== null && guest.tableName.trim() !== ''
-                                  ? ` · שולחן ${guest.tableName}`
-                                  : ''}
+                                {copy.quantity} {guest.partySize}
+                                {guest.tableName !== null && guest.tableName.trim() !== '' ? ` · ${copy.tablePrefix} ${guest.tableName}` : ''}
                               </p>
                             </div>
                             <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-sm">
-                              עריכה
-                              <svg
-                                aria-hidden="true"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="size-4 transition-transform group-open:rotate-180"
-                              >
-                                <path d="m6 9 6 6 6-6" />
-                              </svg>
+                              {copy.edit}
+                              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4 transition-transform group-open:rotate-180"><path d="m6 9 6 6 6-6" /></svg>
                             </span>
                           </div>
                         </summary>
 
                         <div className="border-border mt-4 border-t pt-5">
                           <div className="mb-5 flex flex-wrap gap-2">
-                            <a
-                              href={`tel:${guest.phone}`}
-                              className={buttonClass({ variant: 'outline', size: 'sm' })}
-                            >
-                              חיוג
-                            </a>
-                            <a
-                              href={whatsappUrl(guest.phone)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                            >
-                              WhatsApp
-                            </a>
+                            <a href={`tel:${guest.phone}`} className={buttonClass({ variant: 'outline', size: 'sm' })}>{copy.call}</a>
+                            <a href={whatsappUrl(guest.phone)} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant: 'ghost', size: 'sm' })}>WhatsApp</a>
                           </div>
 
                           <form action={saveAction} className="space-y-5">
                             <input type="hidden" name="eventId" value={eventId} />
                             <input type="hidden" name="guestId" value={guest.id} />
-                            <GuestFields guest={guest} />
-                            <SubmitButton
-                              idleLabel="שמירת שינויים"
-                              pendingLabel="שומר שינויים..."
-                              className="w-full sm:w-auto"
-                            />
+                            <input type="hidden" name="locale" value={locale} />
+                            <GuestFields guest={guest} locale={locale} />
+                            <SubmitButton idleLabel={copy.saveChanges} pendingLabel={copy.savingChanges} className="w-full sm:w-auto" />
                           </form>
 
-                          <form
-                            action={deleteAction}
-                            className="mt-3"
-                            onSubmit={(submitEvent) => {
-                              if (!window.confirm(`למחוק את ${guest.fullName} מרשימת המוזמנים?`)) {
-                                submitEvent.preventDefault();
-                              }
-                            }}
-                          >
+                          <form action={deleteAction} className="mt-3" onSubmit={(submitEvent) => { if (!window.confirm(copy.deleteConfirm(guest.fullName))) submitEvent.preventDefault(); }}>
                             <input type="hidden" name="eventId" value={eventId} />
                             <input type="hidden" name="guestId" value={guest.id} />
-                            <SubmitButton
-                              idleLabel="מחיקת המוזמן"
-                              pendingLabel="מוחק מוזמן..."
-                              variant="destructive"
-                              className="w-full sm:w-auto"
-                            />
+                            <input type="hidden" name="locale" value={locale} />
+                            <SubmitButton idleLabel={copy.deleteGuest} pendingLabel={copy.deletingGuest} variant="destructive" className="w-full sm:w-auto" />
                           </form>
                         </div>
                       </details>
