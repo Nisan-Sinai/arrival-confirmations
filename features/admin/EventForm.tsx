@@ -6,26 +6,9 @@ import type { EventFormState } from '@/app/actions/manageEvent';
 import { Button } from '@/components/ui/button';
 import { CheckboxField, Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { getAppCopy } from '@/config/appCopy';
 import { getEventTypePreset, listEventTypePresets } from '@/config/eventTypes';
-
-/**
- * Create and edit an event (§8).
- *
- * One component for both, because the two differ only in their defaults and which
- * action they post to. Keeping them identical means a field added for creation is
- * automatically editable, which is the failure this shape prevents.
- *
- * Two things changed here beyond the styling.
- *
- * Every control now sits inside `<Field>`, so an error is bound to its input by
- * `aria-describedby` and marked with `aria-invalid`. Before this the errors rendered
- * as loose paragraphs: a sighted user saw red text under the right box, and a screen
- * reader user was moved to a rejected field and told nothing.
- *
- * The form also redraws with what was typed. React resets an uncontrolled form once
- * its action resolves, so a host who left the venue blank previously lost the date,
- * both times, the map links and the invitation note along with it.
- */
+import { useAppLocale } from '@/features/i18n/AppLocaleProvider';
 
 const INITIAL: EventFormState = { status: 'idle', message: '', fieldErrors: {} };
 
@@ -56,25 +39,22 @@ interface EventFormProps {
   readonly defaults?: Partial<EventFormValues>;
 }
 
-/** A hairline heading that groups the fields below it. */
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <fieldset className="border-border border-t pt-7 first:border-t-0 first:pt-0">
-      <legend className="text-eyebrow text-accent-strong -mt-2.5 pe-3 font-semibold">
-        {title}
-      </legend>
+      <legend className="text-eyebrow text-accent-strong -mt-2.5 pe-3 font-semibold">{title}</legend>
       <div className="space-y-5">{children}</div>
     </fieldset>
   );
 }
 
 export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps) {
+  const locale = useAppLocale();
+  const copy = getAppCopy(locale).eventForm;
   const [state, formAction, isPending] = useActionState(action, INITIAL);
-  const presets = listEventTypePresets();
+  const presets = listEventTypePresets(locale);
   const err = (field: string) => state.fieldErrors[field];
 
-  // Values the server echoed back after a rejection win over the row loaded from the
-  // database: they are what the host last typed.
   const submitted = state.values;
   const value = <K extends keyof EventFormValues>(key: K): string => {
     const fromSubmission = submitted?.[key as keyof typeof submitted];
@@ -83,42 +63,26 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
     return fromDefaults === undefined || fromDefaults === null ? '' : String(fromDefaults);
   };
 
-  /**
-   * The chosen type. It drives the two side-label hints and every people-and-time label
-   * on the form — showing "ריק = ברירת המחדל" told a host nothing, where "ריק = צד
-   * החתן" tells them exactly what the guest will see.
-   *
-   * Re-seeded from the echoed submission, and the control remounted with it, because
-   * neither half worked alone. The state was initialised lazily on first render, so it
-   * stayed on whatever the form loaded with; and `defaultValue` on a `<select>` is
-   * applied at mount and never again — with React resetting the form once the action
-   * resolves, which puts a controlled value back too. A host who chose "חתונה", left
-   * the venue blank and submitted got the form back asking for "שעת האירוע" and
-   * offering "ריק = צד א׳" — the wording of a type they had already changed away from,
-   * beside a dropdown that no longer agreed with it either.
-   */
   const [eventType, setEventType] = useState(() => value('event_type') || 'other');
   const [submissionKey, setSubmissionKey] = useState(0);
   const [seenSubmission, setSeenSubmission] = useState<EventFormState['values']>(undefined);
   if (state.values !== seenSubmission) {
     setSeenSubmission(state.values);
     setSubmissionKey((n) => n + 1);
-    // Narrowed by the parse the action already ran, so this is one of the enum members
-    // or nothing — an emptiness check here would be a branch no value can take.
     const submittedType = state.values?.event_type;
     if (submittedType !== undefined && submittedType !== null) setEventType(submittedType);
   }
-  const preset = getEventTypePreset(eventType);
-
+  const preset = getEventTypePreset(eventType, locale);
   const isPublished =
     submitted?.is_active ?? (defaults.is_active === undefined ? true : defaults.is_active);
 
   return (
     <form action={formAction} className="space-y-8" noValidate>
+      <input type="hidden" name="locale" value={locale} />
       {defaults.id !== undefined && <input type="hidden" name="eventId" value={defaults.id} />}
 
-      <Group title="האירוע">
-        <Field label="סוג האירוע" required error={err('eventType')}>
+      <Group title={copy.eventGroup}>
+        <Field label={copy.eventType} required error={err('eventType')}>
           <Select
             key={submissionKey}
             name="eventType"
@@ -133,13 +97,8 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
           </Select>
         </Field>
 
-        <Field
-          label="כותרת פנימית"
-          required
-          error={err('title')}
-          hint="לזיהוי בדשבורד בלבד; האורחים לא רואים אותה."
-        >
-          <Input name="title" defaultValue={value('title')} placeholder="הברית של יונתן" />
+        <Field label={copy.internalTitle} required error={err('title')} hint={copy.internalTitleHint}>
+          <Input name="title" defaultValue={value('title')} placeholder={copy.internalTitlePlaceholder} />
         </Field>
 
         <Field label={preset.hostsLabel} required error={err('hostsNames')}>
@@ -151,70 +110,50 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
         </Field>
       </Group>
 
-      <Group title="מתי">
+      <Group title={copy.whenGroup}>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="תאריך" required error={err('eventDate')}>
+          <Field label={copy.date} required error={err('eventDate')}>
             <Input name="eventDate" type="date" defaultValue={value('event_date')} />
           </Field>
           <Field label={preset.ceremonyTimeLabel}>
-            <Input
-              name="ceremonyTime"
-              type="time"
-              defaultValue={value('ceremony_time').slice(0, 5)}
-            />
+            <Input name="ceremonyTime" type="time" defaultValue={value('ceremony_time').slice(0, 5)} />
           </Field>
-          <Field label="קבלת פנים">
-            <Input
-              name="receptionTime"
-              type="time"
-              defaultValue={value('reception_time').slice(0, 5)}
-            />
+          <Field label={copy.reception}>
+            <Input name="receptionTime" type="time" defaultValue={value('reception_time').slice(0, 5)} />
           </Field>
         </div>
       </Group>
 
-      <Group title="איפה">
-        <Field label="שם המקום" required error={err('venueName')}>
-          <Input name="venueName" defaultValue={value('venue_name')} placeholder="אולמי הדר" />
+      <Group title={copy.whereGroup}>
+        <Field label={copy.venue} required error={err('venueName')}>
+          <Input name="venueName" defaultValue={value('venue_name')} placeholder={copy.venuePlaceholder} />
         </Field>
 
-        <Field label="כתובת" required error={err('address')}>
-          <Input name="address" defaultValue={value('address')} placeholder="הרצל 12, פתח תקווה" />
+        <Field label={copy.address} required error={err('address')}>
+          <Input name="address" defaultValue={value('address')} placeholder={copy.addressPlaceholder} />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="קישור Waze" hint="חייב להתחיל ב-https://">
-            <Input
-              name="wazeUrl"
-              type="url"
-              dir="ltr"
-              className="text-start"
-              defaultValue={value('waze_url')}
-            />
+          <Field label={copy.wazeLink} hint={copy.httpsHint}>
+            <Input name="wazeUrl" type="url" dir="ltr" className="text-start" defaultValue={value('waze_url')} />
           </Field>
-          <Field label="קישור Google Maps" hint="חייב להתחיל ב-https://">
-            <Input
-              name="googleMapsUrl"
-              type="url"
-              dir="ltr"
-              className="text-start"
-              defaultValue={value('google_maps_url')}
-            />
+          <Field label={copy.mapsLink} hint={copy.httpsHint}>
+            <Input name="googleMapsUrl" type="url" dir="ltr" className="text-start" defaultValue={value('google_maps_url')} />
           </Field>
         </div>
       </Group>
 
-      <Group title="פרטים להזמנה">
+      <Group title={copy.invitationGroup}>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="תווית צד א׳" hint={`ריק = ${preset.defaultSideALabel}`}>
+          <Field label={copy.sideA} hint={`${copy.emptyEquals} ${preset.defaultSideALabel}`}>
             <Input name="sideALabel" defaultValue={value('side_a_label')} />
           </Field>
-          <Field label="תווית צד ב׳" hint={`ריק = ${preset.defaultSideBLabel}`}>
+          <Field label={copy.sideB} hint={`${copy.emptyEquals} ${preset.defaultSideBLabel}`}>
             <Input name="sideBLabel" defaultValue={value('side_b_label')} />
           </Field>
         </div>
 
-        <Field label="טלפון לבירורים" hint="מוצג לאורחים בתחתית ההזמנה">
+        <Field label={copy.contactPhone} hint={copy.contactPhoneHint}>
           <Input
             name="contactPhone"
             type="tel"
@@ -225,46 +164,38 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
           />
         </Field>
 
-        <Field label="הערה להזמנה" hint="למשל: חניה חינם במקום, או קוד לבוש">
+        <Field label={copy.description} hint={copy.descriptionHint}>
           <Textarea name="description" rows={3} defaultValue={value('description')} />
         </Field>
       </Group>
 
-      <Group title="מעקב">
-        {/* The denominator for the response-rate tile. Optional, and the tile says
-            "not available" without it rather than inventing a figure (§8.1). */}
-        <Field
-          label="כמה הזמנות שלחתם"
-          hint="לא חובה. משמש רק לחישוב אחוז המענה בדשבורד, ולא מוצג לאורחים."
-        >
+      <Group title={copy.trackingGroup}>
+        <Field label={copy.expectedGuests} hint={copy.expectedGuestsHint}>
           <Input
             name="expectedGuests"
             type="number"
             min={1}
             max={5000}
             inputMode="numeric"
-            placeholder="למשל 120"
+            placeholder={copy.expectedGuestsPlaceholder}
             defaultValue={value('expected_guests')}
           />
         </Field>
       </Group>
 
-      <Group title="פרסום">
+      <Group title={copy.publishingGroup}>
         <CheckboxField name="isActive" defaultChecked={isPublished}>
-          פרסום ההזמנה. כשהתיבה מסומנת הקישור פתוח לאורחים; אחרת הוא מחזיר 404, ואף אחד לא יכול לאשר
-          הגעה.
+          {copy.publish}
         </CheckboxField>
       </Group>
 
-      {state.status === 'error' && state.message !== '' && (
-        <Alert tone="error">{state.message}</Alert>
-      )}
+      {state.status === 'error' && state.message !== '' && <Alert tone="error">{state.message}</Alert>}
       {state.status === 'error' && state.message === '' && (
-        <Alert tone="error">יש שדות חסרים או שגויים. הם מסומנים למעלה.</Alert>
+        <Alert tone="error">{copy.genericFieldsError}</Alert>
       )}
 
       <Button type="submit" size="lg" block disabled={isPending}>
-        {isPending ? 'שומר…' : submitLabel}
+        {isPending ? copy.saving : submitLabel}
       </Button>
     </form>
   );
