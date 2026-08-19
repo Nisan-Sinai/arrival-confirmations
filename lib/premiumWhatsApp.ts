@@ -1,3 +1,5 @@
+import { defaultLocale, type Locale } from '@/lib/i18n';
+
 export const PREMIUM_MESSAGE_KINDS = ['invitation', 'reminder'] as const;
 export type PremiumMessageKind = (typeof PREMIUM_MESSAGE_KINDS)[number];
 
@@ -29,15 +31,32 @@ export function buildPremiumWhatsAppMessage({
   guestName,
   eventTitle,
   inviteUrl,
+  locale = defaultLocale,
 }: {
   kind: PremiumMessageKind;
   guestName: string;
   eventTitle: string;
   inviteUrl: string;
+  locale?: Locale;
 }): string {
+  if (locale === 'en') {
+    const opening =
+      kind === 'invitation'
+        ? `We would love to invite you to ${eventTitle}`
+        : `A reminder about ${eventTitle}`;
+    return [
+      `Hi ${guestName} 👋`,
+      opening,
+      '',
+      'For all the details and to RSVP:',
+      inviteUrl,
+      '',
+      'We would love to see you ❤️',
+    ].join('\n');
+  }
+
   const opening =
     kind === 'invitation' ? `נשמח להזמין אותך ל${eventTitle}` : `תזכורת לגבי ${eventTitle}`;
-
   return [
     `שלום ${guestName} 👋`,
     opening,
@@ -52,7 +71,6 @@ export function buildPremiumWhatsAppMessage({
 export function buildWhatsAppSendUrl(phone: string, message: string): string | null {
   const normalized = normalizeWhatsAppPhone(phone);
   if (normalized === null) return null;
-
   return `https://api.whatsapp.com/send?phone=${normalized}&text=${encodeURIComponent(message)}`;
 }
 
@@ -61,16 +79,17 @@ export function filterPremiumCampaignGuests(
   scope: PremiumCampaignScope,
   sentGuestIds: ReadonlySet<string>,
   query = '',
+  locale: Locale = defaultLocale,
 ): PremiumCampaignGuest[] {
-  const normalizedQuery = query.trim().toLocaleLowerCase('he-IL');
+  const language = locale === 'he' ? 'he-IL' : 'en-US';
+  const normalizedQuery = query.trim().toLocaleLowerCase(language);
 
   return guests.filter((guest) => {
     if (scope === 'unanswered' && guest.attendanceStatus !== null) return false;
     if (scope === 'not_sent' && sentGuestIds.has(guest.id)) return false;
-
     if (normalizedQuery.length === 0) return true;
     return (
-      guest.fullName.toLocaleLowerCase('he-IL').includes(normalizedQuery) ||
+      guest.fullName.toLocaleLowerCase(language).includes(normalizedQuery) ||
       guest.phone.includes(normalizedQuery)
     );
   });
