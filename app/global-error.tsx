@@ -1,17 +1,31 @@
 'use client';
 
+const COPY = {
+  he: {
+    title: 'משהו השתבש',
+    body: 'אירעה תקלה בטעינת האתר. נסו לרענן את הדף; אם התקלה חוזרת, נסו שוב בעוד מספר דקות.',
+    home: 'חזרה לדף הבית',
+    digest: 'מזהה תקלה:',
+  },
+  en: {
+    title: 'Something went wrong',
+    body: 'There was a problem loading the site. Refresh the page; if the problem returns, try again in a few minutes.',
+    home: 'Back to home',
+    digest: 'Error ID:',
+  },
+} as const;
+
 /**
- * The last-resort boundary: an error thrown by the root layout itself (§13).
- *
- * This replaces `<html>` and `<body>`, so it cannot use the layout's fonts, its
- * stylesheet or any component that assumes them — which is why the styles here are
- * inline and the shell is rebuilt by hand. `lang` and `dir` are repeated for the same
- * reason: at this depth nothing else has set them, and a Hebrew sentence rendered
- * left-to-right is unreadable.
+ * The last-resort boundary replaces the root document, so it repeats the language and
+ * direction itself and intentionally uses only inline styles and a plain recovery link.
  */
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+  const locale =
+    typeof window !== 'undefined' && /^\/en(?:\/|$)/.test(window.location.pathname) ? 'en' : 'he';
+  const copy = COPY[locale];
+
   return (
-    <html lang="he" dir="rtl">
+    <html lang={locale === 'he' ? 'he-IL' : 'en'} dir={locale === 'he' ? 'rtl' : 'ltr'}>
       <body
         style={{
           margin: 0,
@@ -28,17 +42,12 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
       >
         <div style={{ maxWidth: '32rem' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, color: '#2b3f5e' }}>
-            משהו השתבש
+            {copy.title}
           </h1>
-          <p style={{ marginTop: '1rem', lineHeight: 1.7, color: '#5b6472' }}>
-            אירעה תקלה בטעינת האתר. נסו לרענן את הדף; אם התקלה חוזרת, נסו שוב בעוד מספר דקות.
-          </p>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages --
-              A plain anchor on purpose. This boundary catches a failure in the root
-              layout, so the router that `next/link` navigates through is exactly the
-              thing that has just broken. A full document load is the recovery. */}
+          <p style={{ marginTop: '1rem', lineHeight: 1.7, color: '#5b6472' }}>{copy.body}</p>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a full reload is the recovery path */}
           <a
-            href="/"
+            href={locale === 'he' ? '/' : '/en'}
             style={{
               display: 'inline-block',
               marginTop: '2rem',
@@ -50,11 +59,11 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
               fontWeight: 600,
             }}
           >
-            חזרה לדף הבית
+            {copy.home}
           </a>
           {error.digest !== undefined && (
             <p style={{ marginTop: '2rem', fontSize: '0.75rem', color: '#7b8494' }}>
-              מזהה תקלה: <span dir="ltr">{error.digest}</span>
+              {copy.digest} <span dir="ltr">{error.digest}</span>
             </p>
           )}
         </div>
