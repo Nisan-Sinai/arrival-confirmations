@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createUserClient } from '@/lib/server/supabase';
 import type { GuestInsert, GuestUpdate } from '@/types/guestDatabase.types';
@@ -16,10 +17,19 @@ function optional(value: FormDataEntryValue | null): string | null {
   return text === '' ? null : text;
 }
 
-function eventPath(eventId: string, params: Record<string, string> = {}): string {
+function localeOf(formData: FormData): Locale {
+  const value = formData.get('locale');
+  return typeof value === 'string' && isLocale(value) ? value : defaultLocale;
+}
+
+function eventPath(
+  eventId: string,
+  locale: Locale,
+  params: Record<string, string> = {},
+): string {
   const search = new URLSearchParams(params);
   const suffix = search.size === 0 ? '' : `?${search.toString()}`;
-  return `/dashboard/events/${eventId}/guests${suffix}`;
+  return `${localePath(locale, `/dashboard/events/${eventId}/guests`)}${suffix}`;
 }
 
 function partySize(value: FormDataEntryValue | null): number | null {
@@ -59,6 +69,7 @@ async function duplicateExists(
 }
 
 export async function saveGuestAction(formData: FormData): Promise<void> {
+  const locale = localeOf(formData);
   const eventId = optional(formData.get('eventId'));
   const guestId = optional(formData.get('guestId'));
   const fullName = optional(formData.get('fullName'));
@@ -66,24 +77,24 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
   const count = partySize(formData.get('partySize'));
   if (eventId === null) throw new Error('Invalid guest request');
   if (fullName === null || phone === null || count === null) {
-    redirect(eventPath(eventId, { error: 'guest-fields' }));
+    redirect(eventPath(eventId, locale, { error: 'guest-fields' }));
   }
 
   const supabase = await requireOwnedEvent(eventId);
-  if (supabase === null) redirect('/dashboard');
+  if (supabase === null) redirect(localePath(locale, '/dashboard'));
 
   let normalized: string;
   try {
     normalized = normalizeIsraeliPhone(phone);
   } catch (error) {
     if (error instanceof PhoneNormalizationError) {
-      redirect(eventPath(eventId, { error: 'guest-phone' }));
+      redirect(eventPath(eventId, locale, { error: 'guest-phone' }));
     }
     throw error;
   }
 
   if (await duplicateExists(supabase, eventId, normalized, guestId)) {
-    redirect(eventPath(eventId, { error: 'guest-duplicate' }));
+    redirect(eventPath(eventId, locale, { error: 'guest-duplicate' }));
   }
 
   const values: GuestWrite = {
@@ -113,7 +124,7 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
       import_source: 'manual',
       is_active: true,
     });
-    if (error) redirect(eventPath(eventId, { error: 'guest-save' }));
+    if (error) redirect(eventPath(eventId, locale, { error: 'guest-save' }));
   } else {
     const { data, error } = await supabase
       .from('guests')
@@ -122,23 +133,26 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
       .eq('id', guestId)
       .select('id');
     if (error || data === null || data.length === 0) {
-      redirect(eventPath(eventId, { error: 'guest-save' }));
+      redirect(eventPath(eventId, locale, { error: 'guest-save' }));
     }
   }
 
-  revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
-  redirect(eventPath(eventId, { saved: guestId === null ? 'guest-added' : 'guest-updated' }));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/guests`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/tools`));
+  redirect(
+    eventPath(eventId, locale, { saved: guestId === null ? 'guest-added' : 'guest-updated' }),
+  );
 }
 
 export async function deleteGuestAction(formData: FormData): Promise<void> {
+  const locale = localeOf(formData);
   const eventId = optional(formData.get('eventId'));
   const guestId = optional(formData.get('guestId'));
   if (eventId === null || guestId === null) throw new Error('Invalid guest deletion');
 
   const supabase = await requireOwnedEvent(eventId);
-  if (supabase === null) redirect('/dashboard');
+  if (supabase === null) redirect(localePath(locale, '/dashboard'));
   const { data, error } = await supabase
     .from('guests')
     .update({ is_active: false, token_revoked_at: new Date().toISOString() })
@@ -146,13 +160,13 @@ export async function deleteGuestAction(formData: FormData): Promise<void> {
     .eq('id', guestId)
     .select('id');
   if (error || data === null || data.length === 0) {
-    redirect(eventPath(eventId, { error: 'guest-delete' }));
+    redirect(eventPath(eventId, locale, { error: 'guest-delete' }));
   }
 
-  revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
-  redirect(eventPath(eventId, { saved: 'guest-deleted' }));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/guests`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/tools`));
+  redirect(eventPath(eventId, locale, { saved: 'guest-deleted' }));
 }
 
 interface ImportedContact {
@@ -225,15 +239,16 @@ async function upsertContacts(
 }
 
 export async function importPhoneContactsAction(formData: FormData): Promise<void> {
+  const locale = localeOf(formData);
   const eventId = optional(formData.get('eventId'));
   if (eventId === null) throw new Error('Invalid contact import');
   const supabase = await requireOwnedEvent(eventId);
-  if (supabase === null) redirect('/dashboard');
+  if (supabase === null) redirect(localePath(locale, '/dashboard'));
 
   const selected = parseSelectedContacts(optional(formData.get('contactsJson')) ?? '');
   const pasted = parsePastedContacts(optional(formData.get('pastedContacts')) ?? '');
   const contacts = selected.length > 0 ? selected : pasted;
-  if (contacts.length === 0) redirect(eventPath(eventId, { error: 'contacts-empty' }));
+  if (contacts.length === 0) redirect(eventPath(eventId, locale, { error: 'contacts-empty' }));
 
   let savedCount: number;
   try {
@@ -245,27 +260,28 @@ export async function importPhoneContactsAction(formData: FormData): Promise<voi
     );
     savedCount = result.saved;
   } catch {
-    redirect(eventPath(eventId, { error: 'contacts-save' }));
+    redirect(eventPath(eventId, locale, { error: 'contacts-save' }));
   }
 
-  if (savedCount === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
-  revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
-  redirect(eventPath(eventId, { saved: 'contacts', count: String(savedCount) }));
+  if (savedCount === 0) redirect(eventPath(eventId, locale, { error: 'contacts-invalid' }));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/guests`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/tools`));
+  redirect(eventPath(eventId, locale, { saved: 'contacts', count: String(savedCount) }));
 }
 
 export async function importGuestFileAction(formData: FormData): Promise<void> {
+  const locale = localeOf(formData);
   const eventId = optional(formData.get('eventId'));
   if (eventId === null) throw new Error('Invalid guest file import');
   const supabase = await requireOwnedEvent(eventId);
-  if (supabase === null) redirect('/dashboard');
+  if (supabase === null) redirect(localePath(locale, '/dashboard'));
 
   const file = formData.get('guestFile');
   if (!(file instanceof File) || file.size === 0) {
-    redirect(eventPath(eventId, { error: 'file-empty' }));
+    redirect(eventPath(eventId, locale, { error: 'file-empty' }));
   }
-  if (file.size > 5_000_000) redirect(eventPath(eventId, { error: 'file-large' }));
+  if (file.size > 5_000_000) redirect(eventPath(eventId, locale, { error: 'file-large' }));
 
   let savedCount: number;
   try {
@@ -275,14 +291,14 @@ export async function importGuestFileAction(formData: FormData): Promise<void> {
     savedCount = result.saved;
   } catch (error) {
     if (error instanceof GuestImportError) {
-      redirect(eventPath(eventId, { error: 'file-format' }));
+      redirect(eventPath(eventId, locale, { error: 'file-format' }));
     }
-    redirect(eventPath(eventId, { error: 'contacts-save' }));
+    redirect(eventPath(eventId, locale, { error: 'contacts-save' }));
   }
 
-  if (savedCount === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
-  revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
-  redirect(eventPath(eventId, { saved: 'file', count: String(savedCount) }));
+  if (savedCount === 0) redirect(eventPath(eventId, locale, { error: 'contacts-invalid' }));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/guests`));
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/tools`));
+  redirect(eventPath(eventId, locale, { saved: 'file', count: String(savedCount) }));
 }
