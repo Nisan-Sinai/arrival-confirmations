@@ -118,7 +118,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
         <section
           id="accessibility-panel"
           aria-labelledby="accessibility-title"
-          className="border-border bg-card text-card-foreground shadow-overlay fixed bottom-20 left-4 z-[60] w-[min(21rem,calc(100vw-2rem))] rounded-2xl border p-4"
+          className="border-border bg-card text-card-foreground shadow-overlay fixed bottom-20 start-4 z-[60] w-[min(21rem,calc(100vw-2rem))] rounded-2xl border p-4"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 id="accessibility-title" className="text-lg font-bold">
@@ -206,7 +206,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
         aria-expanded={open}
         aria-controls="accessibility-panel"
         onClick={() => setOpen((current) => !current)}
-        className="bg-primary text-primary-foreground shadow-lifted hover:bg-primary-hover fixed bottom-4 left-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full transition"
+        className="bg-primary text-primary-foreground shadow-lifted hover:bg-primary-hover fixed bottom-4 start-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full transition"
       >
         <svg
           aria-hidden="true"
