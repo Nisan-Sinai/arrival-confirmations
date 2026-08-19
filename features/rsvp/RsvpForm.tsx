@@ -12,35 +12,11 @@ import { Card } from '@/components/ui/card';
 import { CheckboxField, Field, Input, RadioCard, Select, Textarea } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
 import { Rule } from '@/components/ui/layout';
-import { UI_MESSAGES } from '@/config/messages';
+import { getAppCopy } from '@/config/appCopy';
+import { getDictionary } from '@/config/dictionary';
+import { useAppLocale } from '@/features/i18n/AppLocaleProvider';
 
-/**
- * The public RSVP form (§6, §9).
- *
- * `useActionState` keeps the whole thing working before hydration: the browser posts
- * the form natively and the Server Action still runs. That matters here more than in
- * most apps — a guest on a weak connection at a venue should be able to answer before
- * the JavaScript finishes loading.
- */
-
-/**
- * Declared here rather than beside the action: a 'use server' module may only export
- * async functions, so a plain object exported from it arrives as undefined on the
- * client and the first render crashes reading state.fieldErrors.
- */
 const INITIAL_STATE: RsvpFormState = { status: 'idle', message: '', fieldErrors: {} };
-
-const COUNT_FIELDS = [
-  { name: 'adultsCount', label: 'מבוגרים', fallback: '1' },
-  { name: 'childrenCount', label: 'ילדים', fallback: '0' },
-  { name: 'babiesCount', label: 'תינוקות', fallback: '0' },
-] as const;
-
-const STATUS_OPTIONS = [
-  { value: 'attending', label: 'נגיע בשמחה' },
-  { value: 'maybe', label: 'עדיין לא בטוח' },
-  { value: 'not_attending', label: 'לא נוכל להגיע' },
-] as const;
 
 interface RsvpFormProps {
   readonly eventId: string;
@@ -49,28 +25,26 @@ interface RsvpFormProps {
 }
 
 export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
+  const locale = useAppLocale();
+  const copy = getAppCopy(locale).rsvp;
+  const dictionary = getDictionary(locale);
+  const countFields = [
+    { name: 'adultsCount', label: copy.adults, fallback: '1' },
+    { name: 'childrenCount', label: copy.children, fallback: '0' },
+    { name: 'babiesCount', label: copy.babies, fallback: '0' },
+  ] as const;
+  const statusOptions = [
+    { value: 'attending', label: copy.attending },
+    { value: 'maybe', label: copy.maybe },
+    { value: 'not_attending', label: copy.notAttending },
+  ] as const;
+
   const [state, formAction, isPending] = useActionState<RsvpFormState, FormData>(
     submitRsvpAction,
     INITIAL_STATE,
   );
-
-  /**
-   * Which answer is selected, mirrored into state only because the count fields are
-   * shown or hidden by it.
-   *
-   * The reconciliation below is React's documented "adjusting state when a prop
-   * changes" pattern, and it is here for a specific failure: React resets the form's
-   * DOM once the action resolves, so a guest who selected "we cannot come" and then
-   * tripped validation got the radio back at its default while this state still said
-   * `not_attending` — the counters stayed hidden under a selection that no longer
-   * existed. Re-seeding from the echoed submission keeps the two in step.
-   */
   const submittedStatus = state.values?.attendanceStatus;
   const [status, setStatus] = useState('attending');
-  /**
-   * Bumped once per echoed submission, and used as a `key` on the one control that
-   * cannot redraw without being remounted — see the family-side field below.
-   */
   const [submissionKey, setSubmissionKey] = useState(0);
   const [seenSubmission, setSeenSubmission] = useState<RsvpFormValues | undefined>(undefined);
   if (state.values !== seenSubmission) {
@@ -98,9 +72,8 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
             <path d="m5 12.5 4.5 4.5L19 7.5" />
           </svg>
         </span>
-        {/* §9: aria-live so a screen reader announces the outcome after submission. */}
         <div aria-live="polite">
-          <h2 className="text-h2 text-primary mt-6 font-bold">{UI_MESSAGES.rsvp.successTitle}</h2>
+          <h2 className="text-h2 text-primary mt-6 font-bold">{dictionary.rsvp.successTitle}</h2>
           <p className="text-muted-foreground mt-3 leading-relaxed">{state.message}</p>
         </div>
         <Rule className="mt-8" />
@@ -110,50 +83,40 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
 
   const error = (field: string) => state.fieldErrors[field];
   const previous = state.values;
-
-  // Counts are meaningless once a guest has declined, so they are hidden rather than
-  // left to be filled in and then rejected by a constraint they cannot see.
   const showCounts = status !== 'not_attending';
 
   return (
     <Card padding="lg" className="relative">
       <div className="text-center">
-        <p className="text-eyebrow text-accent-strong font-semibold">נשמח לדעת</p>
-        <h2 className="text-h2 text-primary mt-2 font-bold">אישור הגעה</h2>
+        <p className="text-eyebrow text-accent-strong font-semibold">{copy.eyebrow}</p>
+        <h2 className="text-h2 text-primary mt-2 font-bold">{copy.title}</h2>
       </div>
 
       <Rule className="my-7" />
 
       <form action={formAction} className="space-y-6" noValidate>
         <input type="hidden" name="eventId" value={eventId} />
-        {/*
-          §6.1 honeypot. Hidden without display:none, which many bots skip — they only
-          fill fields they believe a human can see.
-
-          Clipped to nothing rather than pushed to left-[-9999px]. The negative offset
-          worked but widened the document to 10,359px, so every page scrolled sideways
-          on a phone; the clip achieves the same concealment inside the layout.
-        */}
+        <input type="hidden" name="locale" value={locale} />
         <div
           aria-hidden="true"
           className="absolute h-px w-px overflow-hidden"
           style={{ clipPath: 'inset(50%)' }}
         >
-          <label htmlFor="rsvp-company">אל תמלאו שדה זה</label>
+          <label htmlFor="rsvp-company">{copy.honeypot}</label>
           <input id="rsvp-company" name="company" type="text" tabIndex={-1} autoComplete="off" />
         </div>
 
-        <Field label="שם מלא" required error={error('fullName')}>
+        <Field label={copy.fullName} required error={error('fullName')}>
           <Input
             name="fullName"
             type="text"
             autoComplete="name"
-            placeholder="ישראל ישראלי"
+            placeholder={copy.fullNamePlaceholder}
             defaultValue={previous?.fullName ?? ''}
           />
         </Field>
 
-        <Field label="טלפון" required error={error('phone')} hint="לעדכונים על האירוע בלבד">
+        <Field label={copy.phone} required error={error('phone')} hint={copy.phoneHint}>
           <Input
             name="phone"
             type="tel"
@@ -161,25 +124,21 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
             autoComplete="tel"
             dir="ltr"
             placeholder="050-1234567"
-            // Typed left-to-right but aligned to the start of an RTL line, so the
-            // field reads in the same column as every other label on the form.
             className="text-start"
             defaultValue={previous?.phone ?? ''}
           />
         </Field>
 
-        {/* A radiogroup rather than a select: three options are faster to tap than a
-            dropdown, and the choice stays visible while the rest is filled in. */}
         <fieldset>
           <legend className="text-primary text-sm font-semibold">
-            האם תגיעו?
+            {copy.attendanceLegend}
             <span aria-hidden="true" className="text-accent-strong ms-1">
               *
             </span>
-            <span className="sr-only"> (שדה חובה)</span>
+            <span className="sr-only"> {copy.required}</span>
           </legend>
           <div className="mt-2 space-y-2.5">
-            {STATUS_OPTIONS.map((option) => (
+            {statusOptions.map((option) => (
               <RadioCard
                 key={option.value}
                 name="attendanceStatus"
@@ -199,9 +158,9 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
 
         {showCounts && (
           <fieldset>
-            <legend className="text-primary text-sm font-semibold">כמה תגיעו?</legend>
+            <legend className="text-primary text-sm font-semibold">{copy.countLegend}</legend>
             <div className="mt-2 grid grid-cols-3 gap-3">
-              {COUNT_FIELDS.map((field) => (
+              {countFields.map((field) => (
                 <Field key={field.name} label={field.label} error={error(field.name)}>
                   <Input
                     name={field.name}
@@ -218,34 +177,16 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
           </fieldset>
         )}
 
-        <Field label="צד משפחה">
-          {/*
-            The `key` is what makes this field survive a rejection, and it is the only
-            control on the form that needs one. React applies `defaultValue` to a
-            `<select>` at mount and never again, and it resets the form once the action
-            resolves — so a changed default reaches the text inputs but leaves this one
-            sitting on "לא רלוונטי". Making it controlled does not help either: the
-            reset lands after the re-render and puts it back. Remounting per submission
-            re-applies the default as a `selected` attribute, which is what the reset
-            itself then restores, so the two stop fighting.
-
-            The guest-visible bug: someone picks "צד הכלה", mistypes their phone, and
-            gets the form back with the side silently cleared. They resubmit without
-            noticing and the host seats them with the wrong family.
-          */}
+        <Field label={copy.familySide}>
           <Select key={submissionKey} name="familySide" defaultValue={previous?.familySide ?? ''}>
-            <option value="">לא רלוונטי</option>
+            <option value="">{copy.notRelevant}</option>
             <option value="side_a">{sideALabel}</option>
             <option value="side_b">{sideBLabel}</option>
-            <option value="other">אחר</option>
+            <option value="other">{copy.other}</option>
           </Select>
         </Field>
 
-        <Field
-          label="דרישות תזונה"
-          error={error('dietaryRequirements')}
-          hint="צמחוני, ללא גלוטן, אלרגיות — כל מה שחשוב שנדע"
-        >
+        <Field label={copy.dietary} error={error('dietaryRequirements')} hint={copy.dietaryHint}>
           <Input
             name="dietaryRequirements"
             type="text"
@@ -254,13 +195,12 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
           />
         </Field>
 
-        <Field label="הערות" error={error('notes')}>
+        <Field label={copy.notes} error={error('notes')}>
           <Textarea name="notes" rows={3} maxLength={1000} defaultValue={previous?.notes ?? ''} />
         </Field>
 
         <CheckboxField name="consent" required error={error('consent')}>
-          אני מאשר/ת שהפרטים שמסרתי — כולל דרישות תזונה, שעשויות להעיד על מצב רפואי או על אורח חיים
-          — יישמרו לצורך ארגון האירוע בלבד, ויימחקו לאחריו.
+          {copy.consent}
         </CheckboxField>
 
         {state.status === 'error' && state.message !== '' && (
@@ -268,11 +208,11 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
         )}
 
         <Button type="submit" size="lg" block disabled={isPending}>
-          {isPending ? UI_MESSAGES.rsvp.submitting : UI_MESSAGES.rsvp.submit}
+          {isPending ? dictionary.rsvp.submitting : dictionary.rsvp.submit}
         </Button>
 
         <p className="text-muted-foreground text-center text-xs leading-relaxed">
-          הפרטים נשמרים אצל בעלי השמחה בלבד ונמחקים לאחר האירוע.
+          {copy.privacy}
         </p>
       </form>
     </Card>
