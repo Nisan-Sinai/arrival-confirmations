@@ -1,170 +1,101 @@
 import { z } from 'zod';
 
+import { getDictionary } from '@/config/dictionary';
 import { appConfig } from '@/config/event.config';
-import { UI_MESSAGES } from '@/config/messages';
+import { defaultLocale, type Locale } from '@/lib/i18n';
 import { tryNormalizeIsraeliPhone } from '@/lib/phone';
-
-/**
- * The RSVP contract, validated identically on both sides (§6, §6.1).
- *
- * One schema, two enforcement points. The client runs it for immediate feedback;
- * the server runs the same object again on the submitted payload, because client
- * validation is a convenience and never a control — a request can be replayed with
- * any body at all. §6.1 spells out that order: client Zod → honeypot and timing →
- * rate limit → server Zod → sanitisation.
- *
- * Every bound here has a counterpart CHECK constraint in the database, so the three
- * layers agree and a gap in one is caught by the next.
- */
 
 const MAX_PER_CATEGORY = appConfig.maxAttendeesPerCategory;
 
-/*
- * The `AttendanceStatus` and `FamilySide` aliases that used to sit beside these
- * tuples had no importer. They duplicated `Database['public']['Enums'][…]`, which is
- * generated from the schema and therefore cannot drift from it — so keeping a
- * hand-written second name for the same union was an invitation to have two.
- */
 export const ATTENDANCE_STATUSES = ['attending', 'not_attending', 'maybe'] as const;
-
 export const FAMILY_SIDES = ['side_a', 'side_b', 'other'] as const;
 
-/**
- * Collapses runs of whitespace and trims.
- *
- * Names arrive with trailing spaces and doubled spaces constantly, and two spellings
- * of one name should not read as two guests in the dashboard.
- */
 const collapseWhitespace = (value: string): string => value.replace(/\s+/g, ' ').trim();
-
-/**
- * Strips characters that carry no meaning in a name or a note but do carry meaning
- * to a renderer: zero-width joiners, bidi overrides, and control characters.
- *
- * A bidi override in a guest's name would let it reorder the text around it in the
- * admin table. React escapes HTML, so this is not about injection — it is about a
- * name being able to lie about what it is next to.
- */
 const stripInvisibles = (value: string): string =>
-  // Escaped rather than spelled with the raw code points. Written literally, this
-  // class put a NUL byte in the source, so git classified the whole file as binary
-  // and stopped producing diffs, blame and merges for it. The ranges are unchanged:
-  // C0 controls except tab and newline, DEL, the zero-width and directional marks,
-  // the bidi overrides, and the bidi isolates.
   value.replace(/[\u0000-\u0008\u000B-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g, '');
-
 const sanitizedText = z.string().transform((value) => collapseWhitespace(stripInvisibles(value)));
 
-export const fullNameSchema = sanitizedText.pipe(
-  z
-    .string()
-    .min(2, UI_MESSAGES.validation.fullNameTooShort)
-    .max(120, UI_MESSAGES.validation.fullNameTooLong),
-);
-
-/**
- * Accepts any spelling the normaliser accepts and stores the canonical form.
- *
- * The transform is the point: everything downstream sees E.164, so nothing else in
- * the codebase has to remember to normalise before comparing.
- */
-export const phoneSchema = z.string().transform((value, ctx) => {
-  const result = tryNormalizeIsraeliPhone(value);
-  if (!result.ok) {
-    ctx.addIssue({ code: 'custom', message: UI_MESSAGES.validation.phoneInvalid });
-    return z.NEVER;
-  }
-  return result.value;
-});
-
-const attendeeCountSchema = z
-  .number({ message: UI_MESSAGES.validation.countNegative })
-  .int(UI_MESSAGES.validation.countNegative)
-  .min(0, UI_MESSAGES.validation.countNegative)
-  .max(MAX_PER_CATEGORY, UI_MESSAGES.validation.countTooLarge);
-
-/** Number inputs hand back strings; an empty field means zero, not NaN. */
-export const coercedCountSchema = z.preprocess((value) => {
-  if (value === '' || value === null || value === undefined) return 0;
-  if (typeof value === 'string') {
-    const parsed = Number(value.trim());
-    return Number.isNaN(parsed) ? value : parsed;
-  }
-  return value;
-}, attendeeCountSchema);
-
-const optionalNote = (max: number, message: string) =>
-  z
-    .union([z.string(), z.null(), z.undefined()])
-    .transform((value) => {
-      if (value === null || value === undefined) return null;
-      const cleaned = collapseWhitespace(stripInvisibles(value));
-      return cleaned === '' ? null : cleaned;
-    })
-    .refine((value) => value === null || value.length <= max, { message });
-
-export const rsvpSubmissionSchema = z
-  .object({
-    fullName: fullNameSchema,
-    phone: phoneSchema,
-    attendanceStatus: z.enum(ATTENDANCE_STATUSES, {
-      message: UI_MESSAGES.validation.attendanceRequired,
-    }),
-    adultsCount: coercedCountSchema,
-    childrenCount: coercedCountSchema,
-    babiesCount: coercedCountSchema,
-    familySide: z
-      .union([z.enum(FAMILY_SIDES), z.literal(''), z.null(), z.undefined()])
-      .transform((value) => (value === '' || value === undefined ? null : value)),
-    dietaryRequirements: optionalNote(500, UI_MESSAGES.validation.dietaryTooLong),
-    notes: optionalNote(1000, UI_MESSAGES.validation.notesTooLong),
-    // §6.1: storing personal data without the tick that authorised it is the thing
-    // the checkbox exists to prevent, so `false` is not an accepted value.
-    consent: z.literal(true, { message: UI_MESSAGES.validation.consentRequired }),
-    /**
-     * §6.1 honeypot. A real guest never sees this field, so anything in it means a
-     * script filled the form. Named plausibly on purpose — `honeypot` would be
-     * skipped by anything that reads the DOM.
-     */
-    company: z
-      .union([z.string(), z.undefined()])
-      .refine((value) => value === undefined || value === '', {
-        message: UI_MESSAGES.validation.required,
-      }),
-  })
-  .superRefine((value, ctx) => {
-    // Mirrors rsvps_not_attending_has_no_seats. Reported against the count field so
-    // the error lands next to the control the guest has to change.
-    if (
-      value.attendanceStatus === 'not_attending' &&
-      value.adultsCount + value.childrenCount + value.babiesCount > 0
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['adultsCount'],
-        message: UI_MESSAGES.validation.countTooLarge,
-      });
+function schemasFor(locale: Locale) {
+  const messages = getDictionary(locale).validation;
+  const fullName = sanitizedText.pipe(
+    z.string().min(2, messages.fullNameTooShort).max(120, messages.fullNameTooLong),
+  );
+  const phone = z.string().transform((value, ctx) => {
+    const result = tryNormalizeIsraeliPhone(value);
+    if (!result.ok) {
+      ctx.addIssue({ code: 'custom', message: messages.phoneInvalid });
+      return z.NEVER;
     }
+    return result.value;
   });
+  const attendeeCount = z
+    .number({ message: messages.countNegative })
+    .int(messages.countNegative)
+    .min(0, messages.countNegative)
+    .max(MAX_PER_CATEGORY, messages.countTooLarge);
+  const coercedCount = z.preprocess((value) => {
+    if (value === '' || value === null || value === undefined) return 0;
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      return Number.isNaN(parsed) ? value : parsed;
+    }
+    return value;
+  }, attendeeCount);
+  const optionalNote = (max: number, message: string) =>
+    z
+      .union([z.string(), z.null(), z.undefined()])
+      .transform((value) => {
+        if (value === null || value === undefined) return null;
+        const cleaned = collapseWhitespace(stripInvisibles(value));
+        return cleaned === '' ? null : cleaned;
+      })
+      .refine((value) => value === null || value.length <= max, { message });
 
-export type RsvpSubmission = z.infer<typeof rsvpSubmissionSchema>;
-/*
- * `RsvpSubmissionInput` (the pre-transform shape) is gone with the React Hook Form
- * dependency it existed for. The form is uncontrolled and posts a FormData to a
- * Server Action, so nothing binds to the input type.
- */
+  const submission = z
+    .object({
+      fullName,
+      phone,
+      attendanceStatus: z.enum(ATTENDANCE_STATUSES, { message: messages.attendanceRequired }),
+      adultsCount: coercedCount,
+      childrenCount: coercedCount,
+      babiesCount: coercedCount,
+      familySide: z
+        .union([z.enum(FAMILY_SIDES), z.literal(''), z.null(), z.undefined()])
+        .transform((value) => (value === '' || value === undefined ? null : value)),
+      dietaryRequirements: optionalNote(500, messages.dietaryTooLong),
+      notes: optionalNote(1000, messages.notesTooLong),
+      consent: z.literal(true, { message: messages.consentRequired }),
+      company: z
+        .union([z.string(), z.undefined()])
+        .refine((value) => value === undefined || value === '', { message: messages.required }),
+    })
+    .superRefine((value, ctx) => {
+      if (
+        value.attendanceStatus === 'not_attending' &&
+        value.adultsCount + value.childrenCount + value.babiesCount > 0
+      ) {
+        ctx.addIssue({ code: 'custom', path: ['adultsCount'], message: messages.countTooLarge });
+      }
+    });
 
-/**
- * Server-side re-validation (§6.1).
- *
- * Identical rules, deliberately: the value of running it again is not extra strictness
- * but that it runs at all, on a payload no client controlled.
- */
-export function parseRsvpSubmission(payload: unknown): z.ZodSafeParseResult<RsvpSubmission> {
-  return rsvpSubmissionSchema.safeParse(payload);
+  return { fullName, phone, coercedCount, submission };
 }
 
-/** Flattens issues into a field→message map the form can apply directly. */
+const hebrewSchemas = schemasFor(defaultLocale);
+export const fullNameSchema = hebrewSchemas.fullName;
+export const phoneSchema = hebrewSchemas.phone;
+export const coercedCountSchema = hebrewSchemas.coercedCount;
+export const rsvpSubmissionSchema = hebrewSchemas.submission;
+
+export type RsvpSubmission = z.infer<typeof rsvpSubmissionSchema>;
+
+export function parseRsvpSubmission(
+  payload: unknown,
+  locale: Locale = defaultLocale,
+): z.ZodSafeParseResult<RsvpSubmission> {
+  return schemasFor(locale).submission.safeParse(payload) as z.ZodSafeParseResult<RsvpSubmission>;
+}
+
 export function toFieldErrors(error: z.ZodError): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
   for (const issue of error.issues) {
