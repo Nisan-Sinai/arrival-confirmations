@@ -3,6 +3,7 @@ import { Assistant, Frank_Ruhl_Libre } from 'next/font/google';
 
 import { getDictionary } from '@/config/dictionary';
 import { assertNoPlaceholders } from '@/config/event.config';
+import { AppLocaleProvider } from '@/features/i18n/AppLocaleProvider';
 import { SiteFooter } from '@/features/layout/SiteFooter';
 import {
   directionOf,
@@ -61,12 +62,6 @@ export function buildMetadata(locale: Locale): Metadata {
   const dictionary = getDictionary(locale);
 
   return {
-    /**
-     * §12. Every relative URL in a `Metadata` object — canonical tags, `og:image`,
-     * `og:url` — is resolved against this. Without it Next.js emits the image path
-     * relative and warns, and a preview crawler is handed a URL it cannot fetch, which
-     * is the difference between a share card and a bare grey rectangle.
-     */
     metadataBase: new URL(SITE_ORIGIN),
     title: {
       default: dictionary.site.name,
@@ -75,20 +70,12 @@ export function buildMetadata(locale: Locale): Metadata {
     description: dictionary.site.description,
     applicationName: dictionary.site.name,
     formatDetection: {
-      // A phone number inside the invitation copy should not become a tap-to-call link
-      // mid-sentence; the contact block links deliberately instead.
       telephone: false,
     },
     alternates: {
       canonical: localePath(locale, '/'),
       languages: languageAlternates('/'),
     },
-    /**
-     * Defaults, not the last word: `openGraph` is replaced wholesale by any route that
-     * declares its own, which is why the invitation page restates `type` and `locale`.
-     * The image is the exception — `app/opengraph-image.tsx` is picked up by file
-     * convention and does not need naming here.
-     */
     openGraph: {
       type: 'website',
       locale: openGraphLocale(locale),
@@ -97,18 +84,7 @@ export function buildMetadata(locale: Locale): Metadata {
       description: dictionary.site.description,
       url: localePath(locale, '/'),
     },
-    // Read by more preview clients than Twitter's own, and the only thing it changes is
-    // whether the image renders full-bleed or as a thumbnail beside the text.
     twitter: { card: 'summary_large_image' },
-    /**
-     * Ownership proof for Google Search Console — see the note on the constant for why
-     * it is committed rather than configured.
-     *
-     * This is the tag that actually gets the site into Google. Nothing else in this file
-     * does: robots.txt and a sitemap describe a site Google already knows about, and
-     * Google will not discover a brand-new domain with no inbound links on its own.
-     * Verifying here and submitting `/sitemap.xml` is what starts the clock.
-     */
     verification: { google: GOOGLE_SITE_VERIFICATION },
   };
 }
@@ -122,15 +98,9 @@ export const viewport: Viewport = {
 /**
  * The document shell, shared by both locales.
  *
- * `lang` and `dir` are the reason each locale needs a root layout of its own: Next.js
- * only lets the outermost layout emit `<html>`, so one shared root would have to pick a
- * single language for every page on the site. A screen reader handed English prose
- * under `lang="he"` announces it in the wrong voice, and the bidi algorithm lays it out
- * from the wrong side.
- *
- * The product name now comes from the dictionary rather than `appConfig`, which holds
- * a single Hebrew string. The document title is the first thing a reader sees, and it
- * should not be the one place the language fails to follow them.
+ * `lang` and `dir` are set on the actual document, while `AppLocaleProvider` carries
+ * the same locale into client components deeper in the app. This prevents shared
+ * dashboard and RSVP components from silently falling back to Hebrew after navigation.
  */
 export function RootDocument({
   locale,
@@ -145,15 +115,16 @@ export function RootDocument({
       className={`${assistant.variable} ${frankRuhl.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        {/* §9: skip link, first in the tab order, visible only once focused. */}
-        <a
-          href="#main"
-          className="focus-visible:bg-primary focus-visible:text-primary-foreground sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-4 focus-visible:right-4 focus-visible:z-50 focus-visible:rounded-md focus-visible:px-4 focus-visible:py-2"
-        >
-          {dictionary.a11y.skipToContent}
-        </a>
-        {children}
-        <SiteFooter locale={locale} />
+        <AppLocaleProvider locale={locale}>
+          <a
+            href="#main"
+            className="focus-visible:bg-primary focus-visible:text-primary-foreground sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-4 focus-visible:start-4 focus-visible:z-50 focus-visible:rounded-md focus-visible:px-4 focus-visible:py-2"
+          >
+            {dictionary.a11y.skipToContent}
+          </a>
+          {children}
+          <SiteFooter locale={locale} />
+        </AppLocaleProvider>
       </body>
     </html>
   );

@@ -6,20 +6,12 @@ import { submitPersonalRsvpAction, type PersonalRsvpState } from '@/app/actions/
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
+import { getAppCopy } from '@/config/appCopy';
+import { useAppLocale } from '@/features/i18n/AppLocaleProvider';
 
 const INITIAL_STATE: PersonalRsvpState = { status: 'idle', message: '' };
 
-const OPTIONS = [
-  { value: 'attending', label: 'מגיע/ה', description: 'נגיע בשמחה', variant: 'primary' },
-  { value: 'not_attending', label: 'לא מגיע/ה', description: 'לא נוכל להגיע', variant: 'outline' },
-  { value: 'maybe', label: 'אולי', description: 'עדיין לא בטוחים', variant: 'secondary' },
-] as const;
-
-function statusLabel(status: 'attending' | 'not_attending' | 'maybe'): string {
-  if (status === 'attending') return 'מגיע/ה';
-  if (status === 'not_attending') return 'לא מגיע/ה';
-  return 'אולי';
-}
+type Status = 'attending' | 'not_attending' | 'maybe';
 
 export function PersonalRsvpButtons({
   guestName,
@@ -28,30 +20,62 @@ export function PersonalRsvpButtons({
 }: {
   guestName: string;
   partySize: number;
-  currentStatus: 'attending' | 'not_attending' | 'maybe' | null;
+  currentStatus: Status | null;
 }) {
+  const locale = useAppLocale();
+  const copy = getAppCopy(locale).personalRsvp;
+  const options = [
+    {
+      value: 'attending' as const,
+      label: copy.attending,
+      description: copy.attendingDescription,
+      variant: 'primary' as const,
+    },
+    {
+      value: 'not_attending' as const,
+      label: copy.notAttending,
+      description: copy.notAttendingDescription,
+      variant: 'outline' as const,
+    },
+    {
+      value: 'maybe' as const,
+      label: copy.maybe,
+      description: copy.maybeDescription,
+      variant: 'secondary' as const,
+    },
+  ];
+  const statusLabel = (status: Status): string =>
+    status === 'attending'
+      ? copy.attending
+      : status === 'not_attending'
+        ? copy.notAttending
+        : copy.maybe;
+
   const [state, formAction, isPending] = useActionState(submitPersonalRsvpAction, INITIAL_STATE);
   const selected = state.selected ?? currentStatus;
 
   return (
     <Card padding="lg" className="border-accent/30">
       <div className="text-center">
-        <p className="text-eyebrow text-accent-strong font-semibold">קישור אישי</p>
-        <h2 className="text-h2 text-primary mt-2 font-bold">שלום {guestName}</h2>
+        <p className="text-eyebrow text-accent-strong font-semibold">{copy.eyebrow}</p>
+        <h2 className="text-h2 text-primary mt-2 font-bold">
+          {copy.hello} {guestName}
+        </h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          אין צורך למלא שם או טלפון. בחרו תשובה אחת וזה הכול.
-          {partySize > 1 ? ` ההזמנה משויכת ל-${partySize} אנשים.` : ''}
+          {copy.intro}
+          {partySize > 1 ? ` ${copy.partyPrefix}${partySize}${copy.partySuffix}` : ''}
         </p>
       </div>
 
       {selected !== null && state.status !== 'success' && (
         <p className="border-border bg-secondary/30 mt-5 rounded-xl border px-4 py-3 text-center text-sm">
-          הבחירה הנוכחית: <strong>{statusLabel(selected)}</strong>
+          {copy.current} <strong>{statusLabel(selected)}</strong>
         </p>
       )}
 
       <form action={formAction} className="mt-6 grid gap-3 sm:grid-cols-3">
-        {OPTIONS.map((option) => (
+        <input type="hidden" name="locale" value={locale} />
+        {options.map((option) => (
           <Button
             key={option.value}
             type="submit"
@@ -71,7 +95,7 @@ export function PersonalRsvpButtons({
 
       {isPending && (
         <p role="status" className="text-muted-foreground mt-4 text-center text-sm">
-          שומר את הבחירה…
+          {copy.saving}
         </p>
       )}
       {state.status === 'success' && (
@@ -86,7 +110,7 @@ export function PersonalRsvpButtons({
       )}
 
       <p className="text-muted-foreground mt-5 text-center text-xs leading-relaxed">
-        אפשר לחזור לקישור ולשנות את הבחירה כל עוד הוא בתוקף.
+        {copy.changeNote}
       </p>
     </Card>
   );

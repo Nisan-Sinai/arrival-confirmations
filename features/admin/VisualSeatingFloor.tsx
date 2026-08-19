@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { useAppLocale } from '@/features/i18n/AppLocaleProvider';
 import {
   getSeatingAnalytics,
-  TABLE_SHAPE_LABELS,
+  getTableShapeLabels,
   type ProSeatingGuest,
   type ProSeatingTable,
   type TableShape,
@@ -19,6 +20,89 @@ import {
 const INITIAL: ProSeatingState = { status: 'idle', message: '' };
 
 type AssignmentMap = Readonly<Record<string, string | null>>;
+
+const COPY = {
+  he: {
+    places: 'מקומות',
+    lockedPlace: 'מקום נעול',
+    noGroup: 'ללא קבוצה',
+    hallCenter: 'מרכז האולם',
+    lockedAnnouncement: (name: string) => `${name} נעול ולא ניתן להזזה.`,
+    noCapacity: (table: string, needed: number, remaining: number) =>
+      `אין מספיק מקום ב${table}. נדרשים ${needed} מקומות ונשארו ${remaining}.`,
+    unassignedList: 'רשימת הלא משובצים',
+    selectedTable: 'השולחן שנבחר',
+    moved: (name: string, destination: string) => `${name} הועבר אל ${destination}.`,
+    selectFirst: 'בחרו קודם מוזמן מהרשימה או מתוך שולחן.',
+    eyebrow: 'מפה חיה',
+    title: 'מפת האולם החיה',
+    intro: 'גוררים מוזמנים לשולחנות, או לוחצים על מוזמן ואז על שולחן. המערכת מונעת חריגת קיבולת ושומרת מקומות נעולים.',
+    assigned: 'משובצים',
+    waiting: 'ממתינים',
+    free: 'פנויים',
+    waitingAria: 'רשימת מוזמנים שטרם שובצו',
+    waitingEyebrow: 'רשימת המתנה',
+    waitingTitle: 'טרם שובצו',
+    searchPlaceholder: 'חיפוש משפחה או קבוצה',
+    searchAria: 'חיפוש מוזמנים שלא שובצו',
+    returnUnassigned: 'החזרת המוזמן הנבחר ללא משובצים',
+    allAssigned: 'כולם שובצו',
+    ready: 'האולם מוכן לבדיקה ולשמירה.',
+    floorAria: 'מפת שולחנות באולם',
+    stage: 'במה · חופה · שולחן כבוד',
+    danceFloor: 'רחבת ריקודים',
+    remaining: (count: number) => `${count} פנויים`,
+    assignTo: (name: string) => `שיבוץ המוזמן הנבחר אל ${name}`,
+    familiesGuests: (families: number, guests: number) => `${families} משפחות · ${guests} אורחים`,
+    assignHere: 'שיבוץ לכאן',
+    dragFamily: 'גררו לכאן משפחה',
+    saveOnlyOnClick: 'הסידור נשמר רק בלחיצה',
+    summary: (assigned: number, unassigned: number, free: number) =>
+      `${assigned} משובצים · ${unassigned} ללא שולחן · ${free} מקומות פנויים`,
+    saving: 'שומר את האולם…',
+    save: 'שמירת מפת האולם',
+  },
+  en: {
+    places: 'seats',
+    lockedPlace: 'locked seat',
+    noGroup: 'No group',
+    hallCenter: 'Main hall',
+    lockedAnnouncement: (name: string) => `${name} is locked and cannot be moved.`,
+    noCapacity: (table: string, needed: number, remaining: number) =>
+      `${table} does not have enough room. ${needed} seats are needed and ${remaining} remain.`,
+    unassignedList: 'the unassigned list',
+    selectedTable: 'the selected table',
+    moved: (name: string, destination: string) => `${name} was moved to ${destination}.`,
+    selectFirst: 'Select a guest from the list or a table first.',
+    eyebrow: 'Live floor',
+    title: 'Live venue map',
+    intro: 'Drag guests onto tables, or select a guest and then a table. The system prevents capacity overflow and preserves locked seats.',
+    assigned: 'Assigned',
+    waiting: 'Waiting',
+    free: 'Free',
+    waitingAria: 'Guests who have not been assigned yet',
+    waitingEyebrow: 'Waiting list',
+    waitingTitle: 'Not assigned yet',
+    searchPlaceholder: 'Search family or group',
+    searchAria: 'Search unassigned guests',
+    returnUnassigned: 'Return selected guest to unassigned',
+    allAssigned: 'Everyone is assigned',
+    ready: 'The venue is ready to review and save.',
+    floorAria: 'Venue table map',
+    stage: 'Stage · chuppah · head table',
+    danceFloor: 'Dance floor',
+    remaining: (count: number) => `${count} free`,
+    assignTo: (name: string) => `Assign the selected guest to ${name}`,
+    familiesGuests: (families: number, guests: number) => `${families} families · ${guests} guests`,
+    assignHere: 'Assign here',
+    dragFamily: 'Drag a family here',
+    saveOnlyOnClick: 'Changes are saved only when you click Save',
+    summary: (assigned: number, unassigned: number, free: number) =>
+      `${assigned} assigned · ${unassigned} without a table · ${free} free seats`,
+    saving: 'Saving venue…',
+    save: 'Save venue map',
+  },
+} as const;
 
 function buildAssignments(guests: readonly ProSeatingGuest[]): AssignmentMap {
   return Object.fromEntries(guests.map((guest) => [guest.id, guest.tableId]));
@@ -54,10 +138,16 @@ function GuestChip({
   guest,
   selected,
   onSelect,
+  placesLabel,
+  lockedLabel,
+  noGroupLabel,
 }: {
   guest: ProSeatingGuest;
   selected: boolean;
   onSelect: (guestId: string) => void;
+  placesLabel: string;
+  lockedLabel: string;
+  noGroupLabel: string;
 }) {
   return (
     <button
@@ -74,14 +164,14 @@ function GuestChip({
           : 'border-border bg-card hover:border-primary/50 hover:shadow-md'
       } ${guest.seatLocked ? 'cursor-not-allowed opacity-75' : 'cursor-grab active:cursor-grabbing'}`}
       aria-pressed={selected}
-      aria-label={`${guest.fullName}, ${guest.partySize} מקומות${guest.seatLocked ? ', מקום נעול' : ''}`}
+      aria-label={`${guest.fullName}, ${guest.partySize} ${placesLabel}${guest.seatLocked ? `, ${lockedLabel}` : ''}`}
     >
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{guest.fullName}</span>
         <span
           className={`mt-0.5 block truncate text-xs ${selected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}
         >
-          {guest.seatingGroup ?? guest.familySide ?? 'ללא קבוצה'}
+          {guest.seatingGroup ?? guest.familySide ?? noGroupLabel}
         </span>
       </span>
       <span
@@ -104,6 +194,9 @@ export function VisualSeatingFloor({
   guests: readonly ProSeatingGuest[];
   tables: readonly ProSeatingTable[];
 }) {
+  const locale = useAppLocale();
+  const copy = COPY[locale];
+  const shapeLabels = getTableShapeLabels(locale);
   const [saveState, saveAction, saving] = useActionState(saveProGuestSeatingAction, INITIAL);
   const [assignments, setAssignments] = useState<AssignmentMap>(() => buildAssignments(guests));
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
@@ -138,17 +231,17 @@ export function VisualSeatingFloor({
     return result;
   }, [liveGuests]);
   const zones = useMemo(
-    () => [...new Set(tables.map((table) => table.zone?.trim() || 'מרכז האולם'))],
-    [tables],
+    () => [...new Set(tables.map((table) => table.zone?.trim() || copy.hallCenter))],
+    [copy.hallCenter, tables],
   );
-  const normalizedQuery = query.trim().toLocaleLowerCase('he');
+  const normalizedQuery = query.trim().toLocaleLowerCase(locale === 'he' ? 'he' : 'en');
   const unassignedGuests = liveGuests.filter((guest) => {
     if (guest.tableId !== null) return false;
     if (normalizedQuery === '') return true;
     return [guest.fullName, guest.seatingGroup, guest.familySide]
       .filter((value): value is string => value !== null)
       .join(' ')
-      .toLocaleLowerCase('he')
+      .toLocaleLowerCase(locale === 'he' ? 'he' : 'en')
       .includes(normalizedQuery);
   });
 
@@ -156,7 +249,7 @@ export function VisualSeatingFloor({
     const guest = guestById.get(guestId);
     if (guest === undefined) return;
     if (guest.seatLocked) {
-      setAnnouncement(`${guest.fullName} נעול ולא ניתן להזזה.`);
+      setAnnouncement(copy.lockedAnnouncement(guest.fullName));
       return;
     }
 
@@ -168,9 +261,7 @@ export function VisualSeatingFloor({
         table.occupied - (currentTableId === targetTableId ? guest.partySize : 0);
       const remaining = Math.max(0, table.capacity - occupiedWithoutGuest);
       if (guest.partySize > remaining) {
-        setAnnouncement(
-          `אין מספיק מקום ב${table.name}. נדרשים ${guest.partySize} מקומות ונשארו ${remaining}.`,
-        );
+        setAnnouncement(copy.noCapacity(table.name, guest.partySize, remaining));
         return;
       }
     }
@@ -178,8 +269,8 @@ export function VisualSeatingFloor({
     setAssignments((current) => ({ ...current, [guestId]: targetTableId }));
     setSelectedGuestId(null);
     const targetName =
-      targetTableId === null ? 'רשימת הלא משובצים' : tableById.get(targetTableId)?.name;
-    setAnnouncement(`${guest.fullName} הועבר אל ${targetName ?? 'השולחן שנבחר'}.`);
+      targetTableId === null ? copy.unassignedList : tableById.get(targetTableId)?.name;
+    setAnnouncement(copy.moved(guest.fullName, targetName ?? copy.selectedTable));
   }
 
   function handleDrop(event: DragEvent<HTMLElement>, targetTableId: string | null): void {
@@ -190,7 +281,7 @@ export function VisualSeatingFloor({
 
   function chooseDestination(targetTableId: string | null): void {
     if (selectedGuestId === null) {
-      setAnnouncement('בחרו קודם מוזמן מהרשימה או מתוך שולחן.');
+      setAnnouncement(copy.selectFirst);
       return;
     }
     assignGuest(selectedGuestId, targetTableId);
@@ -204,26 +295,25 @@ export function VisualSeatingFloor({
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div>
             <p className="text-primary-foreground/70 text-xs font-bold tracking-[0.22em]">
-              LIVE FLOOR
+              {copy.eyebrow}
             </p>
-            <h2 className="mt-2 text-3xl font-black sm:text-4xl">מפת האולם החיה</h2>
+            <h2 className="mt-2 text-3xl font-black sm:text-4xl">{copy.title}</h2>
             <p className="text-primary-foreground/80 mt-3 max-w-3xl text-sm leading-relaxed sm:text-base">
-              גוררים מוזמנים לשולחנות, או לוחצים על מוזמן ואז על שולחן. המערכת מונעת חריגת קיבולת
-              ושומרת מקומות נעולים.
+              {copy.intro}
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-primary-foreground/10 rounded-2xl px-3 py-2">
               <p className="text-2xl font-black tabular-nums">{analytics.assignedPeople}</p>
-              <p className="text-primary-foreground/70 text-[11px]">משובצים</p>
+              <p className="text-primary-foreground/70 text-[11px]">{copy.assigned}</p>
             </div>
             <div className="bg-primary-foreground/10 rounded-2xl px-3 py-2">
               <p className="text-2xl font-black tabular-nums">{analytics.unassignedPeople}</p>
-              <p className="text-primary-foreground/70 text-[11px]">ממתינים</p>
+              <p className="text-primary-foreground/70 text-[11px]">{copy.waiting}</p>
             </div>
             <div className="bg-primary-foreground/10 rounded-2xl px-3 py-2">
               <p className="text-2xl font-black tabular-nums">{analytics.emptySeats}</p>
-              <p className="text-primary-foreground/70 text-[11px]">פנויים</p>
+              <p className="text-primary-foreground/70 text-[11px]">{copy.free}</p>
             </div>
           </div>
         </div>
@@ -234,16 +324,16 @@ export function VisualSeatingFloor({
           className="border-border bg-secondary/25 border-b p-4 lg:border-e lg:border-b-0"
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => handleDrop(event, null)}
-          aria-label="רשימת מוזמנים שטרם שובצו"
+          aria-label={copy.waitingAria}
         >
           <div className="sticky top-4 space-y-4">
             <div>
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-accent-strong text-xs font-bold tracking-[0.18em]">
-                    WAITING LIST
+                    {copy.waitingEyebrow}
                   </p>
-                  <h3 className="text-primary mt-1 text-xl font-black">טרם שובצו</h3>
+                  <h3 className="text-primary mt-1 text-xl font-black">{copy.waitingTitle}</h3>
                 </div>
                 <span className="bg-card border-border rounded-full border px-3 py-1 text-sm font-bold tabular-nums">
                   {unassignedGuests.length}
@@ -253,8 +343,8 @@ export function VisualSeatingFloor({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="mt-3"
-                placeholder="חיפוש משפחה או קבוצה"
-                aria-label="חיפוש מוזמנים שלא שובצו"
+                placeholder={copy.searchPlaceholder}
+                aria-label={copy.searchAria}
               />
             </div>
 
@@ -263,7 +353,7 @@ export function VisualSeatingFloor({
               onClick={() => chooseDestination(null)}
               className="border-border-strong bg-card text-primary hover:border-primary w-full rounded-2xl border border-dashed px-4 py-3 text-sm font-bold"
             >
-              החזרת המוזמן הנבחר ללא משובצים
+              {copy.returnUnassigned}
             </button>
 
             <div className="max-h-[520px] space-y-2 overflow-y-auto pe-1">
@@ -272,8 +362,8 @@ export function VisualSeatingFloor({
                   <p className="text-4xl" aria-hidden="true">
                     ✓
                   </p>
-                  <p className="text-primary mt-3 font-bold">כולם שובצו</p>
-                  <p className="text-muted-foreground mt-1 text-xs">האולם מוכן לבדיקה ולשמירה.</p>
+                  <p className="text-primary mt-3 font-bold">{copy.allAssigned}</p>
+                  <p className="text-muted-foreground mt-1 text-xs">{copy.ready}</p>
                 </div>
               ) : (
                 unassignedGuests.map((guest) => (
@@ -282,6 +372,9 @@ export function VisualSeatingFloor({
                     guest={guest}
                     selected={selectedGuestId === guest.id}
                     onSelect={setSelectedGuestId}
+                    placesLabel={copy.places}
+                    lockedLabel={copy.lockedPlace}
+                    noGroupLabel={copy.noGroup}
                   />
                 ))
               )}
@@ -289,13 +382,13 @@ export function VisualSeatingFloor({
           </div>
         </aside>
 
-        <section className="bg-card p-4 sm:p-6 lg:p-8" aria-label="מפת שולחנות באולם">
+        <section className="bg-card p-4 sm:p-6 lg:p-8" aria-label={copy.floorAria}>
           <div className="border-border bg-secondary/20 mb-6 rounded-[2rem] border p-4 text-center">
             <div className="bg-primary text-primary-foreground mx-auto max-w-xl rounded-2xl px-6 py-3 font-black shadow-lg">
-              במה · חופה · שולחן כבוד
+              {copy.stage}
             </div>
             <div className="border-border bg-card text-muted-foreground mx-auto mt-4 max-w-sm rounded-full border border-dashed px-6 py-3 text-sm font-bold">
-              רחבת ריקודים
+              {copy.danceFloor}
             </div>
           </div>
 
@@ -320,7 +413,7 @@ export function VisualSeatingFloor({
                 </div>
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {tables
-                    .filter((table) => (table.zone?.trim() || 'מרכז האולם') === zone)
+                    .filter((table) => (table.zone?.trim() || copy.hallCenter) === zone)
                     .map((table) => {
                       const occupancy = occupancyById.get(table.id);
                       const tableGuests = guestsByTable.get(table.id) ?? [];
@@ -341,7 +434,7 @@ export function VisualSeatingFloor({
                           <div className="mb-3 flex items-start justify-between gap-3">
                             <div>
                               <p className="text-muted-foreground text-[11px] font-bold tracking-[0.16em]">
-                                {TABLE_SHAPE_LABELS[table.shape]}
+                                {shapeLabels[table.shape]}
                               </p>
                               <h4 className="text-primary mt-1 text-xl font-black">{table.name}</h4>
                             </div>
@@ -350,7 +443,7 @@ export function VisualSeatingFloor({
                                 {occupied}/{table.capacity}
                               </p>
                               <p className="text-muted-foreground text-[11px]">
-                                {remaining} פנויים
+                                {copy.remaining(remaining)}
                               </p>
                             </div>
                           </div>
@@ -359,15 +452,15 @@ export function VisualSeatingFloor({
                             type="button"
                             onClick={() => chooseDestination(table.id)}
                             className={`${tableShapeClass(table.shape)} border-border bg-secondary/40 hover:border-primary relative flex flex-col items-center justify-center border-2 p-4 text-center shadow-inner transition`}
-                            aria-label={`שיבוץ המוזמן הנבחר אל ${table.name}`}
+                            aria-label={copy.assignTo(table.name)}
                           >
                             <span className="text-primary text-lg font-black">{table.name}</span>
                             <span className="text-muted-foreground mt-1 text-xs">
-                              {tableGuests.length} משפחות · {occupied} אורחים
+                              {copy.familiesGuests(tableGuests.length, occupied)}
                             </span>
                             {selectedGuestId !== null && (
                               <span className="bg-primary text-primary-foreground mt-3 rounded-full px-3 py-1 text-xs font-bold">
-                                שיבוץ לכאן
+                                {copy.assignHere}
                               </span>
                             )}
                           </button>
@@ -382,7 +475,7 @@ export function VisualSeatingFloor({
                           <div className="mt-4 space-y-2">
                             {tableGuests.length === 0 ? (
                               <p className="border-border text-muted-foreground rounded-2xl border border-dashed px-3 py-4 text-center text-xs">
-                                גררו לכאן משפחה
+                                {copy.dragFamily}
                               </p>
                             ) : (
                               tableGuests.map((guest) => (
@@ -391,6 +484,9 @@ export function VisualSeatingFloor({
                                   guest={guest}
                                   selected={selectedGuestId === guest.id}
                                   onSelect={setSelectedGuestId}
+                                  placesLabel={copy.places}
+                                  lockedLabel={copy.lockedPlace}
+                                  noGroupLabel={copy.noGroup}
                                 />
                               ))
                             )}
@@ -413,6 +509,7 @@ export function VisualSeatingFloor({
 
       <form action={saveAction} className="border-border bg-card border-t p-5 sm:p-6">
         <input type="hidden" name="eventId" value={eventId} />
+        <input type="hidden" name="locale" value={locale} />
         {liveGuests.map((guest) => (
           <div key={guest.id}>
             <input type="hidden" name="guestId" value={guest.id} />
@@ -427,14 +524,17 @@ export function VisualSeatingFloor({
         ))}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-primary font-black">הסידור נשמר רק בלחיצה</p>
+            <p className="text-primary font-black">{copy.saveOnlyOnClick}</p>
             <p className="text-muted-foreground mt-1 text-sm">
-              {analytics.assignedPeople} משובצים · {analytics.unassignedPeople} ללא שולחן ·{' '}
-              {analytics.emptySeats} מקומות פנויים
+              {copy.summary(
+                analytics.assignedPeople,
+                analytics.unassignedPeople,
+                analytics.emptySeats,
+              )}
             </p>
           </div>
           <Button type="submit" disabled={saving} className="min-w-48">
-            {saving ? 'שומר את האולם…' : 'שמירת מפת האולם'}
+            {saving ? copy.saving : copy.save}
           </Button>
         </div>
         <div className="mt-4">

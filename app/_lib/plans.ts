@@ -90,17 +90,6 @@ export const PLAN_CATALOG: readonly PlanDefinition[] = [
   },
 ] as const;
 
-/**
- * English copy for the plan cards (§12).
- *
- * The catalogue above stays the single Hebrew source — `plans.test.ts` reads the
- * feature prose straight out of it, and the admin and guest surfaces render it
- * unchanged. Only the public marketing surface needs the reader's own language, so the
- * translation is an overlay keyed by plan code rather than a second catalogue: the
- * price, the attendee limit and the highlight flag are shared, and duplicating them is
- * how the two would drift. Each feature list is translated one-to-one, in the same
- * order, so a card reads the same on either side.
- */
 type PlanCopy = Pick<PlanDefinition, 'name' | 'description' | 'features'>;
 
 const PLAN_COPY_EN: Record<Exclude<PlanCode, 'legacy'>, PlanCopy> = {
@@ -156,10 +145,6 @@ const PLAN_COPY_EN: Record<Exclude<PlanCode, 'legacy'>, PlanCopy> = {
   },
 };
 
-/**
- * The plan catalogue for one locale. Hebrew is the source catalogue itself; every other
- * locale is the shared structural data with its copy replaced.
- */
 export function getPlanCatalog(locale: Locale): readonly PlanDefinition[] {
   if (locale === 'he') return PLAN_CATALOG;
   return PLAN_CATALOG.map((plan) => ({ ...plan, ...PLAN_COPY_EN[plan.code] }));
@@ -176,22 +161,36 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   other: 'אחר',
 };
 
-export function formatPlanPrice(priceAgorot: number): string {
-  return new Intl.NumberFormat('he-IL', {
+const PAYMENT_METHOD_LABELS_EN: Record<PaymentMethod, string> = {
+  phone: 'Phone payment',
+  bit: 'Bit',
+  bank_transfer: 'Bank transfer',
+  cash: 'Cash',
+  other: 'Other',
+};
+
+export function getPaymentMethodLabels(
+  locale: Locale = 'he',
+): Readonly<Record<PaymentMethod, string>> {
+  return locale === 'en' ? PAYMENT_METHOD_LABELS_EN : PAYMENT_METHOD_LABELS;
+}
+
+export function formatPlanPrice(priceAgorot: number, locale: Locale = 'he'): string {
+  return new Intl.NumberFormat(locale === 'he' ? 'he-IL' : 'en-US', {
     style: 'currency',
     currency: 'ILS',
     maximumFractionDigits: 0,
   }).format(priceAgorot / 100);
 }
 
-export function getPlanDefinition(code: PlanCode): PlanDefinition | null {
+export function getPlanDefinition(code: PlanCode, locale: Locale = 'he'): PlanDefinition | null {
   if (code === 'legacy') return null;
-  return PLAN_CATALOG.find((plan) => plan.code === code) ?? null;
+  return getPlanCatalog(locale).find((plan) => plan.code === code) ?? null;
 }
 
-export function getPlanLabel(code: PlanCode): string {
-  if (code === 'legacy') return 'אירוע קיים — ללא חיוב';
-  return getPlanDefinition(code)?.name ?? 'לא ידוע';
+export function getPlanLabel(code: PlanCode, locale: Locale = 'he'): string {
+  if (code === 'legacy') return locale === 'he' ? 'אירוע קיים — ללא חיוב' : 'Existing event — no charge';
+  return getPlanDefinition(code, locale)?.name ?? (locale === 'he' ? 'לא ידוע' : 'Unknown');
 }
 
 export function isMonetizedEvent(createdAt: string): boolean {

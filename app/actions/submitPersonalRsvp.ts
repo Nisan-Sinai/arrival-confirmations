@@ -6,9 +6,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { canAcceptRsvp, getEventLicense } from '@/app/_lib/eventLicenses';
 import { isMonetizedEvent } from '@/app/_lib/plans';
+import { getAppCopy } from '@/config/appCopy';
 import { appConfig } from '@/config/event.config';
-import { resolveClientIpHash } from '@/lib/server/ip';
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import { getActiveInviteContext } from '@/lib/server/currentInvite';
+import { resolveClientIpHash } from '@/lib/server/ip';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import { hashIdentity, issueToken, TOKEN_PURPOSES } from '@/lib/server/tokens';
 
@@ -21,35 +23,35 @@ export interface PersonalRsvpState {
 const RATE_LIMIT_PER_WINDOW = 10;
 const RATE_LIMIT_WINDOW_SECONDS = 300;
 
-function attendanceStatus(
-  value: FormDataEntryValue | null,
-): 'attending' | 'not_attending' | 'maybe' | null {
+type Status = 'attending' | 'not_attending' | 'maybe';
+
+function attendanceStatus(value: FormDataEntryValue | null): Status | null {
   return value === 'attending' || value === 'not_attending' || value === 'maybe' ? value : null;
 }
 
-function successMessage(status: 'attending' | 'not_attending' | 'maybe'): string {
-  if (status === 'attending') return 'תודה! סימנו שתגיעו בשמחה.';
-  if (status === 'not_attending') return 'תודה על העדכון. סימנו שלא תוכלו להגיע.';
-  return 'תודה! סימנו שעדיין אינכם בטוחים.';
+function localeOf(formData: FormData): Locale {
+  const value = formData.get('locale');
+  return typeof value === 'string' && isLocale(value) ? value : defaultLocale;
+}
+
+function successMessage(status: Status, locale: Locale): string {
+  const copy = getAppCopy(locale).personalRsvp;
+  if (status === 'attending') return copy.successAttending;
+  if (status === 'not_attending') return copy.successNotAttending;
+  return copy.successMaybe;
 }
 
 export async function submitPersonalRsvpAction(
   _previous: PersonalRsvpState,
   formData: FormData,
 ): Promise<PersonalRsvpState> {
+  const locale = localeOf(formData);
+  const copy = getAppCopy(locale).personalRsvp;
   const selected = attendanceStatus(formData.get('attendanceStatus'));
-  if (selected === null) {
-    return { status: 'error', message: 'יש לבחור אחת משלוש האפשרויות.' };
-  }
+  if (selected === null) return { status: 'error', message: copy.chooseOne };
 
   const context = await getActiveInviteContext();
-  if (context === null) {
-    return {
-      status: 'error',
-      message: 'הקישור האישי אינו תקף עוד. בקשו מבעלי האירוע לשלוח קישור חדש.',
-      selected,
-    };
-  }
+  if (context === null) return { status: 'error', message: copy.invalidLink, selected };
 
   const privileged = createPrivilegedClient();
   const { data: eventRow, error: eventError } = await privileged
@@ -59,7 +61,7 @@ export async function submitPersonalRsvpAction(
     .eq('is_active', true)
     .maybeSingle();
   if (eventError || eventRow === null) {
-    return { status: 'error', message: 'האירוע אינו זמין כרגע.', selected };
+    return { status: 'error', message: copy.eventUnavailable, selected };
   }
 
   const fallback = isMonetizedEvent(eventRow.created_at) ? 'trial' : 'legacy';
@@ -77,14 +79,10 @@ export async function submitPersonalRsvpAction(
       .maybeSingle(),
   ]);
   if (countResult.error || existingResult.error) {
-    return { status: 'error', message: 'שמירת האישור נכשלה. נסו שוב.', selected };
+    return { status: 'error', message: copy.saveFailed, selected };
   }
   if (!canAcceptRsvp(license, countResult.count ?? 0, existingResult.data !== null)) {
-    return {
-      status: 'error',
-      message: 'האירוע אינו מקבל כרגע אישורי הגעה נוספים. פנו לבעלי האירוע.',
-      selected,
-    };
+    return { status: 'error', message: copy.eventClosed, selected };
   }
 
   const { hash: ipHash } = resolveClientIpHash(await headers());
@@ -95,11 +93,7 @@ export async function submitPersonalRsvpAction(
     p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
   });
   if (limit?.[0]?.allowed === false) {
-    return {
-      status: 'error',
-      message: 'בוצעו יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.',
-      selected,
-    };
+    return { status: 'error', message: copy.rateLimited, selected };
   }
 
   const adults = selected === 'not_attending' ? 0 : context.guest.partySize;
@@ -136,16 +130,14 @@ export async function submitPersonalRsvpAction(
     p_idempotency_ttl_hours: appConfig.idempotencyTtlHours,
   });
 
-  if (error) {
-    return { status: 'error', message: 'שמירת האישור נכשלה. נסו שוב.', selected };
-  }
+  if (error) return { status: 'error', message: copy.saveFailed, selected };
   const outcome = (result as { outcome?: string } | null)?.outcome;
   if (
     outcome === 'idempotency_conflict' ||
     outcome === 'event_unavailable' ||
     outcome === 'invitation_invalid'
   ) {
-    return { status: 'error', message: 'לא ניתן לשמור את האישור דרך הקישור הזה.', selected };
+    return { status: 'error', message: copy.linkCannotSave, selected };
   }
 
   const trackingDb = privileged as unknown as SupabaseClient;
@@ -155,10 +147,12 @@ export async function submitPersonalRsvpAction(
     p_status: selected,
   });
 
-  revalidatePath('/invite');
+  revalidatePath(localePath(locale, '/invite'));
   revalidatePath(`/dashboard/events/${context.event.id}`);
+  revalidatePath(`/en/dashboard/events/${context.event.id}`);
   revalidatePath(`/dashboard/events/${context.event.id}/guests`);
+  revalidatePath(`/en/dashboard/events/${context.event.id}/guests`);
   revalidatePath(`/admin/events/${context.event.id}`);
 
-  return { status: 'success', message: successMessage(selected), selected };
+  return { status: 'success', message: successMessage(selected, locale), selected };
 }

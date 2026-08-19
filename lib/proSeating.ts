@@ -1,3 +1,5 @@
+import { defaultLocale, type Locale } from '@/lib/i18n';
+
 export const TABLE_SHAPES = ['round', 'rectangle', 'square', 'banquet'] as const;
 export type TableShape = (typeof TABLE_SHAPES)[number];
 
@@ -7,6 +9,19 @@ export const TABLE_SHAPE_LABELS: Record<TableShape, string> = {
   square: 'מרובע',
   banquet: 'אבירים',
 };
+
+const ENGLISH_TABLE_SHAPE_LABELS: Record<TableShape, string> = {
+  round: 'Round',
+  rectangle: 'Rectangle',
+  square: 'Square',
+  banquet: 'Banquet',
+};
+
+export function getTableShapeLabels(
+  locale: Locale = defaultLocale,
+): Readonly<Record<TableShape, string>> {
+  return locale === 'en' ? ENGLISH_TABLE_SHAPE_LABELS : TABLE_SHAPE_LABELS;
+}
 
 export interface ProSeatingTable {
   readonly id: string;
@@ -241,24 +256,17 @@ function csvCell(value: string | number): string {
 export function buildSeatingCsv(
   guests: readonly ProSeatingGuest[],
   tables: readonly ProSeatingTable[],
+  locale: Locale = defaultLocale,
 ): string {
   const tableById = new Map(tables.map((table) => [table.id, table] as const));
+  const headers =
+    locale === 'en'
+      ? ['Name', 'Party size', 'Table', 'Zone', 'Seat', 'Group', 'Side', 'Meal preference', 'Accessibility needs', 'Priority', 'Locked']
+      : ['שם', 'כמות', 'שולחן', 'אזור', 'מושב', 'קבוצה', 'צד', 'העדפת אוכל', 'צרכי נגישות', 'עדיפות', 'נעול'];
   const rows = [
-    [
-      'שם',
-      'כמות',
-      'שולחן',
-      'אזור',
-      'מושב',
-      'קבוצה',
-      'צד',
-      'העדפת אוכל',
-      'צרכי נגישות',
-      'עדיפות',
-      'נעול',
-    ],
+    headers,
     ...[...guests]
-      .sort((left, right) => left.fullName.localeCompare(right.fullName, 'he'))
+      .sort((left, right) => left.fullName.localeCompare(right.fullName, locale === 'he' ? 'he' : 'en'))
       .map((guest) => {
         const table = guest.tableId === null ? undefined : tableById.get(guest.tableId);
         return [
@@ -272,7 +280,7 @@ export function buildSeatingCsv(
           guest.mealPreference ?? '',
           guest.accessibilityNeeds ?? '',
           guest.priority,
-          guest.seatLocked ? 'כן' : 'לא',
+          guest.seatLocked ? (locale === 'he' ? 'כן' : 'Yes') : locale === 'he' ? 'לא' : 'No',
         ];
       }),
   ];

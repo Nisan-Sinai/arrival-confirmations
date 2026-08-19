@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import {
   hashInviteToken,
   INVITE_SESSION_COOKIE,
@@ -12,8 +13,15 @@ import { createPrivilegedClient } from '@/lib/server/supabase';
 
 export const dynamic = 'force-dynamic';
 
-function rejected(request: Request): NextResponse {
-  const response = NextResponse.redirect(new URL('/invite?error=invalid', request.url));
+function requestLocale(request: Request): Locale {
+  const value = new URL(request.url).searchParams.get('locale');
+  return value !== null && isLocale(value) ? value : defaultLocale;
+}
+
+function rejected(request: Request, locale: Locale): NextResponse {
+  const response = NextResponse.redirect(
+    new URL(`${localePath(locale, '/invite')}?error=invalid`, request.url),
+  );
   response.cookies.delete(INVITE_SESSION_COOKIE);
   return response;
 }
@@ -22,8 +30,9 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> },
 ): Promise<NextResponse> {
+  const locale = requestLocale(request);
   const { token } = await params;
-  if (!isWellFormedRawToken(token)) return rejected(request);
+  if (!isWellFormedRawToken(token)) return rejected(request, locale);
 
   const privileged = createPrivilegedClient();
   const inviteHash = hashInviteToken(token);
@@ -32,7 +41,7 @@ export async function GET(
     .select('id, event_id, is_active, token_expires_at, token_revoked_at')
     .eq('invite_token_hash', inviteHash)
     .maybeSingle();
-  if (guestError) return rejected(request);
+  if (guestError) return rejected(request, locale);
 
   const validation = validateInviteToken(
     guest === null
@@ -45,14 +54,14 @@ export async function GET(
           tokenRevokedAt: guest.token_revoked_at === null ? null : new Date(guest.token_revoked_at),
         },
   );
-  if (!validation.valid) return rejected(request);
+  if (!validation.valid) return rejected(request, locale);
 
   const { data: event, error: eventError } = await privileged
     .from('events')
     .select('id, is_active')
     .eq('id', validation.eventId)
     .maybeSingle();
-  if (eventError || event === null || !event.is_active) return rejected(request);
+  if (eventError || event === null || !event.is_active) return rejected(request, locale);
 
   const session = mintInviteSession();
   const { error: sessionError } = await privileged.from('invite_sessions').insert({
@@ -61,16 +70,16 @@ export async function GET(
     session_token_hash: session.sessionTokenHash,
     expires_at: session.expiresAt.toISOString(),
   });
-  if (sessionError) return rejected(request);
+  if (sessionError) return rejected(request, locale);
 
   await privileged.from('audit_logs').insert({
     action: 'invite_session_created',
     entity_type: 'guest',
     entity_id: validation.guestId,
-    metadata: { eventId: validation.eventId, expiresAt: session.expiresAt.toISOString() },
+    metadata: { eventId: validation.eventId, expiresAt: session.expiresAt.toISOString(), locale },
   });
 
-  const response = NextResponse.redirect(new URL('/invite', request.url));
+  const response = NextResponse.redirect(new URL(localePath(locale, '/invite'), request.url));
   response.cookies.set(
     INVITE_SESSION_COOKIE,
     session.rawSessionToken,

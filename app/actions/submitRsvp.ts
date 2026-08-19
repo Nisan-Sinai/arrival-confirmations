@@ -5,14 +5,15 @@ import { headers } from 'next/headers';
 
 import { canAcceptRsvp, getEventLicense } from '@/app/_lib/eventLicenses';
 import { isMonetizedEvent } from '@/app/_lib/plans';
+import { getAppCopy } from '@/config/appCopy';
+import { getDictionary } from '@/config/dictionary';
 import { appConfig } from '@/config/event.config';
-import { UI_MESSAGES } from '@/config/messages';
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import { resolveClientIpHash } from '@/lib/server/ip';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import { hashIdentity, issueToken, TOKEN_PURPOSES } from '@/lib/server/tokens';
 import { parseRsvpSubmission, toFieldErrors } from '@/schemas/rsvp';
 
-/** What the guest typed, echoed back verbatim so a rejection does not empty the form. */
 export interface RsvpFormValues {
   readonly fullName: string;
   readonly phone: string;
@@ -40,6 +41,11 @@ const raw = (formData: FormData, key: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
+function localeOf(formData: FormData): Locale {
+  const value = formData.get('locale');
+  return typeof value === 'string' && isLocale(value) ? value : defaultLocale;
+}
+
 function submittedValues(formData: FormData): RsvpFormValues {
   return {
     fullName: raw(formData, 'fullName'),
@@ -54,47 +60,49 @@ function submittedValues(formData: FormData): RsvpFormValues {
   };
 }
 
-function successMessage(status: string): string {
-  if (status === 'attending') return UI_MESSAGES.rsvp.successAttending;
-  if (status === 'not_attending') return UI_MESSAGES.rsvp.successNotAttending;
-  return UI_MESSAGES.rsvp.successMaybe;
+function successMessage(status: string, locale: Locale): string {
+  const messages = getDictionary(locale).rsvp;
+  if (status === 'attending') return messages.successAttending;
+  if (status === 'not_attending') return messages.successNotAttending;
+  return messages.successMaybe;
 }
 
 export async function submitRsvpAction(
   _previous: RsvpFormState,
   formData: FormData,
 ): Promise<RsvpFormState> {
+  const locale = localeOf(formData);
+  const dictionary = getDictionary(locale);
+  const copy = getAppCopy(locale);
   const values = submittedValues(formData);
   const eventId = formData.get('eventId');
   if (typeof eventId !== 'string' || eventId === '') {
-    return { status: 'error', message: UI_MESSAGES.errors.genericBody, fieldErrors: {}, values };
+    return { status: 'error', message: dictionary.errors.genericBody, fieldErrors: {}, values };
   }
 
-  const parsed = parseRsvpSubmission({
-    fullName: formData.get('fullName'),
-    phone: formData.get('phone'),
-    attendanceStatus: formData.get('attendanceStatus'),
-    adultsCount: formData.get('adultsCount'),
-    childrenCount: formData.get('childrenCount'),
-    babiesCount: formData.get('babiesCount'),
-    familySide: formData.get('familySide'),
-    dietaryRequirements: formData.get('dietaryRequirements'),
-    notes: formData.get('notes'),
-    consent: formData.get('consent') === 'on',
-    company: formData.get('company') ?? '',
-  });
+  const parsed = parseRsvpSubmission(
+    {
+      fullName: formData.get('fullName'),
+      phone: formData.get('phone'),
+      attendanceStatus: formData.get('attendanceStatus'),
+      adultsCount: formData.get('adultsCount'),
+      childrenCount: formData.get('childrenCount'),
+      babiesCount: formData.get('babiesCount'),
+      familySide: formData.get('familySide'),
+      dietaryRequirements: formData.get('dietaryRequirements'),
+      notes: formData.get('notes'),
+      consent: formData.get('consent') === 'on',
+      company: formData.get('company') ?? '',
+    },
+    locale,
+  );
 
   if (!parsed.success) {
-    return {
-      status: 'error',
-      message: '',
-      fieldErrors: toFieldErrors(parsed.error),
-      values,
-    };
+    return { status: 'error', message: '', fieldErrors: toFieldErrors(parsed.error), values };
   }
+
   const submission = parsed.data;
   const supabase = createPrivilegedClient();
-
   const { data: event, error: eventError } = await supabase
     .from('events')
     .select('id, created_at')
@@ -102,7 +110,7 @@ export async function submitRsvpAction(
     .eq('is_active', true)
     .maybeSingle();
   if (eventError || event === null) {
-    return { status: 'error', message: UI_MESSAGES.errors.genericBody, fieldErrors: {}, values };
+    return { status: 'error', message: dictionary.errors.genericBody, fieldErrors: {}, values };
   }
 
   const fallback = isMonetizedEvent(event.created_at) ? 'trial' : 'legacy';
@@ -122,29 +130,22 @@ export async function submitRsvpAction(
       countCode: countResult.error?.code,
       existingCode: existingResult.error?.code,
     });
-    return { status: 'error', message: UI_MESSAGES.rsvp.unknownError, fieldErrors: {}, values };
+    return { status: 'error', message: dictionary.rsvp.unknownError, fieldErrors: {}, values };
   }
 
   if (!canAcceptRsvp(license, countResult.count ?? 0, existingResult.data !== null)) {
-    return {
-      status: 'error',
-      message: 'האירוע אינו מקבל כרגע אישורי הגעה נוספים. יש לפנות לבעלי האירוע.',
-      fieldErrors: {},
-      values,
-    };
+    return { status: 'error', message: copy.rsvp.limitReached, fieldErrors: {}, values };
   }
 
   const { hash: ipHash } = resolveClientIpHash(await headers());
   const bucket = `rsvp:${ipHash}:${hashIdentity(submission.phone, TOKEN_PURPOSES.rateLimit)}`;
-
   const { data: limit } = await supabase.rpc('consume_rate_limit', {
     p_bucket_key: bucket,
     p_limit: RATE_LIMIT_PER_WINDOW,
     p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
   });
-
   if (limit?.[0]?.allowed === false) {
-    return { status: 'error', message: UI_MESSAGES.rsvp.rateLimited, fieldErrors: {}, values };
+    return { status: 'error', message: dictionary.rsvp.rateLimited, fieldErrors: {}, values };
   }
 
   const fingerprint = hashIdentity(
@@ -188,19 +189,18 @@ export async function submitRsvpAction(
 
   if (error) {
     console.error('submit_rsvp failed', { code: error.code });
-    return { status: 'error', message: UI_MESSAGES.rsvp.unknownError, fieldErrors: {}, values };
+    return { status: 'error', message: dictionary.rsvp.unknownError, fieldErrors: {}, values };
   }
 
   const outcome = (result as { outcome?: string } | null)?.outcome;
   if (outcome === 'idempotency_conflict' || outcome === 'event_unavailable') {
-    return { status: 'error', message: UI_MESSAGES.rsvp.unknownError, fieldErrors: {}, values };
+    return { status: 'error', message: dictionary.rsvp.unknownError, fieldErrors: {}, values };
   }
 
-  revalidatePath('/e', 'layout');
-
+  revalidatePath(localePath(locale, '/e'), 'layout');
   return {
     status: 'success',
-    message: successMessage(submission.attendanceStatus),
+    message: successMessage(submission.attendanceStatus, locale),
     fieldErrors: {},
   };
 }

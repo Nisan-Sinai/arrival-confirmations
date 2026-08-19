@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getEventLicense } from '@/app/_lib/eventLicenses';
 import { isMonetizedEvent } from '@/app/_lib/plans';
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { isHexColor, isInvitationStyle, normalizeHttpsUrl } from '@/lib/premiumEventTools';
 import { createUserClient } from '@/lib/server/supabase';
@@ -28,9 +29,53 @@ interface OwnedPremiumContext {
   readonly event: OwnedEvent;
 }
 
+const COPY = {
+  he: {
+    denied: 'הכלים המתקדמים זמינים באירוע Premium או Pro פעיל בלבד.',
+    chooseFile: 'יש לבחור קובץ XLSX, CSV או TSV.',
+    fileLarge: 'הקובץ גדול מדי. הגודל המרבי הוא 5MB.',
+    noPhone: 'לא נמצא אף מספר טלפון ישראלי תקין בקובץ.',
+    guestsSaveFailed: 'שמירת המוזמנים נכשלה. נסו שוב.',
+    imported: (count: number, skipped: number) =>
+      `יובאו ${count} מוזמנים בהצלחה${skipped > 0 ? `; ${skipped} שורות דולגו` : ''}.`,
+    fileReadFailed: 'לא ניתן לקרוא את הקובץ. ודאו שהוא תקין ונסו שוב.',
+    invalidColors: 'יש לבחור צבעים תקינים בפורמט HEX.',
+    invalidLogo: 'כתובת הלוגו חייבת להיות כתובת HTTPS תקינה.',
+    invalidStyle: 'סגנון ההזמנה אינו תקין.',
+    brandingFailed: 'שמירת המיתוג נכשלה.',
+    brandingSaved: 'המיתוג נשמר ומופיע בהזמנה.',
+    seatingInvalid: 'נתוני ההושבה אינם תקינים.',
+    seatingFailed: 'שמירת ההושבה נכשלה.',
+    seatingSaved: 'מפת ההושבה נשמרה.',
+  },
+  en: {
+    denied: 'Advanced tools are available only for an active Premium or Pro event.',
+    chooseFile: 'Choose an XLSX, CSV or TSV file.',
+    fileLarge: 'The file is too large. Maximum size is 5MB.',
+    noPhone: 'No valid Israeli phone number was found in the file.',
+    guestsSaveFailed: 'We could not save the guests. Please try again.',
+    imported: (count: number, skipped: number) =>
+      `Imported ${count} guests successfully${skipped > 0 ? `; ${skipped} rows were skipped` : ''}.`,
+    fileReadFailed: 'The file could not be read. Check it and try again.',
+    invalidColors: 'Choose valid HEX colours.',
+    invalidLogo: 'The logo URL must be a valid HTTPS address.',
+    invalidStyle: 'The invitation style is invalid.',
+    brandingFailed: 'We could not save the branding.',
+    brandingSaved: 'Branding saved and applied to the invitation.',
+    seatingInvalid: 'The seating data is invalid.',
+    seatingFailed: 'We could not save the seating plan.',
+    seatingSaved: 'The seating plan was saved.',
+  },
+} as const;
+
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function localeOf(formData: FormData): Locale {
+  const value = formData.get('locale');
+  return typeof value === 'string' && isLocale(value) ? value : defaultLocale;
 }
 
 async function requireOwnedPremiumEvent(eventId: string): Promise<OwnedPremiumContext | null> {
@@ -58,28 +103,25 @@ async function requireOwnedPremiumEvent(eventId: string): Promise<OwnedPremiumCo
   return enabled ? { db, event } : null;
 }
 
-function denied(): PremiumToolState {
-  return {
-    status: 'error',
-    message: 'הכלים המתקדמים זמינים באירוע Premium או Pro פעיל בלבד.',
-  };
+function denied(locale: Locale): PremiumToolState {
+  return { status: 'error', message: COPY[locale].denied };
 }
 
 export async function importGuestsAction(
   _previous: PremiumToolState,
   formData: FormData,
 ): Promise<PremiumToolState> {
+  const locale = localeOf(formData);
+  const copy = COPY[locale];
   const eventId = text(formData, 'eventId');
   const context = await requireOwnedPremiumEvent(eventId);
-  if (context === null) return denied();
+  if (context === null) return denied(locale);
 
   const file = formData.get('guestFile');
   if (!(file instanceof File) || file.size === 0) {
-    return { status: 'error', message: 'יש לבחור קובץ XLSX, CSV או TSV.' };
+    return { status: 'error', message: copy.chooseFile };
   }
-  if (file.size > 5_000_000) {
-    return { status: 'error', message: 'הקובץ גדול מדי. הגודל המרבי הוא 5MB.' };
-  }
+  if (file.size > 5_000_000) return { status: 'error', message: copy.fileLarge };
 
   try {
     const parsed = importGuestsFromFile(new Uint8Array(await file.arrayBuffer()), file.name);
@@ -104,40 +146,31 @@ export async function importGuestsAction(
           is_active: true,
         });
       } catch (error) {
-        if (error instanceof PhoneNormalizationError) {
-          invalid.push(`${guest.fullName}: ${guest.phone}`);
-        } else {
-          throw error;
-        }
+        if (error instanceof PhoneNormalizationError) invalid.push(`${guest.fullName}: ${guest.phone}`);
+        else throw error;
       }
     }
 
     if (unique.size === 0) {
-      return {
-        status: 'error',
-        message: 'לא נמצא אף מספר טלפון ישראלי תקין בקובץ.',
-        details: invalid.slice(0, 10),
-      };
+      return { status: 'error', message: copy.noPhone, details: invalid.slice(0, 10) };
     }
 
     const { error } = await context.db.from('guests').upsert([...unique.values()], {
       onConflict: 'event_id,phone_normalized',
       ignoreDuplicates: false,
     });
-    if (error) return { status: 'error', message: 'שמירת המוזמנים נכשלה. נסו שוב.' };
+    if (error) return { status: 'error', message: copy.guestsSaveFailed };
 
-    revalidatePath(`/dashboard/events/${eventId}`);
-    revalidatePath(`/dashboard/events/${eventId}/tools`);
+    revalidatePath(localePath(locale, `/dashboard/events/${eventId}`));
+    revalidatePath(localePath(locale, `/dashboard/events/${eventId}/tools`));
     return {
       status: 'success',
-      message: `יובאו ${unique.size} מוזמנים בהצלחה${invalid.length > 0 ? `; ${invalid.length} שורות דולגו` : ''}.`,
+      message: copy.imported(unique.size, invalid.length),
       details: invalid.slice(0, 10),
     };
   } catch (error) {
-    if (error instanceof GuestImportError) {
-      return { status: 'error', message: error.message };
-    }
-    return { status: 'error', message: 'לא ניתן לקרוא את הקובץ. ודאו שהוא תקין ונסו שוב.' };
+    if (error instanceof GuestImportError) return { status: 'error', message: error.message };
+    return { status: 'error', message: copy.fileReadFailed };
   }
 }
 
@@ -145,9 +178,11 @@ export async function saveBrandingAction(
   _previous: PremiumToolState,
   formData: FormData,
 ): Promise<PremiumToolState> {
+  const locale = localeOf(formData);
+  const copy = COPY[locale];
   const eventId = text(formData, 'eventId');
   const context = await requireOwnedPremiumEvent(eventId);
-  if (context === null) return denied();
+  if (context === null) return denied(locale);
 
   const primaryColor = text(formData, 'primaryColor');
   const accentColor = text(formData, 'accentColor');
@@ -156,14 +191,10 @@ export async function saveBrandingAction(
   const logoUrl = normalizeHttpsUrl(logoInput);
 
   if (!isHexColor(primaryColor) || !isHexColor(accentColor)) {
-    return { status: 'error', message: 'יש לבחור צבעים תקינים בפורמט HEX.' };
+    return { status: 'error', message: copy.invalidColors };
   }
-  if (logoInput !== '' && logoUrl === null) {
-    return { status: 'error', message: 'כתובת הלוגו חייבת להיות כתובת HTTPS תקינה.' };
-  }
-  if (!isInvitationStyle(invitationStyle)) {
-    return { status: 'error', message: 'סגנון ההזמנה אינו תקין.' };
-  }
+  if (logoInput !== '' && logoUrl === null) return { status: 'error', message: copy.invalidLogo };
+  if (!isInvitationStyle(invitationStyle)) return { status: 'error', message: copy.invalidStyle };
 
   const { error } = await context.db
     .from('events')
@@ -174,51 +205,46 @@ export async function saveBrandingAction(
       invitation_style: invitationStyle,
     })
     .eq('id', eventId);
-  if (error) return { status: 'error', message: 'שמירת המיתוג נכשלה.' };
+  if (error) return { status: 'error', message: copy.brandingFailed };
 
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
-  revalidatePath('/e', 'layout');
-  return { status: 'success', message: 'המיתוג נשמר ומופיע בהזמנה.' };
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/tools`));
+  revalidatePath(localePath(locale, '/e'), 'layout');
+  return { status: 'success', message: copy.brandingSaved };
 }
 
 export async function saveSeatingAction(
   _previous: PremiumToolState,
   formData: FormData,
 ): Promise<PremiumToolState> {
+  const locale = localeOf(formData);
+  const copy = COPY[locale];
   const eventId = text(formData, 'eventId');
   const context = await requireOwnedPremiumEvent(eventId);
-  if (context === null) return denied();
+  if (context === null) return denied(locale);
 
   const guestIds = formData.getAll('guestId');
   const tableNames = formData.getAll('tableName');
   const seatNumbers = formData.getAll('seatNumber');
   if (guestIds.length !== tableNames.length || guestIds.length !== seatNumbers.length) {
-    return { status: 'error', message: 'נתוני ההושבה אינם תקינים.' };
+    return { status: 'error', message: copy.seatingInvalid };
   }
 
   for (let index = 0; index < guestIds.length; index += 1) {
     const guestId = guestIds[index];
     const tableName = tableNames[index];
     const seatNumber = seatNumbers[index];
-    if (
-      typeof guestId !== 'string' ||
-      typeof tableName !== 'string' ||
-      typeof seatNumber !== 'string'
-    ) {
-      return { status: 'error', message: 'נתוני ההושבה אינם תקינים.' };
+    if (typeof guestId !== 'string' || typeof tableName !== 'string' || typeof seatNumber !== 'string') {
+      return { status: 'error', message: copy.seatingInvalid };
     }
 
     const { error } = await context.db
       .from('guests')
-      .update({
-        table_name: tableName.trim() || null,
-        seat_number: seatNumber.trim() || null,
-      })
+      .update({ table_name: tableName.trim() || null, seat_number: seatNumber.trim() || null })
       .eq('event_id', eventId)
       .eq('id', guestId);
-    if (error) return { status: 'error', message: 'שמירת ההושבה נכשלה.' };
+    if (error) return { status: 'error', message: copy.seatingFailed };
   }
 
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
-  return { status: 'success', message: 'מפת ההושבה נשמרה.' };
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}/tools`));
+  return { status: 'success', message: copy.seatingSaved };
 }

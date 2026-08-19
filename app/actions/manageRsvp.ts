@@ -2,26 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import { createUserClient } from '@/lib/server/supabase';
-
-/**
- * Host-side edits to a reply (§8 actions).
- *
- * A guest says "we'll be four" on the phone the week before, or cancels, or a name
- * was typed wrong. The host has to be able to correct the list, and until now could
- * not: these two actions existed but nothing in the application called them — the
- * event page rendered a read-only table. They are reachable from the UI as of this
- * change.
- *
- * Authorisation is not re-implemented here. Every statement runs through the host's
- * own session, so the `rsvps_owner_manage` policy decides what exists — an id
- * belonging to somebody else's event simply matches no row. That is stronger than a
- * check in this file, because it holds even if this file is wrong.
- *
- * What *is* re-implemented is noticing when the policy said no. A write that matches
- * zero rows returns no error, so both functions ask for the affected rows back rather
- * than reporting a save that never happened.
- */
 
 export interface ManageRsvpState {
   readonly status: 'idle' | 'saved' | 'error';
@@ -29,6 +11,28 @@ export interface ManageRsvpState {
 }
 
 const ATTENDANCE = new Set(['attending', 'not_attending', 'maybe']);
+
+const COPY = {
+  he: {
+    failed: 'הפעולה נכשלה. נסו שוב.',
+    invalidStatus: 'סטטוס לא תקין.',
+    saveFailed: 'השמירה נכשלה. נסו שוב.',
+    notFound: 'הרשומה לא נמצאה. רעננו את הדף.',
+    saved: 'העדכון נשמר.',
+  },
+  en: {
+    failed: 'The action failed. Please try again.',
+    invalidStatus: 'Invalid status.',
+    saveFailed: 'We could not save the change. Please try again.',
+    notFound: 'The RSVP was not found. Refresh the page.',
+    saved: 'The update was saved.',
+  },
+} as const;
+
+function localeOf(formData: FormData): Locale {
+  const value = formData.get('locale');
+  return typeof value === 'string' && isLocale(value) ? value : defaultLocale;
+}
 
 function toCount(value: FormDataEntryValue | null): number {
   const parsed = Number(value);
@@ -40,24 +44,20 @@ export async function updateRsvpAction(
   _previous: ManageRsvpState,
   formData: FormData,
 ): Promise<ManageRsvpState> {
+  const locale = localeOf(formData);
+  const copy = COPY[locale];
   const rsvpId = formData.get('rsvpId');
   const eventId = formData.get('eventId');
   const status = formData.get('attendanceStatus');
 
   if (typeof rsvpId !== 'string' || typeof eventId !== 'string' || typeof status !== 'string') {
-    return { status: 'error', message: 'הפעולה נכשלה. נסו שוב.' };
+    return { status: 'error', message: copy.failed };
   }
-  if (!ATTENDANCE.has(status)) {
-    return { status: 'error', message: 'סטטוס לא תקין.' };
-  }
+  if (!ATTENDANCE.has(status)) return { status: 'error', message: copy.invalidStatus };
 
   const adults = toCount(formData.get('adultsCount'));
   const children = toCount(formData.get('childrenCount'));
   const babies = toCount(formData.get('babiesCount'));
-
-  // Mirrors rsvps_not_attending_has_no_seats: the constraint would reject this
-  // anyway, but a rejected update reads as a server error rather than as the rule
-  // it actually is.
   const zeroed = status === 'not_attending';
 
   const supabase = await createUserClient();
@@ -72,21 +72,22 @@ export async function updateRsvpAction(
     .eq('id', rsvpId)
     .select('id');
 
-  if (error) return { status: 'error', message: 'השמירה נכשלה. נסו שוב.' };
+  if (error) return { status: 'error', message: copy.saveFailed };
   if (updated === null || updated.length === 0) {
-    return { status: 'error', message: 'הרשומה לא נמצאה. רעננו את הדף.' };
+    return { status: 'error', message: copy.notFound };
   }
 
-  revalidatePath(`/dashboard/events/${eventId}`);
-  return { status: 'saved', message: 'העדכון נשמר.' };
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}`));
+  return { status: 'saved', message: copy.saved };
 }
 
 export async function deleteRsvpAction(formData: FormData): Promise<void> {
+  const locale = localeOf(formData);
   const rsvpId = formData.get('rsvpId');
   const eventId = formData.get('eventId');
   if (typeof rsvpId !== 'string' || typeof eventId !== 'string') return;
 
   const supabase = await createUserClient();
   await supabase.from('rsvps').delete().eq('id', rsvpId);
-  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(localePath(locale, `/dashboard/events/${eventId}`));
 }

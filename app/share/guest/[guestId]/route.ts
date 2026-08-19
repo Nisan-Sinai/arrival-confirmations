@@ -3,21 +3,30 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { PLATFORM_OWNER_EMAIL } from '@/app/_lib/platformAdmin';
 import { appConfig } from '@/config/event.config';
+import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
 import { createPrivilegedClient, createUserClient } from '@/lib/server/supabase';
 import { issueToken, TOKEN_PURPOSES } from '@/lib/server/tokens';
 
 export const dynamic = 'force-dynamic';
 
+function requestLocale(request: Request): Locale {
+  const value = new URL(request.url).searchParams.get('locale');
+  return value !== null && isLocale(value) ? value : defaultLocale;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ guestId: string }> },
 ): Promise<NextResponse> {
+  const locale = requestLocale(request);
   const { guestId } = await params;
   const userClient = await createUserClient();
   const {
     data: { user },
   } = await userClient.auth.getUser();
-  if (user === null) return NextResponse.redirect(new URL('/login', request.url));
+  if (user === null) {
+    return NextResponse.redirect(new URL(localePath(locale, '/login'), request.url));
+  }
 
   const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const { data: guest, error: guestError } = await privileged
@@ -26,7 +35,7 @@ export async function GET(
     .eq('id', guestId)
     .maybeSingle();
   if (guestError || guest === null || !guest.is_active) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL(localePath(locale, '/dashboard'), request.url));
   }
 
   const { data: event, error: eventError } = await privileged
@@ -35,12 +44,12 @@ export async function GET(
     .eq('id', guest.event_id)
     .maybeSingle();
   if (eventError || event === null) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL(localePath(locale, '/dashboard'), request.url));
   }
 
   const isPlatformOwner = user.email?.toLowerCase() === PLATFORM_OWNER_EMAIL;
   if (!isPlatformOwner && event.owner_user_id !== user.id) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL(localePath(locale, '/dashboard'), request.url));
   }
 
   const invite = issueToken(TOKEN_PURPOSES.invite);
@@ -64,7 +73,7 @@ export async function GET(
       new URL(
         isPlatformOwner
           ? `/admin/events/${event.id}?error=invite-link`
-          : `/dashboard/events/${event.id}/guests?error=invite-link`,
+          : `${localePath(locale, `/dashboard/events/${event.id}/guests`)}?error=invite-link`,
         request.url,
       ),
     );
@@ -81,18 +90,27 @@ export async function GET(
     action: isPlatformOwner ? 'admin_guest_invite_issued' : 'host_guest_invite_issued',
     entity_type: 'guest',
     entity_id: guest.id,
-    metadata: { eventId: event.id, expiresAt, issuedAt: now },
+    metadata: { eventId: event.id, expiresAt, issuedAt: now, locale },
   });
 
   const origin = new URL(request.url).origin;
-  const personalUrl = `${origin}/invite/${invite.raw}`;
-  const message = [
-    `היי ${guest.full_name},`,
-    `נשמח לקבל את אישור ההגעה שלך ל${event.title}.`,
-    '',
-    'בלחיצה על הקישור אפשר לבחור מגיע/ה, לא מגיע/ה או אולי:',
-    personalUrl,
-  ].join('\n');
+  const personalUrl = `${origin}/invite/${invite.raw}?locale=${locale}`;
+  const message =
+    locale === 'en'
+      ? [
+          `Hi ${guest.full_name},`,
+          `We would love to receive your RSVP for ${event.title}.`,
+          '',
+          'Open the link to choose attending, not attending or maybe:',
+          personalUrl,
+        ].join('\n')
+      : [
+          `היי ${guest.full_name},`,
+          `נשמח לקבל את אישור ההגעה שלך ל${event.title}.`,
+          '',
+          'בלחיצה על הקישור אפשר לבחור מגיע/ה, לא מגיע/ה או אולי:',
+          personalUrl,
+        ].join('\n');
   const phone = guest.phone_normalized.replace(/^\+/, '');
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(message)}`;
 
