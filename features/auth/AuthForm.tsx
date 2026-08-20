@@ -35,7 +35,7 @@ interface AuthFormProps {
   readonly locale?: Locale;
 }
 
-const MIN_PASSWORD_LENGTH = 10;
+const MIN_PASSWORD_LENGTH = 12;
 
 export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL);

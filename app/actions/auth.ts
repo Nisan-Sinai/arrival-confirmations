@@ -1,11 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { getDictionary } from '@/config/dictionary';
 import { defaultLocale, isLocale, localePath, type Locale } from '@/lib/i18n';
-import { createUserClient } from '@/lib/server/supabase';
+import { resolveClientIpHash } from '@/lib/server/ip';
+import { createPrivilegedClient, createUserClient } from '@/lib/server/supabase';
+import { hashIdentity, TOKEN_PURPOSES } from '@/lib/server/tokens';
 
 /**
  * Sign-in, sign-up and password recovery (§8, §4.4).
@@ -31,8 +34,16 @@ function isValidEmail(value: unknown): value is string {
   return typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
 }
 
-/** Supabase's own floor is 6; 10 is a meaningful improvement at no usability cost. */
-const MIN_PASSWORD_LENGTH = 10;
+/** A 12-character application floor raises the baseline above Supabase's legacy default. */
+const MIN_PASSWORD_LENGTH = 12;
+
+const AUTH_RATE_LIMITS = {
+  'sign-in': { limit: 10, windowSeconds: 300 },
+  'sign-up': { limit: 5, windowSeconds: 3600 },
+  'password-reset': { limit: 5, windowSeconds: 900 },
+} as const;
+
+type AuthRateLimitScope = keyof typeof AUTH_RATE_LIMITS;
 
 /** Never echoed unless it is safe to: a password is not put back into the DOM. */
 const echo = (value: FormDataEntryValue | null): string => (typeof value === 'string' ? value : '');
@@ -47,11 +58,42 @@ function localeOf(formData: FormData): Locale {
   return typeof value === 'string' && isLocale(value) ? value : defaultLocale;
 }
 
+/**
+ * Distributed, fail-closed throttling for public auth operations.
+ *
+ * Two independent hashed buckets are consumed for every provider call: one for the
+ * source IP and one for the account identifier. That stops a single source from
+ * spraying many addresses and also stops a single account from being attacked by
+ * rotating source addresses. No raw IP or email is stored in the limiter table.
+ */
+async function allowAuthAttempt(scope: AuthRateLimitScope, email: string): Promise<boolean> {
+  const { limit, windowSeconds } = AUTH_RATE_LIMITS[scope];
+  const { hash: ipHash } = resolveClientIpHash(await headers());
+  const emailHash = hashIdentity(email.trim().toLocaleLowerCase('en-US'), TOKEN_PURPOSES.rateLimit);
+  const db = createPrivilegedClient();
+
+  const [ipResult, accountResult] = await Promise.all([
+    db.rpc('consume_rate_limit', {
+      p_bucket_key: `auth:${scope}:ip:${ipHash}`,
+      p_limit: limit,
+      p_window_seconds: windowSeconds,
+    }),
+    db.rpc('consume_rate_limit', {
+      p_bucket_key: `auth:${scope}:account:${emailHash}`,
+      p_limit: limit,
+      p_window_seconds: windowSeconds,
+    }),
+  ]);
+
+  if (ipResult.error !== null || accountResult.error !== null) return false;
+  return ipResult.data?.[0]?.allowed === true && accountResult.data?.[0]?.allowed === true;
+}
+
 export async function signInAction(
   _previous: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const { auth } = getDictionary(localeOf(formData));
+  const { auth, errors } = getDictionary(localeOf(formData));
   const email = formData.get('email');
   const password = formData.get('password');
 
@@ -59,10 +101,14 @@ export async function signInAction(
     return { status: 'error', message: auth.errors.loginFailed, email: echo(email) };
   }
 
+  if (!(await allowAuthAttempt('sign-in', email))) {
+    return { status: 'error', message: errors.genericBody, email };
+  }
+
   const supabase = await createUserClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-  // One message for every failure mode, on purpose.
+  // One message for every provider failure mode, on purpose.
   if (error) {
     return { status: 'error', message: auth.errors.loginFailed, email };
   }
@@ -76,7 +122,7 @@ export async function signUpAction(
   formData: FormData,
 ): Promise<AuthFormState> {
   const locale = localeOf(formData);
-  const { auth } = getDictionary(locale);
+  const { auth, errors } = getDictionary(locale);
   const email = formData.get('email');
   const password = formData.get('password');
 
@@ -89,6 +135,10 @@ export async function signUpAction(
       message: auth.errors.passwordTooShort.replace('{min}', String(MIN_PASSWORD_LENGTH)),
       email,
     };
+  }
+
+  if (!(await allowAuthAttempt('sign-up', email))) {
+    return { status: 'error', message: errors.genericBody, email };
   }
 
   const supabase = await createUserClient();
@@ -136,10 +186,14 @@ export async function requestPasswordResetAction(
   formData: FormData,
 ): Promise<AuthFormState> {
   const locale = localeOf(formData);
-  const { auth } = getDictionary(locale);
+  const { auth, errors } = getDictionary(locale);
   const email = formData.get('email');
   if (!isValidEmail(email)) {
     return { status: 'error', message: auth.errors.invalidEmail, email: echo(email) };
+  }
+
+  if (!(await allowAuthAttempt('password-reset', email))) {
+    return { status: 'error', message: errors.genericBody, email };
   }
 
   const supabase = await createUserClient();
@@ -151,7 +205,7 @@ export async function requestPasswordResetAction(
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}${localePath(locale, '/auth/callback')}?next=${localePath(locale, '/reset-password')}`,
   });
 
-  // The error, if any, is deliberately not surfaced.
+  // The provider error, if any, is deliberately not surfaced.
   return { status: 'sent', message: auth.sent.resetLink };
 }
 

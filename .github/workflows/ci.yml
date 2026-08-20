@@ -1,20 +1,18 @@
 name: CI
 
-# §11: every push and every pull request. A gate that only runs on one of them is a
-# gate somebody will route around.
 on:
   push:
     branches: [main]
   pull_request:
 
-# A second push to the same branch makes the first run's answer irrelevant.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
-  # Deterministic stand-ins so the suites that need no database still run in a fork,
-  # where secrets are unavailable. Obviously fake, and never valid anywhere.
   NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key-0123456789
   NEXT_PUBLIC_SITE_URL: http://localhost:3000
@@ -23,22 +21,56 @@ env:
   IP_HASH_PEPPER: ci-placeholder-ip-pepper-9876543210-zyxwvu
 
 jobs:
+  history-secrets:
+    name: Full Git history secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Install Gitleaks and scan the pull-request range
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+
+      - name: Scan every commit in repository history
+        run: gitleaks git --redact --verbose .
+
+  dependency-audit:
+    name: Production and full dependency audits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies from the lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Production dependency audit
+        run: pnpm audit --prod
+
+      - name: Full dependency audit
+        run: pnpm audit
+
   quality:
     name: Format, lint, types, unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          # Pinned rather than 'latest': §1 requires the toolchain to be reproducible.
           node-version: 24
           cache: pnpm
 
       - name: Install dependencies
-        # Frozen: a lockfile CI is allowed to update is a lockfile that proves nothing.
         run: pnpm install --frozen-lockfile
 
       - name: Prettier
@@ -50,10 +82,6 @@ jobs:
       - name: TypeScript
         run: pnpm typecheck
 
-      # `pnpm test:coverage` rather than `pnpm test`: it runs the same specs and also
-      # enforces the thresholds in vitest.config.ts. The gate was declared in the
-      # README and never invoked here, so the suite sat at 32% against a stated 100%
-      # for the life of the project without anything reporting it.
       - name: Unit and component tests, with coverage thresholds
         run: pnpm test:coverage
 
@@ -61,37 +89,21 @@ jobs:
         run: pnpm build
 
       - name: Browser bundle security tests
-        # The suite inspects .next/static, so it must run in the same job after Build.
         run: pnpm test:security
 
-      # A hard gate, not advisory. This is how `updatePasswordAction`,
-      # `updateRsvpAction` and an entire `/reset-password` flow came to exist with no
-      # caller and no route, and how six unused production dependencies — including
-      # recharts and react-hook-form — stayed in the manifest. It exits clean today,
-      # so anything it reports tomorrow is new.
       - name: Dead code and unused exports
         run: pnpm deadcode
 
       - name: Secret scan over source and build output
-        # Runs after the build on purpose: §4.5's browser-bundle grep has nothing to
-        # inspect until .next exists.
         run: pnpm scan:secrets
-
-      - name: Dependency audit
-        # Advisory: a transitive advisory with no fix available should not block a
-        # release that does not reach the vulnerable path. It is still reported.
-        run: pnpm audit --audit-level high
-        continue-on-error: true
 
   migrations:
     name: Database, integration, RLS and 50-event matrix
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           cache: pnpm
@@ -99,10 +111,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # A fresh local Supabase database is safer and more deterministic than an
-      # optional remote connection string. Every migration is replayed in order, so a
-      # missing object or an invalid migration fails the pull request without secrets.
-      - uses: supabase/setup-cli@v2
+      - uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
         with:
           version: 2.101.0
           github-token: ${{ github.token }}
@@ -135,13 +144,11 @@ jobs:
   e2e:
     name: End-to-end and accessibility
     runs-on: ubuntu-latest
-    # Needs real credentials, which forks cannot have. Skipping is honest; faking a
-    # pass would not be (§17).
     if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           cache: pnpm
@@ -152,20 +159,25 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Check whether E2E credentials are configured
-        id: creds
+      - name: Require E2E credentials on trusted runs
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TOKEN_PEPPER: ${{ secrets.TOKEN_PEPPER }}
+          IP_HASH_PEPPER: ${{ secrets.IP_HASH_PEPPER }}
+          E2E_EVENT_PUBLIC_ID: ${{ secrets.E2E_EVENT_PUBLIC_ID }}
         run: |
-          if [ -z "$SUPABASE_URL" ]; then
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::E2E skipped - repository secrets are not set."
-          else
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          fi
+          missing=0
+          for name in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY TOKEN_PEPPER IP_HASH_PEPPER E2E_EVENT_PUBLIC_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Required E2E secret ${name} is not configured."
+              missing=1
+            fi
+          done
+          exit "$missing"
 
       - name: Build for the E2E server
-        if: steps.creds.outputs.configured == 'true'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -173,11 +185,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TOKEN_PEPPER: ${{ secrets.TOKEN_PEPPER }}
           IP_HASH_PEPPER: ${{ secrets.IP_HASH_PEPPER }}
-        # playwright.config.ts starts `next start` in CI, which needs this.
         run: pnpm build
 
       - name: Run E2E and axe
-        if: steps.creds.outputs.configured == 'true'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -190,7 +200,7 @@ jobs:
 
       - name: Upload the report when something failed
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-report
           path: |
