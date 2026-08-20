@@ -141,64 +141,6 @@ jobs:
         if: always()
         run: supabase stop --no-backup
 
-  maintenance-lockfile:
-    name: Generate patched lockfile artifact
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'security/devsecops-hardening-2026-08-20'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Resolve lockfile only without lifecycle scripts
-        run: pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts
-
-      - name: Upload generated lockfile without repository write permission
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: patched-lockfile
-          path: pnpm-lock.yaml
-          retention-days: 1
-
-  maintenance-publish:
-    name: Publish patched lockfile artifact
-    needs: maintenance-lockfile
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'security/devsecops-hardening-2026-08-20'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout only the trusted same-repository head branch
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-
-      - name: Download generated lockfile
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          name: patched-lockfile
-          path: maintenance-lockfile
-
-      - name: Copy and fast-forward push the lockfile only
-        env:
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          set -euo pipefail
-          cp maintenance-lockfile/pnpm-lock.yaml pnpm-lock.yaml
-          git add -- pnpm-lock.yaml
-          git diff --cached --stat
-          if git diff --cached --quiet; then
-            echo 'No lockfile change to publish.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix(deps): refresh patched transitive lockfile'
-          git push origin "HEAD:${HEAD_REF}"
-
   e2e:
     name: End-to-end and accessibility
     runs-on: ubuntu-latest
