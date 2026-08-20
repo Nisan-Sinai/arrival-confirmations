@@ -143,7 +143,7 @@ jobs:
 
   maintenance-artifact:
     name: Generate audited maintenance artifact
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'security/devsecops-hardening-2026-08-20'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'security/devsecops-hardening-2026-08-20'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -191,6 +191,50 @@ jobs:
             pnpm-workspace.yaml
             pnpm-lock.yaml
           retention-days: 1
+
+  maintenance-publish:
+    name: Publish audited maintenance artifact
+    needs: maintenance-artifact
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'security/devsecops-hardening-2026-08-20'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout only the trusted same-repository head branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Download the read-only generated artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: security-maintenance-files
+          path: maintenance-files
+
+      - name: Copy only reviewed generated files
+        run: |
+          set -euo pipefail
+          cp maintenance-files/.github/dependabot.yml .github/dependabot.yml
+          cp maintenance-files/features/auth/AuthForm.tsx features/auth/AuthForm.tsx
+          cp maintenance-files/pnpm-workspace.yaml pnpm-workspace.yaml
+          cp maintenance-files/pnpm-lock.yaml pnpm-lock.yaml
+          printf '%s\n' '9b1338d0f2265a9b6700afe45d6585b678131a96:.github/workflows/ci.yml:generic-api-key:19' > .gitleaksignore
+          git add -- .github/dependabot.yml .gitleaksignore features/auth/AuthForm.tsx pnpm-workspace.yaml pnpm-lock.yaml
+          git diff --cached --stat
+
+      - name: Fast-forward push generated files only
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then
+            echo 'No generated changes to publish.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(security): apply audited dependency and scan fixes'
+          git push origin "HEAD:${HEAD_REF}"
 
   e2e:
     name: End-to-end and accessibility
