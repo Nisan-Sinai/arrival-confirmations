@@ -64,6 +64,7 @@ jobs:
           const token = process.env.GH_TOKEN;
 
           const REQUIRED_CHECKS = [
+            'Full Git history secret scan',
             'Production and full dependency audits',
             'Format, lint, types, unit tests',
             'Database, integration, RLS and 50-event matrix',
