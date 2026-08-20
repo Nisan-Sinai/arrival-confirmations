@@ -1,59 +1,59 @@
 version: 2
 
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "daily"
-      time: "05:30"
-      timezone: "Asia/Jerusalem"
+      interval: 'daily'
+      time: '05:30'
+      timezone: 'Asia/Jerusalem'
     open-pull-requests-limit: 10
-    rebase-strategy: "auto"
+    rebase-strategy: 'auto'
     commit-message:
-      prefix: "chore(deps)"
+      prefix: 'chore(deps)'
     groups:
       security-production:
-        applies-to: "security-updates"
-        dependency-type: "production"
+        applies-to: 'security-updates'
+        dependency-type: 'production'
         patterns:
-          - "*"
+          - '*'
       security-development:
-        applies-to: "security-updates"
-        dependency-type: "development"
+        applies-to: 'security-updates'
+        dependency-type: 'development'
         patterns:
-          - "*"
+          - '*'
       production-minor-patch:
-        applies-to: "version-updates"
-        dependency-type: "production"
+        applies-to: 'version-updates'
+        dependency-type: 'production'
         patterns:
-          - "*"
+          - '*'
         update-types:
-          - "minor"
-          - "patch"
+          - 'minor'
+          - 'patch'
       development-minor-patch:
-        applies-to: "version-updates"
-        dependency-type: "development"
+        applies-to: 'version-updates'
+        dependency-type: 'development'
         patterns:
-          - "*"
+          - '*'
         update-types:
-          - "minor"
-          - "patch"
+          - 'minor'
+          - 'patch'
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "daily"
-      time: "06:00"
-      timezone: "Asia/Jerusalem"
+      interval: 'daily'
+      time: '06:00'
+      timezone: 'Asia/Jerusalem'
     open-pull-requests-limit: 5
-    rebase-strategy: "auto"
+    rebase-strategy: 'auto'
     commit-message:
-      prefix: "chore(actions)"
+      prefix: 'chore(actions)'
     groups:
       github-actions-minor-patch:
-        applies-to: "version-updates"
+        applies-to: 'version-updates'
         patterns:
-          - "*"
+          - '*'
         update-types:
-          - "minor"
-          - "patch"
+          - 'minor'
+          - 'patch'
