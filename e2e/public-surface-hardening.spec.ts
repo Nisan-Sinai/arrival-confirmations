@@ -29,6 +29,23 @@ test.describe('public surface hardening', () => {
     });
   }
 
+  test('the sticky header stays above scrolled content and remains clickable on desktop', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/');
+
+    const header = page.locator('header').first();
+    await expect(header).toHaveCSS('position', 'sticky');
+    await expect(header).toHaveCSS('z-index', '30');
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(header).toBeInViewport();
+
+    await header.getByRole('link', { name: 'יצירת אירוע', exact: true }).click();
+    await expect(page).toHaveURL(/\/signup$/);
+  });
+
   test('the pricing page has zero WCAG 2.2 AA violations', async ({ page }) => {
     await page.goto('/pricing');
     const results = await new AxeBuilder({ page })
