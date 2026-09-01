@@ -37,18 +37,33 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </p>
           </div>
 
+          {/*
+            `py-1.5` on each link, which is not decoration.
+
+            These were 20px tall. WCAG 2.2 SC 2.5.8 sets the floor at 24×24 CSS pixels,
+            and a site that publishes an accessibility statement under Israeli
+            regulation should not be missing the target-size criterion in the footer
+            that carries the statement's own link. The padding takes them past it
+            without changing how the row reads.
+          */}
           <nav
             aria-label={dictionary.footer.navAria}
-            className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm"
+            className="text-muted-foreground flex flex-wrap justify-center gap-x-6 text-sm"
           >
             <Link
-              className="hover:text-primary rounded-sm underline underline-offset-4"
+              className="hover:text-primary rounded-sm py-1.5 underline underline-offset-4"
+              href={localePath(locale, '/pricing')}
+            >
+              {dictionary.footer.pricing}
+            </Link>
+            <Link
+              className="hover:text-primary rounded-sm py-1.5 underline underline-offset-4"
               href={localePath(locale, '/privacy')}
             >
               {dictionary.footer.privacy}
             </Link>
             <Link
-              className="hover:text-primary rounded-sm underline underline-offset-4"
+              className="hover:text-primary rounded-sm py-1.5 underline underline-offset-4"
               href={localePath(locale, '/accessibility')}
             >
               {dictionary.footer.accessibility}

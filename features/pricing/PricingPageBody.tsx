@@ -101,7 +101,7 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
             </div>
 
             <div className="mt-12">
-              <PricingCards locale={locale} />
+              <PricingCards locale={locale} headingLevel="h2" />
             </div>
 
             <section className="border-border bg-card/60 mt-14 rounded-2xl border p-7 text-center sm:p-10">

@@ -20,13 +20,14 @@ test.describe('commercial surface consistency', () => {
     const graph = (JSON.parse(raw) as { '@graph': Record<string, unknown>[] })['@graph'];
     const app = graph.find((node) => node['@type'] === 'WebApplication');
 
-    expect(app?.offers).toMatchObject(
-      PAID_PLANS.map((plan) => ({
-        name: plan.name,
-        price: plan.price,
-        priceCurrency: 'ILS',
-      })),
-    );
+    // The catalogue publishes the free trial alongside the paid plans now, so this
+    // asserts each paid plan is present rather than that the list is exactly them.
+    const offers = app?.offers as { name: string; price: string; priceCurrency: string }[];
+    for (const plan of PAID_PLANS) {
+      expect(offers).toContainEqual(
+        expect.objectContaining({ name: plan.name, price: plan.price, priceCurrency: 'ILS' }),
+      );
+    }
   });
 
   test('the signup page states the real free-trial limit', async ({ page }) => {

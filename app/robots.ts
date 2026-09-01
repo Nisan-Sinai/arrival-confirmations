@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-import { DISALLOWED_PATHS, absoluteUrl } from '@/lib/seo';
+import { absoluteUrl, disallowedPaths } from '@/lib/seo';
 
 /**
  * `/robots.txt` (§12).
@@ -10,6 +10,12 @@ import { DISALLOWED_PATHS, absoluteUrl } from '@/lib/seo';
  * is the default — and a redundant list is one that goes stale the first time a
  * public page is added and nobody thinks to update it. The `Disallow` block below is
  * the load-bearing half, and it is the half that is enumerated.
+ *
+ * It is enumerated *per locale*, by `disallowedPaths()` rather than by hand. A
+ * `Disallow` is a prefix match, so the hand-written `/login` never covered `/en/login`,
+ * and the English sign-in, sign-up and password-recovery pages were crawlable from the
+ * day the English tree shipped. Deriving both spellings from one list is what stops the
+ * next private route arriving half-protected.
  *
  * A note on what this file does *not* buy. WhatsApp's link-preview fetcher does not
  * request robots.txt, so `Disallow: /e/` costs an invitation nothing on the channel
@@ -25,9 +31,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        // Spread into a mutable array: `MetadataRoute.Robots` types `disallow` as
-        // `string | string[]`, and the shared constant is `readonly`.
-        disallow: [...DISALLOWED_PATHS],
+        disallow: disallowedPaths(),
       },
     ],
     // No `host` directive. It is a Yandex extension that Google ignores, it expects a

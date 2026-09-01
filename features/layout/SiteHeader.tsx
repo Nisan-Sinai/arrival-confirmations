@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { buttonClass } from '@/components/ui/button';
 import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
+import { BrandMark } from '@/features/layout/BrandMark';
 import { LanguageSwitch } from '@/features/layout/LanguageSwitch';
 import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -35,49 +36,55 @@ export function SiteHeader({
         className,
       )}
     >
-      <Container className="flex min-h-16 items-center justify-between gap-3 py-2 sm:min-h-18">
+      <Container className="flex min-h-16 items-center justify-between gap-2 py-2 sm:min-h-18 sm:gap-3">
         <Link
           href={localePath(locale, '/')}
           aria-label={dictionary.header.homeAria}
           className="text-primary flex items-center gap-2.5 rounded-md font-[family-name:var(--font-display)] text-lg font-bold sm:text-xl"
         >
-          <span
-            aria-hidden="true"
-            className="border-accent-strong/40 text-accent-strong flex size-9 shrink-0 items-center justify-center rounded-full border"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4.5"
-            >
-              <path d="M4 8h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
-              <path d="M4 8l8 5 8-5" />
-              <path d="M12 8V4M9.5 5.5 12 4l2.5 1.5" />
-            </svg>
-          </span>
+          <BrandMark className="size-9 shrink-0" />
           <span className="hidden sm:inline">{dictionary.site.name}</span>
         </Link>
 
         {!minimal && (
-          <nav aria-label={dictionary.header.navAria} className="flex items-center gap-1 sm:gap-2">
+          <nav
+            aria-label={dictionary.header.navAria}
+            className="flex shrink-0 items-center gap-0.5 sm:gap-2"
+          >
             {showLanguageSwitch && <LanguageSwitch locale={locale} />}
+            {/*
+              Hidden below `sm`, and the only item that is.
+
+              Four items plus the mark do not fit a phone. In English they never did:
+              the bar measured 325px of content inside a 302px budget on a 390px screen —
+              an iPhone 12 through 15 — so the sign-up button hung off the edge of every
+              page on the site. Hebrew failed the same way at 320px.
+
+              Pricing is the item that gives, because it is the one with somewhere else
+              to be: the landing hero links to it, the plans section is on the page, and
+              it is in the footer of every page precisely so that dropping it here costs
+              a reader nothing.
+            */}
             <Link
               href={localePath(locale, '/pricing')}
-              className={buttonClass({ variant: 'ghost', size: 'sm' })}
+              className={buttonClass({
+                variant: 'ghost',
+                size: 'sm',
+                className: 'hidden sm:inline-flex',
+              })}
             >
               {dictionary.header.pricing}
             </Link>
             <Link
               href={localePath(locale, '/login')}
-              className={buttonClass({ variant: 'ghost', size: 'sm' })}
+              className={buttonClass({ variant: 'ghost', size: 'sm', className: 'px-3 sm:px-4' })}
             >
               {dictionary.header.login}
             </Link>
-            <Link href={localePath(locale, '/signup')} className={buttonClass({ size: 'sm' })}>
+            <Link
+              href={localePath(locale, '/signup')}
+              className={buttonClass({ size: 'sm', className: 'px-3 sm:px-4' })}
+            >
               {dictionary.header.signup}
             </Link>
           </nav>

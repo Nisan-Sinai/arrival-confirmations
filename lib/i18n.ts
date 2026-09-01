@@ -72,10 +72,18 @@ export function localeFromPath(pathname: string): Locale {
 /**
  * Every locale pointing at every other one, keyed the way Next.js `alternates`
  * expects, so a page declares its pair in one line instead of restating both.
+ *
+ * `x-default` is the third entry, and it is not a restatement of the Hebrew one.
+ * `hreflang="he"` and `hreflang="en"` between them tell Google what to serve a Hebrew
+ * or an English speaker; they say nothing about the Russian speaker, and Google's
+ * documented fallback for an unmatched language is to choose from the set on its own.
+ * Naming the Hebrew root makes that choice ours rather than whichever page happens to
+ * rank that week.
  */
-export function languageAlternates(path = '/'): Record<Locale, string> {
+export function languageAlternates(path = '/'): Record<Locale | 'x-default', string> {
   return {
     he: localePath('he', path),
     en: localePath('en', path),
+    'x-default': localePath(defaultLocale, path),
   };
 }

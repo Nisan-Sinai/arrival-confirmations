@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { getPlanCatalog } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Container, Rule } from '@/components/ui/layout';
@@ -10,14 +9,8 @@ import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
-import {
-  languageAlternates,
-  languageTag,
-  localePath,
-  openGraphLocale,
-  type Locale,
-} from '@/lib/i18n';
-import { SITE_ORIGIN } from '@/lib/seo';
+import { languageAlternates, localePath, openGraphLocale, type Locale } from '@/lib/i18n';
+import { structuredData } from '@/lib/structuredData';
 
 /**
  * The marketing home page, shared by both locales (§12).
@@ -47,44 +40,6 @@ export function buildLandingMetadata(locale: Locale): Metadata {
       description: landing.meta.ogDescription,
       url: path,
     },
-  };
-}
-
-/** The `application/ld+json` graph, built from the dictionary and the plan catalogue. */
-function structuredData(locale: Locale) {
-  const { landing, site } = getDictionary(locale);
-  const tag = languageTag(locale);
-  const paidPlans = getPlanCatalog(locale).filter((plan) => plan.code !== 'trial');
-
-  return {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebApplication',
-        name: site.name,
-        description: site.description,
-        url: SITE_ORIGIN,
-        applicationCategory: 'LifestyleApplication',
-        operatingSystem: 'Web',
-        inLanguage: tag,
-        isAccessibleForFree: true,
-        offers: paidPlans.map((plan) => ({
-          '@type': 'Offer',
-          name: plan.name,
-          price: String(Math.round(plan.priceAgorot / 100)),
-          priceCurrency: 'ILS',
-        })),
-      },
-      {
-        '@type': 'FAQPage',
-        inLanguage: tag,
-        mainEntity: landing.faq.items.map((item) => ({
-          '@type': 'Question',
-          name: item.question,
-          acceptedAnswer: { '@type': 'Answer', text: item.answer },
-        })),
-      },
-    ],
   };
 }
 

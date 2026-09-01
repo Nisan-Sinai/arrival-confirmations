@@ -178,11 +178,14 @@ export const he: Dictionary = {
   site: {
     name: 'אישורי הגעה',
     description: 'הזמנה דיגיטלית ואישור הגעה לאירוע',
+    publisherDescription:
+      'בית תוכנה ישראלי המפתח אתרים, מערכות ניהול ואוטומציות לעסקים, ומפעיל את מערכת אישורי ההגעה לאירועים.',
   },
   footer: {
     builtBy: 'האתר עוצב ופותח ע״י',
     builderName: 'ניסן סיני טכנולוגיות',
     navAria: 'קישורי חובה',
+    pricing: 'מסלולים ומחירים',
     privacy: 'מדיניות פרטיות',
     accessibility: 'הצהרת נגישות',
   },
