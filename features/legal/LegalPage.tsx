@@ -128,6 +128,16 @@ export function LegalPageBody({
           {page.sections.map((section) => (
             <section
               key={section.title}
+              /*
+                Deliberately not `.reveal`.
+              
+                The privacy notice and the accessibility statement are compliance
+                documents, and someone reaching them is usually looking for one specific
+                sentence. Fading them in on scroll serves that reader nothing, and it
+                costs something real: axe reports a contrast violation against a section
+                still at low opacity, so the site's own accessibility statement failed an
+                accessibility check. Decoration is not worth that here.
+              */
               className="border-border mt-10 border-t pt-8 first:mt-0 first:border-t-0 first:pt-0"
             >
               <h2 className="text-primary text-h3 font-semibold">{section.title}</h2>

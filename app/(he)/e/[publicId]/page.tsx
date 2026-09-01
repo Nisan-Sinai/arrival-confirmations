@@ -128,6 +128,15 @@ export default async function EventPage({ params }: EventPageProps) {
 
       {/* The form is the point of the page, so it is anchored and linked to from the
           card above rather than left to be found by scrolling. */}
+      {/*
+        Deliberately not `.reveal`.
+
+        This form is the product's one job, in front of guests invited to a family's
+        simcha, and a scroll-driven animation starts at `opacity: 0`. The decoration is
+        worth very little and the tail risk — a browser where the animation does not
+        complete and the form never appears — is a guest who cannot reply at all. The
+        rest of the site can fade in; this cannot.
+      */}
       <div id="rsvp" className="w-full max-w-xl scroll-mt-8">
         <RsvpForm
           eventId={event.id!}
