@@ -93,11 +93,39 @@ async function seedUsers(client: PoolClient): Promise<SeededUser[]> {
   return users;
 }
 
+/**
+ * Seeds 200 events and their licence audit entries in two statements.
+ *
+ * It used to be 400, awaited one at a time in a nested loop — an insert and an audit row
+ * per event. Against the local database CI provisions that is fine. Against a remote
+ * Supabase project, which is what `.env.local` points at, each round trip costs about a
+ * tenth of a second and the suite blew through its 30s budget before reaching a single
+ * assertion. The test was failing for everyone running it locally while passing in CI,
+ * which is the worst state for a test to be in: it teaches you to ignore a red result.
+ *
+ * Batching changes nothing about what is verified. Every assertion in this file runs
+ * after seeding, against the same rows; only the number of network hops differs. Both
+ * statements stay well inside Postgres's 65535-parameter ceiling — 2600 and 1600.
+ *
+ * The returned ids are mapped back by `public_id` rather than by position. A single
+ * `insert ... values` does return rows in input order, but relying on that is a silent
+ * mis-association waiting to happen if the statement is ever rewritten.
+ */
 async function seedEvents(
   client: PoolClient,
   users: readonly SeededUser[],
 ): Promise<SeededEvent[]> {
-  const events: SeededEvent[] = [];
+  interface Pending {
+    readonly ownerId: string;
+    readonly publicId: string;
+    readonly plan: TestPlan;
+    readonly priceAgorot: number;
+    readonly attendeeLimit: number;
+    readonly eventValues: readonly unknown[];
+    readonly auditValues: (eventId: string) => readonly unknown[];
+  }
+
+  const pending: Pending[] = [];
 
   for (const user of users) {
     for (let eventNumber = 1; eventNumber <= EVENTS_PER_USER; eventNumber += 1) {
@@ -107,16 +135,17 @@ async function seedEvents(
 
       const publicId = `qa20u${String(user.userNumber).padStart(2, '0')}event${String(eventNumber).padStart(2, '0')}`;
       const eventType = EVENT_TYPES[(eventNumber - 1) % EVENT_TYPES.length]!;
-      const eventResult = await client.query<{ id: string }>(
-        `insert into public.events
-           (owner_user_id, public_id, event_type, title, hosts_names,
-            honoree_display_name, event_date, ceremony_time, venue_name,
-            address, contact_phone, description, expected_guests, is_active)
-         values
-           ($1, $2, $3, $4, $5, $6, current_date + $7::integer,
-            '19:00', $8, $9, $10, $11, $12, $13)
-         returning id`,
-        [
+      const status = plan === 'trial' ? 'trial' : 'active';
+      const paymentMethod =
+        plan === 'trial' ? null : PAYMENT_METHODS[(eventNumber - 1) % PAYMENT_METHODS.length]!;
+
+      pending.push({
+        ownerId: user.id,
+        publicId,
+        plan,
+        priceAgorot: planDefinition.priceAgorot,
+        attendeeLimit: planDefinition.attendeeLimit,
+        eventValues: [
           user.id,
           publicId,
           eventType,
@@ -131,27 +160,7 @@ async function seedEvents(
           planDefinition.attendeeLimit,
           eventNumber % 5 !== 0,
         ],
-      );
-      const eventId = eventResult.rows[0]!.id;
-      const status = plan === 'trial' ? 'trial' : 'active';
-      const paymentMethod =
-        plan === 'trial' ? null : PAYMENT_METHODS[(eventNumber - 1) % PAYMENT_METHODS.length]!;
-
-      await client.query(
-        `insert into public.audit_logs
-           (admin_user_id, action, entity_type, entity_id, metadata)
-         values
-           ($1::uuid, 'event_license_updated', 'event_license', $2::uuid,
-            jsonb_build_object(
-              'event_id', ($2::uuid)::text,
-              'plan', $3::text,
-              'status', $4::text,
-              'price_agorot', $5::integer,
-              'payment_method', $6::text,
-              'payment_reference', $7::text,
-              'notes', $8::text
-            ))`,
-        [
+        auditValues: (eventId: string) => [
           user.id,
           eventId,
           plan,
@@ -163,20 +172,71 @@ async function seedEvents(
             : `QA-${String(user.userNumber).padStart(2, '0')}-${String(eventNumber).padStart(2, '0')}`,
           `מנוי ${plan} לאירוע ${eventNumber} של משתמש ${user.userNumber}`,
         ],
-      );
-
-      events.push({
-        id: eventId,
-        ownerId: user.id,
-        publicId,
-        plan,
-        priceAgorot: planDefinition.priceAgorot,
-        attendeeLimit: planDefinition.attendeeLimit,
       });
     }
   }
 
-  return events;
+  const EVENT_COLUMNS = 13;
+  const eventParams = pending.flatMap((p) => [...p.eventValues]);
+  const eventRows = pending
+    .map((_, index) => {
+      const base = index * EVENT_COLUMNS;
+      const p = (offset: number) => `$${base + offset}`;
+      return `(${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)}, ${p(6)}, current_date + ${p(7)}::integer, '19:00', ${p(8)}, ${p(9)}, ${p(10)}, ${p(11)}, ${p(12)}, ${p(13)})`;
+    })
+    .join(',\n           ');
+
+  const inserted = await client.query<{ id: string; public_id: string }>(
+    `insert into public.events
+       (owner_user_id, public_id, event_type, title, hosts_names,
+        honoree_display_name, event_date, ceremony_time, venue_name,
+        address, contact_phone, description, expected_guests, is_active)
+     values
+           ${eventRows}
+     returning id, public_id`,
+    eventParams,
+  );
+
+  const idByPublicId = new Map(inserted.rows.map((row) => [row.public_id, row.id]));
+
+  const AUDIT_COLUMNS = 8;
+  const auditParams: unknown[] = [];
+  const auditRows = pending
+    .map((p, index) => {
+      const eventId = idByPublicId.get(p.publicId);
+      if (eventId === undefined) throw new Error(`No id returned for ${p.publicId}`);
+      auditParams.push(...p.auditValues(eventId));
+      const base = index * AUDIT_COLUMNS;
+      const n = (offset: number) => `$${base + offset}`;
+      return `(${n(1)}::uuid, 'event_license_updated', 'event_license', ${n(2)}::uuid,
+              jsonb_build_object(
+                'event_id', (${n(2)}::uuid)::text,
+                'plan', ${n(3)}::text,
+                'status', ${n(4)}::text,
+                'price_agorot', ${n(5)}::integer,
+                'payment_method', ${n(6)}::text,
+                'payment_reference', ${n(7)}::text,
+                'notes', ${n(8)}::text
+              ))`;
+    })
+    .join(',\n           ');
+
+  await client.query(
+    `insert into public.audit_logs
+       (admin_user_id, action, entity_type, entity_id, metadata)
+     values
+           ${auditRows}`,
+    auditParams,
+  );
+
+  return pending.map((p) => ({
+    id: idByPublicId.get(p.publicId)!,
+    ownerId: p.ownerId,
+    publicId: p.publicId,
+    plan: p.plan,
+    priceAgorot: p.priceAgorot,
+    attendeeLimit: p.attendeeLimit,
+  }));
 }
 
 async function becomeUser(client: PoolClient, userId: string): Promise<void> {
