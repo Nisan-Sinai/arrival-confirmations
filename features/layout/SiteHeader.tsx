@@ -42,7 +42,7 @@ export function SiteHeader({
           aria-label={dictionary.header.homeAria}
           className="text-primary flex items-center gap-2.5 rounded-md font-[family-name:var(--font-display)] text-lg font-bold sm:text-xl"
         >
-          <BrandMark className="size-9 shrink-0" />
+          <BrandMark animated className="size-9 shrink-0" />
           <span className="hidden sm:inline">{dictionary.site.name}</span>
         </Link>
 

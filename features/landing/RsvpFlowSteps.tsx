@@ -7,7 +7,7 @@ export function RsvpFlowSteps({ locale = defaultLocale }: { locale?: Locale }) {
   const { flow } = getDictionary(locale);
 
   return (
-    <section className="pb-16 sm:pb-20">
+    <section className="reveal pb-16 sm:pb-20">
       <Container width="wide">
         <Card variant="ink" padding="lg" className="overflow-hidden">
           <div className="mx-auto max-w-2xl text-center">
