@@ -41,13 +41,18 @@ export function PricingCards({
   const plans = showTrial ? catalog : catalog.filter((plan) => plan.code !== 'trial');
 
   return (
-    <div className={cn('grid gap-5', plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2')}>
+    <div
+      className={cn(
+        'reveal-stagger grid gap-5',
+        plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2',
+      )}
+    >
       {plans.map((plan) => (
         <Card
           key={plan.code}
           padding="lg"
           variant={plan.highlighted ? 'accent' : 'paper'}
-          className="relative flex h-full flex-col"
+          className="reveal relative flex h-full flex-col"
         >
           {plan.highlighted && (
             <span className="bg-primary text-primary-foreground absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-semibold">

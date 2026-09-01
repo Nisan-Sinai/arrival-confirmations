@@ -322,6 +322,36 @@
         animation-timeline: view();
         animation-range: entry 0% entry 220px;
       }
+
+      /**
+       * The same reveal, but the children arrive one after another.
+       *
+       * A stagger on a scroll-driven timeline is not `animation-delay` — there is no
+       * clock to delay against. It is a later *range*: each child starts its arrival
+       * further into the scroll than the one before, so the sequence is tied to how fast
+       * the reader is actually moving rather than to a fixed number of milliseconds.
+       * Scroll slowly and the cards deal out one by one; flick past and they are simply
+       * there, which is the behaviour you want in both cases.
+       *
+       * Enumerated to four because the plan grid holds four cards and a loop would need
+       * a preprocessor for no gain. Anything beyond the fourth keeps the base range,
+       * which is a graceful place to stop rather than a bug.
+       */
+      .reveal-stagger > *:nth-child(1) {
+        animation-range: entry 0% entry 200px;
+      }
+
+      .reveal-stagger > *:nth-child(2) {
+        animation-range: entry 45px entry 245px;
+      }
+
+      .reveal-stagger > *:nth-child(3) {
+        animation-range: entry 90px entry 290px;
+      }
+
+      .reveal-stagger > *:nth-child(4) {
+        animation-range: entry 135px entry 335px;
+      }
     }
   }
 
