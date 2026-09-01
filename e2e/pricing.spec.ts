@@ -16,9 +16,24 @@ test.describe('pricing', () => {
     await expect(page.getByText('תשלום חד-פעמי לאירוע').first()).toBeVisible();
   });
 
-  test('links to pricing from the public header', async ({ page }) => {
+  /**
+   * Reachability, not placement.
+   *
+   * The header carries the plans link on a wide viewport and drops it below `sm`, where
+   * four items plus the mark did not fit and the sign-up button hung off the edge of the
+   * screen. The footer carries it on every viewport so that trade costs a reader nothing
+   * — and this project runs on Desktop Chrome *and* a Pixel 7, so the test states the
+   * contract that holds on both: pricing is one tap from the chrome, wherever it sits.
+   */
+  test('reaches pricing from the site chrome on every viewport', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: 'מחירים' }).click();
-    await expect(page).toHaveURL(/\/pricing$/);
+
+    const header = page.getByRole('banner').getByRole('link', { name: 'מחירים', exact: true });
+    const footer = page.getByRole('contentinfo').getByRole('link', { name: 'מסלולים ומחירים' });
+
+    await expect(footer).toBeVisible();
+    const link = (await header.isVisible()) ? header : footer;
+    await link.click();
+    await expect(page).toHaveURL(new RegExp('/pricing$'));
   });
 });

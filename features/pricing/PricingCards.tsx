@@ -20,9 +20,20 @@ function whatsappPlanUrl(message: string): string {
 export function PricingCards({
   showTrial = true,
   locale = defaultLocale,
+  headingLevel = 'h3',
 }: {
   showTrial?: boolean;
   locale?: Locale;
+  /**
+   * The level for each plan name, because the right one depends on what precedes the
+   * grid rather than on the grid itself.
+   *
+   * On the landing page a section `h2` introduces the plans, so `h3` continues the
+   * outline. On `/pricing` the cards follow the page `h1` directly, and leaving the
+   * default there skipped a level — the outline read h1 → h3, which is what a screen
+   * reader navigating by heading actually announces.
+   */
+  headingLevel?: 'h2' | 'h3';
 }) {
   const dictionary = getDictionary(locale);
   const copy = dictionary.pricing;
@@ -45,7 +56,7 @@ export function PricingCards({
           )}
 
           <div>
-            <CardTitle as="h3" className="text-accent-strong text-sm">
+            <CardTitle as={headingLevel} className="text-accent-strong text-sm">
               {plan.name}
             </CardTitle>
             <p className="text-primary mt-3 font-[family-name:var(--font-display)] text-4xl font-bold">

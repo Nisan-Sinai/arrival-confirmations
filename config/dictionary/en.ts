@@ -194,11 +194,14 @@ export const en: Dictionary = {
   site: {
     name: 'Arrival Confirmations',
     description: 'A digital invitation and RSVP for your event',
+    publisherDescription:
+      'An Israeli software studio building websites, management systems and automations for businesses, and the operator of this event RSVP service.',
   },
   footer: {
     builtBy: 'Designed and built by',
     builderName: 'Nisan Sinai Technologies',
     navAria: 'Required links',
+    pricing: 'Plans and pricing',
     privacy: 'Privacy policy',
     accessibility: 'Accessibility statement',
   },

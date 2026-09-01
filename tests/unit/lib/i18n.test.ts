@@ -12,7 +12,6 @@ import {
   locales,
   openGraphLocale,
   stripLocale,
-  type Locale,
 } from '@/lib/i18n';
 
 describe('locales', () => {
@@ -128,15 +127,33 @@ describe('languageAlternates', () => {
     expect(languageAlternates('/pricing')).toEqual({
       he: '/pricing',
       en: '/en/pricing',
+      'x-default': '/pricing',
     });
   });
 
   it('covers the home page by default', () => {
-    expect(languageAlternates()).toEqual({ he: '/', en: '/en' });
+    expect(languageAlternates()).toEqual({ he: '/', en: '/en', 'x-default': '/' });
   });
 
-  it('lists one entry per locale and no others', () => {
-    const keys = Object.keys(languageAlternates()) as Locale[];
-    expect(keys.sort()).toEqual([...locales].sort());
+  it('lists one entry per locale, plus the default', () => {
+    const keys = Object.keys(languageAlternates());
+    expect(keys.sort()).toEqual([...locales, 'x-default'].sort());
+  });
+
+  it('points x-default at the default locale, not merely at the root', () => {
+    // The distinction only shows on a sub-path: both spellings of '/' would pass a
+    // check that compared against the origin.
+    for (const path of ['/', '/pricing', '/privacy', '/accessibility']) {
+      const alternates = languageAlternates(path);
+      expect(alternates['x-default'], path).toBe(alternates[defaultLocale]);
+      expect(alternates['x-default'], path).not.toBe(alternates.en);
+    }
+  });
+
+  it('never emits a prefixed path for the default locale', () => {
+    for (const path of ['/', '/pricing', '/privacy']) {
+      const he = languageAlternates(path).he;
+      expect(he === '/en' || he.startsWith('/en/'), path).toBe(false);
+    }
   });
 });

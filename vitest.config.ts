@@ -138,19 +138,21 @@ export default defineConfig({
        * not: it measured 32% and failed every time `test:coverage` was invoked, which
        * CI never did.
        *
-       * Branches sits at 99 rather than 100 for exactly one branch: the `else` of the
-       * `instanceof PhoneNormalizationError` check in `tryNormalizeIsraeliPhone`,
-       * which re-throws anything that is not a phone rejection. `normalizeIsraeliPhone`
-       * throws only that class and is called directly rather than through a seam, so
-       * the branch cannot be reached from a test — and adding indirection to reach it
-       * would be changing production code to satisfy a number. The line itself is
-       * marked with a `v8 ignore` and the reason is written beside it.
+       * Branches is a hard 100 alongside the rest, which it was not before.
        *
-       * Everything else is a hard 100. A regression that drops any of them fails.
+       * It sat at 99 for one real gap in `findEndOfCentralDirectory`: every XLSX
+       * fixture was comment-free, so the backward scan for the end-of-central-directory
+       * record matched on its first read and the "keep looking" path never ran. That is
+       * a reachable state — plenty of tools stamp a comment into an archive — and it is
+       * covered now by a fixture that appends one, so the allowance has nothing left to
+       * excuse. The one genuinely unreachable branch, the re-throw in
+       * `tryNormalizeIsraeliPhone`, carries a `v8 ignore` and never counted here.
+       *
+       * All four are a hard 100. A regression that drops any of them fails.
        */
       thresholds: {
         statements: 100,
-        branches: 99,
+        branches: 100,
         functions: 100,
         lines: 100,
       },

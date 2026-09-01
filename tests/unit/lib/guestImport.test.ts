@@ -238,6 +238,47 @@ describe('guest spreadsheet import', () => {
     ]);
   });
 
+  it('scans back past a trailing ZIP comment to find the central directory', () => {
+    /**
+     * The end-of-central-directory record is the *last* thing in a ZIP only when the
+     * archive carries no comment. Every other fixture here is comment-free, so the scan
+     * in `findEndOfCentralDirectory` matched on its first read and the loop body's
+     * "keep looking" path never ran — the one branch the suite could not reach.
+     *
+     * Comments are not exotic: plenty of tools stamp one in, and a workbook that arrives
+     * with one must still import. The record's comment-length field lives at its final
+     * two bytes, so setting it and appending the text is the whole forgery.
+     */
+    const workbook = makeZip([{ name: 'xl/worksheets/sheet1.xml', content: inlineSheet }]);
+    const comment = Buffer.from('packed by a tool that leaves its name behind');
+    workbook.writeUInt16LE(comment.length, workbook.length - 2);
+    const commented = Buffer.concat([workbook, comment]);
+
+    expect(parseXlsxRows(commented)).toEqual([
+      ['name', 'phone'],
+      ['Test Guest', '0521234567'],
+    ]);
+  });
+
+  it('finds the central directory in a workbook larger than the comment window', () => {
+    /**
+     * `findEndOfCentralDirectory` scans back from the end of the buffer, bounded by
+     * `Math.max(0, buffer.length - 65_557)` — 65,557 being the largest a ZIP end record
+     * plus its maximum comment can be. Every other fixture here is a few hundred bytes,
+     * so the bound was always 0 and the subtraction branch never ran. A workbook past
+     * that size is the only thing that exercises it, and a real guest list clears it
+     * easily: this one is a single padded cell.
+     */
+    const padding = 'x'.repeat(70_000);
+    const sheet = `<?xml version="1.0"?><worksheet><sheetData>
+      <row><c r="A1" t="inlineStr"><is><t>${padding}</t></is></c></row>
+    </sheetData></worksheet>`;
+    const workbook = makeZip([{ name: 'xl/worksheets/sheet1.xml', content: sheet }]);
+
+    expect(workbook.length).toBeGreaterThan(65_557);
+    expect(parseXlsxRows(workbook)).toEqual([[padding]]);
+  });
+
   it('fills XLSX column holes and an absent shared-string index with empty text', () => {
     const sheet = `<?xml version="1.0"?><worksheet><sheetData>
       <row><c r="A1" t="s"><v>99</v></c><c r="C1" t="inlineStr"><is><t>third</t></is></c></row>

@@ -197,12 +197,30 @@ export type Dictionary = {
   site: {
     name: string;
     description: string;
+    /**
+     * What the studio behind the product does, for the `Organization` node.
+     *
+     * Google's generative summary asserted that Nisan Sinai Technologies is a
+     * metalworking plant in Karmiel and "is not connected to RSVP systems" — an
+     * unrelated business sharing the name, picked because the site published no entity
+     * data of its own. This sentence is the correction, and it has to say the category
+     * out loud rather than implying it.
+     */
+    publisherDescription: string;
   };
   footer: {
     /** The prose before the studio name, e.g. "Designed and built by". */
     builtBy: string;
     builderName: string;
     navAria: string;
+    /**
+     * The plans link.
+     *
+     * It lives here so the header can drop it on a phone without stranding the page:
+     * below `sm` the header has room for the mark, the language switch, sign-in and
+     * the call to action, and nothing more.
+     */
+    pricing: string;
     privacy: string;
     accessibility: string;
   };

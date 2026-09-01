@@ -213,7 +213,19 @@ test.describe('the crawlable surface', () => {
     const paths = [...body.matchAll(/<loc>(?<url>[^<]+)<\/loc>/g)].map((match) =>
       new URL(match[1]!).pathname.replace(/(.)\/$/, '$1'),
     );
-    expect(paths).toEqual(['/', '/pricing', '/privacy', '/accessibility']);
+    // Both languages. The English pages were absent while every Hebrew page carried an
+    // `hreflang` pointing at them — Google was told the translations existed and never
+    // handed a list of them to fetch.
+    expect(paths).toEqual([
+      '/',
+      '/en',
+      '/pricing',
+      '/en/pricing',
+      '/privacy',
+      '/en/privacy',
+      '/accessibility',
+      '/en/accessibility',
+    ]);
   });
 
   test('the landing page declares a canonical URL and a share card', async ({ page }) => {
@@ -236,11 +248,31 @@ test.describe('the crawlable surface', () => {
     const graph = (JSON.parse(raw) as { '@graph': Record<string, unknown>[] })['@graph'];
 
     const app = graph.find((node) => node['@type'] === 'WebApplication');
+    /**
+     * The trial is listed at zero rather than omitted, and `isAccessibleForFree` is
+     * false beside it.
+     *
+     * The graph used to claim the application was free while listing three paid plans.
+     * Google reads that as the contradiction it is, and the product does not keep the
+     * promise either — the free tier stops at ten confirmations. A priced trial states
+     * the same fact without the contradiction.
+     */
+    expect(app?.isAccessibleForFree).toBe(false);
     expect(app?.offers).toMatchObject([
+      { name: 'בדיקה חינמית', price: '0', priceCurrency: 'ILS' },
       { name: 'Basic', price: '99', priceCurrency: 'ILS' },
       { name: 'Premium', price: '199', priceCurrency: 'ILS' },
       { name: 'Pro', price: '349', priceCurrency: 'ILS' },
     ]);
+
+    // The two nodes that decide how the site is *named* in a result and which entity it
+    // belongs to. Without them Google labelled every result "Vercel" and attributed the
+    // publisher to an unrelated business of the same name.
+    const site = graph.find((node) => node['@type'] === 'WebSite');
+    const organization = graph.find((node) => node['@type'] === 'Organization');
+    expect(site?.name).toBe('אישורי הגעה');
+    expect(organization?.name).toBe('ניסן סיני טכנולוגיות');
+    expect(site?.publisher).toEqual({ '@id': organization?.['@id'] });
 
     /**
      * Google treats FAQ markup describing questions absent from the page as a
