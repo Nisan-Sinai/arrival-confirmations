@@ -47,6 +47,14 @@ yarn-error.log*
 /supabase/.temp
 /supabase/.branches
 
+# Database exports. A dump taken before a destructive change holds real rows —
+# guest names, phone numbers, dietary notes — and this repository is public.
+# The one that produced this rule was 6.5MB of guests and RSVPs sitting untracked
+# in the project root, one `git add -A` away from being published.
+qa-fixture-backup-*.json
+*-backup-*.json
+/backups/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

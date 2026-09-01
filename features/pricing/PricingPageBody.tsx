@@ -100,7 +100,10 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
               <p className="text-lead text-muted-foreground mt-5 leading-relaxed">{content.lead}</p>
             </div>
 
-            <div className="reveal mt-12">
+            {/* No `.reveal` here: the grid inside staggers its own cards, and a reveal
+                on the wrapper would fade the whole block in first and then fade each
+                card in again inside it. */}
+            <div className="mt-12">
               <PricingCards locale={locale} headingLevel="h2" />
             </div>
 
