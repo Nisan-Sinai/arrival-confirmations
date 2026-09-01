@@ -64,10 +64,10 @@ export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps
    */
   if (state.status === 'sent') {
     return (
-      <Card padding="lg" className="mx-auto w-full max-w-md text-center">
+      <Card padding="lg" className="animate-rise mx-auto w-full max-w-md text-center">
         <span
           aria-hidden="true"
-          className="border-accent-strong/30 text-accent-strong mx-auto mb-6 flex size-14 items-center justify-center rounded-full border"
+          className="border-accent-strong/30 text-accent-strong confirm-ring mx-auto mb-6 flex size-14 items-center justify-center rounded-full border"
         >
           <svg
             viewBox="0 0 24 24"
@@ -96,7 +96,7 @@ export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps
   }
 
   return (
-    <Card padding="lg" className="mx-auto w-full max-w-md">
+    <Card padding="lg" className="animate-rise mx-auto w-full max-w-md">
       <div className="text-center">
         <h1 className="text-h2 text-primary font-bold">{copy.title}</h1>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{copy.subtitle}</p>

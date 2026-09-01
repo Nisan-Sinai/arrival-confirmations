@@ -82,9 +82,17 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
   if (state.status === 'success') {
     return (
       <Card padding="lg" className="border-success/30 text-center">
+        {/*
+          The ring settles, then the tick draws itself.
+
+          A guest has just told a family they are coming. The answer to that used to be a
+          static glyph appearing at once, which reads like a receipt. Both classes carry
+          real durations, so the `prefers-reduced-motion` override in `globals.css`
+          collapses them and the mark simply appears for anyone who asked for stillness.
+        */}
         <span
           aria-hidden="true"
-          className="border-success/40 text-success mx-auto flex size-16 items-center justify-center rounded-full border"
+          className="border-success/40 text-success confirm-ring mx-auto flex size-16 items-center justify-center rounded-full border"
         >
           <svg
             viewBox="0 0 24 24"
@@ -95,7 +103,7 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
             strokeLinejoin="round"
             className="size-7"
           >
-            <path d="m5 12.5 4.5 4.5L19 7.5" />
+            <path className="confirm-tick" d="m5 12.5 4.5 4.5L19 7.5" />
           </svg>
         </span>
         {/* §9: aria-live so a screen reader announces the outcome after submission. */}

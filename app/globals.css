@@ -307,15 +307,20 @@
    *     reader who asked for stillness. The global override below neutralises duration,
    *     but a scroll-driven animation has no duration for it to shorten — it would still
    *     run. This is the one place the blanket rule does not reach.
-   *   - `entry 0%` to `entry 60%`: the element finishes arriving well before it reaches
-   *     the middle of the screen, so nothing is still fading while it is being read.
+   *   - The range is a *length*, not a percentage. A percentage measures against the
+   *     element's own height, and these sections range from roughly 300px on a desktop
+   *     to well over 900px at 320px wide, so the same `60%` is a very different scroll
+   *     distance on each — and on the tallest of them there may not be enough page left
+   *     below to finish it. `entry 0%` to `entry 220px` completes after a fixed
+   *     distance whatever the element's height, which makes "the section never finished
+   *     appearing" unrepresentable rather than merely unlikely.
    */
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
       .reveal {
-        animation: rise auto both;
+        animation: reveal-in auto both;
         animation-timeline: view();
-        animation-range: entry 0% entry 60%;
+        animation-range: entry 0% entry 220px;
       }
     }
   }
@@ -336,6 +341,30 @@
     stroke-dasharray: var(--mark-length);
     stroke-dashoffset: var(--mark-length);
     animation: draw-mark var(--duration-slow) var(--ease-out) 120ms forwards;
+  }
+
+  /**
+   * The confirmation tick, drawn rather than shown.
+   *
+   * This is the one moment in the product worth animating. A guest has just told a
+   * family they are coming to a simcha, and the answer to that was a static glyph
+   * appearing — the visual register of a bank receipt. The tick is a single path, so one
+   * `stroke-dashoffset` sweep draws it the way a hand would, and the ring around it
+   * settles a beat later so the two read as one gesture rather than a pile-up.
+   *
+   * No `@media` guard needed: these have real durations, so the blanket
+   * `prefers-reduced-motion` override at the end of this file collapses them to nothing.
+   * That is not true of the scroll-driven reveal above, which is why that one carries its
+   * own guard.
+   */
+  .confirm-tick {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    animation: draw-mark var(--duration-slow) var(--ease-out) 180ms forwards;
+  }
+
+  .confirm-ring {
+    animation: confirm-ring var(--duration-slow) var(--ease-out) both;
   }
 
   /**
@@ -376,6 +405,40 @@
     /* RTL: the track starts shifted and moves rightwards, matching the reading
        direction of everything around it. */
     transform: translate3d(50%, 0, 0);
+  }
+}
+
+/**
+ * The reveal's own travel, separate from `rise`.
+ *
+ * `rise` moves 12px and is used by the hero preview, where the element is already on
+ * screen and anything larger would read as a jolt. A section arriving from below the
+ * fold has the opposite problem: 12px over a scroll is imperceptible, which is a
+ * animation nobody sees and therefore pure cost. 28px and a hair of scale make the
+ * arrival legible without turning into a slide deck.
+ */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes confirm-ring {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

@@ -100,11 +100,11 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
               <p className="text-lead text-muted-foreground mt-5 leading-relaxed">{content.lead}</p>
             </div>
 
-            <div className="mt-12">
+            <div className="reveal mt-12">
               <PricingCards locale={locale} headingLevel="h2" />
             </div>
 
-            <section className="border-border bg-card/60 mt-14 rounded-2xl border p-7 text-center sm:p-10">
+            <section className="reveal border-border bg-card/60 mt-14 rounded-2xl border p-7 text-center sm:p-10">
               <SectionHeader title={content.howTitle} />
               <ol className="text-muted-foreground mx-auto mt-6 grid max-w-4xl gap-5 text-start sm:grid-cols-3">
                 {content.steps.map((step) => (
