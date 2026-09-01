@@ -1,3 +1,5 @@
+import type React from 'react';
+
 import { cn } from '@/lib/utils';
 
 /**
@@ -23,7 +25,16 @@ import { cn } from '@/lib/utils';
  *      boundaries at 36px and 48px, the two sizes it ships at, so the horizontals stay
  *      crisp instead of straddling a pixel and going soft.
  */
-export function BrandMark({ className }: { className?: string }) {
+export function BrandMark({
+  className,
+  animated = false,
+}: {
+  className?: string;
+  /**
+   * Draw the tick on load. Public surfaces only — see `.mark-draw` in `globals.css`.
+   */
+  animated?: boolean;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -57,7 +68,17 @@ export function BrandMark({ className }: { className?: string }) {
         Drawn as a single path so the crease is one mitred join rather than two round
         caps meeting approximately.
       */}
-      <path d="M3.4 9.4 10.5 16.5 21.9 5.4" />
+      <path
+        d="M3.4 9.4 10.5 16.5 21.9 5.4"
+        className={animated ? 'mark-draw' : undefined}
+        /*
+         * The path's own length, to the unit: √(7.1² + 7.1²) + √(11.4² + 11.1²) ≈ 25.9,
+         * rounded up so the dash always covers it and the stroke starts fully hidden.
+         * Hard-coded because reading it back needs `getTotalLength()`, and a decoration
+         * that only appears after hydration is worse than one that never moves.
+         */
+        style={animated ? ({ '--mark-length': '26' } as React.CSSProperties) : undefined}
+      />
     </svg>
   );
 }

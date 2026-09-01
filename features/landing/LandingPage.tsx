@@ -154,7 +154,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
 
         <RsvpFlowSteps locale={locale} />
 
-        <section className="py-16 sm:py-20">
+        <section className="reveal py-16 sm:py-20">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{benefits.eyebrow}</p>
@@ -171,7 +171,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
-        <section className="bg-secondary/25 py-16 sm:py-20">
+        <section className="reveal bg-secondary/25 py-16 sm:py-20">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{plans.eyebrow}</p>
@@ -184,7 +184,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
-        <section className="py-16 sm:py-20">
+        <section className="reveal py-16 sm:py-20">
           <Container>
             <div className="mx-auto max-w-3xl">
               <p className="text-eyebrow text-accent-strong text-center font-semibold">

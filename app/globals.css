@@ -291,6 +291,54 @@
   }
 
   /**
+   * Scroll-linked section reveal.
+   *
+   * Reuses the `rise` keyframes above, driven by the element's own progress through the
+   * viewport rather than by a timer, so a section that is already on screen at load does
+   * not animate and one scrolled past quickly does not finish late. `view()` runs on the
+   * compositor: no scroll listener, no `IntersectionObserver`, no work on the main thread.
+   *
+   * Three guards, and each one matters:
+   *
+   *   - `@supports`, because a browser without scroll-driven animations must render the
+   *     content plainly rather than at `opacity: 0`. The failure mode of a reveal is an
+   *     invisible page, and that is not a failure worth risking for decoration.
+   *   - `prefers-reduced-motion: no-preference`, so the animation is never *created* for a
+   *     reader who asked for stillness. The global override below neutralises duration,
+   *     but a scroll-driven animation has no duration for it to shorten — it would still
+   *     run. This is the one place the blanket rule does not reach.
+   *   - `entry 0%` to `entry 60%`: the element finishes arriving well before it reaches
+   *     the middle of the screen, so nothing is still fading while it is being read.
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        animation: rise auto both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 60%;
+      }
+    }
+  }
+
+  /**
+   * The mark drawing itself.
+   *
+   * The tick is one path, so one `stroke-dashoffset` sweep draws the flap and the tick in
+   * the order a hand would: down the crease, then up and out. `--mark-length` is set on
+   * the element rather than measured, because `pathLength` normalisation would need
+   * JavaScript for a decoration that must work without it.
+   *
+   * Public pages only. In the signed-in console the same mark sits on a tool someone uses
+   * forty times a day, and a logo that redraws itself on every load stops being charming
+   * about the third time.
+   */
+  .mark-draw {
+    stroke-dasharray: var(--mark-length);
+    stroke-dashoffset: var(--mark-length);
+    animation: draw-mark var(--duration-slow) var(--ease-out) 120ms forwards;
+  }
+
+  /**
    * The event-type marquee.
    *
    * Two identical copies of the list sit side by side and the track translates by
@@ -328,6 +376,12 @@
     /* RTL: the track starts shifted and moves rightwards, matching the reading
        direction of everything around it. */
     transform: translate3d(50%, 0, 0);
+  }
+}
+
+@keyframes draw-mark {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
