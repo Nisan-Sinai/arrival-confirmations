@@ -147,7 +147,21 @@ export function Countdown({ targetMs }: CountdownProps) {
           key={unit.key}
           className="border-accent/40 from-secondary/40 flex min-w-14 flex-col items-center rounded-xl border bg-gradient-to-b to-white/60 px-2 py-2.5 sm:min-w-16 sm:px-3"
         >
-          <span className="text-primary font-[family-name:var(--font-display)] text-2xl leading-none font-bold tabular-nums sm:text-3xl">
+          {/*
+            Keyed by the value, not by the unit.
+
+            That is the whole mechanism: when the figure changes React sees a different
+            key, unmounts the old span and mounts a new one, and a fresh element replays
+            the CSS animation from the start. Keying by `unit.key` would give the same
+            element a new number and no animation at all, which is what it did before.
+
+            Each unit therefore moves on its own schedule — seconds every second, days
+            once a day — rather than the whole row twitching together.
+          */}
+          <span
+            key={remaining[unit.key]}
+            className="tick text-primary font-[family-name:var(--font-display)] text-2xl leading-none font-bold tabular-nums sm:text-3xl"
+          >
             {remaining[unit.key]}
           </span>
           <span className="text-muted-foreground mt-1 text-[11px] sm:text-xs">

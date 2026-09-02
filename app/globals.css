@@ -374,6 +374,25 @@
   }
 
   /**
+   * A countdown figure changing.
+   *
+   * The clock on the invitation replaced its digits with no transition at all, which is
+   * the register of a microwave. The card around it is a printed invitation with a gold
+   * rule and a serif face; the one moving thing on it should not be the cheapest-looking.
+   *
+   * Applied per unit rather than to the row, so each one moves on its own schedule —
+   * seconds every second, minutes every minute, days once a day. That is the difference
+   * between a clock with a pulse and a row that twitches in unison.
+   *
+   * Opacity and `translateY` only. A scale would resample the glyph mid-transition and
+   * undo what `tabular-nums` is there for, and the figure is 2rem of serif numeral where
+   * that shows.
+   */
+  .tick {
+    animation: tick var(--duration-base) var(--ease-out);
+  }
+
+  /**
    * The walkthrough: three scenes in a phone, cycling.
    *
    * This is the site's "video", and it is drawn rather than filmed on purpose. A real
@@ -559,6 +578,24 @@
 @keyframes draw-mark {
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+/**
+ * The new figure rises into place as the old one is replaced.
+ *
+ * 4px, which is small on purpose: this runs once a second for as long as the invitation
+ * is open, and anything a reader can consciously watch becomes something they cannot
+ * stop watching.
+ */
+@keyframes tick {
+  from {
+    opacity: 0.25;
+    transform: translate3d(0, 4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
