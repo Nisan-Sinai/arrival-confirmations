@@ -69,6 +69,7 @@ export const he: Dictionary = {
     title: 'שלושה צעדים פשוטים עד לאישור ההגעה',
     demoPlay: 'הפעלת סרטון ההדגמה',
     demoCaption: 'לחצו לצפייה · 20 שניות',
+    demoClose: 'סגירת הסרטון',
     steps: [
       {
         title: 'האורח פותח מה-WhatsApp',

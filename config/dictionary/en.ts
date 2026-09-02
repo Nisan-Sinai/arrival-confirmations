@@ -78,6 +78,7 @@ export const en: Dictionary = {
     title: 'Three simple steps to an RSVP',
     demoPlay: 'Play the demo clip',
     demoCaption: 'Tap to watch · 20 seconds',
+    demoClose: 'Close the clip',
     steps: [
       {
         title: 'Your guest opens it from WhatsApp',
