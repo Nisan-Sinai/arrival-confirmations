@@ -61,3 +61,8 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Stray logs from the shell profile on this machine. A `pwsh` invocation from inside
+# this directory makes the work SDK's profile drop its console log here, and a
+# `git add -A` will happily commit it to what is a public repository.
+circlez_*.csv
