@@ -30,8 +30,14 @@ import type { CSSProperties, ReactNode } from 'react';
  * heading, which is the difference between a typing effect and a stagger.
  */
 
-/** Milliseconds per character. The whole rhythm of the effect is this number. */
-const MS_PER_CHARACTER = 32;
+/**
+ * Milliseconds per character. The whole rhythm of the effect is this number.
+ *
+ * 38 rather than the 32 it shipped at — a fifth slower, which on the hero's first line
+ * is 512ms becoming 608ms. Enough to read as a hand rather than a wipe, small enough
+ * that nobody waits for the heading.
+ */
+const MS_PER_CHARACTER = 38;
 
 /**
  * How long `text` takes to write, in seconds.
@@ -41,7 +47,19 @@ const MS_PER_CHARACTER = 32;
  * as a function so the two cannot drift apart the way a hand-tuned delay would.
  */
 export function writingDuration(text: string): number {
-  return (text.replace(/\s/g, '').length * MS_PER_CHARACTER) / 1000;
+  return seconds(text.replace(/\s/g, '').length * MS_PER_CHARACTER);
+}
+
+/**
+ * Milliseconds as a number of seconds, rounded to the millisecond.
+ *
+ * Without the rounding, a delay of six characters plus a line's worth of them came out of
+ * binary floating point as `0.9119999999999999s` and went into the DOM that way. Harmless
+ * to the animation and not something to hand a reader viewing source, and it would make
+ * any test of these values needlessly brittle.
+ */
+function seconds(ms: number): number {
+  return Math.round(ms) / 1000;
 }
 
 export function WrittenHeading({
@@ -112,10 +130,10 @@ export function WrittenHeading({
           // back as 0.00001s while its step count resolved correctly from the same
           // variable. So the caret raced to its end instantly and sat there lit. Handing
           // CSS a plain `<time>` to substitute avoids the whole question.
-          '--write-dur': `${(word.length * MS_PER_CHARACTER) / 1000}s`,
+          '--write-dur': `${seconds(word.length * MS_PER_CHARACTER)}s`,
           ...(scrollDriven
             ? { '--write-offset': offset }
-            : { '--write-delay': `${delay + (offset * MS_PER_CHARACTER) / 1000}s` }),
+            : { '--write-delay': `${seconds(delay * 1000 + offset * MS_PER_CHARACTER)}s` }),
         };
 
         return (

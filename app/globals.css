@@ -452,7 +452,7 @@
     position: relative;
     display: inline-block;
     animation-name: write-in-ltr;
-    animation-duration: var(--write-dur, 0.128s);
+    animation-duration: var(--write-dur, 0.152s);
     animation-timing-function: steps(var(--chars, 4));
     animation-delay: var(--write-delay, 0s);
     animation-fill-mode: both;
@@ -506,7 +506,7 @@
      * `opacity: 1/chars`, a number that named its own cause.
      */
     animation-name: write-caret-move, write-caret-fade;
-    animation-duration: var(--write-dur, 0.128s), var(--write-dur, 0.128s);
+    animation-duration: var(--write-dur, 0.152s), var(--write-dur, 0.152s);
     animation-timing-function: steps(var(--chars, 4)), linear;
     animation-delay: var(--write-delay, 0s), var(--write-delay, 0s);
     animation-fill-mode: forwards, forwards;
@@ -526,8 +526,10 @@
    *   * **`cover`, not `entry`.** `entry` spans only the element's own height — about 45px
    *     for a heading — so the whole line would have to be written inside 45px of scroll.
    *
-   * Six pixels per character keeps one writing speed across the heading, the same way the
-   * load variant accumulates milliseconds. `--write-offset` is the characters written
+   * Seven pixels per character keeps one writing speed across the heading, the same way
+   * the load variant accumulates milliseconds — and it moves with that constant, so the
+   * two triggers stay the same effect rather than drifting into two different paces.
+   * `--write-offset` is the characters written
    * before this word; its `, 0` fallback matters, because without it an unregistered
    * variable makes the whole `animation-range` invalid, and every word would then run on
    * the default range at once — the effect silently collapsing rather than failing.
@@ -537,8 +539,8 @@
       .written-word-scroll,
       .written-word-scroll::after {
         animation-timeline: view();
-        animation-range: cover calc(120px + var(--write-offset, 0) * 6px) cover
-          calc(120px + (var(--write-offset, 0) + var(--chars, 4)) * 6px);
+        animation-range: cover calc(120px + var(--write-offset, 0) * 7px) cover
+          calc(120px + (var(--write-offset, 0) + var(--chars, 4)) * 7px);
       }
     }
   }

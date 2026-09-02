@@ -60,8 +60,8 @@ describe('WrittenHeading', () => {
     // per word makes the caret lurch — it would cross "אחת" at the same rate as "שתיים".
     expect(words.map((w) => w.style.getPropertyValue('--write-delay'))).toEqual([
       '0s',
-      '0.096s',
-      '0.256s',
+      '0.114s',
+      '0.304s',
     ]);
   });
 
@@ -99,8 +99,24 @@ describe('WrittenHeading', () => {
   describe('writingDuration', () => {
     it('measures the line so a caller can start the next as this one ends', () => {
       // Spaces cost nothing — the caret jumps them — so only characters count.
-      expect(writingDuration('אחת שתיים')).toBeCloseTo(0.256, 5);
+      expect(writingDuration('אחת שתיים')).toBeCloseTo(0.304, 5);
       expect(writingDuration('')).toBe(0);
     });
+  });
+
+  it('emits clean times rather than binary floating point', () => {
+    // A delay that lands on 0.9119999999999999 animates identically and reads as a bug
+    // to anyone who opens the element inspector, so the arithmetic is done in whole
+    // milliseconds before it becomes a string.
+    const { container } = render(
+      <WrittenHeading as="div" text="אחרי תשובות" delay={writingDuration('מנהלים את המוזמנים')} />,
+    );
+
+    for (const word of container.querySelectorAll<HTMLElement>('.written-word')) {
+      for (const property of ['--write-delay', '--write-dur']) {
+        const value = word.style.getPropertyValue(property);
+        expect(value, `${property} on "${word.textContent}"`).toMatch(/^\d+(\.\d{1,3})?s$/);
+      }
+    }
   });
 });
