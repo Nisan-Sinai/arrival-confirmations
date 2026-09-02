@@ -13,6 +13,7 @@ import { CheckboxField, Field, Input, RadioCard, Select, Textarea } from '@/comp
 import { Alert } from '@/components/ui/feedback';
 import { Rule } from '@/components/ui/layout';
 import { UI_MESSAGES } from '@/config/messages';
+import { AddToCalendar } from '@/features/invite/AddToCalendar';
 
 /**
  * The public RSVP form (§6, §9).
@@ -46,9 +47,24 @@ interface RsvpFormProps {
   readonly eventId: string;
   readonly sideALabel: string;
   readonly sideBLabel: string;
+  /**
+   * Everything needed to offer the calendar entry once the answer is in.
+   *
+   * Optional because the form has one other caller — the component test — and a
+   * required prop there would be four lines of fixture for a branch it is not testing.
+   * Absent, the success card is what it was.
+   */
+  readonly calendar?: {
+    readonly uid: string;
+    readonly title: string;
+    readonly date: string;
+    readonly time: string | null;
+    readonly venueName: string;
+    readonly address: string;
+  };
 }
 
-export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
+export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpFormProps) {
   const [state, formAction, isPending] = useActionState<RsvpFormState, FormData>(
     submitRsvpAction,
     INITIAL_STATE,
@@ -111,6 +127,34 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel }: RsvpFormProps) {
           <h2 className="text-h2 text-primary mt-6 font-bold">{UI_MESSAGES.rsvp.successTitle}</h2>
           <p className="text-muted-foreground mt-3 leading-relaxed">{state.message}</p>
         </div>
+
+        {/*
+          The one thing to offer a guest who has just said yes.
+
+          This card used to end at the rule below — a tick, a sentence, and nothing to do.
+          But the moment someone has just told a family they are coming is exactly the
+          moment the date is worth saving, and the calendar entry was already built and
+          sitting on the invitation further up the page. A guest who has scrolled down,
+          filled in a form and submitted it is not going to scroll back for it.
+
+          Which matters because this is the product's whole job. Every reply is a promise
+          made weeks before the day, against a date the guest has written down nowhere.
+          An entry in their calendar is the difference between a confirmed guest and one
+          who meant to come.
+        */}
+        {calendar !== undefined && (
+          <div className="mt-7 flex justify-center">
+            <AddToCalendar
+              uid={calendar.uid}
+              title={calendar.title}
+              date={calendar.date}
+              time={calendar.time}
+              venueName={calendar.venueName}
+              address={calendar.address}
+            />
+          </div>
+        )}
+
         <Rule className="mt-8" />
       </Card>
     );

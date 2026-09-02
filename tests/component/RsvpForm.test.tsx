@@ -230,3 +230,60 @@ describe('RsvpForm', () => {
     expect(honeypot).toHaveAttribute('autocomplete', 'off');
   });
 });
+
+/**
+ * The success state, which used to be a dead end.
+ *
+ * A guest who has just promised to come is the one person on the page most likely to
+ * want the date in their calendar, and the entry sits at the top of the invitation —
+ * above a form they have already scrolled past and submitted. These specs hold the
+ * second offer in place.
+ */
+describe('the confirmation', () => {
+  const calendar = {
+    uid: 'demo1234',
+    title: 'ברית מילה — יונתן',
+    date: '2026-07-29',
+    time: '19:00:00',
+    venueName: 'אולמי הדר',
+    address: 'רחוב הרצל 1, נתניה',
+  } as const;
+
+  it('offers the calendar entry once the answer is in', async () => {
+    const user = userEvent.setup();
+    actionResult.current = { status: 'success', message: 'תודה!', fieldErrors: {} };
+    render(
+      <RsvpForm eventId="event-1" sideALabel="צד החתן" sideBLabel="צד הכלה" calendar={calendar} />,
+    );
+
+    // Reached by submitting rather than by initial state: `useActionState` starts at
+    // `INITIAL_STATE` and only takes the stubbed result once an action has run.
+    await user.click(submit());
+
+    await waitFor(() => {
+      expect(screen.getByText('תודה!')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/יומן/)).toBeInTheDocument();
+  });
+
+  it('does not offer it before the guest has answered', () => {
+    render(
+      <RsvpForm eventId="event-1" sideALabel="צד החתן" sideBLabel="צד הכלה" calendar={calendar} />,
+    );
+
+    expect(screen.queryByText(/יומן/)).not.toBeInTheDocument();
+  });
+
+  it('still renders the confirmation when no calendar details were passed', async () => {
+    const user = userEvent.setup();
+    actionResult.current = { status: 'success', message: 'תודה!', fieldErrors: {} };
+    renderForm();
+
+    await user.click(submit());
+
+    await waitFor(() => {
+      expect(screen.getByText('תודה!')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/יומן/)).not.toBeInTheDocument();
+  });
+});
