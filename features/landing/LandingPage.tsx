@@ -7,6 +7,8 @@ import { Container, Rule } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { Candlelight } from '@/features/landing/Candlelight';
+import { KineticHeading } from '@/features/landing/KineticHeading';
+import { TiltCard } from '@/features/landing/TiltCard';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
@@ -78,9 +80,20 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 <p className="enter enter-1 text-eyebrow text-accent-strong font-semibold">
                   {hero.eyebrow}
                 </p>
-                <h1 className="enter enter-2 text-display text-primary mt-5 font-bold">
-                  {hero.titleLead}
-                  <span className="text-accent-strong block">{hero.titleAccent}</span>
+                {/*
+                  No `enter` on the heading: its words carry their own arrival, and
+                  running both would move each word twice — once with the block and once
+                  on its own. The second line starts 0.18s after the first so the two
+                  read as one sentence being set rather than as two things happening.
+                */}
+                <h1 className="text-display text-primary mt-5 font-bold">
+                  <KineticHeading text={hero.titleLead} as="span" />
+                  <KineticHeading
+                    text={hero.titleAccent}
+                    as="div"
+                    delay={0.18}
+                    className="text-accent-strong"
+                  />
                 </h1>
                 <p className="enter enter-3 text-lead text-muted-foreground mt-6 max-w-2xl leading-relaxed lg:mx-0">
                   {hero.lead}
@@ -109,47 +122,57 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 </ul>
               </div>
 
-              <div aria-hidden="true" className="enter enter-3 relative mx-auto w-full max-w-sm">
-                <div className="card-lift border-accent/60 bg-card rounded-2xl border-2 p-2.5">
-                  <div className="border-accent/35 from-secondary/25 rounded-xl border bg-gradient-to-b via-white/90 to-white/90 px-6 py-9 text-center">
-                    <p className="text-muted-foreground text-xs">{preview.blessing}</p>
-                    <p className="text-foreground mt-5 text-sm leading-relaxed">
-                      {preview.introFirstLine}
-                      <br />
-                      {preview.introSecondLine}
-                    </p>
-                    <p className="text-primary mt-4 font-[family-name:var(--font-display)] text-3xl font-bold">
-                      {preview.occasion}
-                    </p>
-                    <Rule className="my-6" />
-                    <div className="text-primary flex justify-center gap-5 text-xs font-semibold">
-                      {[
-                        { k: preview.dateLabel, v: preview.dateValue },
-                        { k: preview.timeLabel, v: preview.timeValue },
-                        { k: preview.placeLabel, v: preview.placeValue },
-                      ].map((cell) => (
-                        <div key={cell.k}>
-                          <span className="text-muted-foreground block font-normal">{cell.k}</span>
-                          {cell.v}
-                        </div>
-                      ))}
-                    </div>
-                    <Rule className="my-6" />
-                    <div className="flex justify-center gap-2" dir="ltr">
-                      {countdown.map(([n, l]) => (
-                        <div
-                          key={l}
-                          className="border-accent/40 from-secondary/40 min-w-12 rounded-lg border bg-gradient-to-b to-white/60 py-1.5"
-                        >
-                          <span className="text-primary block font-[family-name:var(--font-display)] text-lg leading-none font-bold">
-                            {n}
-                          </span>
-                          <span className="text-muted-foreground text-[10px]">{l}</span>
-                        </div>
-                      ))}
+              <div
+                aria-hidden="true"
+                className="enter enter-3 parallax-slow relative mx-auto w-full max-w-sm"
+              >
+                <TiltCard>
+                  <div className="card-lift border-accent/60 bg-card rounded-2xl border-2 p-2.5">
+                    <div className="border-accent/35 from-secondary/25 rounded-xl border bg-gradient-to-b via-white/90 to-white/90 px-6 py-9 text-center">
+                      <p className="text-muted-foreground text-xs">{preview.blessing}</p>
+                      <p className="text-foreground mt-5 text-sm leading-relaxed">
+                        {preview.introFirstLine}
+                        <br />
+                        {preview.introSecondLine}
+                      </p>
+                      <p className="text-primary mt-4 font-[family-name:var(--font-display)] text-3xl font-bold">
+                        {preview.occasion}
+                      </p>
+                      <Rule className="my-6" />
+                      <div className="text-primary flex justify-center gap-5 text-xs font-semibold">
+                        {[
+                          { k: preview.dateLabel, v: preview.dateValue },
+                          { k: preview.timeLabel, v: preview.timeValue },
+                          { k: preview.placeLabel, v: preview.placeValue },
+                        ].map((cell) => (
+                          <div key={cell.k}>
+                            <span className="text-muted-foreground block font-normal">
+                              {cell.k}
+                            </span>
+                            {cell.v}
+                          </div>
+                        ))}
+                      </div>
+                      <Rule className="my-6" />
+                      <div className="flex justify-center gap-2" dir="ltr">
+                        {countdown.map(([n, l]) => (
+                          <div
+                            key={l}
+                            className="border-accent/40 from-secondary/40 min-w-12 rounded-lg border bg-gradient-to-b to-white/60 py-1.5"
+                          >
+                            <span className="text-primary block font-[family-name:var(--font-display)] text-lg leading-none font-bold">
+                              {n}
+                            </span>
+                            <span className="text-muted-foreground text-[10px]">{l}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </TiltCard>
+                {/* Outside the tilt on purpose: the badge is pinned to the card's corner
+                    in page space, and rotating it with the card would swing it out of
+                    alignment with the edge it is supposed to be sitting on. */}
                 <div className="border-border bg-card/85 shadow-raised absolute start-0 -bottom-5 rounded-xl border px-4 py-2.5 backdrop-blur-sm">
                   <p className="text-muted-foreground text-[11px]">{preview.captionLead}</p>
                   <p className="text-primary text-sm font-semibold">{preview.captionAccent}</p>
