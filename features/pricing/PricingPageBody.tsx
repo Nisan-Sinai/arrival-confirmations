@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button';
 import { Container, Section, SectionHeader } from '@/components/ui/layout';
-import { KineticHeading } from '@/features/landing/KineticHeading';
+import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
 import { languageAlternates, localePath, type Locale } from '@/lib/i18n';
@@ -101,7 +101,7 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
                   and a scroll trigger on something already in view would either fire at
                   once or never fire at all. */}
               <h1 className="text-display text-primary mt-4 font-bold">
-                <KineticHeading text={content.title} />
+                <WrittenHeading text={content.title} />
               </h1>
               <p className="text-lead text-muted-foreground mt-5 leading-relaxed">{content.lead}</p>
             </div>

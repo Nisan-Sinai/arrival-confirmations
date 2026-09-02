@@ -419,6 +419,32 @@ test.describe('submitting an RSVP', () => {
 test.describe('@a11y accessibility', () => {
   const scan = async (page: Page, path: string) => {
     await page.goto(path);
+
+    /*
+     * Let the entrance animations finish before auditing.
+     *
+     * This used to scan the instant the page loaded, which raced every fade on it, and it
+     * passed on luck: in a run of eight it failed four times, reporting the hero's primary
+     * button at a contrast of 2.58 — #fdf8f4 on #b59597, which is the burgundy caught
+     * halfway through its fade, over the pale page behind it. The button is fine a few
+     * hundred milliseconds later. A flaky accessibility gate is worse than a slow one,
+     * because the response to it is to re-run rather than to look.
+     *
+     * Two kinds of animation are deliberately not waited for, and neither can ever finish:
+     *
+     *   * **Infinite ones.** The candlelight motes drift for as long as the page is open.
+     *   * **Scroll-driven ones.** Their timeline is the reader's scroll position, not a
+     *     clock, so `playState` stays `running` however long anyone waits. `DocumentTimeline`
+     *     is what separates the two — a `ViewTimeline` is not one.
+     */
+    await page.waitForFunction(() =>
+      document.getAnimations().every((animation) => {
+        if (animation.effect?.getTiming().iterations === Infinity) return true;
+        if (!(animation.timeline instanceof DocumentTimeline)) return true;
+        return animation.playState === 'finished';
+      }),
+    );
+
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();

@@ -424,64 +424,121 @@
   }
 
   /**
-   * A word rising from behind its own mask.
+   * A word being typed.
    *
-   * Two elements because one cannot both clip and be clipped: the outer span is the
-   * window, the inner one is what moves. `overflow: clip` rather than `hidden` — `hidden`
-   * makes the element a scroll container, which on an inline heading means the browser
-   * can scroll it and a focused link inside would jump.
+   * `clip-path` uncovers the word from its own leading edge, stepped to its character
+   * count, with a gold caret sitting exactly on the uncovered edge. The caret is what
+   * makes it read as writing — a wipe on its own is a transition, a wipe with something
+   * leading it is a hand.
    *
-   * `pb`/`mb` of a quarter em is not decoration: Hebrew descenders in Frank Ruhl (ק, ן,
-   * ף) sit below the baseline, and a mask cut exactly at the line shears them off.
+   * This replaced a mask that slid each word up from below, and the reason is worth
+   * keeping. That mask cut **horizontally**, through the middle of the glyphs. On a load
+   * animation that is invisible, because 620ms always finishes. On a scroll-driven one it
+   * is not: a reader who stops scrolling stops the animation, and QA found that across
+   * **21% of the landing page** parking the scroll left words sawn in half — five of them
+   * still cut after 600ms of stillness. Not a flicker, a resting state.
    *
-   * Nothing fades. The hard edge is the whole effect — a cross-dissolve here would read
-   * as a slideshow transition rather than as type being set.
+   * A vertical clip cannot do that. Every frame shows whole letters and a clean edge, so
+   * a paused animation reads as a line half written rather than as broken text.
+   *
+   * `steps(var(--chars))` is the typewriter. The word is never split into characters —
+   * `steps()` takes a *count*, so the text stays one intact node and only its length is
+   * measured. That matters in Hebrew, where splitting a string tears combining marks off
+   * their letters; counting is safe where splitting is not. Steps land on even fractions
+   * of the width rather than on real glyph advances, which is why the caret is wide enough
+   * to cover the seam — the same thing a real text cursor does.
    */
-  .kinetic-mask {
+  .written-word {
+    position: relative;
     display: inline-block;
-    overflow: clip;
-    padding-bottom: 0.25em;
-    margin-bottom: -0.25em;
-    vertical-align: bottom;
+    animation-name: write-in-ltr;
+    animation-duration: var(--write-dur, 0.128s);
+    animation-timing-function: steps(var(--chars, 4));
+    animation-delay: var(--write-delay, 0s);
+    animation-fill-mode: both;
   }
 
-  .kinetic-word {
-    display: inline-block;
-    animation: kinetic-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  [dir='rtl'] .written-word {
+    animation-name: write-in-rtl;
   }
 
   /**
-   * The same words, arriving as you scroll to them rather than on load.
+   * The caret, riding the uncovered edge.
    *
-   * A heading below the fold cannot animate on a clock: by the time the reader reaches it
-   * the 620ms is long spent and the effect is one they never saw. So the section headings
-   * are driven by their own position instead — the words set themselves as the heading
-   * comes up the screen.
+   * `inset-inline-start` is a percentage of the word, and the clip is a percentage of the
+   * same box under the same step function, so the two land on the identical boundary
+   * without either knowing about the other.
    *
-   * Two things follow from that, both learned already by `.reveal-stagger` above:
+   * The delay arrives as a custom property rather than as `animation-delay` on the word,
+   * because delay does not inherit to a pseudo-element: set the real property and every
+   * caret on the line starts at zero while the words wait their turn.
+   */
+  .written-word::after {
+    content: '';
+    position: absolute;
+    inset-block: 0.06em 0.04em;
+    width: 0.09em;
+    min-width: 1.5px;
+    background: var(--accent-strong);
+    border-radius: 1px;
+    /*
+     * Dark by default, and `forwards` rather than `both`.
+     *
+     * `both` includes *backwards* fill, which applies the `0%` keyframe throughout the
+     * delay — so every word still waiting its turn was already showing a lit caret parked
+     * at its own start edge, and a three-word line displayed three carets at once. A
+     * screenshot of the hero caught exactly that.
+     *
+     * With no backwards fill the caret sits at this base `opacity: 0` until its word
+     * begins, and `forwards` holds the last keyframe, which is also transparent. It is lit
+     * only while its own word is being written — and because the next word starts as this
+     * one ends, what you see is one caret running along the line.
+     */
+    opacity: 0;
+    /*
+     * Two animations, because they need different timing functions.
+     *
+     * The travel is stepped, so the caret lands on the same boundary the clip does. The
+     * fade must not be: `animation-timing-function` applies **between each pair of
+     * keyframes**, not once across the whole animation, so a stepped fade from a 90%
+     * keyframe to a 100% one takes its own N steps to get there and comes to rest on the
+     * last one — which is how four finished carets ended up sitting at exactly
+     * `opacity: 1/chars`, a number that named its own cause.
+     */
+    animation-name: write-caret-move, write-caret-fade;
+    animation-duration: var(--write-dur, 0.128s), var(--write-dur, 0.128s);
+    animation-timing-function: steps(var(--chars, 4)), linear;
+    animation-delay: var(--write-delay, 0s), var(--write-delay, 0s);
+    animation-fill-mode: forwards, forwards;
+  }
+
+  /**
+   * The same writing, driven by the reader's scroll rather than by a clock.
    *
-   *   * **The stagger is a range, not a delay.** `animation-delay` has no meaning against
-   *     a scroll timeline — there is no clock to delay. Each word instead starts further
-   *     into the scroll than the one before, which ties the sequence to how fast the
-   *     reader is actually moving. Scroll slowly and the sentence types itself; flick past
-   *     and it is simply there.
-   *   * **`cover`, not `entry`.** `entry` spans only the element's own height, and a
-   *     heading is about 45px tall, so the whole stagger would have to fit inside 45px of
-   *     scroll and the words would land on top of one another. `cover` runs from first
-   *     overlap to last and is a viewport tall, which is room enough to deal them out.
+   * A heading below the fold cannot animate on a timer: by the time anyone reaches it the
+   * duration is long spent and they arrive at something that already happened.
    *
-   * `--word-index` is set per word by the component. The `, 0` fallback matters: without
-   * it a browser that does not register the variable computes `calc(120px + <invalid>)`,
-   * the whole `animation-range` is dropped, and every word runs on the default range at
-   * once — the stagger silently disappearing rather than failing loudly.
+   * Two things follow, both already learned by `.reveal-stagger` above:
+   *
+   *   * **The offset is a range, not a delay.** `animation-delay` has nothing to delay
+   *     against on a scroll timeline. Each word instead begins further into the scroll
+   *     than the one before, so the line types itself at the speed the reader is moving.
+   *   * **`cover`, not `entry`.** `entry` spans only the element's own height — about 45px
+   *     for a heading — so the whole line would have to be written inside 45px of scroll.
+   *
+   * Six pixels per character keeps one writing speed across the heading, the same way the
+   * load variant accumulates milliseconds. `--write-offset` is the characters written
+   * before this word; its `, 0` fallback matters, because without it an unregistered
+   * variable makes the whole `animation-range` invalid, and every word would then run on
+   * the default range at once — the effect silently collapsing rather than failing.
    */
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
-      .kinetic-word-scroll {
-        animation: kinetic-rise linear both;
+      .written-word-scroll,
+      .written-word-scroll::after {
         animation-timeline: view();
-        animation-range: cover calc(120px + var(--word-index, 0) * 34px) cover
-          calc(320px + var(--word-index, 0) * 34px);
+        animation-range: cover calc(120px + var(--write-offset, 0) * 6px) cover
+          calc(120px + (var(--write-offset, 0) + var(--chars, 4)) * 6px);
       }
     }
   }
@@ -827,14 +884,22 @@
      *
      * The blanket override at the foot of this file collapses `animation-duration` but
      * says nothing about `animation-delay` — so a word 0.4s into a stagger was still
-     * held at its `from` keyframe by the backwards fill, translated 110% below its own
-     * line and clipped out of sight by the mask. A QA pass caught exactly one word in
-     * that state, which is the sort of thing that only ever shows up on the slowest
-     * machine in the room.
+     * held at its `from` keyframe by the backwards fill, clipped out of sight. A QA pass
+     * caught exactly one word in that state, which is the sort of thing that only ever
+     * shows up on the slowest machine in the room.
+     *
+     * The clip has to be released explicitly for the same reason: `animation: none` stops
+     * the animation but would leave the word at whatever `clip-path` it was holding.
      */
-    .kinetic-word {
+    .written-word {
       animation: none;
-      transform: none;
+      clip-path: none;
+    }
+
+    /* No caret at all. A cursor parked in the middle of a heading, going nowhere, is
+       noise for a reader who asked for stillness. */
+    .written-word::after {
+      display: none;
     }
   }
 
@@ -1011,19 +1076,60 @@
 }
 
 /**
- * A word arriving from below its own baseline.
+ * A word uncovered from its own leading edge.
  *
- * 110% of its own height, so it starts fully outside the mask whatever the type size —
- * a fixed pixel value would leave a sliver showing at the display sizes this heading uses.
- * The slight rotation is what stops five words rising in perfect lockstep and reading as
- * a lift rather than as type being set.
+ * Two keyframes rather than one logical property, because `clip-path` has no logical
+ * form: `inset()` names physical sides. In Hebrew the text begins at the right, so the
+ * empty rectangle is anchored there and grows leftward; in English it is the mirror.
+ *
+ * The insets are percentages, so this holds at any type size, and the clip is vertical at
+ * every frame — which is the whole reason this replaced a mask that cut horizontally and
+ * left words sawn in half wherever a reader stopped scrolling.
  */
-@keyframes kinetic-rise {
+@keyframes write-in-rtl {
   from {
-    transform: translate3d(0, 110%, 0) rotate(3deg);
+    clip-path: inset(0 0 0 100%);
   }
   to {
-    transform: none;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes write-in-ltr {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/** The caret travelling with the uncovered edge, stepped to match the clip exactly. */
+@keyframes write-caret-move {
+  from {
+    inset-inline-start: 0%;
+  }
+  to {
+    inset-inline-start: 100%;
+  }
+}
+
+/**
+ * The caret going out as its word finishes.
+ *
+ * Separate from the travel so it can be timed `linear` while the travel is stepped, and
+ * it is what stops a finished line wearing a row of carets — one stranded at the end of
+ * every word. Lit for the whole of its own word, dark the moment that word is done; and
+ * because the next word begins as this one ends, what a reader sees is a single caret
+ * running along the line.
+ */
+@keyframes write-caret-fade {
+  0%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 

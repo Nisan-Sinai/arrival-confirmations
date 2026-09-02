@@ -15,7 +15,13 @@ overrides:
   'next>sharp': '0.35.3'
   'brace-expansion@<1.1.18': '1.1.18'
   'brace-expansion@>=4.0.0 <5.0.9': '5.0.9'
-  'qs@>=6.11.1 <=6.15.1': '6.15.2'
+  # Two advisories published against 6.14.2–6.15.3 (GHSA-x5fp-wj9c-mxmx and the
+  # isBuffer denial of service) moved the ceiling past the 6.15.2 this used to pin.
+  # Both name ">=6.15.4" as patched and no such version exists on npm, so 6.16.0 is
+  # the smallest published fix rather than the smallest patch line. Reached only
+  # through @stryker-mutator/core > typed-rest-client, so it is dev-only and the
+  # production audit was never affected.
+  'qs@>=6.11.1 <=6.15.3': '6.16.0'
   'nanoid@<3.3.18': '3.3.18'
   'fast-uri@>=3.0.0 <3.1.5': '3.1.5'
   'js-yaml@>=4.0.0 <4.3.1': '4.3.1'

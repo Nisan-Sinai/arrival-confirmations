@@ -13,7 +13,7 @@ import { CheckboxField, Field, Input, RadioCard, Select, Textarea } from '@/comp
 import { Alert } from '@/components/ui/feedback';
 import { Rule } from '@/components/ui/layout';
 import { UI_MESSAGES } from '@/config/messages';
-import { KineticHeading } from '@/features/landing/KineticHeading';
+import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { AddToCalendar } from '@/features/invite/AddToCalendar';
 
 /**
@@ -173,7 +173,7 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
       <div className="text-center">
         <p className="text-eyebrow text-accent-strong font-semibold">נשמח לדעת</p>
         <h2 className="text-h2 text-primary mt-2 font-bold">
-          <KineticHeading text="אישור הגעה" />
+          <WrittenHeading text="אישור הגעה" />
         </h2>
       </div>
 
