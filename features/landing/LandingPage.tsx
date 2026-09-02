@@ -67,18 +67,23 @@ export function LandingPage({ locale }: { locale: Locale }) {
         </div>
 
         <section className="from-secondary/45 relative overflow-hidden bg-gradient-to-b to-transparent py-16 sm:py-24">
+          {/* Behind everything in the hero, and behind nothing else — the drift is a
+              welcome, not a background the whole site sits on. */}
+          <div aria-hidden="true" className="hero-glow" />
           <Container width="wide">
             <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="text-center lg:text-start">
-                <p className="text-eyebrow text-accent-strong font-semibold">{hero.eyebrow}</p>
-                <h1 className="text-display text-primary mt-5 font-bold">
+                <p className="enter enter-1 text-eyebrow text-accent-strong font-semibold">
+                  {hero.eyebrow}
+                </p>
+                <h1 className="enter enter-2 text-display text-primary mt-5 font-bold">
                   {hero.titleLead}
                   <span className="text-accent-strong block">{hero.titleAccent}</span>
                 </h1>
-                <p className="text-lead text-muted-foreground mt-6 max-w-2xl leading-relaxed lg:mx-0">
+                <p className="enter enter-3 text-lead text-muted-foreground mt-6 max-w-2xl leading-relaxed lg:mx-0">
                   {hero.lead}
                 </p>
-                <div className="mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
+                <div className="enter enter-4 mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
                   <Link
                     href={localePath(locale, '/signup')}
                     className={buttonClass({ size: 'lg' })}
@@ -92,7 +97,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     {hero.ctaSecondary}
                   </Link>
                 </div>
-                <ul className="text-muted-foreground mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm lg:justify-start">
+                <ul className="enter enter-5 text-muted-foreground mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm lg:justify-start">
                   {hero.facts.map((fact) => (
                     <li key={fact} className="flex items-center gap-2">
                       <span aria-hidden="true" className="bg-accent-strong size-1.5 rounded-full" />
@@ -102,8 +107,8 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 </ul>
               </div>
 
-              <div aria-hidden="true" className="animate-rise relative mx-auto w-full max-w-sm">
-                <div className="border-accent/60 bg-card shadow-lifted rotate-[-1.5deg] rounded-2xl border-2 p-2.5">
+              <div aria-hidden="true" className="enter enter-3 relative mx-auto w-full max-w-sm">
+                <div className="card-lift border-accent/60 bg-card rounded-2xl border-2 p-2.5">
                   <div className="border-accent/35 from-secondary/25 rounded-xl border bg-gradient-to-b via-white/90 to-white/90 px-6 py-9 text-center">
                     <p className="text-muted-foreground text-xs">{preview.blessing}</p>
                     <p className="text-foreground mt-5 text-sm leading-relaxed">
@@ -162,7 +167,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
             </div>
             <div className="mt-10 grid gap-5 md:grid-cols-3">
               {benefits.items.map((benefit) => (
-                <Card key={benefit.title} padding="lg">
+                <Card key={benefit.title} padding="lg" interactive>
                   <h3 className="text-h3 text-primary font-semibold">{benefit.title}</h3>
                   <p className="text-muted-foreground mt-3 leading-relaxed">{benefit.body}</p>
                 </Card>
