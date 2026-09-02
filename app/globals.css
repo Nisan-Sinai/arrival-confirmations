@@ -441,7 +441,7 @@
    * A vertical clip cannot do that. Every frame shows whole letters and a clean edge, so
    * a paused animation reads as a line half written rather than as broken text.
    *
-   * `steps(var(--chars))` is the typewriter. The word is never split into characters —
+   * `steps()` is the typewriter. The word is never split into characters —
    * `steps()` takes a *count*, so the text stays one intact node and only its length is
    * measured. That matters in Hebrew, where splitting a string tears combining marks off
    * their letters; counting is safe where splitting is not. Steps land on even fractions
@@ -493,31 +493,40 @@
    * always reaches its end once it has begun, which removes by construction the whole
    * class of bug that a scroll-driven reveal of *text* invites.
    *
-   * **`jump-start` is not a style choice — it is the fix for a letter that vanished.**
+   * **The step function has to start at nothing and end at everything, and only one of
+   * the four does both.**
    *
-   * The default, `jump-end`, only reaches a progress of 1 at the very last instant of the
-   * animation. Land a hair short of that instant and it comes to rest on the step before,
-   * and because these are custom-property durations and delays that do not divide cleanly,
-   * some combinations do. The word "עד" sat permanently at `inset(0 0 0 50%)` — the ד
-   * simply not there, with the animation reporting `finished` — while every longer word in
-   * the same heading was complete. A screenshot caught it; nothing else would have.
+   * `jump-end`, the default, never reaches a progress of 1 until the very last instant of
+   * the animation. Land a hair short of that instant — and with custom-property durations
+   * and delays that do not divide cleanly, some combinations do — and it comes to rest on
+   * the step before. The word "עד" sat permanently at `inset(0 0 0 50%)`, the ד simply not
+   * there, with the animation reporting `finished` and every longer word in the heading
+   * complete. At one character the failure is total: the word rests 100% clipped, which is
+   * to say gone.
    *
-   * Swept every combination this site can produce, words of 1 to 12 characters against 41
-   * possible offsets, 492 in all:
+   * `jump-start` fixes the ending and breaks the beginning. Its first output is `1/n`, so
+   * a word does not begin — it *appears* with its opening chunk already written and
+   * carries on from there. Half of a two-character word arriving at once reads as a
+   * glitch, and shipping it was a mistake I had already half-noticed and talked myself out
+   * of.
    *
-   *     steps(n)              34 stuck
-   *     steps(n, jump-start)   0 stuck
+   * `jump-none` is the one that does both: first output 0, last output 1, and the 1 is
+   * reached *during* the final interval rather than at its edge. Swept across words of 1
+   * to 12 characters against 41 offsets, 492 combinations:
    *
-   * At `n=1` the failure is total — a one-character word rests at 100% clipped, which is
-   * to say invisible. `jump-start` reaches 1 *during* the final interval rather than at its
-   * edge, so arriving fractionally early still lands on a fully written word. It also
-   * shows the first character immediately instead of after a blank interval, which is what
-   * a typewriter does anyway.
+   *     steps(n)                  34 rest part-written
+   *     steps(n, jump-start)       0 — but every word starts 1/n written
+   *     steps(n + 1, jump-none)    0, and every word starts from nothing
+   *
+   * The `+ 1` is not padding. `steps(k, jump-none)` spreads k outputs evenly from 0 to 1,
+   * so landing them on character boundaries needs one more step than there are characters:
+   * a six-letter word wants 0, ⅙, … , 1, which is seven outputs. It also puts the count at
+   * two for a single-character word, where `jump-none` is undefined at one.
    */
   .written-word-writing {
     animation-name: write-in-ltr;
     animation-duration: var(--write-dur, 0.152s);
-    animation-timing-function: steps(var(--chars, 4), jump-start);
+    animation-timing-function: steps(var(--steps, 5), jump-none);
     animation-delay: var(--write-delay, 0s);
     animation-fill-mode: both;
   }
@@ -574,7 +583,7 @@
      */
     animation-name: write-caret-move, write-caret-fade;
     animation-duration: var(--write-dur, 0.152s), var(--write-dur, 0.152s);
-    animation-timing-function: steps(var(--chars, 4), jump-start), linear;
+    animation-timing-function: steps(var(--steps, 5), jump-none), linear;
     animation-delay: var(--write-delay, 0s), var(--write-delay, 0s);
     animation-fill-mode: forwards, forwards;
   }
