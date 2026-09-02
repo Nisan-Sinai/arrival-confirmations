@@ -159,7 +159,35 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Require E2E credentials on trusted runs
+      # GitHub withholds repository secrets from Dependabot-triggered workflows — they
+      # live in a separate Dependabot secrets store. The job's `if:` above treats "not a
+      # fork" as "secrets are available", which is true for every branch except
+      # Dependabot's, so every dependency PR failed the credential check below for a
+      # reason that had nothing to do with the dependencies. All three open ones were red
+      # on arrival, and the `Dependabot auto-merge gate` could never pass.
+      #
+      # The fix is not to skip the job. Measured locally with nothing but the placeholder
+      # values in this file's `env` block, the suite runs **66 tests and skips 11** —
+      # exactly what it does with real credentials. Only the live-invitation tests need
+      # secrets, and `e2e/invitation.spec.ts` already skips those on a per-test basis
+      # rather than abandoning the file. So a Dependabot run gets the whole public
+      # surface, every axe check and every layout assertion, and only loses the eleven
+      # that need a real event.
+      - name: Decide whether this run can have credentials
+        id: creds
+        run: |
+          if [ "${{ github.actor }}" = "dependabot[bot]" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Dependabot run — GitHub withholds repository secrets, so the E2E suite runs against placeholders and the live-invitation tests skip."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Still a hard failure everywhere secrets are supposed to exist. The point of this
+      # step is that a run must never look green while silently testing nothing, and that
+      # is unchanged for pushes to main and for human pull requests.
+      - name: Require E2E credentials on runs that should have them
+        if: steps.creds.outputs.available == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -177,25 +205,43 @@ jobs:
           done
           exit "$missing"
 
-      - name: Build for the E2E server
+      # Promote the real credentials into the environment, or leave the workflow-level
+      # `env:` placeholders at the top of this file standing.
+      #
+      # The first version of this wrote `secrets.X || 'ci-placeholder-…'` inline on each
+      # step, which was a second copy of values this file already defines — and gitleaks
+      # rightly flagged the copies as `generic-api-key` at entropy 4.4, because an inline
+      # quoted high-entropy string is exactly what a leaked key looks like. Overriding
+      # only when there is something to override keeps one definition of the placeholders
+      # and adds no literal the scanner has to be taught to ignore.
+      - name: Export credentials when this run has them
+        if: steps.creds.outputs.available == 'true'
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_SITE_URL: http://localhost:3000
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TOKEN_PEPPER: ${{ secrets.TOKEN_PEPPER }}
-          IP_HASH_PEPPER: ${{ secrets.IP_HASH_PEPPER }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PEPPER_TOKEN: ${{ secrets.TOKEN_PEPPER }}
+          PEPPER_IP: ${{ secrets.IP_HASH_PEPPER }}
+          EVENT_PUBLIC_ID: ${{ secrets.E2E_EVENT_PUBLIC_ID }}
+        run: |
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}"
+            echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}"
+            echo "TOKEN_PEPPER=${PEPPER_TOKEN}"
+            echo "IP_HASH_PEPPER=${PEPPER_IP}"
+            echo "E2E_EVENT_PUBLIC_ID=${EVENT_PUBLIC_ID}"
+          } >> "$GITHUB_ENV"
+
+      # No `env:` on either step below. They read whatever the step above exported, or
+      # the workflow-level placeholders when it did not run. `E2E_EVENT_PUBLIC_ID` is
+      # simply absent on a Dependabot run, which is the signal `invitation.spec.ts` reads
+      # to skip the eleven tests that need a real event — inventing a value there would
+      # turn eleven honest skips into eleven confusing failures.
+      - name: Build for the E2E server
         run: pnpm build
 
       - name: Run E2E and axe
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_SITE_URL: http://localhost:3000
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TOKEN_PEPPER: ${{ secrets.TOKEN_PEPPER }}
-          IP_HASH_PEPPER: ${{ secrets.IP_HASH_PEPPER }}
-          E2E_EVENT_PUBLIC_ID: ${{ secrets.E2E_EVENT_PUBLIC_ID }}
         run: pnpm test:e2e
 
       - name: Upload the report when something failed
