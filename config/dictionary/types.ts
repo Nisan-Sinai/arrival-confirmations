@@ -93,6 +93,8 @@ export type Dictionary = {
     demoPlay: string;
     /** The line under the clip, saying what it is. */
     demoCaption: string;
+    /** Accessible name of the button that closes the clip. */
+    demoClose: string;
     steps: readonly [
       { title: string; body: string },
       { title: string; body: string },

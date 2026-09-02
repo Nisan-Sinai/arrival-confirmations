@@ -36,7 +36,7 @@ export function RsvpFlowSteps({ locale = defaultLocale }: { locale?: Locale }) {
             width of empty burgundy between them on a desktop. A pair of things that belong
             together should not be at opposite ends of the room.
           */}
-          <div className="mx-auto mt-10 grid max-w-3xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_200px] lg:gap-12">
+          <div className="mx-auto mt-10 grid max-w-3xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-12">
             {/*
               The steps read as a column on a phone, a row on a tablet, and a column again
               beside the drawing on a wide screen. The drawing sits beside them rather than
@@ -58,7 +58,11 @@ export function RsvpFlowSteps({ locale = defaultLocale }: { locale?: Locale }) {
             </ol>
 
             <div className="flex justify-center">
-              <FlowDemo playLabel={flow.demoPlay} caption={flow.demoCaption} />
+              <FlowDemo
+                playLabel={flow.demoPlay}
+                caption={flow.demoCaption}
+                closeLabel={flow.demoClose}
+              />
             </div>
           </div>
         </Card>
