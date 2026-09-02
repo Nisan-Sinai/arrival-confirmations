@@ -47,11 +47,18 @@ export function PricingCards({
         plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2',
       )}
     >
+      {/*
+        `interactive` was already in the card system and unused here — a variant that
+        lifts on hover and on focus-within, which is what a card holding a price and a
+        button should do. Choosing a plan is the one decision on this page, and the cards
+        gave no sign they were things you could act on.
+      */}
       {plans.map((plan) => (
         <Card
           key={plan.code}
           padding="lg"
           variant={plan.highlighted ? 'accent' : 'paper'}
+          interactive
           className="reveal relative flex h-full flex-col"
         >
           {plan.highlighted && (

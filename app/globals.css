@@ -245,6 +245,37 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /**
+   * Paper grain.
+   *
+   * The design brief for this product is "a printed invitation, brought online", and the
+   * one thing a flat ivory fill cannot do is read as paper. Real stock has tooth; a
+   * hex colour does not, and no amount of typography fixes that — the page looked
+   * *well-made and plain*, which is the gap this closes.
+   *
+   * An inline `feTurbulence` rather than an image: a tiling noise PNG is another asset to
+   * ship, cache and get wrong at a device pixel ratio, and this is a few hundred bytes
+   * that scales to any screen. Fractal noise at a high base frequency is film grain
+   * rather than clouds.
+   *
+   * `position: fixed` so the grain belongs to the screen and not to the document —
+   * scrolling a texture with the content makes it read as a printed pattern rather than
+   * as the surface itself. `pointer-events: none` because it covers everything, and
+   * `z-index` below the header so nothing interactive is affected.
+   *
+   * 4% opacity is the whole trick. At 8% it is a visible effect and looks like a mistake;
+   * at 4% nobody can name it and the cream stops looking like a swatch.
+   */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
   /* §9: a focus state that stays visible on every surface, including the gold accent.
      Two rings — ink on paper — so it reads on both light and dark bands. */
   :focus-visible {
@@ -390,6 +421,92 @@
    */
   .tick {
     animation: tick var(--duration-base) var(--ease-out);
+  }
+
+  /**
+   * The hero's warm glow.
+   *
+   * Two very large, very soft radial washes — gold from the top, wine from the lower
+   * edge — drifting on a slow loop. They are what stops a flat cream field reading as a
+   * swatch, and at these opacities neither is nameable as a colour; you notice the page
+   * has depth without being able to say why.
+   *
+   * `blur` on a huge element is expensive, so this is plain radial gradients moving by a
+   * few per cent instead: no filter, no repaint of anything but this one layer, and the
+   * transform runs on the compositor. 34 seconds because a drift you can perceive is a
+   * distraction, and this one has to survive being on screen for the whole visit.
+   */
+  .hero-glow {
+    position: absolute;
+    inset: -20% -10%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(42rem 26rem at 22% 8%, var(--color-accent-soft), transparent 62%),
+      radial-gradient(38rem 24rem at 82% 92%, var(--color-secondary), transparent 66%);
+    opacity: 0.55;
+    animation: hero-drift 34s var(--ease-in-out) infinite alternate;
+  }
+
+  /**
+   * The hero arriving, one part at a time.
+   *
+   * Everything used to appear at once, which is the visual equivalent of a page that has
+   * finished loading rather than one that is greeting you. Five steps, 90ms apart,
+   * finishing inside half a second — fast enough that a returning visitor never waits for
+   * it, ordered so the eye is led from the eyebrow down to the call to action.
+   *
+   * `both` is correct here and wrong for the scroll-driven reveals: these have a real
+   * delay to fill, and without it each element would flash at full opacity before its
+   * turn.
+   */
+  .enter {
+    animation: enter var(--duration-slow) var(--ease-out) both;
+  }
+
+  .enter-1 {
+    animation-delay: 60ms;
+  }
+
+  .enter-2 {
+    animation-delay: 150ms;
+  }
+
+  .enter-3 {
+    animation-delay: 240ms;
+  }
+
+  .enter-4 {
+    animation-delay: 330ms;
+  }
+
+  .enter-5 {
+    animation-delay: 420ms;
+  }
+
+  /**
+   * The invitation card, lifted off the page.
+   *
+   * A card with no shadow is a rectangle; a card with one is an object lying on a
+   * surface, which is the entire metaphor. The tilt is under a degree — enough to say
+   * "placed" rather than "pasted", little enough that the gold rule inside it does not
+   * visibly stair-step.
+   *
+   * It straightens on hover, which is the small reward for touching it.
+   */
+  .card-lift {
+    transform: rotate(-0.8deg);
+    box-shadow: var(--shadow-lifted);
+    transition:
+      transform var(--duration-slow) var(--ease-out),
+      box-shadow var(--duration-slow) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .card-lift:hover {
+      transform: rotate(0deg) translateY(-4px);
+      box-shadow: var(--shadow-overlay);
+    }
   }
 
   /**
@@ -592,6 +709,28 @@
   from {
     opacity: 0.25;
     transform: translate3d(0, 4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/** A few per cent of travel on a very large soft wash — perceptible only as depth. */
+@keyframes hero-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, -1.5%, 0) scale(1.06);
+  }
+}
+
+/** 14px, which is enough to read as arrival and short enough never to be waited on. */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
   }
   to {
     opacity: 1;
