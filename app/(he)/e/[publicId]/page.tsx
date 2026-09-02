@@ -138,10 +138,27 @@ export default async function EventPage({ params }: EventPageProps) {
         rest of the site can fade in; this cannot.
       */}
       <div id="rsvp" className="w-full max-w-xl scroll-mt-8">
+        {/*
+          The same calendar entry the card above offers, repeated on the success state.
+
+          Not a duplicate so much as a second chance at the right moment: a guest who has
+          scrolled past the invitation, filled in the form and submitted it will not
+          scroll back up for it, and having just promised to come is when the date is
+          most worth saving. The values are identical to the card's on purpose — two
+          entries that differed would be worse than one.
+        */}
         <RsvpForm
           eventId={event.id!}
           sideALabel={event.side_a_label ?? preset.defaultSideALabel}
           sideBLabel={event.side_b_label ?? preset.defaultSideBLabel}
+          calendar={{
+            uid: event.public_id!,
+            title: `${preset.label} — ${event.honoree_display_name}`,
+            date: event.event_date!,
+            time: event.ceremony_time,
+            venueName: event.venue_name!,
+            address: event.address!,
+          }}
         />
       </div>
     </main>
