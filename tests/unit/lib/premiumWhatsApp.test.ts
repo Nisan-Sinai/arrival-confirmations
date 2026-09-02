@@ -82,3 +82,102 @@ describe('Premium personal WhatsApp campaigns', () => {
     expect(filterPremiumCampaignGuests(guests, 'all', sent)).toEqual(guests);
   });
 });
+
+/**
+ * The two kinds that close the gap either side of an invitation.
+ *
+ * `update` is the one whose absence does damage: an event moves and nobody who already
+ * said yes is told. `thanks` is the note the morning after.
+ */
+describe('update and thank-you broadcasts', () => {
+  it("carries the host's own words about what changed", () => {
+    const message = buildPremiumWhatsAppMessage({
+      kind: 'update',
+      guestName: 'שרה כהן',
+      eventTitle: 'ברית המילה',
+      inviteUrl: 'https://example.test/e/abc',
+      note: 'האולם עבר לרחוב הרצל 4',
+    });
+
+    expect(message).toContain('שלום שרה כהן');
+    expect(message).toContain('עדכון לגבי ברית המילה');
+    expect(message).toContain('האולם עבר לרחוב הרצל 4');
+    expect(message).toContain('https://example.test/e/abc');
+  });
+
+  it('still says something coherent when the host left the note blank', () => {
+    for (const note of [undefined, '', '   ']) {
+      const message = buildPremiumWhatsAppMessage({
+        kind: 'update',
+        guestName: 'שרה',
+        eventTitle: 'החתונה',
+        inviteUrl: 'https://example.test/e/abc',
+        note,
+      });
+
+      expect(message, String(note)).toContain('חלו שינויים בפרטי האירוע.');
+      expect(message, String(note)).toContain('https://example.test/e/abc');
+    }
+  });
+
+  it('sends no link with a thank-you, because the event is over', () => {
+    const message = buildPremiumWhatsAppMessage({
+      kind: 'thanks',
+      guestName: 'משה לוי',
+      eventTitle: 'בר המצווה',
+      inviteUrl: 'https://example.test/e/abc',
+    });
+
+    expect(message).toContain('תודה שהייתם איתנו בבר המצווה');
+    expect(message).not.toContain('https://example.test/e/abc');
+    expect(message).not.toContain('אישור הגעה');
+  });
+
+  it('leaves the invitation and reminder wording untouched', () => {
+    const invitation = buildPremiumWhatsAppMessage({
+      kind: 'invitation',
+      guestName: 'דן',
+      eventTitle: 'החתונה',
+      inviteUrl: 'https://example.test/e/abc',
+    });
+
+    expect(invitation).toContain('נשמח להזמין אותך לחתונה');
+    expect(invitation).toContain('לכל הפרטים ולאישור הגעה:');
+  });
+});
+
+describe('the attending scope', () => {
+  it('reaches everyone who said yes or maybe, and nobody who declined', () => {
+    const reached = filterPremiumCampaignGuests(guests, 'attending', new Set());
+
+    expect(reached.map((guest) => guest.id)).toEqual(['guest-2']);
+  });
+
+  it('includes a guest who is still undecided', () => {
+    const withMaybe = [
+      ...guests,
+      { id: 'guest-4', fullName: 'נועה', phone: '0541234567', attendanceStatus: 'maybe' as const },
+    ];
+
+    expect(
+      filterPremiumCampaignGuests(withMaybe, 'attending', new Set()).map((guest) => guest.id),
+    ).toEqual(['guest-2', 'guest-4']);
+  });
+
+  it('excludes anyone who never answered, who has nothing to be updated about', () => {
+    const reached = filterPremiumCampaignGuests(guests, 'attending', new Set());
+
+    expect(reached.some((guest) => guest.attendanceStatus === null)).toBe(false);
+  });
+
+  it('still honours the name search', () => {
+    const withMaybe = [
+      ...guests,
+      { id: 'guest-4', fullName: 'נועה', phone: '0541234567', attendanceStatus: 'maybe' as const },
+    ];
+
+    expect(
+      filterPremiumCampaignGuests(withMaybe, 'attending', new Set(), 'נועה').map((g) => g.id),
+    ).toEqual(['guest-4']);
+  });
+});

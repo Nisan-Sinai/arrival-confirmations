@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prefixHebrew } from '@/lib/hebrew';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { PLATFORM_OWNER_EMAIL } from '@/app/_lib/platformAdmin';
@@ -88,7 +89,7 @@ export async function GET(
   const personalUrl = `${origin}/invite/${invite.raw}`;
   const message = [
     `היי ${guest.full_name},`,
-    `נשמח לקבל את אישור ההגעה שלך ל${event.title}.`,
+    `נשמח לקבל את אישור ההגעה שלך ${prefixHebrew('ל', event.title)}.`,
     '',
     'בלחיצה על הקישור אפשר לבחור מגיע/ה, לא מגיע/ה או אולי:',
     personalUrl,

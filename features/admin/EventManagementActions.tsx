@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
+import { prefixHebrew } from '@/lib/hebrew';
 
 /**
  * Icons for the action list.
@@ -131,9 +132,12 @@ export function EventManagementActions({
   const [copied, setCopied] = useState(false);
   const inviteUrl = `${origin}/e/${publicId}`;
   const whatsappUrl = useMemo(() => {
-    const message = [`נשמח להזמין אתכם ל${eventTitle}`, '', 'לפרטים ולאישור הגעה:', inviteUrl].join(
-      '\n',
-    );
+    const message = [
+      `נשמח להזמין אתכם ${prefixHebrew('ל', eventTitle)}`,
+      '',
+      'לפרטים ולאישור הגעה:',
+      inviteUrl,
+    ].join('\n');
 
     return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   }, [eventTitle, inviteUrl]);
