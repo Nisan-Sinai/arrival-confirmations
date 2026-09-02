@@ -48,6 +48,28 @@ test.describe('public surface hardening', () => {
 
   test('the pricing page has zero WCAG 2.2 AA violations', async ({ page }) => {
     await page.goto('/pricing');
+
+    /*
+     * Scan what a reader is looking at, not what is still arriving.
+     *
+     * The plan cards fade in on a scroll-driven timeline, so a card below the fold is
+     * genuinely at low opacity and axe is right to say its text has no contrast. Scanning
+     * the instant the page loaded therefore measured the entrance rather than the page,
+     * and it only stayed green by accident of where the cards happened to fall: laying
+     * them out four-across at this width moved the whole row below the fold at once and
+     * the same test started reporting 556 lines of violation on unchanged markup.
+     *
+     * The equivalent wait already guards the `@a11y` suite in `invitation.spec.ts`, for
+     * the same reason. Scrolling the grid into view and letting it settle is what makes
+     * this assertion about the design instead of about the timing.
+     */
+    await page.locator('main').getByRole('list').last().scrollIntoViewIfNeeded();
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('.reveal')].every(
+        (el) => Number(getComputedStyle(el).opacity) > 0.99,
+      ),
+    );
+
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();

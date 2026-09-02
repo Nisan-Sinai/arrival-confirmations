@@ -43,9 +43,21 @@ export function PricingCards({
 
   return (
     <div
+      /*
+       * Four plans belong in one row once there is room for one.
+       *
+       * They were laid out two-by-two at every width above `md`, which on a desktop put
+       * the trial beside Basic and Premium beside Pro — two separate comparisons, when
+       * comparing is the only thing a pricing page is for. Reading Pro against Basic meant
+       * looking down and across.
+       *
+       * Two columns still carry the tablet range, where four would be too narrow to read a
+       * feature list in. The three-plan case is the landing page, which never shows the
+       * trial and is already a single row.
+       */
       className={cn(
         'reveal-stagger grid gap-5',
-        plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2',
+        plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-4',
       )}
     >
       {/*

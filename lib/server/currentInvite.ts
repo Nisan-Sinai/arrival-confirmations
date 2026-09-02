@@ -39,6 +39,15 @@ export interface ActiveInviteContext {
     readonly phoneNormalized: string;
     readonly partySize: number;
     readonly familySide: 'side_a' | 'side_b' | 'other' | null;
+    /**
+     * Where they are sitting, once the host has seated them.
+     *
+     * Already on the guest row — the seating studio writes it — and never once shown to
+     * the person it is about. Competitors treat telling a guest their table as a paid
+     * day-of service; the data was here all along.
+     */
+    readonly tableName: string | null;
+    readonly seatNumber: string | null;
   };
 }
 
@@ -69,7 +78,7 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       privileged
         .from('guests')
         .select(
-          'id, event_id, full_name, phone, phone_normalized, party_size, family_side, is_active',
+          'id, event_id, full_name, phone, phone_normalized, party_size, family_side, table_name, seat_number, is_active',
         )
         .eq('id', validation.guestId)
         .eq('event_id', validation.eventId)
@@ -122,6 +131,8 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       phoneNormalized: guest.phone_normalized,
       partySize: guest.party_size,
       familySide: guest.family_side,
+      tableName: guest.table_name,
+      seatNumber: guest.seat_number,
     },
   };
 }
