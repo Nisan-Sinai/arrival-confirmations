@@ -40,6 +40,22 @@ beforeEach(() => {
 });
 
 describe('RsvpForm', () => {
+  /**
+   * The heading is split into animated words, and this asserts it still announces as one.
+   *
+   * Worth a test of its own because of where it sits: this is the page a family sends to
+   * its guests, and the split puts every word behind `aria-hidden` with the sentence
+   * carried by a single visually hidden node. Get that wrong and a screen reader reads a
+   * heading of disconnected fragments — on the one screen in the product that has to work
+   * for someone who was handed a link and nothing else. Every other assertion in this file
+   * and in the e2e suite matches the submit *button*, so nothing was covering it.
+   */
+  it('announces its heading as one phrase', () => {
+    renderForm();
+
+    expect(screen.getByRole('heading', { name: 'אישור הגעה' })).toBeInTheDocument();
+  });
+
   it('shows the two family sides the event was configured with', () => {
     renderForm();
 
