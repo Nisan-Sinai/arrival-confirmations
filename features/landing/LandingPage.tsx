@@ -7,7 +7,7 @@ import { Container, Rule } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { Candlelight } from '@/features/landing/Candlelight';
-import { KineticHeading } from '@/features/landing/KineticHeading';
+import { WrittenHeading, writingDuration } from '@/features/landing/WrittenHeading';
 import { TiltCard } from '@/features/landing/TiltCard';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
@@ -83,15 +83,19 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 {/*
                   No `enter` on the heading: its words carry their own arrival, and
                   running both would move each word twice — once with the block and once
-                  on its own. The second line starts 0.18s after the first so the two
-                  read as one sentence being set rather than as two things happening.
+                  on its own.
+
+                  The second line starts exactly as the first finishes, so the caret runs
+                  off the end of one line and picks up at the start of the next instead of
+                  restarting. `writingDuration` rather than a hand-tuned number, because a
+                  literal here would drift the moment the copy changed by a word.
                 */}
                 <h1 className="text-display text-primary mt-5 font-bold">
-                  <KineticHeading text={hero.titleLead} as="span" />
-                  <KineticHeading
+                  <WrittenHeading text={hero.titleLead} as="span" />
+                  <WrittenHeading
                     text={hero.titleAccent}
                     as="div"
-                    delay={0.18}
+                    delay={writingDuration(hero.titleLead)}
                     className="text-accent-strong"
                   />
                 </h1>
@@ -198,7 +202,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{benefits.eyebrow}</p>
               <h2 className="text-h1 text-primary mt-3 font-bold">
-                <KineticHeading text={benefits.title} trigger="scroll" />
+                <WrittenHeading text={benefits.title} trigger="scroll" />
               </h2>
             </div>
             <div className="reveal-stagger mt-10 grid gap-5 md:grid-cols-3">
@@ -221,7 +225,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{plans.eyebrow}</p>
               <h2 className="text-h1 text-primary mt-3 font-bold">
-                <KineticHeading text={plans.title} trigger="scroll" />
+                <WrittenHeading text={plans.title} trigger="scroll" />
               </h2>
               <p className="text-muted-foreground mt-4 leading-relaxed">{plans.lead}</p>
             </div>
@@ -238,7 +242,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 {faq.eyebrow}
               </p>
               <h2 className="text-h1 text-primary mt-3 text-center font-bold">
-                <KineticHeading text={faq.title} trigger="scroll" />
+                <WrittenHeading text={faq.title} trigger="scroll" />
               </h2>
               <div className="reveal-stagger mt-9 space-y-3">
                 {faq.items.map((item) => (

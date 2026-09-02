@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { Container, Rule } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
-import { KineticHeading } from '@/features/landing/KineticHeading';
+import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { languageAlternates, localePath, type Locale } from '@/lib/i18n';
 
@@ -123,7 +123,7 @@ export function LegalPageBody({
         <Container width="prose">
           <p className="text-eyebrow text-accent-strong font-semibold">{page.eyebrow}</p>
           <h1 className="text-h1 text-primary mt-3 font-bold">
-            <KineticHeading text={page.title} />
+            <WrittenHeading text={page.title} />
           </h1>
           <p className="text-muted-foreground mt-3 text-sm">{page.updated}</p>
           <Rule draw="scroll" className="mt-8 mb-10" />

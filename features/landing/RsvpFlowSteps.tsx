@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { FlowDemo } from '@/features/landing/FlowDemo';
-import { KineticHeading } from '@/features/landing/KineticHeading';
+import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { defaultLocale, type Locale } from '@/lib/i18n';
 
 /**
@@ -51,7 +51,7 @@ export function RsvpFlowSteps({ locale = defaultLocale }: { locale?: Locale }) {
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-accent text-sm font-semibold">{flow.eyebrow}</p>
             <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-              <KineticHeading text={flow.title} trigger="scroll" />
+              <WrittenHeading text={flow.title} trigger="scroll" />
             </h2>
           </div>
 
