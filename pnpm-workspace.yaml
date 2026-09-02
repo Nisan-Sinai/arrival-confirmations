@@ -23,5 +23,13 @@ overrides:
   # production audit was never affected.
   'qs@>=6.11.1 <=6.15.3': '6.16.0'
   'nanoid@<3.3.18': '3.3.18'
-  'fast-uri@>=3.0.0 <3.1.5': '3.1.5'
+  # Four high advisories land on 3.1.5, so this pin was exactly one version short:
+  # GHSA-5jgf-p345-68v8, GHSA-f65p-4m7j-42xc, GHSA-fph4-wmhf-6fwf and
+  # GHSA-jqff-g426-hqxp, all patched in 3.1.6.
+  #
+  # Note that `pnpm audit` reports this tree clean. It queries the npm registry's feed,
+  # which had not picked these up; GitHub's advisory database had. The two disagree, so
+  # a green `pnpm audit` is not on its own evidence that nothing is outstanding — check
+  # the Dependabot alerts as well.
+  'fast-uri@>=3.0.0 <3.1.6': '3.1.6'
   'js-yaml@>=4.0.0 <4.3.1': '4.3.1'
