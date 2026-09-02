@@ -37,6 +37,22 @@ export default defineConfig({
           environment: 'jsdom',
           include: ['tests/component/**/*.test.tsx'],
           setupFiles: ['tests/setup/component.setup.ts'],
+          /*
+           * Vitest defaults to five seconds, which these are not unit tests enough to
+           * live inside. They mount real React trees into jsdom and drive them through
+           * `userEvent`, which dispatches and awaits each keystroke and click.
+           *
+           * On an idle machine that is milliseconds and the ceiling never shows. Running
+           * the suite while four headless browsers scrolled the site in parallel —
+           * roughly a busy CI runner — put several tests over it, and they failed as
+           * `Test timed out in 5000ms` rather than as anything about the component.
+           *
+           * Twenty seconds against the five that `asyncUtilTimeout` allows a single wait,
+           * so a stuck assertion still reports itself as a failed assertion rather than
+           * as an opaque timeout of the whole test. The projects that talk to the
+           * database already carry 30_000 for the same reason.
+           */
+          testTimeout: 20_000,
         },
       },
       {
