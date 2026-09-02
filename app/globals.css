@@ -424,6 +424,81 @@
   }
 
   /**
+   * A word rising from behind its own mask.
+   *
+   * Two elements because one cannot both clip and be clipped: the outer span is the
+   * window, the inner one is what moves. `overflow: clip` rather than `hidden` — `hidden`
+   * makes the element a scroll container, which on an inline heading means the browser
+   * can scroll it and a focused link inside would jump.
+   *
+   * `pb`/`mb` of a quarter em is not decoration: Hebrew descenders in Frank Ruhl (ק, ן,
+   * ף) sit below the baseline, and a mask cut exactly at the line shears them off.
+   *
+   * Nothing fades. The hard edge is the whole effect — a cross-dissolve here would read
+   * as a slideshow transition rather than as type being set.
+   */
+  .kinetic-mask {
+    display: inline-block;
+    overflow: clip;
+    padding-bottom: 0.25em;
+    margin-bottom: -0.25em;
+    vertical-align: bottom;
+  }
+
+  .kinetic-word {
+    display: inline-block;
+    animation: kinetic-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /**
+   * The pointer-tracking tilt on the invitation card.
+   *
+   * `perspective` lives here, on the wrapper, and the rotation on the child — set on the
+   * rotating element itself the vanishing point travels with it and the result reads as a
+   * shear. 1100px is far enough back that a 9° tilt does not fish-eye the near corner.
+   *
+   * The resting state keeps the -0.8° the card had before, so nothing jumps when the
+   * pointer leaves; the tilt is added to it rather than replacing it.
+   */
+  .tilt-scene {
+    perspective: 1100px;
+  }
+
+  @media (hover: hover) {
+    .tilt-scene .card-lift {
+      transform: rotate(-0.8deg) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+      transition:
+        transform 220ms var(--ease-out),
+        box-shadow var(--duration-slow) var(--ease-out);
+    }
+
+    .tilt-scene:hover .card-lift {
+      box-shadow: var(--shadow-overlay);
+    }
+  }
+
+  /**
+   * The hero card drifting against the scroll.
+   *
+   * A scroll-driven parallax, so there is no listener and nothing runs on the main
+   * thread. The card rises 40px more slowly than the page it sits on across the section's
+   * own travel, which is the layer separation the flat version was missing.
+   *
+   * Guarded the same way the reveals are: `@supports` because a browser without
+   * scroll-driven animations must simply not do it, and `no-preference` because a
+   * scroll-linked animation has no duration for the blanket override to collapse.
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .parallax-slow {
+        animation: parallax-slow linear both;
+        animation-timeline: view();
+        animation-range: cover 0% cover 100%;
+      }
+    }
+  }
+
+  /**
    * One mote of dust in candlelight.
    *
    * A radial gradient rather than a flat disc with a blur: `filter: blur()` on seventeen
@@ -616,6 +691,21 @@
     .mote {
       display: none;
     }
+
+    /*
+     * The words sit where they belong, immediately.
+     *
+     * The blanket override at the foot of this file collapses `animation-duration` but
+     * says nothing about `animation-delay` — so a word 0.4s into a stagger was still
+     * held at its `from` keyframe by the backwards fill, translated 110% below its own
+     * line and clipped out of sight by the mask. A QA pass caught exactly one word in
+     * that state, which is the sort of thing that only ever shows up on the slowest
+     * machine in the room.
+     */
+    .kinetic-word {
+      animation: none;
+      transform: none;
+    }
   }
 
   /*
@@ -787,6 +877,34 @@
   100% {
     transform: translate3d(0, -95vh, 0);
     opacity: 0;
+  }
+}
+
+/**
+ * A word arriving from below its own baseline.
+ *
+ * 110% of its own height, so it starts fully outside the mask whatever the type size —
+ * a fixed pixel value would leave a sliver showing at the display sizes this heading uses.
+ * The slight rotation is what stops five words rising in perfect lockstep and reading as
+ * a lift rather than as type being set.
+ */
+@keyframes kinetic-rise {
+  from {
+    transform: translate3d(0, 110%, 0) rotate(3deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/** 40px of lag across the section — enough to separate the layers, little enough that
+    the card never leaves the space the layout gave it. */
+@keyframes parallax-slow {
+  from {
+    transform: translate3d(0, 40px, 0);
+  }
+  to {
+    transform: translate3d(0, -40px, 0);
   }
 }
 
