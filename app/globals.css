@@ -424,6 +424,35 @@
   }
 
   /**
+   * One mote of dust in candlelight.
+   *
+   * A radial gradient rather than a flat disc with a blur: `filter: blur()` on seventeen
+   * permanently animating elements is seventeen offscreen buffers to composite every
+   * frame, and a gradient gets the same soft edge for free. The transform is the only
+   * animated property, so each mote lives on the compositor and the main thread never
+   * hears about them.
+   *
+   * They rise. Dust in a warm room rises, and downward motion would read as snow, which
+   * is a different season and a different feeling entirely.
+   */
+  .mote {
+    position: absolute;
+    bottom: -10%;
+    border-radius: 9999px;
+    /*
+       `accent-strong`, not `accent`. The decorative gold sits at lightness 0.78 against a
+       0.983 ivory ground — on a 3px dot that is invisible, which is what the first
+       version was. The palette's own note says `accent-strong` is the only gold with
+       enough contrast to sit on paper, and a mote is exactly that case.
+    */
+    background: radial-gradient(circle, var(--color-accent-strong) 0%, transparent 70%);
+    animation-name: mote-drift;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+  }
+
+  /**
    * The hero's warm glow.
    *
    * Two very large, very soft radial washes — gold from the top, wine from the lower
@@ -571,6 +600,24 @@
     transform-origin: left center;
   }
 
+  /**
+   * Motion off: the air goes still.
+   *
+   * The blanket override at the end of this file collapses `animation-duration`, but
+   * each mote sets its own duration as an *inline* style and the two do not resolve the
+   * way you would hope — a QA pass found all seventeen still drifting with the
+   * preference set. An explicit rule is both the fix and the honest way to write it: a
+   * reader who has asked for stillness should not have to trust a cascade.
+   *
+   * They are removed rather than frozen. A field of dust stopped mid-air is stranger
+   * than no dust at all.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .mote {
+      display: none;
+    }
+  }
+
   /*
    * Motion off: no cycle at all, and the middle scene held.
    *
@@ -713,6 +760,33 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/**
+ * A mote crossing the hero, bottom to top.
+ *
+ * The horizontal wander is 18px against a vertical travel of 120% of the section — a
+ * ratio that reads as air moving rather than as a dot on a path. It fades in and out at
+ * the ends so nothing ever pops into or out of existence at an edge.
+ */
+@keyframes mote-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--mote-opacity);
+  }
+  50% {
+    transform: translate3d(18px, -45vh, 0);
+  }
+  88% {
+    opacity: var(--mote-opacity);
+  }
+  100% {
+    transform: translate3d(0, -95vh, 0);
+    opacity: 0;
   }
 }
 

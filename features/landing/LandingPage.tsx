@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Container, Rule } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
+import { Candlelight } from '@/features/landing/Candlelight';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
@@ -70,6 +71,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
           {/* Behind everything in the hero, and behind nothing else — the drift is a
               welcome, not a background the whole site sits on. */}
           <div aria-hidden="true" className="hero-glow" />
+          <Candlelight />
           <Container width="wide">
             <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="text-center lg:text-start">
