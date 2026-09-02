@@ -448,9 +448,52 @@
    * of the width rather than on real glyph advances, which is why the caret is wide enough
    * to cover the seam — the same thing a real text cursor does.
    */
+  /*
+   * The base. Deliberately carries no animation and no clip: a word with only this class
+   * is simply text, sitting where it belongs and fully legible.
+   *
+   * That is what makes a scroll-triggered version of this safe to build on JavaScript.
+   * The note on `.reveal` above rules out an `IntersectionObserver` reveal because it
+   * "leaves the content invisible until hydration, which is a worse failure than no
+   * animation at all" — and that is right, but it is an argument about the *initial*
+   * state, not about the observer. The server renders this class alone, so a reader whose
+   * JavaScript never arrives gets the heading in full. Hiding is something only the client
+   * does, and only once it is in a position to also un-hide.
+   */
   .written-word {
     position: relative;
     display: inline-block;
+  }
+
+  /*
+   * Armed: hidden, waiting for the reader to reach it.
+   *
+   * Only ever applied from the client, and only after it has an observer ready to take it
+   * off again. `clip-path` has no logical form — `inset()` names physical sides — so the
+   * right-to-left case is written out.
+   */
+  .written-word-armed {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  [dir='rtl'] .written-word-armed {
+    clip-path: inset(0 0 0 100%);
+  }
+
+  /*
+   * Writing.
+   *
+   * On a clock, for both triggers. The scroll variant used to be driven by
+   * `animation-timeline: view()`, which tied progress to scroll position — so a reader who
+   * flicked past got the whole heading typed in a single frame, and one who stopped
+   * mid-way got a heading frozen half-written. The observer starts this; the clock runs
+   * it. Flick past and you still see it written at a hand's pace.
+   *
+   * A consequence worth stating: this can no longer be left part-written. The animation
+   * always reaches its end once it has begun, which removes by construction the whole
+   * class of bug that a scroll-driven reveal of *text* invites.
+   */
+  .written-word-writing {
     animation-name: write-in-ltr;
     animation-duration: var(--write-dur, 0.152s);
     animation-timing-function: steps(var(--chars, 4));
@@ -458,7 +501,7 @@
     animation-fill-mode: both;
   }
 
-  [dir='rtl'] .written-word {
+  [dir='rtl'] .written-word-writing {
     animation-name: write-in-rtl;
   }
 
@@ -472,8 +515,11 @@
    * The delay arrives as a custom property rather than as `animation-delay` on the word,
    * because delay does not inherit to a pseudo-element: set the real property and every
    * caret on the line starts at zero while the words wait their turn.
+   *
+   * It hangs off the *writing* class rather than the base, so an unarmed or unhydrated
+   * heading has no caret sitting in it.
    */
-  .written-word::after {
+  .written-word-writing::after {
     content: '';
     position: absolute;
     inset-block: 0.06em 0.04em;
@@ -510,39 +556,6 @@
     animation-timing-function: steps(var(--chars, 4)), linear;
     animation-delay: var(--write-delay, 0s), var(--write-delay, 0s);
     animation-fill-mode: forwards, forwards;
-  }
-
-  /**
-   * The same writing, driven by the reader's scroll rather than by a clock.
-   *
-   * A heading below the fold cannot animate on a timer: by the time anyone reaches it the
-   * duration is long spent and they arrive at something that already happened.
-   *
-   * Two things follow, both already learned by `.reveal-stagger` above:
-   *
-   *   * **The offset is a range, not a delay.** `animation-delay` has nothing to delay
-   *     against on a scroll timeline. Each word instead begins further into the scroll
-   *     than the one before, so the line types itself at the speed the reader is moving.
-   *   * **`cover`, not `entry`.** `entry` spans only the element's own height — about 45px
-   *     for a heading — so the whole line would have to be written inside 45px of scroll.
-   *
-   * Seven pixels per character keeps one writing speed across the heading, the same way
-   * the load variant accumulates milliseconds — and it moves with that constant, so the
-   * two triggers stay the same effect rather than drifting into two different paces.
-   * `--write-offset` is the characters written
-   * before this word; its `, 0` fallback matters, because without it an unregistered
-   * variable makes the whole `animation-range` invalid, and every word would then run on
-   * the default range at once — the effect silently collapsing rather than failing.
-   */
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .written-word-scroll,
-      .written-word-scroll::after {
-        animation-timeline: view();
-        animation-range: cover calc(120px + var(--write-offset, 0) * 7px) cover
-          calc(120px + (var(--write-offset, 0) + var(--chars, 4)) * 7px);
-      }
-    }
   }
 
   /**
@@ -892,15 +905,22 @@
      *
      * The clip has to be released explicitly for the same reason: `animation: none` stops
      * the animation but would leave the word at whatever `clip-path` it was holding.
+     *
+     * `.written-word-armed` is covered here as a second line of defence. The component
+     * already refuses to arm a heading when this preference is set, so in practice the
+     * class never reaches the page — but the cost of being wrong about that is an
+     * invisible heading, and the cost of the extra rule is nothing.
      */
-    .written-word {
+    .written-word,
+    .written-word-armed,
+    .written-word-writing {
       animation: none;
       clip-path: none;
     }
 
     /* No caret at all. A cursor parked in the middle of a heading, going nowhere, is
        noise for a reader who asked for stillness. */
-    .written-word::after {
+    .written-word-writing::after {
       display: none;
     }
   }
