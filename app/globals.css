@@ -374,6 +374,90 @@
   }
 
   /**
+   * The walkthrough: three scenes in a phone, cycling.
+   *
+   * This is the site's "video", and it is drawn rather than filmed on purpose. A real
+   * clip of the product would be a megabyte or two to download before a visitor on a
+   * phone learns anything, it would need a poster frame to avoid a blank rectangle while
+   * it loads, and it would go stale the first time a button moves. Twelve seconds of SVG
+   * costs nothing, cannot buffer, and stays correct because it is abstract.
+   *
+   * One timeline, three scenes, four seconds each. The scenes are stacked in the same
+   * grid cell rather than swapped in and out, so nothing reflows as they change — the box
+   * is the size of the tallest scene from the first frame.
+   *
+   * `steps()` on the caret and a plain fade on the scenes: the fade is what carries the
+   * cut, and easing it would make one scene visible under another for long enough to read
+   * as a mistake rather than a transition.
+   */
+  /*
+   * `infinite` with no fill mode, and that is the whole fix.
+   *
+   * The first version used `both`, which includes *backwards* — during a scene's delay
+   * the browser applies its 0% keyframe, and that keyframe is `opacity: 1`. So scenes two
+   * and three were painted on top of scene one from the first frame and the phone showed
+   * all three at once. Without a fill mode the base `opacity: 0` below holds through the
+   * delay, which is what "not your turn yet" should look like.
+   */
+  .demo-scene {
+    animation: demo-scene 12s var(--ease-in-out) infinite;
+    opacity: 0;
+  }
+
+  .demo-scene-1 {
+    animation-delay: 0s;
+  }
+
+  .demo-scene-2 {
+    animation-delay: 4s;
+  }
+
+  .demo-scene-3 {
+    animation-delay: 8s;
+  }
+
+  /* The message sliding into the thread, then the tap, then the counter filling. Each is
+     on the same 12s clock so it stays in step with the scene that contains it. */
+  .demo-bubble {
+    animation: demo-bubble 12s var(--ease-out) infinite;
+    opacity: 0;
+  }
+
+  .demo-tap {
+    animation: demo-tap 12s var(--ease-out) infinite;
+    opacity: 0;
+    transform-origin: center;
+  }
+
+  .demo-fill {
+    animation: demo-fill 12s var(--ease-out) infinite;
+    transform: scaleX(0.08);
+    transform-origin: left center;
+  }
+
+  /*
+   * Motion off: no cycle at all, and the middle scene held.
+   *
+   * The blanket override at the end of this file collapses durations, which on an
+   * infinite loop would leave every scene stacked at whatever opacity it had. Scene two —
+   * a guest answering — is the one frame that explains the product on its own, so it is
+   * the one that stays.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .demo-scene,
+    .demo-bubble,
+    .demo-tap,
+    .demo-fill {
+      animation: none;
+      opacity: 0;
+    }
+
+    .demo-scene-2 {
+      opacity: 1;
+    }
+  }
+
+  /**
    * The confirmation tick, drawn rather than shown.
    *
    * This is the one moment in the product worth animating. A guest has just told a
@@ -475,6 +559,77 @@
 @keyframes draw-mark {
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+/**
+ * A scene holds for its third of the cycle and cross-fades at the edges.
+ *
+ * The 2% ramps are deliberate: a hard cut reads as a glitch on a loop this slow, and
+ * anything longer leaves two scenes legible at once.
+ */
+@keyframes demo-scene {
+  0%,
+  33.4% {
+    opacity: 1;
+  }
+  35.4%,
+  98% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/** The invitation arriving in the thread, in the first four seconds only. */
+@keyframes demo-bubble {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  8%,
+  33% {
+    opacity: 1;
+    transform: none;
+  }
+  35%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/** A finger landing on the answer, once, in the second scene. */
+@keyframes demo-tap {
+  0%,
+  38% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  44% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  52%,
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/** The dashboard bar filling as the replies land, in the third scene. */
+@keyframes demo-fill {
+  0%,
+  68% {
+    transform: scaleX(0.08);
+  }
+  82%,
+  99% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0.08);
   }
 }
 
