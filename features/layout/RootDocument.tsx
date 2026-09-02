@@ -145,10 +145,24 @@ export function RootDocument({
       className={`${assistant.variable} ${frankRuhl.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        {/* §9: skip link, first in the tab order, visible only once focused. */}
+        {/*
+          §9: skip link, first in the tab order, visible only once focused.
+
+          `top-20`, not `top-4`. At `top-4` the focused link landed inside the header at
+          the inline-start corner — which in a right-to-left document is exactly where the
+          brand mark sits — so the first thing a keyboard user did, on the first Tab of the
+          page, was put two interactive targets in the same pixels. axe reports it as a
+          WCAG 2.2 SC 2.5.8 failure against the logo, and it is a real one: the two are
+          genuinely indistinguishable to a pointer.
+
+          Below the header it overlaps a heading or a paragraph instead. Those are not
+          targets, so nothing competes, and the link is still the first thing visible.
+          `start-4` rather than `right-4` so it follows the writing direction instead of
+          assuming one.
+        */}
         <a
           href="#main"
-          className="focus-visible:bg-primary focus-visible:text-primary-foreground sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-4 focus-visible:right-4 focus-visible:z-50 focus-visible:rounded-md focus-visible:px-4 focus-visible:py-2"
+          className="focus-visible:bg-primary focus-visible:text-primary-foreground sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:start-4 focus-visible:top-20 focus-visible:z-50 focus-visible:rounded-md focus-visible:px-4 focus-visible:py-2 focus-visible:shadow-lg"
         >
           {dictionary.a11y.skipToContent}
         </a>

@@ -33,8 +33,22 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: 'bg-primary text-primary-foreground shadow-paper hover:bg-primary-hover',
+        /*
+         * The border here is `border-strong`, not `transparent`, and that is a fix
+         * rather than a preference.
+         *
+         * `--secondary` is lightness 0.94 and `--border-strong` is 0.82, so a secondary
+         * button with an invisible edge was a pale tint floating on a 0.98 card — paler,
+         * in practice, than the bordered `outline` sitting *below* it in the hierarchy.
+         * Every screen that used both read them in the wrong order, which is the opposite
+         * of what a ranked variant set is for.
+         *
+         * Giving it the same edge as `outline` and keeping its tint restores the ranking:
+         * same frame, more fill, more weight. The box model is unchanged, since the
+         * transparent border was already reserving the pixel.
+         */
         secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/70 border border-transparent',
+          'bg-secondary text-secondary-foreground hover:bg-secondary/70 border border-border-strong',
         outline: 'border border-border-strong text-primary bg-card/60 hover:bg-secondary/50',
         /* The gold call to action. Reserved for the single most important action on
            the guest surface, which is why it is not simply `accent`. */

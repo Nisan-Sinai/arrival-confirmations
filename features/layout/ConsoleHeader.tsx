@@ -85,8 +85,23 @@ export function ConsoleHeader({
                   key={tab.href}
                   href={tab.href}
                   aria-current={isActive ? 'page' : undefined}
+                  /*
+                   * The active tab is `outline`, not `primary`.
+                   *
+                   * It was `primary`, which put two filled burgundy pills in one bar —
+                   * the selected tab and "אירוע חדש" — competing for the same attention.
+                   * The button system's own note rules that out: exactly one `primary`
+                   * per view, and here it belongs to the action, not to a statement of
+                   * where you already are.
+                   *
+                   * `outline` rather than `secondary` because `--secondary` sits at
+                   * lightness 0.94 and `--border` at 0.90, so a secondary fill is
+                   * literally paler than the outline beneath it in the hierarchy. The
+                   * border reads as "selected" against borderless siblings and stays
+                   * out of the call to action's way.
+                   */
                   className={buttonClass({
-                    variant: isActive ? 'primary' : 'ghost',
+                    variant: isActive ? 'outline' : 'ghost',
                     size: 'sm',
                     className: NAV_BUTTON,
                   })}
