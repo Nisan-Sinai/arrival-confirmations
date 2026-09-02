@@ -694,6 +694,25 @@
     perspective: 1100px;
   }
 
+  /*
+   * The rotating element has to be as tall as the scene, and this is not decoration.
+   *
+   * Wrapping the plan cards in a tilt put a second element between the grid and the card.
+   * The grid stretches its own child — `.tilt-scene` — to the row height, but `.tilt-target`
+   * inside it kept an automatic height, so the card's own `h-full` resolved against a box
+   * that was only as tall as the card itself. Two cards sharing a row came out 64px and
+   * 112px apart, at every width from 768 up.
+   *
+   * Deliberately outside the `hover` query below: the rotation is for pointers, but a grid
+   * row has to line up on a phone too.
+   *
+   * Harmless where there is no height to inherit — `height: 100%` against an automatic
+   * parent resolves to automatic — so the hero's invitation card is untouched.
+   */
+  .tilt-scene > .tilt-target {
+    height: 100%;
+  }
+
   @media (hover: hover) {
     /* The tilt lives on its own element, one inside the perspective wrapper. That is
        what lets the invitation card keep the resting -0.8deg it has always had on
