@@ -76,6 +76,8 @@ export const en: Dictionary = {
   flow: {
     eyebrow: 'What happens after you send the link?',
     title: 'Three simple steps to an RSVP',
+    demoPlay: 'Play the demo clip',
+    demoCaption: 'Tap to watch · 20 seconds',
     steps: [
       {
         title: 'Your guest opens it from WhatsApp',

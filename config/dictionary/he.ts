@@ -67,6 +67,8 @@ export const he: Dictionary = {
   flow: {
     eyebrow: 'מה קורה אחרי ששולחים את הקישור?',
     title: 'שלושה צעדים פשוטים עד לאישור ההגעה',
+    demoPlay: 'הפעלת סרטון ההדגמה',
+    demoCaption: 'לחצו לצפייה · 20 שניות',
     steps: [
       {
         title: 'האורח פותח מה-WhatsApp',
