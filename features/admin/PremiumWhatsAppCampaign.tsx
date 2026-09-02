@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Field, Input, Select } from '@/components/ui/field';
+import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
 import {
   buildPremiumWhatsAppMessage,
@@ -66,6 +66,22 @@ export function PremiumWhatsAppCampaign({
 }) {
   const [kind, setKind] = useState<PremiumMessageKind>('invitation');
   const [scope, setScope] = useState<PremiumCampaignScope>('unanswered');
+  /** What changed, for an `update`. Ignored by every other kind. */
+  const [note, setNote] = useState('');
+
+  /**
+   * Choosing a kind moves the audience with it.
+   *
+   * An invitation goes to whoever has not answered; a change of venue and a thank-you go
+   * to the people who said they were coming. Leaving the scope where it was would have
+   * sent a thank-you to guests who declined, which reads as a mistake — and the host
+   * would have had to notice a second dropdown to avoid it. Still a plain `setScope`, so
+   * they can override it immediately.
+   */
+  const selectKind = (next: PremiumMessageKind) => {
+    setKind(next);
+    setScope(next === 'update' || next === 'thanks' ? 'attending' : 'unanswered');
+  };
   const [query, setQuery] = useState('');
   const storageKey = `premium-whatsapp-progress:${eventId}:${kind}`;
   const getProgressSnapshot = useCallback(() => readProgressSnapshot(storageKey), [storageKey]);
@@ -139,10 +155,12 @@ export function PremiumWhatsAppCampaign({
         <Field label="סוג ההודעה">
           <Select
             value={kind}
-            onChange={(event) => setKind(event.target.value as PremiumMessageKind)}
+            onChange={(event) => selectKind(event.target.value as PremiumMessageKind)}
           >
             <option value="invitation">הזמנה אישית</option>
             <option value="reminder">תזכורת אישית</option>
+            <option value="update">עדכון על שינוי באירוע</option>
+            <option value="thanks">תודה אחרי האירוע</option>
           </Select>
         </Field>
         <Field label="קבוצת מוזמנים">
@@ -152,6 +170,7 @@ export function PremiumWhatsAppCampaign({
           >
             <option value="unanswered">רק מי שעדיין לא ענה</option>
             <option value="not_sent">רק מי שטרם סומן כנשלח</option>
+            <option value="attending">רק מי שמגיע או שוקל</option>
             <option value="all">כל המוזמנים</option>
           </Select>
         </Field>
@@ -164,9 +183,30 @@ export function PremiumWhatsAppCampaign({
         </Field>
       </div>
 
+      {/*
+        Only for an update, because it is the only message whose content is not known in
+        advance. "There has been a change" makes a guest open a link to find out what,
+        and some of them will not — so the host says it in the message itself.
+      */}
+      {kind === 'update' && (
+        <div className="mt-4">
+          <Field
+            label="מה השתנה?"
+            hint="המשפט הזה נכנס להודעה עצמה, לפני הקישור. לדוגמה: האולם עבר לרחוב הרצל 4."
+          >
+            <Textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              rows={2}
+              placeholder="האולם עבר לרחוב הרצל 4"
+            />
+          </Field>
+        </div>
+      )}
+
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground text-sm">
-          מוצגים {filteredGuests.length} מוזמנים · ההתקדמות נשמרת בנפרד להזמנות ולתזכורות.
+          מוצגים {filteredGuests.length} מוזמנים · ההתקדמות נשמרת בנפרד לכל סוג הודעה.
         </p>
         {sentGuestIds.size > 0 && (
           <Button type="button" variant="ghost" size="sm" onClick={resetProgress}>
@@ -189,6 +229,7 @@ export function PremiumWhatsAppCampaign({
               guestName: guest.fullName,
               eventTitle,
               inviteUrl,
+              note,
             });
             const sendUrl = buildWhatsAppSendUrl(guest.phone, message);
             const wasSent = sentGuestIds.has(guest.id);
