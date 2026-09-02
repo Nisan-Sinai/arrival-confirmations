@@ -42,6 +42,7 @@ export interface EventFormValues {
   readonly address: string;
   readonly waze_url: string | null;
   readonly google_maps_url: string | null;
+  readonly gift_url: string | null;
   readonly contact_phone: string | null;
   readonly description: string | null;
   readonly side_a_label: string | null;
@@ -199,6 +200,26 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
               dir="ltr"
               className="text-start"
               defaultValue={value('google_maps_url')}
+            />
+          </Field>
+          {/*
+            The one thing the Israeli services charge for and this does not.
+            A gift at a simcha here is money, and it moves through Bit or PayBox — so the
+            answer to "where do I send it" is a link the host already has. Left as a plain
+            URL rather than a provider picker: both apps have changed the shape of their
+            share links more than once, and a bank page or PayPal.me is just as valid.
+          */}
+          <Field
+            label="קישור למתנה (ביט / PayBox)"
+            hint="לא חובה. הקישור יופיע בהזמנה לאורחים. חייב להתחיל ב-https://"
+          >
+            <Input
+              name="giftUrl"
+              type="url"
+              dir="ltr"
+              className="text-start"
+              placeholder="https://www.bitpay.co.il/app/me/..."
+              defaultValue={value('gift_url')}
             />
           </Field>
         </div>

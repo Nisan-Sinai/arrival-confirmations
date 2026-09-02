@@ -94,6 +94,7 @@ export type Database = {
           event_date: string;
           event_type: Database['public']['Enums']['event_type'];
           google_maps_url: string | null;
+          gift_url: string | null;
           honoree_display_name: string;
           hosts_names: string;
           id: string;
@@ -118,6 +119,7 @@ export type Database = {
           event_date: string;
           event_type?: Database['public']['Enums']['event_type'];
           google_maps_url?: string | null;
+          gift_url?: string | null;
           honoree_display_name: string;
           hosts_names: string;
           id?: string;
@@ -142,6 +144,7 @@ export type Database = {
           event_date?: string;
           event_type?: Database['public']['Enums']['event_type'];
           google_maps_url?: string | null;
+          gift_url?: string | null;
           honoree_display_name?: string;
           hosts_names?: string;
           id?: string;
@@ -488,6 +491,7 @@ export type Database = {
         address: string | null;
         waze_url: string | null;
         google_maps_url: string | null;
+        gift_url: string | null;
         contact_phone: string | null;
         description: string | null;
         side_a_label: string | null;

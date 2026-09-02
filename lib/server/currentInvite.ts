@@ -27,6 +27,7 @@ export interface ActiveInviteContext {
     readonly address: string;
     readonly wazeUrl: string | null;
     readonly googleMapsUrl: string | null;
+    readonly giftUrl: string | null;
     readonly contactPhone: string | null;
     readonly description: string | null;
     readonly sideALabel: string | null;
@@ -86,7 +87,7 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       privileged
         .from('events')
         .select(
-          'id, public_id, title, event_type, hosts_names, honoree_display_name, event_date, ceremony_time, reception_time, venue_name, address, waze_url, google_maps_url, contact_phone, description, side_a_label, side_b_label, is_active',
+          'id, public_id, title, event_type, hosts_names, honoree_display_name, event_date, ceremony_time, reception_time, venue_name, address, waze_url, google_maps_url, gift_url, contact_phone, description, side_a_label, side_b_label, is_active',
         )
         .eq('id', validation.eventId)
         .maybeSingle(),
@@ -119,6 +120,7 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       address: event.address,
       wazeUrl: event.waze_url,
       googleMapsUrl: event.google_maps_url,
+      giftUrl: event.gift_url,
       contactPhone: event.contact_phone,
       description: event.description,
       sideALabel: event.side_a_label,

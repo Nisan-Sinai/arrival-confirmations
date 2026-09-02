@@ -33,6 +33,7 @@ function anEvent(overrides: Partial<PublicEvent> = {}): PublicEvent {
     address: null,
     waze_url: null,
     google_maps_url: null,
+    gift_url: null,
     contact_phone: null,
     description: null,
     side_a_label: null,

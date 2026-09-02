@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { getEventTypePreset } from '@/config/eventTypes';
+import { GiftLink } from '@/features/invite/GiftLink';
 import { InvitationCard } from '@/features/invite/InvitationCard';
 import { RsvpForm } from '@/features/rsvp/RsvpForm';
 import { brandingCssVariables } from '@/lib/premiumEventTools';
@@ -160,6 +161,11 @@ export default async function EventPage({ params }: EventPageProps) {
             address: event.address!,
           }}
         />
+
+        {/* Below the form, never above it. The page exists to collect an answer, and a
+            gift prompt in front of that would make the invitation read as a request for
+            money. Whoever scrolls this far has already replied. */}
+        <GiftLink url={event.gift_url} />
       </div>
     </main>
   );

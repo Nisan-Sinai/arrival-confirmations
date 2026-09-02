@@ -41,7 +41,7 @@ export default async function AdminCustomerInvitationPreviewPage({
   const { data: rawEvent, error } = await privileged
     .from('events')
     .select(
-      'id, public_id, title, is_active, event_type, event_date, ceremony_time, reception_time, venue_name, address, contact_phone, description, hosts_names, honoree_display_name, side_a_label, side_b_label, waze_url, google_maps_url, brand_primary_color, brand_accent_color, brand_logo_url, invitation_style',
+      'id, public_id, title, is_active, event_type, event_date, ceremony_time, reception_time, venue_name, address, contact_phone, description, hosts_names, honoree_display_name, side_a_label, side_b_label, waze_url, google_maps_url, gift_url, brand_primary_color, brand_accent_color, brand_logo_url, invitation_style',
     )
     .eq('id', id)
     .maybeSingle();

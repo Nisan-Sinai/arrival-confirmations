@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
+import { parsePastedGuests } from '@/lib/guestPaste';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
 import { createUserClient } from '@/lib/server/supabase';
 import type { GuestInsert, GuestUpdate } from '@/types/guestDatabase.types';
@@ -160,18 +161,6 @@ interface ImportedContact {
   readonly phone: string;
 }
 
-function parsePastedContacts(value: string): ImportedContact[] {
-  const rows: ImportedContact[] = [];
-  for (const line of value.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (trimmed === '') continue;
-    const parts = trimmed.split(/[;,\t]/).map((part) => part.trim());
-    if (parts.length < 2) continue;
-    rows.push({ name: parts[0] ?? '', phone: parts[1] ?? '' });
-  }
-  return rows;
-}
-
 function parseSelectedContacts(value: string): ImportedContact[] {
   try {
     const parsed: unknown = JSON.parse(value);
@@ -231,7 +220,19 @@ export async function importPhoneContactsAction(formData: FormData): Promise<voi
   if (supabase === null) redirect('/dashboard');
 
   const selected = parseSelectedContacts(optional(formData.get('contactsJson')) ?? '');
-  const pasted = parsePastedContacts(optional(formData.get('pastedContacts')) ?? '');
+  const rawPaste = optional(formData.get('pastedContacts')) ?? '';
+  let pasted: ImportedContact[] = [];
+  let skipped: readonly string[] = [];
+  if (rawPaste.trim() !== '') {
+    try {
+      const parsed = parsePastedGuests(rawPaste);
+      pasted = parsed.guests.map((guest) => ({ name: guest.fullName, phone: guest.phone }));
+      skipped = parsed.skipped;
+    } catch (error) {
+      if (!(error instanceof GuestImportError)) throw error;
+      redirect(eventPath(eventId, { error: 'contacts-none' }));
+    }
+  }
   const contacts = selected.length > 0 ? selected : pasted;
   if (contacts.length === 0) redirect(eventPath(eventId, { error: 'contacts-empty' }));
 
@@ -252,7 +253,13 @@ export async function importPhoneContactsAction(formData: FormData): Promise<voi
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
   revalidatePath(`/dashboard/events/${eventId}/tools`);
-  redirect(eventPath(eventId, { saved: 'contacts', count: String(savedCount) }));
+  redirect(
+    eventPath(eventId, {
+      saved: 'contacts',
+      count: String(savedCount),
+      ...(skipped.length > 0 ? { skipped: String(skipped.length) } : {}),
+    }),
+  );
 }
 
 export async function importGuestFileAction(formData: FormData): Promise<void> {

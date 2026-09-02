@@ -65,6 +65,7 @@ function messageFor(
   saved: string,
   error: string,
   count: string,
+  skipped: string,
 ): {
   tone: 'success' | 'error';
   text: string;
@@ -73,7 +74,12 @@ function messageFor(
   if (saved === 'guest-updated') return { tone: 'success', text: 'פרטי המוזמן נשמרו.' };
   if (saved === 'guest-deleted') return { tone: 'success', text: 'המוזמן הוסר מהרשימה.' };
   if (saved === 'contacts') {
-    return { tone: 'success', text: `יובאו ${count || 'מספר'} אנשי קשר מהטלפון.` };
+    // The skipped count is the whole reason this is worth reporting. The old parser
+    // dropped anything without a comma in silence, so a host who pasted forty names and
+    // got twelve had no way to know why — and went back to sharing one public link.
+    const lost = Number(skipped ?? '');
+    const tail = Number.isInteger(lost) && lost > 0 ? ` ${lost} שורות ללא מספר נייד לא יובאו.` : '';
+    return { tone: 'success', text: `יובאו ${count || 'מספר'} אנשי קשר.${tail}` };
   }
   if (saved === 'file') {
     return { tone: 'success', text: `יובאו ${count || 'מספר'} מוזמנים מהקובץ.` };
@@ -83,6 +89,9 @@ function messageFor(
   if (error === 'guest-duplicate') return { tone: 'error', text: 'כבר קיים מוזמן עם המספר הזה.' };
   if (error === 'guest-save') return { tone: 'error', text: 'שמירת המוזמן נכשלה.' };
   if (error === 'guest-delete') return { tone: 'error', text: 'מחיקת המוזמן נכשלה.' };
+  if (error === 'contacts-none') {
+    return { tone: 'error', text: 'לא נמצא אף מספר נייד ברשימה שהודבקה.' };
+  }
   if (error === 'contacts-empty') {
     return { tone: 'error', text: 'לא נבחרו אנשי קשר ולא הודבקה רשימה.' };
   }
@@ -236,11 +245,14 @@ export function GuestManagementPanel({
   saved = '',
   error = '',
   count = '',
+  skipped = '',
 }: {
   readonly mode: 'owner' | 'admin';
   readonly eventId: string;
   readonly guests: readonly ManagedGuest[];
   readonly saved?: string;
+  /** How many pasted lines held no mobile number. Absent when none did. */
+  readonly skipped?: string;
   readonly error?: string;
   readonly count?: string;
 }) {
@@ -259,7 +271,7 @@ export function GuestManagementPanel({
   const deleteAction = mode === 'admin' ? adminDeleteGuestAction : deleteGuestAction;
   const contactAction =
     mode === 'admin' ? adminImportPhoneContactsAction : importPhoneContactsAction;
-  const status = messageFor(saved, error, count);
+  const status = messageFor(saved, error, count, skipped);
 
   const totalPeople = useMemo(
     () => guests.reduce((sum, guest) => sum + guest.partySize, 0),
@@ -415,7 +427,8 @@ export function GuestManagementPanel({
                 />
               </label>
               <p id="pasted-contacts-help" className="text-muted-foreground mt-2 text-xs">
-                כל איש קשר בשורה חדשה: שם, פסיק ומספר טלפון.
+                שורה לכל מוזמן, שם ומספר נייד בכל סדר. פסיק לא חובה — אפשר להדביק ישר מוואטסאפ או
+                מפתק.
               </p>
               <SubmitButton
                 idleLabel="ייבוא הרשימה המודבקת"

@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 
 import { Card } from '@/components/ui/card';
 import { InvitationCard } from '@/features/invite/InvitationCard';
+import { GiftLink } from '@/features/invite/GiftLink';
 import { SeatCard } from '@/features/invite/SeatCard';
 import { PersonalInviteOpenTracker } from '@/features/rsvp/PersonalInviteOpenTracker';
 import { PersonalRsvpButtons } from '@/features/rsvp/PersonalRsvpButtons';
@@ -119,6 +120,8 @@ export default async function PersonalInvitePage() {
           partySize={context.guest.partySize}
           currentStatus={existingRsvp?.attendance_status ?? null}
         />
+
+        <GiftLink url={context.event.giftUrl} />
       </div>
     </main>
   );
