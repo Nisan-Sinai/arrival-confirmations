@@ -1,7 +1,56 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { WrittenHeading, writingDuration } from '@/features/landing/WrittenHeading';
+import { WrittenHeading } from '@/features/landing/WrittenHeading';
+import { writingDuration } from '@/features/landing/writingPace';
+
+/**
+ * A recorded observer, so a test can say "the reader reached it" without a viewport.
+ *
+ * jsdom has neither `IntersectionObserver` nor a layout to observe, and the component
+ * treats a missing one as a reason not to arm at all — so without this stub every scroll
+ * test would pass by taking the bail-out path and proving nothing.
+ */
+class FakeObserver {
+  disconnected = false;
+  constructor(private readonly callback: IntersectionObserverCallback) {
+    observers.push(this);
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {
+    this.disconnected = true;
+  }
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+  trigger(isIntersecting: boolean) {
+    this.callback(
+      [{ isIntersecting } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver,
+    );
+  }
+}
+
+let observers: FakeObserver[] = [];
+let reducedMotion = false;
+
+beforeEach(() => {
+  observers = [];
+  reducedMotion = false;
+  vi.stubGlobal('IntersectionObserver', FakeObserver);
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('prefers-reduced-motion: reduce') && reducedMotion,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 /**
  * A heading that types itself.
@@ -75,19 +124,77 @@ describe('WrittenHeading', () => {
     expect(words.every((w) => w.style.animationDelay === '')).toBe(true);
   });
 
-  it('offsets by scroll distance, not by time, when triggered by scroll', () => {
-    const { container } = render(
-      <WrittenHeading as="div" text="אחת שתיים שלוש" trigger="scroll" />,
-    );
+  describe('triggered by scroll', () => {
+    it('sends plain, unhidden text from the server', () => {
+      // Rendered on the server, where no effect runs — which is exactly the state a reader
+      // keeps if the JavaScript never arrives. Asserted here rather than through `render`
+      // because that flushes effects immediately, so the armed state is all it can ever
+      // see, and the one state worth guarding would go untested.
+      //
+      // This is what makes an observer acceptable at all. `.reveal` in globals.css rules
+      // one out because a JavaScript-dependent reveal "leaves the content invisible until
+      // hydration" — true of hiding on the server, which is precisely what this refuses to
+      // do. Regress it and the heading is blank for anyone whose bundle fails.
+      const html = renderToStaticMarkup(
+        <WrittenHeading as="div" text="אחת שתיים שלוש" trigger="scroll" />,
+      );
 
-    const words = [...container.querySelectorAll<HTMLElement>('.written-word')];
+      expect(html).not.toContain('written-word-armed');
+      expect(html).not.toContain('written-word-writing');
+      expect(html).toContain('אחת');
+      expect(html).toContain('שתיים');
+      expect(html).toContain('שלוש');
+    });
 
-    // A scroll timeline has no clock to delay against, so a delay here would be silently
-    // ignored and the whole heading would write at once — the effect disappearing without
-    // anything failing.
-    expect(words.map((w) => w.style.getPropertyValue('--write-offset'))).toEqual(['0', '3', '8']);
-    expect(words.every((w) => w.style.getPropertyValue('--write-delay') === '')).toBe(true);
-    expect(words.every((w) => w.classList.contains('written-word-scroll'))).toBe(true);
+    it('arms every word once observed, then writes them on reaching the viewport', () => {
+      const { container } = render(
+        <WrittenHeading as="div" text="אחת שתיים שלוש" trigger="scroll" />,
+      );
+      const words = [...container.querySelectorAll<HTMLElement>('.written-word')];
+
+      expect(observers).toHaveLength(1);
+      expect(words.every((w) => w.classList.contains('written-word-armed'))).toBe(true);
+
+      act(() => observers[0]!.trigger(true));
+
+      expect(words.every((w) => w.classList.contains('written-word-writing'))).toBe(true);
+      expect(words.some((w) => w.classList.contains('written-word-armed'))).toBe(false);
+    });
+
+    it('keeps the clock timings, so the pace does not depend on how fast anyone scrolls', () => {
+      const { container } = render(
+        <WrittenHeading as="div" text="אחת שתיים שלוש" trigger="scroll" />,
+      );
+      act(() => observers[0]!.trigger(true));
+
+      // The whole point of the observer: it decides *when*, the clock decides *how fast*.
+      // A scroll-driven timeline gave the reader both, so flicking past typed a heading in
+      // one frame and stopping half way left it half typed for good.
+      const words = [...container.querySelectorAll<HTMLElement>('.written-word')];
+      expect(words.map((w) => w.style.getPropertyValue('--write-delay'))).toEqual([
+        '0s',
+        '0.114s',
+        '0.304s',
+      ]);
+    });
+
+    it('stops observing once written, so scrolling back up does not rewrite it', () => {
+      render(<WrittenHeading as="div" text="אחת שתיים" trigger="scroll" />);
+
+      act(() => observers[0]!.trigger(true));
+      expect(observers[0]!.disconnected).toBe(true);
+    });
+
+    it('never arms a heading for a reader who asked for stillness', () => {
+      reducedMotion = true;
+      const { container } = render(<WrittenHeading as="div" text="אחת שתיים" trigger="scroll" />);
+
+      // Not arming is the mechanism; the stylesheet override is only a backstop. If this
+      // regressed, the heading would be hidden with nothing left to reveal it.
+      expect(observers).toHaveLength(0);
+      const words = [...container.querySelectorAll<HTMLElement>('.written-word')];
+      expect(words.some((w) => w.className !== 'written-word')).toBe(false);
+    });
   });
 
   it('ignores repeated spaces rather than emitting empty words', () => {
