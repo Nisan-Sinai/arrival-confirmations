@@ -451,6 +451,134 @@
   }
 
   /**
+   * The same words, arriving as you scroll to them rather than on load.
+   *
+   * A heading below the fold cannot animate on a clock: by the time the reader reaches it
+   * the 620ms is long spent and the effect is one they never saw. So the section headings
+   * are driven by their own position instead — the words set themselves as the heading
+   * comes up the screen.
+   *
+   * Two things follow from that, both learned already by `.reveal-stagger` above:
+   *
+   *   * **The stagger is a range, not a delay.** `animation-delay` has no meaning against
+   *     a scroll timeline — there is no clock to delay. Each word instead starts further
+   *     into the scroll than the one before, which ties the sequence to how fast the
+   *     reader is actually moving. Scroll slowly and the sentence types itself; flick past
+   *     and it is simply there.
+   *   * **`cover`, not `entry`.** `entry` spans only the element's own height, and a
+   *     heading is about 45px tall, so the whole stagger would have to fit inside 45px of
+   *     scroll and the words would land on top of one another. `cover` runs from first
+   *     overlap to last and is a viewport tall, which is room enough to deal them out.
+   *
+   * `--word-index` is set per word by the component. The `, 0` fallback matters: without
+   * it a browser that does not register the variable computes `calc(120px + <invalid>)`,
+   * the whole `animation-range` is dropped, and every word runs on the default range at
+   * once — the stagger silently disappearing rather than failing loudly.
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .kinetic-word-scroll {
+        animation: kinetic-rise linear both;
+        animation-timeline: view();
+        animation-range: cover calc(120px + var(--word-index, 0) * 34px) cover
+          calc(320px + var(--word-index, 0) * 34px);
+      }
+    }
+  }
+
+  /**
+   * The gold rule drawing itself: the ornament arrives, then the hairlines run out of it.
+   *
+   * The star leads because that is the order a hand works in — you place the ornament,
+   * then draw out from it. Reversed, the lines grow toward a point that is not there yet
+   * and it reads as two unrelated things moving.
+   *
+   * `scaleX` on a hairline is free: a composited transform on a 1px box. Animating `width`
+   * would relayout the flex row every frame for the same picture.
+   *
+   * The origin has to follow the writing direction. These are flex siblings, so in Hebrew
+   * the first hairline sits on the *right* and the edge it must grow from is its left one.
+   * `transform-origin` has no logical keywords, so the RTL case is written out.
+   */
+  .rule-draw > span:first-child {
+    transform-origin: 100% 50%;
+  }
+
+  .rule-draw > span:last-child {
+    transform-origin: 0% 50%;
+  }
+
+  [dir='rtl'] .rule-draw > span:first-child {
+    transform-origin: 0% 50%;
+  }
+
+  [dir='rtl'] .rule-draw > span:last-child {
+    transform-origin: 100% 50%;
+  }
+
+  /**
+   * Drawn on load.
+   *
+   * This is the variant to reach for by default, and the reason is a trap worth writing
+   * down: **`overflow: hidden` makes an element a scroll container**, so `view()` on
+   * anything inside one is measured against that box rather than against the page. A
+   * clipped container never scrolls, so the timeline never advances, and a rule inside it
+   * freezes at whatever partial scale its static position happens to give — 0.49 at 320px
+   * wide and 0.91 at 1440px, in the QA pass that caught this. A hairline permanently
+   * stopped at half width is a worse outcome than no animation at all, and nothing about
+   * it looks like a bug from the code.
+   *
+   * The hero card, the ink panel and every `Card` that clips are all such containers, so
+   * a scroll-driven rule is only safe in plain page flow — and even then only where there
+   * is room below to finish. Load has no such dependency and works anywhere.
+   */
+  .rule-draw-load > span {
+    animation: rule-extend 700ms var(--ease-out) 120ms both;
+  }
+
+  .rule-draw-load > svg {
+    animation: rule-star 620ms var(--ease-out) both;
+  }
+
+  /*
+   * The delay above is the reason this block exists. The blanket override at the foot of
+   * this file collapses `animation-duration` and says nothing about `animation-delay`, so
+   * a reader who asked for stillness would be held at the `from` keyframe — `scaleX(0)`,
+   * a rule that is simply not there. The same trap already cost one kinetic word.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .rule-draw-load > span,
+    .rule-draw-load > svg {
+      animation: none;
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  /**
+   * Drawn on scroll, for a rule in normal page flow with content below it.
+   *
+   * Everything in the note above applies: this must not be used inside anything that
+   * clips, and the QA sweep checks for a hairline left part-drawn precisely because the
+   * failure is silent.
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .rule-draw-scroll > span {
+        animation: rule-extend linear both;
+        animation-timeline: view();
+        animation-range: cover 100px cover 300px;
+      }
+
+      .rule-draw-scroll > svg {
+        animation: rule-star linear both;
+        animation-timeline: view();
+        animation-range: cover 60px cover 280px;
+      }
+    }
+  }
+
+  /**
    * The pointer-tracking tilt on the invitation card.
    *
    * `perspective` lives here, on the wrapper, and the rotation on the child — set on the
@@ -465,11 +593,13 @@
   }
 
   @media (hover: hover) {
-    .tilt-scene .card-lift {
-      transform: rotate(-0.8deg) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-      transition:
-        transform 220ms var(--ease-out),
-        box-shadow var(--duration-slow) var(--ease-out);
+    /* The tilt lives on its own element, one inside the perspective wrapper. That is
+       what lets the invitation card keep the resting -0.8deg it has always had on
+       `.card-lift`: the two rotations compose across two elements instead of one rule
+       having to know about the other. */
+    .tilt-scene > .tilt-target {
+      transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+      transition: transform 220ms var(--ease-out);
     }
 
     .tilt-scene:hover .card-lift {
@@ -899,6 +1029,29 @@
 
 /** 40px of lag across the section — enough to separate the layers, little enough that
     the card never leaves the space the layout gave it. */
+/** The hairline running out from under the ornament. */
+@keyframes rule-extend {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/** The ornament set down into place. A quarter turn, not a spin — it should look placed,
+    not thrown. */
+@keyframes rule-star {
+  from {
+    transform: scale(0.2) rotate(-90deg);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
 @keyframes parallax-slow {
   from {
     transform: translate3d(0, 40px, 0);

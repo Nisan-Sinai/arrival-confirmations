@@ -13,6 +13,7 @@ import { CheckboxField, Field, Input, RadioCard, Select, Textarea } from '@/comp
 import { Alert } from '@/components/ui/feedback';
 import { Rule } from '@/components/ui/layout';
 import { UI_MESSAGES } from '@/config/messages';
+import { KineticHeading } from '@/features/landing/KineticHeading';
 import { AddToCalendar } from '@/features/invite/AddToCalendar';
 
 /**
@@ -155,7 +156,7 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
           </div>
         )}
 
-        <Rule className="mt-8" />
+        <Rule draw="load" className="mt-8" />
       </Card>
     );
   }
@@ -171,10 +172,12 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
     <Card padding="lg" className="relative">
       <div className="text-center">
         <p className="text-eyebrow text-accent-strong font-semibold">נשמח לדעת</p>
-        <h2 className="text-h2 text-primary mt-2 font-bold">אישור הגעה</h2>
+        <h2 className="text-h2 text-primary mt-2 font-bold">
+          <KineticHeading text="אישור הגעה" />
+        </h2>
       </div>
 
-      <Rule className="my-7" />
+      <Rule draw="load" className="my-7" />
 
       <form action={formAction} className="space-y-6" noValidate>
         <input type="hidden" name="eventId" value={eventId} />

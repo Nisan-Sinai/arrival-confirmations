@@ -9,7 +9,7 @@ export default function DashboardNotFound() {
       <div className="w-full max-w-lg text-center">
         <p className="text-eyebrow text-accent-strong font-semibold">שגיאה 404</p>
         <h1 className="text-h1 text-primary mt-4 font-bold">העמוד שחיפשתם לא נמצא</h1>
-        <Rule className="my-7" />
+        <Rule draw="load" className="my-7" />
         <p className="text-muted-foreground text-lead leading-relaxed">
           ייתכן שהאירוע או העמוד נמחקו, או שהקישור כבר אינו מעודכן. אפשר לחזור מיד לדף הבית של
           החשבון ולבחור אירוע אחר.

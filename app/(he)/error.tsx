@@ -44,7 +44,7 @@ export default function ErrorBoundary({
           </svg>
         </span>
         <h1 className="text-h1 text-primary mt-6 font-bold">{UI_MESSAGES.errors.genericTitle}</h1>
-        <Rule className="my-7" />
+        <Rule draw="load" className="my-7" />
         <p className="text-muted-foreground text-lead leading-relaxed">
           {UI_MESSAGES.errors.genericBody}
         </p>

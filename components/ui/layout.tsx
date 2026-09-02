@@ -123,9 +123,35 @@ export function SectionHeader({
  * "separator" between every block of an invitation is noise, and the headings already
  * carry the structure.
  */
-export function Rule({ className }: { className?: string }) {
+export function Rule({
+  className,
+  draw,
+}: {
+  className?: string;
+  /**
+   * Whether the rule draws itself, and off what.
+   *
+   * Left out, it is simply there — which stays the default because the animated forms
+   * each carry a condition the caller has to have checked.
+   *
+   * `'load'` works anywhere. `'scroll'` reads better for a rule you come down the page
+   * to, but it is only safe in plain page flow: `overflow: hidden` makes an element a
+   * scroll container, so a scroll-driven rule inside anything that clips is measured
+   * against a box that never scrolls and freezes part-drawn. See the note in
+   * `globals.css`; the QA sweep checks for it because nothing else would.
+   */
+  draw?: 'load' | 'scroll';
+}) {
   return (
-    <div className={cn('flex items-center justify-center gap-2.5', className)} aria-hidden="true">
+    <div
+      className={cn(
+        'flex items-center justify-center gap-2.5',
+        draw === 'load' && 'rule-draw rule-draw-load',
+        draw === 'scroll' && 'rule-draw rule-draw-scroll',
+        className,
+      )}
+      aria-hidden="true"
+    >
       <span className="from-accent/0 to-accent h-px w-16 bg-gradient-to-l sm:w-24" />
       <svg viewBox="0 0 24 24" className="fill-accent size-2.5" role="presentation">
         <path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z" />

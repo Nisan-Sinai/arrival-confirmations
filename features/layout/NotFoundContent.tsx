@@ -24,7 +24,7 @@ export function NotFoundContent() {
       <div className="w-full max-w-lg text-center">
         <p className="text-eyebrow text-accent-strong font-semibold">שגיאה 404</p>
         <h1 className="text-h1 text-primary mt-4 font-bold">{UI_MESSAGES.errors.notFoundTitle}</h1>
-        <Rule className="my-7" />
+        <Rule draw="load" className="my-7" />
         <p className="text-muted-foreground text-lead leading-relaxed">
           {UI_MESSAGES.errors.notFoundBody} אם הגעתם לכאן מקישור להזמנה, בקשו מבעלי השמחה קישור
           מעודכן.
