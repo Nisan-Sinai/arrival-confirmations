@@ -159,6 +159,7 @@ export type Database = {
       };
       guests: {
         Row: {
+          checked_in_at: string | null;
           created_at: string;
           event_id: string;
           family_side: Database['public']['Enums']['family_side'] | null;
@@ -173,6 +174,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          checked_in_at?: string | null;
           created_at?: string;
           event_id: string;
           family_side?: Database['public']['Enums']['family_side'] | null;
@@ -187,6 +189,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          checked_in_at?: string | null;
           created_at?: string;
           event_id?: string;
           family_side?: Database['public']['Enums']['family_side'] | null;

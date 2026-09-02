@@ -2,6 +2,7 @@ import type { Database } from '@/types/database.types';
 
 export interface GuestInsert {
   readonly accessibility_needs?: string | null;
+  readonly checked_in_at?: string | null;
   readonly created_at?: string;
   readonly email?: string | null;
   readonly event_id: string;
@@ -29,6 +30,7 @@ export interface GuestInsert {
 
 export interface GuestUpdate {
   readonly accessibility_needs?: string | null;
+  readonly checked_in_at?: string | null;
   readonly created_at?: string;
   readonly email?: string | null;
   readonly event_id?: string;
