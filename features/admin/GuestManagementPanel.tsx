@@ -10,6 +10,7 @@ import {
 } from '@/app/actions/manageAdminCustomerEvent';
 import {
   deleteGuestAction,
+  toggleGuestCheckInAction,
   importGuestFileAction,
   importPhoneContactsAction,
   saveGuestAction,
@@ -27,6 +28,8 @@ export interface ManagedGuest {
   readonly tableName: string | null;
   readonly seatNumber: string | null;
   readonly notes: string | null;
+  /** When the guest was marked as arrived. Null means unmarked, never absent. */
+  readonly checkedInAt: string | null;
 }
 
 interface ContactPickerEntry {
@@ -541,6 +544,46 @@ export function GuestManagementPanel({
                                   : ''}
                               </p>
                             </div>
+                            {/*
+                              Owner mode only, and deliberately so: the person standing
+                              at the door is the host, and giving the platform admin a
+                              second path to the same write would need a second action
+                              with its own ownership check for no one who would use it.
+                            */}
+                            {mode === 'owner' && (
+                              <form action={toggleGuestCheckInAction} className="shrink-0">
+                                <input type="hidden" name="eventId" value={eventId} />
+                                <input type="hidden" name="guestId" value={guest.id} />
+                                <input
+                                  type="hidden"
+                                  name="checkedIn"
+                                  value={guest.checkedInAt === null ? 'true' : 'false'}
+                                />
+                                <Button
+                                  type="submit"
+                                  variant={guest.checkedInAt === null ? 'outline' : 'primary'}
+                                  size="sm"
+                                  aria-pressed={guest.checkedInAt !== null}
+                                  className="gap-1.5"
+                                  /* Inside a <summary>: a click here must mark an arrival,
+                                     not open the edit panel underneath it. */
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="m4 12.5 5 5L20 6.5" />
+                                  </svg>
+                                  {guest.checkedInAt === null ? 'סימון הגעה' : 'הגיע'}
+                                </Button>
+                              </form>
+                            )}
                             <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-sm">
                               עריכה
                               <svg

@@ -16,6 +16,7 @@ vi.mock('@/app/actions/manageGuests', () => ({
   importGuestFileAction: vi.fn(),
   importPhoneContactsAction: vi.fn(),
   saveGuestAction: vi.fn(),
+  toggleGuestCheckInAction: vi.fn(),
 }));
 
 const { GuestManagementPanel } = await import('@/features/admin/GuestManagementPanel');
@@ -30,6 +31,7 @@ const guests = [
     tableName: 'משפחה',
     seatNumber: '1',
     notes: null,
+    checkedInAt: null,
   },
   {
     id: 'g2',
@@ -40,6 +42,7 @@ const guests = [
     tableName: 'VIP',
     seatNumber: null,
     notes: null,
+    checkedInAt: '2026-07-29T17:05:00.000Z',
   },
 ] as const;
 
@@ -105,5 +108,48 @@ describe('GuestManagementPanel', () => {
       'href',
       '#phone-import',
     );
+  });
+});
+
+/**
+ * Arrival check-in.
+ *
+ * An RSVP is a promise made weeks ahead; on the night the host needs the other number.
+ * The control lives in the row header rather than behind the edit panel because it is
+ * used standing at a door with a queue behind them.
+ */
+describe('arrival check-in', () => {
+  it('offers the mark to a guest who has not arrived, and reads back the one who has', () => {
+    render(<GuestManagementPanel mode="owner" eventId="event-1" guests={guests} />);
+
+    expect(screen.getByRole('button', { name: /סימון הגעה/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^הגיע$/ })).toBeInTheDocument();
+  });
+
+  it('announces the arrived state to assistive technology', () => {
+    render(<GuestManagementPanel mode="owner" eventId="event-1" guests={guests} />);
+
+    expect(screen.getByRole('button', { name: /סימון הגעה/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByRole('button', { name: /^הגיע$/ })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('sends the state it is leaving, so a double tap settles on one answer', () => {
+    render(<GuestManagementPanel mode="owner" eventId="event-1" guests={guests} />);
+
+    const unmarked = screen.getByRole('button', { name: /סימון הגעה/ }).closest('form');
+    const marked = screen.getByRole('button', { name: /^הגיע$/ }).closest('form');
+
+    expect(unmarked?.querySelector('input[name="checkedIn"]')).toHaveValue('true');
+    expect(marked?.querySelector('input[name="checkedIn"]')).toHaveValue('false');
+  });
+
+  it('is absent for a platform admin, who is not the one at the door', () => {
+    render(<GuestManagementPanel mode="admin" eventId="event-1" guests={guests} />);
+
+    expect(screen.queryByRole('button', { name: /סימון הגעה/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^הגיע$/ })).not.toBeInTheDocument();
   });
 });

@@ -286,3 +286,47 @@ export async function importGuestFileAction(formData: FormData): Promise<void> {
   revalidatePath(`/dashboard/events/${eventId}/tools`);
   redirect(eventPath(eventId, { saved: 'file', count: String(savedCount) }));
 }
+
+/**
+ * Marks a guest as arrived, or takes the mark back.
+ *
+ * The only write in this file that happens while the host is standing at a door with a
+ * queue behind them, which is what shapes it:
+ *
+ *   * It is a toggle rather than two actions. The mistake it has to survive is tapping
+ *     the wrong row, and the fix for that must be tapping it again — not finding an undo
+ *     somewhere else while people wait.
+ *   * `checked_in_at` is a timestamp rather than a boolean, so the list can later be read
+ *     as an arrival order. Clearing it writes `null`, which the column's comment defines
+ *     as unmarked rather than absent.
+ *   * `is_active` is not filtered on. A guest removed from the list after the invitations
+ *     went out can still turn up, and refusing to record that would leave the host with a
+ *     count they know is wrong.
+ */
+export async function toggleGuestCheckInAction(formData: FormData): Promise<void> {
+  const eventId = optional(formData.get('eventId'));
+  const guestId = optional(formData.get('guestId'));
+  if (eventId === null || guestId === null) throw new Error('Invalid check-in');
+
+  // The client sends the state it believes it is leaving, so a double tap on a slow
+  // connection settles on one answer rather than flipping twice.
+  const checkedIn = formData.get('checkedIn') === 'true';
+
+  const supabase = await requireOwnedEvent(eventId);
+  if (supabase === null) redirect('/dashboard');
+
+  const { data, error } = await supabase
+    .from('guests')
+    .update({ checked_in_at: checkedIn ? new Date().toISOString() : null })
+    .eq('event_id', eventId)
+    .eq('id', guestId)
+    .select('id');
+
+  if (error || data === null || data.length === 0) {
+    redirect(eventPath(eventId, { error: 'guest-check-in' }));
+  }
+
+  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
+  redirect(eventPath(eventId, { saved: checkedIn ? 'guest-arrived' : 'guest-unarrived' }));
+}
