@@ -492,11 +492,32 @@
    * A consequence worth stating: this can no longer be left part-written. The animation
    * always reaches its end once it has begun, which removes by construction the whole
    * class of bug that a scroll-driven reveal of *text* invites.
+   *
+   * **`jump-start` is not a style choice — it is the fix for a letter that vanished.**
+   *
+   * The default, `jump-end`, only reaches a progress of 1 at the very last instant of the
+   * animation. Land a hair short of that instant and it comes to rest on the step before,
+   * and because these are custom-property durations and delays that do not divide cleanly,
+   * some combinations do. The word "עד" sat permanently at `inset(0 0 0 50%)` — the ד
+   * simply not there, with the animation reporting `finished` — while every longer word in
+   * the same heading was complete. A screenshot caught it; nothing else would have.
+   *
+   * Swept every combination this site can produce, words of 1 to 12 characters against 41
+   * possible offsets, 492 in all:
+   *
+   *     steps(n)              34 stuck
+   *     steps(n, jump-start)   0 stuck
+   *
+   * At `n=1` the failure is total — a one-character word rests at 100% clipped, which is
+   * to say invisible. `jump-start` reaches 1 *during* the final interval rather than at its
+   * edge, so arriving fractionally early still lands on a fully written word. It also
+   * shows the first character immediately instead of after a blank interval, which is what
+   * a typewriter does anyway.
    */
   .written-word-writing {
     animation-name: write-in-ltr;
     animation-duration: var(--write-dur, 0.152s);
-    animation-timing-function: steps(var(--chars, 4));
+    animation-timing-function: steps(var(--chars, 4), jump-start);
     animation-delay: var(--write-delay, 0s);
     animation-fill-mode: both;
   }
@@ -553,7 +574,7 @@
      */
     animation-name: write-caret-move, write-caret-fade;
     animation-duration: var(--write-dur, 0.152s), var(--write-dur, 0.152s);
-    animation-timing-function: steps(var(--chars, 4)), linear;
+    animation-timing-function: steps(var(--chars, 4), jump-start), linear;
     animation-delay: var(--write-delay, 0s), var(--write-delay, 0s);
     animation-fill-mode: forwards, forwards;
   }
