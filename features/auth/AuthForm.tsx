@@ -84,7 +84,7 @@ export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps
         </span>
         <h1 className="text-h2 text-primary font-bold">{auth.checkInbox}</h1>
         <p className="text-muted-foreground mt-3 leading-relaxed">{state.message}</p>
-        <Rule className="my-7" />
+        <Rule draw="load" className="my-7" />
         <Link
           href={localePath(locale, '/login')}
           className="text-primary text-sm font-semibold underline-offset-4 hover:underline"
@@ -102,7 +102,7 @@ export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{copy.subtitle}</p>
       </div>
 
-      <Rule className="my-7" />
+      <Rule draw="load" className="my-7" />
 
       <form action={formAction} className="space-y-5" noValidate>
         <input type="hidden" name="locale" value={locale} />

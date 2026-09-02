@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { Container, Rule } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
+import { KineticHeading } from '@/features/landing/KineticHeading';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { languageAlternates, localePath, type Locale } from '@/lib/i18n';
 
@@ -121,9 +122,11 @@ export function LegalPageBody({
       <main id="main" className="flex-1 py-12 sm:py-16">
         <Container width="prose">
           <p className="text-eyebrow text-accent-strong font-semibold">{page.eyebrow}</p>
-          <h1 className="text-h1 text-primary mt-3 font-bold">{page.title}</h1>
+          <h1 className="text-h1 text-primary mt-3 font-bold">
+            <KineticHeading text={page.title} />
+          </h1>
           <p className="text-muted-foreground mt-3 text-sm">{page.updated}</p>
-          <Rule className="mt-8 mb-10" />
+          <Rule draw="scroll" className="mt-8 mb-10" />
 
           {page.sections.map((section) => (
             <section

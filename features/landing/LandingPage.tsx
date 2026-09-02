@@ -138,7 +138,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                       <p className="text-primary mt-4 font-[family-name:var(--font-display)] text-3xl font-bold">
                         {preview.occasion}
                       </p>
-                      <Rule className="my-6" />
+                      <Rule draw="load" className="my-6" />
                       <div className="text-primary flex justify-center gap-5 text-xs font-semibold">
                         {[
                           { k: preview.dateLabel, v: preview.dateValue },
@@ -153,7 +153,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                           </div>
                         ))}
                       </div>
-                      <Rule className="my-6" />
+                      <Rule draw="load" className="my-6" />
                       <div className="flex justify-center gap-2" dir="ltr">
                         {countdown.map(([n, l]) => (
                           <div
@@ -184,28 +184,45 @@ export function LandingPage({ locale }: { locale: Locale }) {
 
         <RsvpFlowSteps locale={locale} />
 
-        <section className="reveal py-16 sm:py-20">
+        {/*
+          The `reveal` moved off the <section> and onto the content below each heading.
+
+          It cannot stay on an ancestor of a scroll-driven heading: `view()` measures the
+          word's own position in the viewport, and a parent that is translating the word
+          upward is changing the very quantity the word's progress is computed from. The
+          heading now carries its own arrival and the content below carries the reveal, so
+          the two never feed into each other.
+        */}
+        <section className="py-16 sm:py-20">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{benefits.eyebrow}</p>
-              <h2 className="text-h1 text-primary mt-3 font-bold">{benefits.title}</h2>
+              <h2 className="text-h1 text-primary mt-3 font-bold">
+                <KineticHeading text={benefits.title} trigger="scroll" />
+              </h2>
             </div>
-            <div className="mt-10 grid gap-5 md:grid-cols-3">
+            <div className="reveal-stagger mt-10 grid gap-5 md:grid-cols-3">
               {benefits.items.map((benefit) => (
-                <Card key={benefit.title} padding="lg" interactive>
-                  <h3 className="text-h3 text-primary font-semibold">{benefit.title}</h3>
-                  <p className="text-muted-foreground mt-3 leading-relaxed">{benefit.body}</p>
-                </Card>
+                // Five degrees, not the hero's nine: the same angle on a short wide box
+                // reads as the grid being crooked rather than as a card being tipped.
+                <TiltCard key={benefit.title} degrees={5} className="reveal h-full">
+                  <Card padding="lg" interactive className="h-full">
+                    <h3 className="text-h3 text-primary font-semibold">{benefit.title}</h3>
+                    <p className="text-muted-foreground mt-3 leading-relaxed">{benefit.body}</p>
+                  </Card>
+                </TiltCard>
               ))}
             </div>
           </Container>
         </section>
 
-        <section className="reveal bg-secondary/25 py-16 sm:py-20">
+        <section className="bg-secondary/25 py-16 sm:py-20">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{plans.eyebrow}</p>
-              <h2 className="text-h1 text-primary mt-3 font-bold">{plans.title}</h2>
+              <h2 className="text-h1 text-primary mt-3 font-bold">
+                <KineticHeading text={plans.title} trigger="scroll" />
+              </h2>
               <p className="text-muted-foreground mt-4 leading-relaxed">{plans.lead}</p>
             </div>
             <div className="mt-11">
@@ -214,18 +231,20 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
-        <section className="reveal py-16 sm:py-20">
+        <section className="py-16 sm:py-20">
           <Container>
             <div className="mx-auto max-w-3xl">
               <p className="text-eyebrow text-accent-strong text-center font-semibold">
                 {faq.eyebrow}
               </p>
-              <h2 className="text-h1 text-primary mt-3 text-center font-bold">{faq.title}</h2>
-              <div className="mt-9 space-y-3">
+              <h2 className="text-h1 text-primary mt-3 text-center font-bold">
+                <KineticHeading text={faq.title} trigger="scroll" />
+              </h2>
+              <div className="reveal-stagger mt-9 space-y-3">
                 {faq.items.map((item) => (
                   <details
                     key={item.question}
-                    className="border-border bg-card rounded-xl border px-5"
+                    className="reveal border-border bg-card rounded-xl border px-5"
                   >
                     <summary className="text-primary cursor-pointer list-none py-4 font-semibold">
                       {item.question}
