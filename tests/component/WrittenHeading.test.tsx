@@ -103,7 +103,7 @@ describe('WrittenHeading', () => {
     const { container } = render(<WrittenHeading as="div" text="אחת שתיים שלוש" />);
 
     const words = [...container.querySelectorAll<HTMLElement>('.written-word')];
-    expect(words.map((w) => w.style.getPropertyValue('--chars'))).toEqual(['3', '5', '4']);
+    expect(words.map((w) => w.style.getPropertyValue('--steps'))).toEqual(['4', '6', '5']);
 
     // Delays accumulate by characters already written, not by word index. Stepping once
     // per word makes the caret lurch — it would cross "אחת" at the same rate as "שתיים".

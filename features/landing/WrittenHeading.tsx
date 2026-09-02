@@ -180,7 +180,15 @@ export function WrittenHeading({
          * properties do reach a pseudo-element, so the two stay locked together.
          */
         const style: Record<string, string | number> = {
-          '--chars': word.length,
+          /*
+           * One more step than there are characters.
+           *
+           * `steps(k, jump-none)` spreads k outputs evenly from 0 to 1, so landing them on
+           * character boundaries takes one more than the character count: a six-letter
+           * word wants 0, ⅙, … , 1, which is seven outputs. It also keeps the count at two
+           * for a single-character word, where `jump-none` is undefined at one.
+           */
+          '--steps': word.length + 1,
           // A ready-made time rather than something CSS has to compute.
           //
           // `animation-duration: calc(var(--chars) * 38ms)` works on the word and silently
