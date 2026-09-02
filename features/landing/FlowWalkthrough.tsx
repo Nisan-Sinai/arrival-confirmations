@@ -22,10 +22,10 @@
 export function FlowWalkthrough() {
   return (
     <svg
-      viewBox="0 0 220 340"
+      viewBox="0 0 220 391"
       fill="none"
       aria-hidden="true"
-      className="h-auto w-full max-w-[220px]"
+      className="h-full w-full"
       role="presentation"
     >
       {/* The handset. Drawn once, behind every scene. */}
@@ -33,7 +33,7 @@ export function FlowWalkthrough() {
         x="6"
         y="6"
         width="208"
-        height="328"
+        height="379"
         rx="26"
         className="fill-white/5 stroke-white/25"
         strokeWidth="1.5"

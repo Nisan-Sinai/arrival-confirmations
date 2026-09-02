@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
-import { FlowWalkthrough } from '@/features/landing/FlowWalkthrough';
+import { FlowDemo } from '@/features/landing/FlowDemo';
 import { defaultLocale, type Locale } from '@/lib/i18n';
 
 /**
@@ -58,7 +58,7 @@ export function RsvpFlowSteps({ locale = defaultLocale }: { locale?: Locale }) {
             </ol>
 
             <div className="flex justify-center">
-              <FlowWalkthrough />
+              <FlowDemo playLabel={flow.demoPlay} caption={flow.demoCaption} />
             </div>
           </div>
         </Card>

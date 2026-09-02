@@ -89,6 +89,10 @@ export type Dictionary = {
   flow: {
     eyebrow: string;
     title: string;
+    /** Accessible name of the button that starts the demo clip. */
+    demoPlay: string;
+    /** The line under the clip, saying what it is. */
+    demoCaption: string;
     steps: readonly [
       { title: string; body: string },
       { title: string; body: string },
