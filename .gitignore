@@ -66,3 +66,6 @@ next-env.d.ts
 # this directory makes the work SDK's profile drop its console log here, and a
 # `git add -A` will happily commit it to what is a public repository.
 circlez_*.csv
+
+# Screenshots dropped by ad-hoc QA scripts run from the repo root.
+/*.png
