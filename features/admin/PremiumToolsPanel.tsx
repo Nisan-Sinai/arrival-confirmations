@@ -13,7 +13,6 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
-import { PremiumWhatsAppCampaign } from '@/features/admin/PremiumWhatsAppCampaign';
 import { ProSeatingStudio } from '@/features/admin/ProSeatingStudio';
 import { VisualSeatingFloor } from '@/features/admin/VisualSeatingFloor';
 import { seatingSummary } from '@/lib/premiumEventTools';
@@ -52,7 +51,6 @@ function Result({ state }: { state: PremiumToolState }) {
 
 export function PremiumToolsPanel({
   eventId,
-  eventTitle,
   guests,
   branding,
   isPro,
@@ -62,7 +60,6 @@ export function PremiumToolsPanel({
   locked = false,
 }: {
   eventId: string;
-  eventTitle: string;
   guests: readonly PremiumGuestRow[];
   branding: PremiumBrandingDefaults;
   isPro: boolean;
@@ -122,8 +119,6 @@ export function PremiumToolsPanel({
           הורדת תבנית מוכנה ל-Excel
         </a>
       </Card>
-
-      <PremiumWhatsAppCampaign eventId={eventId} eventTitle={eventTitle} guests={guests} />
 
       <Card padding="lg">
         <p className="text-eyebrow text-accent-strong font-semibold">עיצוב</p>
@@ -274,8 +269,8 @@ export function PremiumToolsPanel({
           <h2 className="text-h2 text-primary mt-2 font-bold">כלים מתקדמים</h2>
           <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
             {isPro
-              ? 'ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג וסטודיו הושבה מלא — מחוברים לרשימה שלכם.'
-              : 'ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג וניהול הושבה — מחוברים לרשימה שלכם.'}
+              ? 'ייבוא מ-Excel, מיתוג וסטודיו הושבה מלא — מחוברים לרשימה שלכם.'
+              : 'ייבוא מ-Excel, מיתוג וניהול הושבה — מחוברים לרשימה שלכם.'}
           </p>
         </div>
         {body}
@@ -311,8 +306,8 @@ export function PremiumToolsPanel({
           <div>
             <h2 className="text-h2 text-primary font-bold">הכלים המתקדמים — עם Premium</h2>
             <p className="text-muted-foreground mt-1 max-w-xl text-sm leading-relaxed">
-              ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג מתקדם וניהול הושבה — הכול כאן, מחובר
-              לרשימה שלכם. נפתח לעריכה עם שדרוג המסלול.
+              ייבוא מ-Excel, מיתוג מתקדם וניהול הושבה — הכול כאן, מחובר לרשימה שלכם. נפתח לעריכה עם
+              שדרוג המסלול.
             </p>
           </div>
         </div>

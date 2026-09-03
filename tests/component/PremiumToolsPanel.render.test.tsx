@@ -46,7 +46,6 @@ describe('PremiumToolsPanel renders on the guest page', () => {
       render(
         <PremiumToolsPanel
           eventId="e1"
-          eventTitle="הברית"
           guests={[guest]}
           branding={branding}
           isPro
@@ -63,7 +62,6 @@ describe('PremiumToolsPanel renders on the guest page', () => {
       render(
         <PremiumToolsPanel
           eventId="e1"
-          eventTitle="הברית"
           guests={[guest]}
           branding={branding}
           isPro={false}

@@ -9,8 +9,8 @@ import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Container } from '@/components/ui/layout';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
-import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
+import { WhatsAppSendCenter } from '@/features/admin/WhatsAppSendCenter';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
 import type { ProSeatingTable, TableShape } from '@/lib/proSeating';
 import { createUserClient } from '@/lib/server/supabase';
@@ -210,6 +210,18 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
     sortOrder: table.sort_order,
   }));
   const snapshotCount = 'count' in snapshotResult ? (snapshotResult.count ?? 0) : 0;
+  const sendCenterGuests = guestRows.map((guest) => ({
+    id: guest.id,
+    fullName: guest.fullName,
+    phone: guest.phone,
+    attendanceStatus: attendanceByGuest.get(guest.id) ?? null,
+    inviteLinkIssuedAt: guest.inviteLinkIssuedAt,
+    inviteFirstOpenedAt: guest.inviteFirstOpenedAt,
+    inviteLastOpenedAt: guest.inviteLastOpenedAt,
+    inviteOpenCount: guest.inviteOpenCount,
+    inviteLastResponseAt: guest.inviteLastResponseAt,
+    inviteLastResponseStatus: guest.inviteLastResponseStatus,
+  }));
 
   return (
     <main id="main" className="flex-1 py-10 sm:py-14">
@@ -260,10 +272,14 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             count={count}
             skipped={skipped}
           />
-          <PersonalInviteSendList guests={guestRows} />
-          <PremiumToolsPanel
+          <WhatsAppSendCenter
             eventId={event.id}
             eventTitle={event.title}
+            guests={sendCenterGuests}
+            premium={toolsEnabled}
+          />
+          <PremiumToolsPanel
+            eventId={event.id}
             guests={premiumGuests}
             branding={{
               primaryColor: event.brand_primary_color,

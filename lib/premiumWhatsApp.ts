@@ -156,12 +156,12 @@ export function buildPersonalInviteSendPath({
   return `/share/guest/${guestId}?${params.toString()}`;
 }
 
-export function filterPremiumCampaignGuests(
-  guests: readonly PremiumCampaignGuest[],
+export function filterPremiumCampaignGuests<T extends PremiumCampaignGuest>(
+  guests: readonly T[],
   scope: PremiumCampaignScope,
   sentGuestIds: ReadonlySet<string>,
   query = '',
-): PremiumCampaignGuest[] {
+): T[] {
   const normalizedQuery = query.trim().toLocaleLowerCase('he-IL');
 
   return guests.filter((guest) => {
