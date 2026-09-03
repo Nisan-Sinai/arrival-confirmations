@@ -113,6 +113,49 @@ export function buildWhatsAppSendUrl(phone: string, message: string): string | n
   return `https://api.whatsapp.com/send?phone=${normalized}&text=${encodeURIComponent(message)}`;
 }
 
+/** A host's note about a change is one WhatsApp line, not an essay. Capped so it cannot
+ * bloat a URL the invite route puts in an `?note=` parameter. */
+export const PERSONAL_INVITE_NOTE_MAX = 300;
+
+/**
+ * Widen a query string back into a message kind, or nothing.
+ *
+ * The invite-issuing route (`/share/guest/[guestId]`) reads this off the URL to pick a
+ * template. Anything it does not recognise — a stale link, a typo, an absent value —
+ * falls through to the route's own default message rather than throwing, so a mangled
+ * `?kind=` never turns a working send button into an error page.
+ */
+export function parsePremiumMessageKind(value: string | null): PremiumMessageKind | null {
+  return PREMIUM_MESSAGE_KINDS.find((kind) => kind === value) ?? null;
+}
+
+/**
+ * Where a bulk send button points.
+ *
+ * The Premium centre used to open WhatsApp directly with the *public* link, which told
+ * the system nothing about who answered. It now routes every link-bearing message
+ * through the same issuer the one-by-one list uses, so each guest gets a personal token
+ * and the reply lands on their row. The chosen template travels as `kind`; an `update`
+ * carries the host's own words in `note`, and only an `update` does — the other kinds
+ * have nothing to say that the linked page does not.
+ */
+export function buildPersonalInviteSendPath({
+  guestId,
+  kind,
+  note,
+}: {
+  guestId: string;
+  kind: PremiumMessageKind;
+  note?: string;
+}): string {
+  const params = new URLSearchParams({ kind });
+  const trimmed = note?.trim() ?? '';
+  if (kind === 'update' && trimmed !== '') {
+    params.set('note', trimmed.slice(0, PERSONAL_INVITE_NOTE_MAX));
+  }
+  return `/share/guest/${guestId}?${params.toString()}`;
+}
+
 export function filterPremiumCampaignGuests(
   guests: readonly PremiumCampaignGuest[],
   scope: PremiumCampaignScope,

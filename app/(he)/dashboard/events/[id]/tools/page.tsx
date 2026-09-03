@@ -11,7 +11,6 @@ import { Container } from '@/components/ui/layout';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
 import type { ProSeatingTable, TableShape } from '@/lib/proSeating';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
-import { resolveRequestOrigin } from '@/lib/server/origin';
 import { createUserClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
@@ -142,7 +141,6 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
     }),
   );
   const snapshotCount = 'count' in snapshotResult ? (snapshotResult.count ?? 0) : 0;
-  const inviteUrl = `${await resolveRequestOrigin()}/e/${event.public_id}`;
 
   return (
     <main id="main" className="flex-1 py-10 sm:py-14">
@@ -173,8 +171,8 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
           <h1 className="text-h1 text-primary mt-2 font-bold">כלים מתקדמים · {event.title}</h1>
           <p className="text-muted-foreground mt-3 max-w-3xl leading-relaxed">
             {isPro
-              ? 'ניהול מוזמנים ושליחה אישית, מיתוג, שולחנות עם קיבולת ואזורים, הושבה חכמה, קבוצות, נגישות, דוחות, ייצוא ונקודות שחזור — מחוברים לנתוני האירוע האמיתיים.'
-              : 'יבוא מוזמנים מ-Excel, מרכז שליחה חכם מה-WhatsApp האישי, מעקב התקדמות, מיתוג מתקדם וניהול הושבה — מחוברים לנתוני האירוע האמיתיים במקום אחד.'}
+              ? 'יבוא מוזמנים, מיתוג, שולחנות עם קיבולת ואזורים, הושבה חכמה, קבוצות, נגישות, דוחות, ייצוא ונקודות שחזור — מחוברים לנתוני האירוע האמיתיים. מרכז השליחה החכם ב-WhatsApp נמצא בעמוד ניהול המוזמנים.'
+              : 'יבוא מוזמנים מ-Excel, מיתוג מתקדם וניהול הושבה — מחוברים לנתוני האירוע האמיתיים במקום אחד. מרכז השליחה החכם ב-WhatsApp נמצא בעמוד ניהול המוזמנים.'}
           </p>
         </div>
 
@@ -193,8 +191,6 @@ export default async function EventToolsPage({ params }: { params: Promise<{ id:
           <div className="mt-8">
             <PremiumToolsPanel
               eventId={event.id}
-              eventTitle={event.title}
-              inviteUrl={inviteUrl}
               guests={guests.map((guest) => ({
                 id: guest.id,
                 fullName: guest.full_name,

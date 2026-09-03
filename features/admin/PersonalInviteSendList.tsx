@@ -101,11 +101,11 @@ function TrackingStatus({ guest }: { readonly guest: PersonalInviteGuest }) {
 export function PersonalInviteSendList({ guests }: { guests: readonly PersonalInviteGuest[] }) {
   return (
     <Card padding="lg">
-      <p className="text-eyebrow text-accent-strong font-semibold">קישורים אישיים ומעקב</p>
+      <p className="text-eyebrow text-accent-strong font-semibold">קישורים אישיים · אחד-אחד</p>
       <h2 className="text-h2 text-primary mt-2 font-bold">שליחה אישית ב־WhatsApp</h2>
       <p className="text-muted-foreground mt-3 leading-relaxed">
-        לכל מוזמן נוצר קישור ייחודי. כאן רואים אם הקישור נוצר, אם ההזמנה נפתחה וכמה פעמים, ומה הייתה
-        הבחירה האחרונה: מגיע/ה, לא מגיע/ה או אולי.
+        לכל מוזמן נוצר קישור ייחודי, ושולחים אותו אחד-אחד. כאן רואים אם הקישור נוצר, אם ההזמנה נפתחה
+        וכמה פעמים, ומה הייתה הבחירה האחרונה: מגיע/ה, לא מגיע/ה או אולי.
       </p>
       <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
         יצירת קישור חדש מבטלת את הקישור הקודם. פתיחה נספרת רק לאחר שהעמוד נטען בדפדפן, כדי שתצוגה

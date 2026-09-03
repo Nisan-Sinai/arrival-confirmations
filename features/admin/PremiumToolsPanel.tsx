@@ -13,7 +13,6 @@ import { Card } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
 import { ProSeatingStudio } from '@/features/admin/ProSeatingStudio';
-import { PremiumWhatsAppCampaign } from '@/features/admin/PremiumWhatsAppCampaign';
 import { VisualSeatingFloor } from '@/features/admin/VisualSeatingFloor';
 import { seatingSummary } from '@/lib/premiumEventTools';
 import type { ProSeatingGuest, ProSeatingTable } from '@/lib/proSeating';
@@ -51,8 +50,6 @@ function Result({ state }: { state: PremiumToolState }) {
 
 export function PremiumToolsPanel({
   eventId,
-  eventTitle,
-  inviteUrl,
   guests,
   branding,
   isPro,
@@ -61,8 +58,6 @@ export function PremiumToolsPanel({
   snapshotCount,
 }: {
   eventId: string;
-  eventTitle: string;
-  inviteUrl: string;
   guests: readonly PremiumGuestRow[];
   branding: PremiumBrandingDefaults;
   isPro: boolean;
@@ -119,13 +114,6 @@ export function PremiumToolsPanel({
           הורדת תבנית מוכנה ל-Excel
         </a>
       </Card>
-
-      <PremiumWhatsAppCampaign
-        eventId={eventId}
-        eventTitle={eventTitle}
-        inviteUrl={inviteUrl}
-        guests={guests}
-      />
 
       <Card padding="lg">
         <p className="text-eyebrow text-accent-strong font-semibold">עיצוב</p>

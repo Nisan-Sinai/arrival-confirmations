@@ -3,11 +3,15 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { getEventLicense } from '@/app/_lib/eventLicenses';
+import { isMonetizedEvent } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Container } from '@/components/ui/layout';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
+import { PremiumWhatsAppCampaign } from '@/features/admin/PremiumWhatsAppCampaign';
+import { WhatsAppCenterTeaser } from '@/features/admin/WhatsAppCenterTeaser';
 import { createUserClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
@@ -48,7 +52,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
 
   const guestDb = supabase as unknown as SupabaseClient;
   const [{ data: event }, { data: guests, error: guestsError }] = await Promise.all([
-    guestDb.from('events').select('id, title, public_id').eq('id', id).maybeSingle(),
+    guestDb.from('events').select('id, title, public_id, created_at').eq('id', id).maybeSingle(),
     guestDb
       .from('guests')
       .select(
@@ -83,6 +87,25 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
   const answeredInvites = guestRows.filter(
     (guest) => guest.inviteLastResponseStatus !== null,
   ).length;
+
+  // The smart send centre is a Premium/Pro feature, shown here — right under the
+  // one-by-one list it improves on — so a free host sees exactly what they would gain.
+  // A licensed host gets the live centre; everyone else gets the locked preview.
+  const license = await getEventLicense(
+    event.id,
+    isMonetizedEvent(event.created_at) ? 'trial' : 'legacy',
+  );
+  const sendCentreEnabled =
+    license.plan === 'legacy' ||
+    ((license.plan === 'premium' || license.plan === 'pro') && license.status === 'active');
+  const campaignGuests = guestRows.map((guest) => ({
+    id: guest.id,
+    fullName: guest.fullName,
+    phone: guest.phone,
+    // The centre now sends personal links, so a reply lands on the guest's row and shows
+    // up here as the last response — the same signal the one-by-one list already tracks.
+    attendanceStatus: guest.inviteLastResponseStatus,
+  }));
 
   return (
     <main id="main" className="flex-1 py-10 sm:py-14">
@@ -134,6 +157,15 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             skipped={skipped}
           />
           <PersonalInviteSendList guests={guestRows} />
+          {sendCentreEnabled ? (
+            <PremiumWhatsAppCampaign
+              eventId={event.id}
+              eventTitle={event.title}
+              guests={campaignGuests}
+            />
+          ) : (
+            <WhatsAppCenterTeaser />
+          )}
         </div>
       </Container>
     </main>

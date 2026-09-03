@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildPersonalInviteSendPath,
   buildPremiumWhatsAppMessage,
   buildWhatsAppSendUrl,
   filterPremiumCampaignGuests,
   normalizeWhatsAppPhone,
+  parsePremiumMessageKind,
+  PERSONAL_INVITE_NOTE_MAX,
   type PremiumCampaignGuest,
 } from '@/lib/premiumWhatsApp';
 
@@ -143,6 +146,56 @@ describe('update and thank-you broadcasts', () => {
 
     expect(invitation).toContain('נשמח להזמין אותך לחתונה');
     expect(invitation).toContain('לכל הפרטים ולאישור הגעה:');
+  });
+});
+
+/**
+ * Routing a bulk send through the personal-link issuer is the whole fix: the centre used
+ * to send the public link and learn nothing about who replied.
+ */
+describe('personal-link routing for the send centre', () => {
+  it('recognises every real message kind and rejects anything else', () => {
+    expect(parsePremiumMessageKind('invitation')).toBe('invitation');
+    expect(parsePremiumMessageKind('reminder')).toBe('reminder');
+    expect(parsePremiumMessageKind('update')).toBe('update');
+    expect(parsePremiumMessageKind('thanks')).toBe('thanks');
+    expect(parsePremiumMessageKind('nonsense')).toBeNull();
+    expect(parsePremiumMessageKind(null)).toBeNull();
+  });
+
+  it('points a link-bearing send at the issuer with the chosen template', () => {
+    expect(buildPersonalInviteSendPath({ guestId: 'g1', kind: 'invitation' })).toBe(
+      '/share/guest/g1?kind=invitation',
+    );
+    expect(buildPersonalInviteSendPath({ guestId: 'g2', kind: 'reminder' })).toBe(
+      '/share/guest/g2?kind=reminder',
+    );
+  });
+
+  it("carries the host's own words only for an update", () => {
+    expect(
+      buildPersonalInviteSendPath({ guestId: 'g3', kind: 'update', note: 'האולם עבר להרצל 4' }),
+    ).toBe(
+      '/share/guest/g3?kind=update&note=%D7%94%D7%90%D7%95%D7%9C%D7%9D+%D7%A2%D7%91%D7%A8+%D7%9C%D7%94%D7%A8%D7%A6%D7%9C+4',
+    );
+    // A note on any other kind is dropped: the invitation and reminder have no free text.
+    expect(
+      buildPersonalInviteSendPath({ guestId: 'g4', kind: 'invitation', note: 'ignored' }),
+    ).toBe('/share/guest/g4?kind=invitation');
+    // An empty or whitespace note leaves the update with no parameter to carry.
+    expect(buildPersonalInviteSendPath({ guestId: 'g5', kind: 'update', note: '   ' })).toBe(
+      '/share/guest/g5?kind=update',
+    );
+  });
+
+  it('caps a runaway note so it cannot bloat the URL', () => {
+    const path = buildPersonalInviteSendPath({
+      guestId: 'g6',
+      kind: 'update',
+      note: 'x'.repeat(PERSONAL_INVITE_NOTE_MAX + 50),
+    });
+    const note = new URL(path, 'https://example.test').searchParams.get('note');
+    expect(note).toHaveLength(PERSONAL_INVITE_NOTE_MAX);
   });
 });
 

@@ -7,9 +7,11 @@ import { Card } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
 import {
+  buildPersonalInviteSendPath,
   buildPremiumWhatsAppMessage,
   buildWhatsAppSendUrl,
   filterPremiumCampaignGuests,
+  normalizeWhatsAppPhone,
   type PremiumCampaignGuest,
   type PremiumCampaignScope,
   type PremiumMessageKind,
@@ -56,12 +58,10 @@ function announceProgressChange(): void {
 export function PremiumWhatsAppCampaign({
   eventId,
   eventTitle,
-  inviteUrl,
   guests,
 }: {
   eventId: string;
   eventTitle: string;
-  inviteUrl: string;
   guests: readonly PremiumCampaignGuest[];
 }) {
   const [kind, setKind] = useState<PremiumMessageKind>('invitation');
@@ -123,9 +123,9 @@ export function PremiumWhatsAppCampaign({
       <p className="text-eyebrow text-accent-strong font-semibold">בלעדי ל-Premium</p>
       <h2 className="text-h2 text-primary mt-2 font-bold">מרכז שליחה חכם ב-WhatsApp</h2>
       <p className="text-muted-foreground mt-3 leading-relaxed">
-        ההודעות נפתחות ב-WhatsApp הפרטי של בעל האירוע, עם שם המוזמן והקישור כבר בתוך ההודעה. המערכת
-        מסננת מי שכבר ענה, זוכרת למי שלחת ומאפשרת להמשיך בדיוק מהמקום שבו עצרת — ללא חיבור API וללא
-        עלות הודעות.
+        אותם קישורים אישיים שברשימת המוזמנים, אבל בכמות: כל הודעה נפתחת ב-WhatsApp הפרטי עם שם
+        המוזמן וקישור אישי משלו, כך שהתשובה נרשמת על השורה שלו. המערכת מסננת מי שכבר ענה, זוכרת למי
+        שלחת ומאפשרת להמשיך בדיוק מהמקום שבו עצרת — ללא חיבור API וללא עלות הודעות.
       </p>
 
       <Alert tone="info" className="mt-5">
@@ -224,14 +224,26 @@ export function PremiumWhatsAppCampaign({
       ) : (
         <ul className="mt-5 space-y-3">
           {filteredGuests.map((guest) => {
-            const message = buildPremiumWhatsAppMessage({
-              kind,
-              guestName: guest.fullName,
-              eventTitle,
-              inviteUrl,
-              note,
-            });
-            const sendUrl = buildWhatsAppSendUrl(guest.phone, message);
+            // Everything with a link now goes through the personal-invite issuer, which
+            // mints a token for this guest and only then opens WhatsApp — that is what
+            // makes the reply land on their row. A thank-you has no link and nothing to
+            // issue, so it opens WhatsApp straight from the client as it always did.
+            const phoneValid = normalizeWhatsAppPhone(guest.phone) !== null;
+            const sendUrl =
+              kind === 'thanks'
+                ? buildWhatsAppSendUrl(
+                    guest.phone,
+                    // A thank-you carries no link, so the empty `inviteUrl` is never read.
+                    buildPremiumWhatsAppMessage({
+                      kind,
+                      guestName: guest.fullName,
+                      eventTitle,
+                      inviteUrl: '',
+                    }),
+                  )
+                : phoneValid
+                  ? buildPersonalInviteSendPath({ guestId: guest.id, kind, note })
+                  : null;
             const wasSent = sentGuestIds.has(guest.id);
 
             return (
