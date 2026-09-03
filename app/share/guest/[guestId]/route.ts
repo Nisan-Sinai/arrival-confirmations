@@ -4,6 +4,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { PLATFORM_OWNER_EMAIL } from '@/app/_lib/platformAdmin';
 import { appConfig } from '@/config/event.config';
+import {
+  buildPremiumWhatsAppMessage,
+  parsePremiumMessageKind,
+  PERSONAL_INVITE_NOTE_MAX,
+} from '@/lib/premiumWhatsApp';
 import { createPrivilegedClient, createUserClient } from '@/lib/server/supabase';
 import { issueToken, TOKEN_PURPOSES } from '@/lib/server/tokens';
 
@@ -85,15 +90,31 @@ export async function GET(
     metadata: { eventId: event.id, expiresAt, issuedAt: now },
   });
 
-  const origin = new URL(request.url).origin;
-  const personalUrl = `${origin}/invite/${invite.raw}`;
-  const message = [
-    `היי ${guest.full_name},`,
-    `נשמח לקבל את אישור ההגעה שלך ${prefixHebrew('ל', event.title)}.`,
-    '',
-    'בלחיצה על הקישור אפשר לבחור מגיע/ה, לא מגיע/ה או אולי:',
-    personalUrl,
-  ].join('\n');
+  const requestUrl = new URL(request.url);
+  const personalUrl = `${requestUrl.origin}/invite/${invite.raw}`;
+
+  // The one-by-one list sends no `kind` and keeps the wording it always had. The Premium
+  // send centre passes a template — invitation, reminder or an update carrying the host's
+  // own words — and it is built here, around this guest's *personal* link, so the reply
+  // is attributed instead of arriving anonymously through the public form. `thanks` never
+  // reaches this route: it carries no link, so there is nothing to issue a token for.
+  const templateKind = parsePremiumMessageKind(requestUrl.searchParams.get('kind'));
+  const message =
+    templateKind === null || templateKind === 'thanks'
+      ? [
+          `היי ${guest.full_name},`,
+          `נשמח לקבל את אישור ההגעה שלך ${prefixHebrew('ל', event.title)}.`,
+          '',
+          'בלחיצה על הקישור אפשר לבחור מגיע/ה, לא מגיע/ה או אולי:',
+          personalUrl,
+        ].join('\n')
+      : buildPremiumWhatsAppMessage({
+          kind: templateKind,
+          guestName: guest.full_name,
+          eventTitle: event.title,
+          inviteUrl: personalUrl,
+          note: (requestUrl.searchParams.get('note') ?? '').slice(0, PERSONAL_INVITE_NOTE_MAX),
+        });
   const phone = guest.phone_normalized.replace(/^\+/, '');
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(message)}`;
 

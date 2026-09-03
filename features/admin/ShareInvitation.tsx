@@ -50,7 +50,7 @@ export function ShareInvitation({
     <div className="border-accent-strong/25 bg-accent-soft/30 rounded-2xl border p-5 sm:p-6">
       <h2 className="text-primary text-h3 font-semibold">הקישור להזמנה</h2>
       <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
-        זו הכתובת ששולחים לאורחים. אפשר לשלוח עכשיו, לנהל מוזמנים או להמשיך לכלים המתקדמים.
+        זו הכתובת ששולחים לאורחים. אפשר לשלוח עכשיו או לעבור לניהול המוזמנים והכלים המתקדמים.
       </p>
 
       <p
@@ -91,7 +91,7 @@ export function ShareInvitation({
             className: 'lg:w-auto',
           })}
         >
-          ניהול מוזמנים
+          מוזמנים וכלים מתקדמים
         </Link>
 
         <Button onClick={copy} variant="outline" size="sm" block className="lg:w-auto">
@@ -143,23 +143,11 @@ export function ShareInvitation({
           תצוגה מקדימה
           <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
         </a>
-
-        <Link
-          href={`${pathname}/tools`}
-          className={buttonClass({
-            variant: 'outline',
-            size: 'sm',
-            block: true,
-            className: 'sm:col-span-2 lg:w-auto',
-          })}
-        >
-          מרכז Premium
-        </Link>
       </div>
 
       <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-        בניהול המוזמנים אפשר להוסיף ידנית ולייבא מהטלפון. במרכז Premium נמצאים Excel, שליחה חכמה,
-        מיתוג והושבה.
+        בעמוד המוזמנים אפשר להוסיף ידנית, לייבא מהטלפון, ולנהל את כל הכלים המתקדמים — Excel, שליחה
+        חכמה ב-WhatsApp, מיתוג והושבה — במקום אחד.
       </p>
 
       <p role="status" aria-live="polite" className="sr-only">

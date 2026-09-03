@@ -141,6 +141,19 @@ export function tryNormalizeIsraeliPhone(
 }
 
 /**
+ * A stored guest phone, formatted for display.
+ *
+ * A guest's `phone` is whatever put it there: a host typing `054-940-6750`, or an import
+ * or a personal link storing the E.164 `+972587170978`. Shown raw, the second is long,
+ * unpunctuated and overflows a narrow card while the first sits neatly beside it. This
+ * brings an E.164 number back to the local `0XX-XXXXXXX` form so the two read alike and
+ * both fit; anything a host typed by hand is left exactly as they wrote it.
+ */
+export function formatStoredPhoneForDisplay(phone: string): string {
+  return phone.startsWith('+972') ? formatIsraeliPhoneForDisplay(phone) : phone;
+}
+
+/**
  * Formats an E.164 number the way an Israeli reader expects to see it, for display
  * only. Never store this — `phone_normalized` is the comparable value.
  */

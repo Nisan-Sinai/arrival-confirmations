@@ -18,6 +18,7 @@ import {
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
+import { formatStoredPhoneForDisplay } from '@/lib/phone';
 
 export interface ManagedGuest {
   readonly id: string;
@@ -78,7 +79,8 @@ function messageFor(
     // dropped anything without a comma in silence, so a host who pasted forty names and
     // got twelve had no way to know why — and went back to sharing one public link.
     const lost = Number(skipped ?? '');
-    const tail = Number.isInteger(lost) && lost > 0 ? ` ${lost} שורות ללא מספר נייד לא יובאו.` : '';
+    const tail =
+      Number.isInteger(lost) && lost > 0 ? ` ${lost} שורות ללא מספר טלפון לא יובאו.` : '';
     return { tone: 'success', text: `יובאו ${count || 'מספר'} אנשי קשר.${tail}` };
   }
   if (saved === 'file') {
@@ -90,7 +92,7 @@ function messageFor(
   if (error === 'guest-save') return { tone: 'error', text: 'שמירת המוזמן נכשלה.' };
   if (error === 'guest-delete') return { tone: 'error', text: 'מחיקת המוזמן נכשלה.' };
   if (error === 'contacts-none') {
-    return { tone: 'error', text: 'לא נמצא אף מספר נייד ברשימה שהודבקה.' };
+    return { tone: 'error', text: 'לא נמצא אף מספר טלפון ברשימה שהודבקה.' };
   }
   if (error === 'contacts-empty') {
     return { tone: 'error', text: 'לא נבחרו אנשי קשר ולא הודבקה רשימה.' };
@@ -427,7 +429,7 @@ export function GuestManagementPanel({
                 />
               </label>
               <p id="pasted-contacts-help" className="text-muted-foreground mt-2 text-xs">
-                שורה לכל מוזמן, שם ומספר נייד בכל סדר. פסיק לא חובה — אפשר להדביק ישר מוואטסאפ או
+                שורה לכל מוזמן, שם ומספר טלפון בכל סדר. פסיק לא חובה — אפשר להדביק ישר מוואטסאפ או
                 מפתק.
               </p>
               <SubmitButton
@@ -446,9 +448,10 @@ export function GuestManagementPanel({
               className="border-border mt-6 scroll-mt-24 space-y-4 border-t pt-6"
             >
               <div>
-                <h3 className="text-primary font-semibold">ייבוא קובץ</h3>
+                <h3 className="text-primary font-semibold">ייבוא מהיר מקובץ</h3>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  נתמכים Excel, CSV, TSV וטקסט, עד 5MB.
+                  שם וטלפון בלבד, מ-Excel/CSV/TSV, עד 5MB. לייבוא עם שולחן, מנה וצד — ייבוא ה-Excel
+                  המלא שבכלים המתקדמים.
                 </p>
               </div>
               <input type="hidden" name="eventId" value={eventId} />
@@ -547,8 +550,11 @@ export function GuestManagementPanel({
                               <p className="text-primary truncate font-semibold">
                                 {guest.fullName}
                               </p>
-                              <p className="text-muted-foreground mt-1 text-sm" dir="ltr">
-                                {guest.phone}
+                              <p
+                                className="text-muted-foreground mt-1 text-sm break-words"
+                                dir="ltr"
+                              >
+                                {formatStoredPhoneForDisplay(guest.phone)}
                               </p>
                               <p className="text-muted-foreground mt-1 text-xs">
                                 כמות: {guest.partySize}

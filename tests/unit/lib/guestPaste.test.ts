@@ -59,11 +59,20 @@ describe('parsePastedGuests', () => {
     expect(skipped).toEqual(['דודה מרים']);
   });
 
-  it('refuses a landline, which cannot be messaged', () => {
-    const { guests, skipped } = parsePastedGuests('משרד 03-1234567\nדוד 0501234567');
+  it('accepts a landline, as every other surface already does', () => {
+    // A home line is often the only number a host has for an older relative. The manual
+    // form and the file import take it; the paste box refusing it was the odd one out and
+    // dropped the person. It comes in now — just without a WhatsApp button beside it.
+    const { guests, skipped } = parsePastedGuests(
+      'משרד 03-1234567\nסבתא 02-5645584\nדוד 0501234567',
+    );
 
-    expect(guests.map((g) => g.fullName)).toEqual(['דוד']);
-    expect(skipped).toEqual(['משרד 03-1234567']);
+    expect(skipped).toEqual([]);
+    expect(guests).toEqual([
+      { fullName: 'משרד', phone: '+97231234567' },
+      { fullName: 'סבתא', phone: '+97225645584' },
+      { fullName: 'דוד', phone: '+972501234567' },
+    ]);
   });
 
   it('refuses a number with extra digits rather than inventing a plausible one', () => {
@@ -101,12 +110,12 @@ describe('parsePastedGuests', () => {
   });
 
   it('refuses a paste with no number anywhere in it', () => {
-    expect(() => parsePastedGuests('דוד כהן\nשרה לוי')).toThrow(/לא נמצא אף מספר נייד/);
+    expect(() => parsePastedGuests('דוד כהן\nשרה לוי')).toThrow(/לא נמצא אף מספר טלפון/);
   });
 
   it('accepts every number shape it is willing to match', () => {
     // The contract that lets the parser call the normaliser without a guard: anything
-    // MOBILE finds must be something normalizeIsraeliPhone can take. If the two ever drift
+    // PHONE finds must be something normalizeIsraeliPhone can take. If the two ever drift
     // apart this fails here, rather than throwing in front of a host mid-paste.
     const shapes = [
       '0501234567',
@@ -123,12 +132,23 @@ describe('parsePastedGuests', () => {
       '0551234567',
       '0581234567',
       '0591234567',
+      // Landlines, matched by every prefix the normaliser knows.
+      '025645584',
+      '02-564-5584',
+      '03-1234567',
+      '04 123 4567',
+      '08-1234567',
+      '09-1234567',
+      '077-1234567',
+      '073-1234567',
+      '+97231234567',
+      '972 2 5645584',
     ];
 
     for (const shape of shapes) {
       const { guests, skipped } = parsePastedGuests(`דוד ${shape}`);
       expect(skipped, shape).toEqual([]);
-      expect(guests[0]?.phone, shape).toMatch(/^\+9725\d{8}$/);
+      expect(guests[0]?.phone, shape).toMatch(/^\+972\d{8,9}$/);
     }
   });
 

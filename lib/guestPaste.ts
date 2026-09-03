@@ -26,26 +26,34 @@ import { normalizeIsraeliPhone } from '@/lib/phone';
  *     0529876543  שרה לוי
  *     יוסי ומירי אברהם, 054 111 2222
  *
- * **The phone is what is found; the name is whatever is left.** Israeli mobile numbers
- * have a shape distinctive enough to locate anywhere in a line, and once it is removed
- * the remainder is a name by definition. Trying it the other way — parse a name, hope a
- * phone follows — fails on the very common "number first" habit and on any name
- * containing a digit.
+ * **The phone is what is found; the name is whatever is left.** An Israeli phone number
+ * has a shape distinctive enough to locate anywhere in a line, and once it is removed the
+ * remainder is a name by definition. Trying it the other way — parse a name, hope a phone
+ * follows — fails on the very common "number first" habit and on any name containing a
+ * digit.
  */
 
 /**
- * A mobile number sitting anywhere in a line.
+ * A phone number sitting anywhere in a line — mobile or landline.
  *
- * Israeli mobiles are `05x` followed by seven digits, with spaces, hyphens or dots
- * scattered through them at the typist's whim, and often a `+972` or `972` prefix with the
- * leading zero dropped. Landlines are deliberately not matched: a guest list is a list of
- * people to message, and a message to a landline reaches nobody.
+ * Landlines were once refused here on the reasoning that a WhatsApp invitation cannot
+ * reach one. But every other surface — the manual form, the file import, the send links —
+ * already accepts them through `normalizeIsraeliPhone`, so the paste box refusing them was
+ * the odd one out, and it silently dropped real relatives whose only number a host has is
+ * a home line. Accepting them keeps the list whole; the number simply has no WhatsApp
+ * button next to it, which is the honest state of affairs rather than a lost row.
+ *
+ * The three shapes, matched by their prefix so the invariant with the normaliser holds:
+ * a mobile `5x`, a two-digit `07x` non-geographic line, or a one-digit geographic area
+ * code (`2 3 4 8 9`) — each followed by a seven-digit subscriber number, with `+972`/`972`
+ * and scattered spaces, hyphens or dots all allowed. The prefixes are exactly those
+ * `normalizeIsraeliPhone` knows, `075`/`079`/`06` and the like left out on both sides.
  *
  * The trailing boundary matters. Without it `0501234567890` — a mistyped number with
  * three extra digits — would match its first ten characters and silently invent a
  * plausible wrong number, which is worse than refusing the line.
  */
-const MOBILE = /(?<![\d֐-׿])((?:\+?972[-. ]?|0)5\d(?:[-. ]?\d){7})(?![\d])/u;
+const PHONE = /(?<![\d֐-׿])((?:\+?972[-. ]?|0)(?:5\d|7[234678]|[23489])(?:[-. ]?\d){7})(?![\d])/u;
 
 /**
  * Whatever separated the fields, once the number is lifted out from between them.
@@ -107,14 +115,14 @@ export function parsePastedGuests(input: string): GuestPasteResult {
     const line = rawLine.trim();
     if (line === '') continue;
 
-    const match = MOBILE.exec(line);
+    const match = PHONE.exec(line);
     if (match === null) {
       skipped.push(line);
       continue;
     }
 
     // No guard around this, and that is a deliberate contract rather than an oversight:
-    // every shape `MOBILE` matches is a shape `normalizeIsraeliPhone` accepts. A try/catch
+    // every shape `PHONE` matches is a shape `normalizeIsraeliPhone` accepts. A try/catch
     // here would be unreachable defensive code — untestable, and therefore unable to tell
     // anyone when it stopped being true. The invariant is asserted directly in the tests
     // instead, so the two definitions drifting apart fails loudly at build time rather
@@ -140,7 +148,7 @@ export function parsePastedGuests(input: string): GuestPasteResult {
   }
 
   if (guests.length === 0) {
-    throw new GuestImportError('לא נמצא אף מספר נייד ברשימה שהודבקה.');
+    throw new GuestImportError('לא נמצא אף מספר טלפון ברשימה שהודבקה.');
   }
 
   return { guests, skipped };

@@ -91,7 +91,7 @@ export async function updateEventLicenseAction(formData: FormData): Promise<void
   revalidatePath('/admin/plans');
   revalidatePath('/dashboard');
   revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
   revalidatePath('/e', 'layout');
 
   redirect(successRedirectPath(eventId, optionalText(formData.get('q'))));

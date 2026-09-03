@@ -101,6 +101,6 @@ export async function adminImportPhoneContactsAction(formData: FormData): Promis
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
   redirect(path(eventId, { saved: 'contacts', count: String(rows.size) }));
 }

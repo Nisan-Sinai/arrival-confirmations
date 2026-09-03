@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
  */
 
 interface FieldContextValue {
-  readonly controlId: string;
+  readonly controlId: string | undefined;
   readonly describedBy: string | undefined;
   readonly invalid: boolean;
   readonly required: boolean;
@@ -27,12 +27,26 @@ interface FieldContextValue {
 
 const FieldContext = createContext<FieldContextValue | null>(null);
 
+/**
+ * Outside a `<Field>` the control still renders — it just carries no Field-derived id or
+ * `aria-describedby`, and labels itself through its own `aria-label`.
+ *
+ * This used to throw. The rule it enforced — a labelled control in every *form* — is real,
+ * and inside a form a `<Field>` still supplies it. But the Pro seating studio uses these
+ * same styled controls in dense table cells, where a visible per-cell label would be
+ * absurd and each control names itself with `aria-label` instead. A hard throw turned that
+ * legitimate use into a white screen for the whole page — a far worse accessibility outcome
+ * than the missing id it was guarding against — so the guard gives way to a safe default.
+ */
+const STANDALONE: FieldContextValue = {
+  controlId: undefined,
+  describedBy: undefined,
+  invalid: false,
+  required: false,
+};
+
 function useField(): FieldContextValue {
-  const context = useContext(FieldContext);
-  if (context === null) {
-    throw new Error('Input, Textarea and Select must be rendered inside a <Field>.');
-  }
-  return context;
+  return useContext(FieldContext) ?? STANDALONE;
 }
 
 export function Field({

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   formatIsraeliPhoneForDisplay,
+  formatStoredPhoneForDisplay,
   normalizeIsraeliPhone,
   PhoneNormalizationError,
   tryNormalizeIsraeliPhone,
@@ -126,5 +127,19 @@ describe('formatIsraeliPhoneForDisplay', () => {
 
   it('tolerates a value that is already national', () => {
     expect(formatIsraeliPhoneForDisplay('501234567')).toBe('050-1234567');
+  });
+});
+
+describe('formatStoredPhoneForDisplay', () => {
+  it('brings a stored E.164 number back to the short local form', () => {
+    // The long unpunctuated shape that overflows a narrow card, made to read like a
+    // hand-typed number and fit beside one.
+    expect(formatStoredPhoneForDisplay('+972587170978')).toBe('058-7170978');
+    expect(formatStoredPhoneForDisplay('+97231234567')).toBe('03-1234567');
+  });
+
+  it('leaves a hand-typed number exactly as it was entered', () => {
+    expect(formatStoredPhoneForDisplay('054-940-6750')).toBe('054-940-6750');
+    expect(formatStoredPhoneForDisplay('0501234567')).toBe('0501234567');
   });
 });
