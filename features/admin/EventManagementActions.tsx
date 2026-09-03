@@ -69,12 +69,6 @@ const ICONS = {
       <path d="M8.6 9.2c0 3 2.2 5.2 5.2 5.2" />
     </>,
   ),
-  tools: icon(
-    <>
-      <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3" />
-      <path d="M1 14h6M9 8h6M17 16h6" />
-    </>,
-  ),
 } as const;
 
 /**
@@ -199,7 +193,7 @@ export function EventManagementActions({
 
         <ActionGroup title="ניהול">
           <ActionLink href={`/dashboard/events/${eventId}/guests`} icon={ICONS.guests}>
-            מוזמנים וייבוא מהטלפון
+            מוזמנים וכלים מתקדמים
           </ActionLink>
           <ActionLink href={`/dashboard/events/${eventId}/edit`} icon={ICONS.edit}>
             עריכת ההזמנה
@@ -225,18 +219,6 @@ export function EventManagementActions({
             שליחה ב-WhatsApp
           </a>
         </ActionGroup>
-
-        <Link
-          href={`/dashboard/events/${eventId}/tools`}
-          className={buttonClass({
-            variant: 'ghost',
-            size: 'sm',
-            className: 'w-full justify-start',
-          })}
-        >
-          {ICONS.tools}
-          כלים מתקדמים
-        </Link>
       </div>
 
       <p role="status" aria-live="polite" className="sr-only">

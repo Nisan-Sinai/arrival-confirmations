@@ -50,7 +50,7 @@ export function ShareInvitation({
     <div className="border-accent-strong/25 bg-accent-soft/30 rounded-2xl border p-5 sm:p-6">
       <h2 className="text-primary text-h3 font-semibold">הקישור להזמנה</h2>
       <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
-        זו הכתובת ששולחים לאורחים. אפשר לשלוח עכשיו, לנהל מוזמנים או להמשיך לכלים המתקדמים.
+        זו הכתובת ששולחים לאורחים. אפשר לשלוח עכשיו או לעבור לניהול המוזמנים והכלים המתקדמים.
       </p>
 
       <p
@@ -145,7 +145,7 @@ export function ShareInvitation({
         </a>
 
         <Link
-          href={`${pathname}/tools`}
+          href={`${pathname}/guests`}
           className={buttonClass({
             variant: 'outline',
             size: 'sm',
@@ -153,7 +153,7 @@ export function ShareInvitation({
             className: 'sm:col-span-2 lg:w-auto',
           })}
         >
-          מרכז Premium
+          מוזמנים וכלים מתקדמים
         </Link>
       </div>
 

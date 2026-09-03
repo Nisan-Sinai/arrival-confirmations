@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 
 import {
@@ -8,10 +9,11 @@ import {
   saveSeatingAction,
   type PremiumToolState,
 } from '@/app/actions/managePremiumTools';
-import { Button } from '@/components/ui/button';
+import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { PremiumWhatsAppCampaign } from '@/features/admin/PremiumWhatsAppCampaign';
 import { ProSeatingStudio } from '@/features/admin/ProSeatingStudio';
 import { VisualSeatingFloor } from '@/features/admin/VisualSeatingFloor';
 import { seatingSummary } from '@/lib/premiumEventTools';
@@ -50,20 +52,26 @@ function Result({ state }: { state: PremiumToolState }) {
 
 export function PremiumToolsPanel({
   eventId,
+  eventTitle,
   guests,
   branding,
   isPro,
   attendeeLimit,
   seatingTables,
   snapshotCount,
+  locked = false,
 }: {
   eventId: string;
+  eventTitle: string;
   guests: readonly PremiumGuestRow[];
   branding: PremiumBrandingDefaults;
   isPro: boolean;
   attendeeLimit: number;
   seatingTables: readonly ProSeatingTable[];
   snapshotCount: number;
+  /** A host without an active paid plan sees the whole suite, greyed and inert, above a
+   * single upgrade prompt — the product behind glass rather than a feature list. */
+  readonly locked?: boolean;
 }) {
   const [importState, importAction, importing] = useActionState(importGuestsAction, INITIAL);
   const [brandingState, brandingAction, savingBranding] = useActionState(
@@ -76,7 +84,7 @@ export function PremiumToolsPanel({
     .map((guest) => `${guest.id}:${guest.tableId ?? ''}:${guest.seatLocked ? '1' : '0'}`)
     .join('|');
 
-  return (
+  const body = (
     <div className="space-y-6">
       <Card padding="lg">
         <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
@@ -114,6 +122,8 @@ export function PremiumToolsPanel({
           הורדת תבנית מוכנה ל-Excel
         </a>
       </Card>
+
+      <PremiumWhatsAppCampaign eventId={eventId} eventTitle={eventTitle} guests={guests} />
 
       <Card padding="lg">
         <p className="text-eyebrow text-accent-strong font-semibold">עיצוב</p>
@@ -250,5 +260,51 @@ export function PremiumToolsPanel({
         </Card>
       )}
     </div>
+  );
+
+  if (!locked) return body;
+
+  return (
+    <section aria-label="כלים מתקדמים של Premium">
+      {/*
+        The whole suite is shown, not described — but behind glass. The banner carries the
+        one live control; the preview under it is greyed and marked `inert`, so nothing in
+        it takes focus, a click or an Enter. That is the "grey, as if not clickable" a host
+        without a plan should see: their real list, in the real tools, one upgrade away.
+      */}
+      <div className="border-accent/40 bg-accent-soft/40 flex flex-col items-start gap-4 rounded-2xl border p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="bg-card text-accent-strong shadow-paper mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-4.5"
+            >
+              <rect x="5" y="11" width="14" height="9" rx="2" />
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            </svg>
+          </span>
+          <div>
+            <h2 className="text-h2 text-primary font-bold">הכלים המתקדמים — עם Premium</h2>
+            <p className="text-muted-foreground mt-1 max-w-xl text-sm leading-relaxed">
+              ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג מתקדם וניהול הושבה — הכול כאן, מחובר
+              לרשימה שלכם. נפתח לעריכה עם שדרוג המסלול.
+            </p>
+          </div>
+        </div>
+        <Link href="/pricing" className={buttonClass({ size: 'lg', className: 'shrink-0' })}>
+          שדרוג ל-Premium
+        </Link>
+      </div>
+
+      <div inert aria-hidden className="pointer-events-none mt-6 opacity-55 grayscale select-none">
+        {body}
+      </div>
+    </section>
   );
 }

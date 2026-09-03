@@ -129,7 +129,6 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
 
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
   redirect(eventPath(eventId, { saved: guestId === null ? 'guest-added' : 'guest-updated' }));
 }
 
@@ -152,7 +151,6 @@ export async function deleteGuestAction(formData: FormData): Promise<void> {
 
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
   redirect(eventPath(eventId, { saved: 'guest-deleted' }));
 }
 
@@ -252,7 +250,6 @@ export async function importPhoneContactsAction(formData: FormData): Promise<voi
   if (savedCount === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
   redirect(
     eventPath(eventId, {
       saved: 'contacts',
@@ -290,7 +287,6 @@ export async function importGuestFileAction(formData: FormData): Promise<void> {
   if (savedCount === 0) redirect(eventPath(eventId, { error: 'contacts-invalid' }));
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
   redirect(eventPath(eventId, { saved: 'file', count: String(savedCount) }));
 }
 

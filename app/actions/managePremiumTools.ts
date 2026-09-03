@@ -127,7 +127,7 @@ export async function importGuestsAction(
     if (error) return { status: 'error', message: 'שמירת המוזמנים נכשלה. נסו שוב.' };
 
     revalidatePath(`/dashboard/events/${eventId}`);
-    revalidatePath(`/dashboard/events/${eventId}/tools`);
+    revalidatePath(`/dashboard/events/${eventId}/guests`);
     return {
       status: 'success',
       message: `יובאו ${unique.size} מוזמנים בהצלחה${invalid.length > 0 ? `; ${invalid.length} שורות דולגו` : ''}.`,
@@ -176,7 +176,7 @@ export async function saveBrandingAction(
     .eq('id', eventId);
   if (error) return { status: 'error', message: 'שמירת המיתוג נכשלה.' };
 
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
   revalidatePath('/e', 'layout');
   return { status: 'success', message: 'המיתוג נשמר ומופיע בהזמנה.' };
 }
@@ -219,6 +219,6 @@ export async function saveSeatingAction(
     if (error) return { status: 'error', message: 'שמירת ההושבה נכשלה.' };
   }
 
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
   return { status: 'success', message: 'מפת ההושבה נשמרה.' };
 }

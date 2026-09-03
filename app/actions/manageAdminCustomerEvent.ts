@@ -273,7 +273,7 @@ export async function adminSaveGuestAction(formData: FormData): Promise<void> {
 
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
   redirect(adminEventPath(eventId, { saved: guestId === null ? 'guest-added' : 'guest-updated' }));
 }
 
@@ -305,6 +305,6 @@ export async function adminDeleteGuestAction(formData: FormData): Promise<void> 
 
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
   redirect(adminEventPath(eventId, { saved: 'guest-deleted' }));
 }

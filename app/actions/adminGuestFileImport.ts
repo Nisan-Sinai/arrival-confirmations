@@ -90,6 +90,6 @@ export async function adminImportGuestFileAction(formData: FormData): Promise<vo
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
   redirect(path(eventId, { saved: 'file', count: String(rows.size) }));
 }

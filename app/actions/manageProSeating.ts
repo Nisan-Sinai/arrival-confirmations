@@ -82,7 +82,7 @@ function denied(): ProSeatingState {
 
 function revalidate(eventId: string): void {
   revalidatePath(`/dashboard/events/${eventId}`);
-  revalidatePath(`/dashboard/events/${eventId}/tools`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
 }
 
 export async function saveProTablesAction(
