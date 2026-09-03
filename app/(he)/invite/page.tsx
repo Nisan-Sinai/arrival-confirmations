@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 
 import { Card } from '@/components/ui/card';
 import { InvitationCard } from '@/features/invite/InvitationCard';
+import { GiftLink } from '@/features/invite/GiftLink';
+import { SeatCard } from '@/features/invite/SeatCard';
 import { PersonalInviteOpenTracker } from '@/features/rsvp/PersonalInviteOpenTracker';
 import { PersonalRsvpButtons } from '@/features/rsvp/PersonalRsvpButtons';
 import { brandingCssVariables } from '@/lib/premiumEventTools';
@@ -104,12 +106,22 @@ export default async function PersonalInvitePage() {
         </div>
       </section>
 
-      <div id="rsvp" className="w-full max-w-xl scroll-mt-8">
+      <div id="rsvp" className="flex w-full max-w-xl scroll-mt-8 flex-col gap-6">
+        {/* Above the buttons, not below: a guest who already answered comes back to this
+            page for exactly one reason, and it is not to answer again. */}
+        <SeatCard
+          tableName={context.guest.tableName}
+          seatNumber={context.guest.seatNumber}
+          partySize={context.guest.partySize}
+        />
+
         <PersonalRsvpButtons
           guestName={context.guest.fullName}
           partySize={context.guest.partySize}
           currentStatus={existingRsvp?.attendance_status ?? null}
         />
+
+        <GiftLink url={context.event.giftUrl} />
       </div>
     </main>
   );

@@ -23,7 +23,12 @@ export const dynamic = 'force-dynamic';
 
 interface AdminCustomerEventPageProps {
   readonly params: Promise<{ id: string }>;
-  readonly searchParams: Promise<{ saved?: string; error?: string; count?: string }>;
+  readonly searchParams: Promise<{
+    saved?: string;
+    error?: string;
+    count?: string;
+    skipped?: string;
+  }>;
 }
 
 function attendanceLabel(status: string): string {
@@ -44,7 +49,7 @@ export default async function AdminCustomerEventPage({
 }: AdminCustomerEventPageProps) {
   await requirePlatformOwner();
   const { id } = await params;
-  const { saved = '', error = '', count = '' } = await searchParams;
+  const { saved = '', error = '', count = '', skipped = '' } = await searchParams;
   const privileged = createPrivilegedClient() as unknown as SupabaseClient;
 
   const { data: event, error: eventError } = await privileged
@@ -200,6 +205,7 @@ export default async function AdminCustomerEventPage({
             saved={saved}
             error={error}
             count={count}
+            skipped={skipped}
           />
           <GuestFileImportForm mode="admin" eventId={event.id} />
         </section>

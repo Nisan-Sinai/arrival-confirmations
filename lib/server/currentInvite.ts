@@ -27,6 +27,7 @@ export interface ActiveInviteContext {
     readonly address: string;
     readonly wazeUrl: string | null;
     readonly googleMapsUrl: string | null;
+    readonly giftUrl: string | null;
     readonly contactPhone: string | null;
     readonly description: string | null;
     readonly sideALabel: string | null;
@@ -39,6 +40,15 @@ export interface ActiveInviteContext {
     readonly phoneNormalized: string;
     readonly partySize: number;
     readonly familySide: 'side_a' | 'side_b' | 'other' | null;
+    /**
+     * Where they are sitting, once the host has seated them.
+     *
+     * Already on the guest row — the seating studio writes it — and never once shown to
+     * the person it is about. Competitors treat telling a guest their table as a paid
+     * day-of service; the data was here all along.
+     */
+    readonly tableName: string | null;
+    readonly seatNumber: string | null;
   };
 }
 
@@ -69,7 +79,7 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       privileged
         .from('guests')
         .select(
-          'id, event_id, full_name, phone, phone_normalized, party_size, family_side, is_active',
+          'id, event_id, full_name, phone, phone_normalized, party_size, family_side, table_name, seat_number, is_active',
         )
         .eq('id', validation.guestId)
         .eq('event_id', validation.eventId)
@@ -77,7 +87,7 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       privileged
         .from('events')
         .select(
-          'id, public_id, title, event_type, hosts_names, honoree_display_name, event_date, ceremony_time, reception_time, venue_name, address, waze_url, google_maps_url, contact_phone, description, side_a_label, side_b_label, is_active',
+          'id, public_id, title, event_type, hosts_names, honoree_display_name, event_date, ceremony_time, reception_time, venue_name, address, waze_url, google_maps_url, gift_url, contact_phone, description, side_a_label, side_b_label, is_active',
         )
         .eq('id', validation.eventId)
         .maybeSingle(),
@@ -110,6 +120,7 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       address: event.address,
       wazeUrl: event.waze_url,
       googleMapsUrl: event.google_maps_url,
+      giftUrl: event.gift_url,
       contactPhone: event.contact_phone,
       description: event.description,
       sideALabel: event.side_a_label,
@@ -122,6 +133,8 @@ export async function getActiveInviteContext(): Promise<ActiveInviteContext | nu
       phoneNormalized: guest.phone_normalized,
       partySize: guest.party_size,
       familySide: guest.family_side,
+      tableName: guest.table_name,
+      seatNumber: guest.seat_number,
     },
   };
 }

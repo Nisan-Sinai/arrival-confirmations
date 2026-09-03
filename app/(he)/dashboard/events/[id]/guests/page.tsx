@@ -19,7 +19,12 @@ export const dynamic = 'force-dynamic';
 
 interface GuestPageProps {
   readonly params: Promise<{ id: string }>;
-  readonly searchParams: Promise<{ saved?: string; error?: string; count?: string }>;
+  readonly searchParams: Promise<{
+    saved?: string;
+    error?: string;
+    count?: string;
+    skipped?: string;
+  }>;
 }
 
 function SummaryCard({ label, value, hint }: { label: string; value: number; hint: string }) {
@@ -34,7 +39,7 @@ function SummaryCard({ label, value, hint }: { label: string; value: number; hin
 
 export default async function GuestPage({ params, searchParams }: GuestPageProps) {
   const { id } = await params;
-  const { saved = '', error = '', count = '' } = await searchParams;
+  const { saved = '', error = '', count = '', skipped = '' } = await searchParams;
   const supabase = await createUserClient();
   const {
     data: { user },
@@ -126,6 +131,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             saved={saved}
             error={error}
             count={count}
+            skipped={skipped}
           />
           <PersonalInviteSendList guests={guestRows} />
         </div>

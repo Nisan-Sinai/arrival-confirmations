@@ -107,6 +107,7 @@ function parseEventForm(formData: FormData): ParsedEvent {
       side_b_label: optional(formData.get('sideBLabel')),
       waze_url: safeUrl(formData.get('wazeUrl')),
       google_maps_url: safeUrl(formData.get('googleMapsUrl')),
+      gift_url: safeUrl(formData.get('giftUrl')),
       expected_guests: optionalCount(formData.get('expectedGuests')),
       is_active: formData.get('isActive') === 'on',
     },
