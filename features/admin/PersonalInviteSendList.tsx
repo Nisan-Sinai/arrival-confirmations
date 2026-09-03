@@ -1,6 +1,7 @@
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/feedback';
+import { formatStoredPhoneForDisplay } from '@/lib/phone';
 
 type AttendanceStatus = 'attending' | 'not_attending' | 'maybe';
 
@@ -122,9 +123,9 @@ export function PersonalInviteSendList({ guests }: { guests: readonly PersonalIn
               className="border-border flex flex-col justify-between gap-4 rounded-2xl border p-4"
             >
               <div>
-                <p className="text-primary font-semibold">{guest.fullName}</p>
-                <p className="text-muted-foreground mt-1 text-sm" dir="ltr">
-                  {guest.phone}
+                <p className="text-primary font-semibold break-words">{guest.fullName}</p>
+                <p className="text-muted-foreground mt-1 text-sm break-words" dir="ltr">
+                  {formatStoredPhoneForDisplay(guest.phone)}
                 </p>
                 <TrackingStatus guest={guest} />
               </div>

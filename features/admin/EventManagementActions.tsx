@@ -154,7 +154,7 @@ export function EventManagementActions({
   return (
     <div className="border-border mt-5 border-t pt-4">
       <p className="text-primary text-sm font-semibold">ניהול ההזמנה</p>
-      <p className="text-muted-foreground mt-1 text-xs" dir="ltr">
+      <p className="text-muted-foreground mt-1 text-xs break-all" dir="ltr">
         {inviteUrl}
       </p>
 
