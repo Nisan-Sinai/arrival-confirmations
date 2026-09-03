@@ -57,7 +57,7 @@ export const PLAN_CATALOG: readonly PlanDefinition[] = [
     features: [
       'כל מה שב-Basic',
       'עד 1,000 מוזמנים',
-      'יבוא ועדכון מוזמנים מ-Excel, CSV ו-TSV',
+      'ייבוא מלא מ-Excel, CSV ו-TSV — עם שולחן, מושב, צד ומנה, לא רק שם וטלפון',
       'מרכז שליחה חכם מה-WhatsApp האישי',
       'הודעה אישית מוכנה לכל מוזמן בלחיצה',
       'סינון אוטומטי של מי שעדיין לא ענה',
@@ -126,7 +126,7 @@ const PLAN_COPY_EN: Record<Exclude<PlanCode, 'legacy'>, PlanCopy> = {
     features: [
       'Everything in Basic',
       'Up to 1,000 guests',
-      'Import and update guests from Excel, CSV and TSV',
+      'A full Excel, CSV and TSV import — with tables, seats, sides and meals, not just name and phone',
       'A smart send centre from your own WhatsApp',
       'A personal message ready for each guest in one tap',
       'Automatic filtering of who has not replied yet',
