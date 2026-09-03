@@ -18,6 +18,7 @@ import {
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
+import { formatStoredPhoneForDisplay } from '@/lib/phone';
 
 export interface ManagedGuest {
   readonly id: string;
@@ -549,8 +550,11 @@ export function GuestManagementPanel({
                               <p className="text-primary truncate font-semibold">
                                 {guest.fullName}
                               </p>
-                              <p className="text-muted-foreground mt-1 text-sm" dir="ltr">
-                                {guest.phone}
+                              <p
+                                className="text-muted-foreground mt-1 text-sm break-words"
+                                dir="ltr"
+                              >
+                                {formatStoredPhoneForDisplay(guest.phone)}
                               </p>
                               <p className="text-muted-foreground mt-1 text-xs">
                                 כמות: {guest.partySize}

@@ -7,6 +7,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert, Badge } from '@/components/ui/feedback';
+import { formatStoredPhoneForDisplay } from '@/lib/phone';
 import {
   buildPersonalInviteSendPath,
   buildPremiumWhatsAppMessage,
@@ -375,8 +376,8 @@ export function WhatsAppSendCenter({
                       </span>
                     )}
                   </div>
-                  <p className="text-muted-foreground mt-1 text-sm" dir="ltr">
-                    {guest.phone}
+                  <p className="text-muted-foreground mt-1 text-sm break-words" dir="ltr">
+                    {formatStoredPhoneForDisplay(guest.phone)}
                   </p>
                   <TrackingStatus guest={guest} />
                 </div>
