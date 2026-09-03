@@ -447,9 +447,10 @@ export function GuestManagementPanel({
               className="border-border mt-6 scroll-mt-24 space-y-4 border-t pt-6"
             >
               <div>
-                <h3 className="text-primary font-semibold">ייבוא קובץ</h3>
+                <h3 className="text-primary font-semibold">ייבוא מהיר מקובץ</h3>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  נתמכים Excel, CSV, TSV וטקסט, עד 5MB.
+                  שם וטלפון בלבד, מ-Excel/CSV/TSV, עד 5MB. לייבוא עם שולחן, מנה וצד — ייבוא ה-Excel
+                  המלא שבכלים המתקדמים.
                 </p>
               </div>
               <input type="hidden" name="eventId" value={eventId} />

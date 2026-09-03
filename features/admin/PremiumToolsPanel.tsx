@@ -87,7 +87,7 @@ export function PremiumToolsPanel({
   const body = (
     <div className="space-y-6">
       <Card padding="lg">
-        <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
+        <p className="text-eyebrow text-accent-strong font-semibold">ייבוא נתונים</p>
         <h2 className="text-h2 text-primary mt-2 font-bold">יבוא מ-Excel</h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
           מעלים XLSX ישירות מ-Excel, או CSV/TSV. עמודות החובה הן שם וטלפון; אפשר לצרף אימייל, צד,
@@ -262,7 +262,26 @@ export function PremiumToolsPanel({
     </div>
   );
 
-  if (!locked) return body;
+  if (!locked) {
+    // A paying host needs the premium block to read as its own labelled section, not as
+    // a wall of cards continuing the free guest list above it.
+    return (
+      <section aria-label="כלים מתקדמים" className="space-y-6">
+        <div>
+          <p className="text-eyebrow text-accent-strong font-semibold">
+            {isPro ? 'Pro · הפקה והושבה' : 'Premium'}
+          </p>
+          <h2 className="text-h2 text-primary mt-2 font-bold">כלים מתקדמים</h2>
+          <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+            {isPro
+              ? 'ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג וסטודיו הושבה מלא — מחוברים לרשימה שלכם.'
+              : 'ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג וניהול הושבה — מחוברים לרשימה שלכם.'}
+          </p>
+        </div>
+        {body}
+      </section>
+    );
+  }
 
   return (
     <section aria-label="כלים מתקדמים של Premium">
