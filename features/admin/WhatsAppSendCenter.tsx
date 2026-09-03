@@ -369,7 +369,7 @@ export function WhatsAppSendCenter({
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-primary font-semibold">{guest.fullName}</p>
+                    <p className="text-primary font-semibold break-words">{guest.fullName}</p>
                     {wasSent && (
                       <span className="bg-accent-soft text-accent-strong rounded-full px-2.5 py-1 text-xs font-medium">
                         סומן כנשלח
