@@ -84,11 +84,12 @@ export function PremiumToolsPanel({
   const body = (
     <div className="space-y-6">
       <Card padding="lg">
-        <p className="text-eyebrow text-accent-strong font-semibold">ייבוא נתונים</p>
-        <h2 className="text-h2 text-primary mt-2 font-bold">יבוא מ-Excel</h2>
+        <p className="text-eyebrow text-accent-strong font-semibold">ייבוא מלא</p>
+        <h2 className="text-h2 text-primary mt-2 font-bold">ייבוא מלא מ-Excel</h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          מעלים XLSX ישירות מ-Excel, או CSV/TSV. עמודות החובה הן שם וטלפון; אפשר לצרף אימייל, צד,
-          כמות, שולחן, מושב והערות. יבוא חוזר מעדכן לפי מספר הטלפון ולא יוצר כפילויות.
+          הייבוא המהיר שבניהול המוזמנים שומר שם וטלפון; כאן נכנסות גם כל שאר העמודות — אימייל, צד,
+          כמות, שולחן, מושב והערות — מ-XLSX, CSV או TSV. יבוא חוזר מעדכן לפי מספר הטלפון ולא יוצר
+          כפילויות.
         </p>
 
         <form action={importAction} className="mt-6 space-y-4">
@@ -269,8 +270,8 @@ export function PremiumToolsPanel({
           <h2 className="text-h2 text-primary mt-2 font-bold">כלים מתקדמים</h2>
           <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
             {isPro
-              ? 'ייבוא מ-Excel, מיתוג וסטודיו הושבה מלא — מחוברים לרשימה שלכם.'
-              : 'ייבוא מ-Excel, מיתוג וניהול הושבה — מחוברים לרשימה שלכם.'}
+              ? 'ייבוא מלא מ-Excel (עם שולחן ומנה), מיתוג וסטודיו הושבה מלא — מחוברים לרשימה שלכם.'
+              : 'ייבוא מלא מ-Excel (עם שולחן ומנה), מיתוג וניהול הושבה — מחוברים לרשימה שלכם.'}
           </p>
         </div>
         {body}
@@ -306,8 +307,8 @@ export function PremiumToolsPanel({
           <div>
             <h2 className="text-h2 text-primary font-bold">הכלים המתקדמים — עם Premium</h2>
             <p className="text-muted-foreground mt-1 max-w-xl text-sm leading-relaxed">
-              ייבוא מ-Excel, מיתוג מתקדם וניהול הושבה — הכול כאן, מחובר לרשימה שלכם. נפתח לעריכה עם
-              שדרוג המסלול.
+              ייבוא מלא מ-Excel (עם שולחן, מושב ומנה), מיתוג מתקדם וניהול הושבה — הכול כאן, מחובר
+              לרשימה שלכם. נפתח לעריכה עם שדרוג המסלול.
             </p>
           </div>
         </div>
