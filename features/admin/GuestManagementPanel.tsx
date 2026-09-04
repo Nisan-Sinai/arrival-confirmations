@@ -18,6 +18,7 @@ import {
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
+import { UI_MESSAGES } from '@/config/messages';
 import { formatStoredPhoneForDisplay } from '@/lib/phone';
 
 export interface ManagedGuest {
@@ -633,7 +634,8 @@ export function GuestManagementPanel({
                               rel="noopener noreferrer"
                               className={buttonClass({ variant: 'ghost', size: 'sm' })}
                             >
-                              WhatsApp
+                              WhatsApp{' '}
+                              <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
                             </a>
                           </div>
 

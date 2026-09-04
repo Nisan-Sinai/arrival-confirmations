@@ -8,6 +8,7 @@ import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
+import { UI_MESSAGES } from '@/config/messages';
 import { GuestFileImportForm } from '@/features/admin/GuestFileImportForm';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
@@ -155,7 +156,7 @@ export default async function AdminCustomerEventPage({
               rel="noopener noreferrer"
               className={buttonClass({ variant: 'outline' })}
             >
-              תצוגה מקדימה להזמנה
+              תצוגה מקדימה להזמנה <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
             </Link>
             <Link href="/admin/plans" className={buttonClass({ variant: 'ghost' })}>
               מסלול ותשלום

@@ -255,8 +255,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                       <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" />
                       <circle cx="12" cy="10" r="2.5" />
                     </svg>
-                    ניווט ב-Waze
-                    <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
+                    ניווט ב-Waze <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
                   </a>
                 )}
                 {event.google_maps_url !== null && (
@@ -266,8 +265,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Google Maps
-                    <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
+                    Google Maps <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
                   </a>
                 )}
               </div>

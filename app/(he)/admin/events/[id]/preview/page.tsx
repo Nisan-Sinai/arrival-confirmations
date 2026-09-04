@@ -7,6 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requirePlatformOwner } from '@/app/_lib/platformAdmin';
 import { buttonClass } from '@/components/ui/button';
 import { Badge } from '@/components/ui/feedback';
+import { UI_MESSAGES } from '@/config/messages';
 import { InvitationCard } from '@/features/invite/InvitationCard';
 import { brandingCssVariables, parsePublicBranding } from '@/lib/premiumEventTools';
 import { createPrivilegedClient } from '@/lib/server/supabase';
@@ -97,7 +98,8 @@ export default async function AdminCustomerInvitationPreviewPage({
               rel="noopener noreferrer"
               className={buttonClass()}
             >
-              פתיחת הקישור הציבורי
+              פתיחת הקישור הציבורי{' '}
+              <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
             </Link>
           )}
         </div>

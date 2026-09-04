@@ -53,19 +53,30 @@ const VTIMEZONE = [
   'END:VTIMEZONE',
 ].join('\r\n');
 
-/** `2026-09-04` + `19:00:00` → `20260904T190000`. */
-function stamp(date: string, time: string | null): string {
-  return `${date.replaceAll('-', '')}T${(time ?? '19:00:00').slice(0, 8).replaceAll(':', '')}`;
+/** `2026-09-04` → `20260904`. */
+function dateStamp(date: string): string {
+  return date.replaceAll('-', '');
 }
 
-/** Adds hours to a wall-clock stamp without leaving the event's zone. */
-function addHours(date: string, time: string | null, hours: number): string {
-  const [h = 19, m = 0] = (time ?? '19:00:00').split(':').map(Number);
-  const shifted = new Date(Date.UTC(2000, 0, 1, h + hours, m));
+/** `2026-09-04` + `19:00:00` → `20260904T190000`. */
+function timedStamp(date: string, time: string): string {
+  return `${dateStamp(date)}T${time.slice(0, 8).replaceAll(':', '')}`;
+}
+
+/** Adds whole days without depending on the browser's local time zone. */
+function addDays(date: string, days: number): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year!, month! - 1, day! + days));
+  return shifted.toISOString().slice(0, 10).replaceAll('-', '');
+}
+
+/** Adds hours to a wall-clock timestamp and rolls the date when it crosses midnight. */
+function addHours(date: string, time: string, hours: number): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time.split(':').map(Number);
+  const shifted = new Date(Date.UTC(year!, month! - 1, day!, hour! + hours, minute!));
   const pad = (n: number) => String(n).padStart(2, '0');
-  // Only the time rolls; an event starting at 23:00 would need the date to roll too,
-  // and a simcha that starts at 23:00 is not a case worth the extra arithmetic here.
-  return `${date.replaceAll('-', '')}T${pad(shifted.getUTCHours())}${pad(shifted.getUTCMinutes())}00`;
+  return `${shifted.getUTCFullYear()}${pad(shifted.getUTCMonth() + 1)}${pad(shifted.getUTCDate())}T${pad(shifted.getUTCHours())}${pad(shifted.getUTCMinutes())}00`;
 }
 
 /**
@@ -78,8 +89,9 @@ const escapeText = (value: string): string =>
 
 export function AddToCalendar({ uid, title, date, time, venueName, address }: AddToCalendarProps) {
   const location = `${venueName}, ${address}`;
-  const start = stamp(date, time);
-  const end = addHours(date, time, 4);
+  const allDay = time === null;
+  const start = allDay ? dateStamp(date) : timedStamp(date, time);
+  const end = allDay ? addDays(date, 1) : addHours(date, time, 4);
 
   const icsHref = useMemo(() => {
     const lines = [
@@ -94,9 +106,10 @@ export function AddToCalendar({ uid, title, date, time, venueName, address }: Ad
       // hydration mismatch on the href. Deriving it also means re-downloading the
       // file updates the existing calendar entry instead of creating a second one.
       `UID:${start}-${uid}@arrival-confirmations`,
-      `DTSTAMP:${start}Z`,
-      `DTSTART;TZID=${TZID}:${start}`,
-      `DTEND;TZID=${TZID}:${end}`,
+      `DTSTAMP:${dateStamp(date)}T000000Z`,
+      ...(allDay
+        ? [`DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`]
+        : [`DTSTART;TZID=${TZID}:${start}`, `DTEND;TZID=${TZID}:${end}`]),
       `SUMMARY:${escapeText(title)}`,
       `LOCATION:${escapeText(location)}`,
       'END:VEVENT',
@@ -105,7 +118,7 @@ export function AddToCalendar({ uid, title, date, time, venueName, address }: Ad
     // encodeURIComponent, not btoa: the content is Hebrew, and btoa throws on any
     // code point above U+00FF.
     return `data:text/calendar;charset=utf-8,${encodeURIComponent(lines.join('\r\n'))}`;
-  }, [start, end, title, location, uid]);
+  }, [allDay, date, start, end, title, location, uid]);
 
   const googleHref = useMemo(() => {
     const params = new URLSearchParams({
@@ -145,8 +158,7 @@ export function AddToCalendar({ uid, title, date, time, venueName, address }: Ad
         rel="noopener noreferrer"
         className={buttonClass({ variant: 'ghost', size: 'sm' })}
       >
-        Google Calendar
-        <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
+        Google Calendar <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
       </a>
     </div>
   );

@@ -7,6 +7,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert, Badge } from '@/components/ui/feedback';
+import { UI_MESSAGES } from '@/config/messages';
 import { formatStoredPhoneForDisplay } from '@/lib/phone';
 import {
   buildPersonalInviteSendPath,
@@ -392,7 +393,10 @@ export function WhatsAppSendCenter({
                     className={buttonClass({ variant: 'secondary', size: 'sm' })}
                   >
                     {isFirstSend ? 'שליחת לינק אישי' : 'שליחה מחדש'}
-                    <span className="sr-only"> עבור {guest.fullName}</span>
+                    <span className="sr-only">
+                      {' '}
+                      עבור {guest.fullName} ({UI_MESSAGES.a11y.externalLink})
+                    </span>
                   </a>
                 )}
               </li>

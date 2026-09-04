@@ -39,7 +39,7 @@ const MIN_PASSWORD_LENGTH = 12;
 
 export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL);
-  const { auth } = getDictionary(locale);
+  const { a11y, auth } = getDictionary(locale);
   const copy = auth.modes[mode];
   const passwordHint = auth.fields.passwordHint.replace('{min}', String(MIN_PASSWORD_LENGTH));
 
@@ -108,7 +108,7 @@ export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps
         <input type="hidden" name="locale" value={locale} />
 
         {showEmail && (
-          <Field label={auth.fields.email} required>
+          <Field label={auth.fields.email} required requiredLabel={a11y.requiredField}>
             <Input
               name="email"
               type="email"
@@ -126,6 +126,7 @@ export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps
           <Field
             label={mode === 'setPassword' ? auth.fields.newPassword : auth.fields.password}
             required
+            requiredLabel={a11y.requiredField}
             hint={isNewPassword ? passwordHint : undefined}
           >
             <Input
@@ -142,7 +143,7 @@ export function AuthForm({ action, mode, locale = defaultLocale }: AuthFormProps
         )}
 
         {mode === 'setPassword' && (
-          <Field label={auth.fields.confirmPassword} required>
+          <Field label={auth.fields.confirmPassword} required requiredLabel={a11y.requiredField}>
             <Input
               name="passwordConfirmation"
               type="password"

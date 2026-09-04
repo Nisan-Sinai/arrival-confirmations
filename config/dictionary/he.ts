@@ -46,6 +46,10 @@ export const he: Dictionary = {
   errors: {
     notFoundTitle: 'הדף לא נמצא',
     notFoundBody: 'ייתכן שהקישור שגוי או שהוסר.',
+    notFoundEyebrow: 'שגיאה 404',
+    notFoundInviteHint: 'אם הגעתם לכאן מקישור להזמנה, בקשו מבעלי השמחה קישור מעודכן.',
+    notFoundHome: 'לדף הבית',
+    notFoundLogin: 'כניסה לחשבון',
     genericTitle: 'משהו השתבש',
     genericBody: 'אירעה תקלה זמנית. נסו לרענן את הדף.',
     offlineTitle: 'אין חיבור לאינטרנט',

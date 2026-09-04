@@ -104,6 +104,21 @@ test.describe('bilingual public surface', () => {
     await expect(page).toHaveURL(/\/en\/signup$/);
   });
 
+  test('an unknown English path stays English and links back into the English site', async ({
+    page,
+  }) => {
+    const response = await page.goto('/en/this-page-does-not-exist');
+
+    expect(response?.status()).toBe(404);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-GB');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+    await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to the home page' })).toHaveAttribute(
+      'href',
+      '/en',
+    );
+  });
+
   for (const path of ENGLISH_PATHS) {
     test(`${path} remains usable on a 320px phone`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 720 });

@@ -2,7 +2,8 @@ import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button';
 import { Rule } from '@/components/ui/layout';
-import { UI_MESSAGES } from '@/config/messages';
+import { getDictionary } from '@/config/dictionary';
+import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 
 /**
  * The body of the 404 page (§13), shared by the two places a miss can surface.
@@ -18,23 +19,27 @@ import { UI_MESSAGES } from '@/config/messages';
  * purpose (§4.2) — telling them apart would make the id space enumerable one probe at a
  * time. So the wording suggests asking the host rather than implying the link was valid.
  */
-export function NotFoundContent() {
+export function NotFoundContent({ locale = defaultLocale }: { locale?: Locale }) {
+  const copy = getDictionary(locale).errors;
+
   return (
     <main id="main" className="flex flex-1 items-center justify-center px-5 py-20 sm:py-28">
       <div className="w-full max-w-lg text-center">
-        <p className="text-eyebrow text-accent-strong font-semibold">שגיאה 404</p>
-        <h1 className="text-h1 text-primary mt-4 font-bold">{UI_MESSAGES.errors.notFoundTitle}</h1>
+        <p className="text-eyebrow text-accent-strong font-semibold">{copy.notFoundEyebrow}</p>
+        <h1 className="text-h1 text-primary mt-4 font-bold">{copy.notFoundTitle}</h1>
         <Rule draw="load" className="my-7" />
         <p className="text-muted-foreground text-lead leading-relaxed">
-          {UI_MESSAGES.errors.notFoundBody} אם הגעתם לכאן מקישור להזמנה, בקשו מבעלי השמחה קישור
-          מעודכן.
+          {copy.notFoundBody} {copy.notFoundInviteHint}
         </p>
         <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <Link href="/" className={buttonClass({ size: 'lg' })}>
-            לדף הבית
+          <Link href={localePath(locale, '/')} className={buttonClass({ size: 'lg' })}>
+            {copy.notFoundHome}
           </Link>
-          <Link href="/login" className={buttonClass({ variant: 'outline', size: 'lg' })}>
-            כניסה לחשבון
+          <Link
+            href={localePath(locale, '/login')}
+            className={buttonClass({ variant: 'outline', size: 'lg' })}
+          >
+            {copy.notFoundLogin}
           </Link>
         </div>
       </div>

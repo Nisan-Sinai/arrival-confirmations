@@ -132,7 +132,8 @@ export function PricingCards({
                     variant: plan.highlighted ? 'primary' : 'outline',
                   })}
                 >
-                  {copy.choosePlan.replace('{plan}', plan.name)}
+                  {copy.choosePlan.replace('{plan}', plan.name)}{' '}
+                  <span className="sr-only"> ({dictionary.a11y.externalLink})</span>
                 </a>
               )}
             </div>

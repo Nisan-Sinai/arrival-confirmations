@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
+import { UI_MESSAGES } from '@/config/messages';
 import { prefixHebrew } from '@/lib/hebrew';
 
 /**
@@ -203,7 +204,7 @@ export function EventManagementActions({
         <ActionGroup title="שיתוף">
           <a href={inviteUrl} target="_blank" rel="noopener noreferrer" className={ACTION_CLASS}>
             {ICONS.preview}
-            צפייה בהזמנה
+            צפייה בהזמנה <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
           </a>
           <Button
             variant="outline"
@@ -216,7 +217,7 @@ export function EventManagementActions({
           </Button>
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={ACTION_CLASS}>
             {ICONS.whatsapp}
-            שליחה ב-WhatsApp
+            שליחה ב-WhatsApp <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
           </a>
         </ActionGroup>
       </div>

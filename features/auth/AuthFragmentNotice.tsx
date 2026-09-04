@@ -1,10 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Alert } from '@/components/ui/feedback';
 import { getDictionary } from '@/config/dictionary';
-import { defaultLocale, type Locale } from '@/lib/i18n';
+import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 
 /**
  * Surfaces an auth failure that Supabase reports in the URL fragment.
@@ -69,9 +70,12 @@ export function AuthFragmentNotice({ locale = defaultLocale }: { locale?: Locale
   return (
     <Alert tone="error" className="mx-auto w-full max-w-md">
       {message}{' '}
-      <a href="/forgot-password" className="font-semibold underline underline-offset-2">
+      <Link
+        href={localePath(locale, '/forgot-password')}
+        className="font-semibold underline underline-offset-2"
+      >
         {authNotice.requestNewLink}
-      </a>
+      </Link>
     </Alert>
   );
 }
