@@ -55,6 +55,10 @@ export const en: Dictionary = {
   errors: {
     notFoundTitle: 'Page not found',
     notFoundBody: 'The link may be wrong, or the page may have been removed.',
+    notFoundEyebrow: 'Error 404',
+    notFoundInviteHint: 'If this was an invitation link, ask the hosts for an up-to-date one.',
+    notFoundHome: 'Back to the home page',
+    notFoundLogin: 'Sign in to your account',
     genericTitle: 'Something went wrong',
     genericBody: 'A temporary problem. Try refreshing the page.',
     offlineTitle: 'No internet connection',

@@ -61,6 +61,10 @@ export type Dictionary = {
   errors: {
     notFoundTitle: string;
     notFoundBody: string;
+    notFoundEyebrow: string;
+    notFoundInviteHint: string;
+    notFoundHome: string;
+    notFoundLogin: string;
     genericTitle: string;
     genericBody: string;
     offlineTitle: string;

@@ -8,6 +8,7 @@ import { getPlanDefinition, isMonetizedEvent } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Container } from '@/components/ui/layout';
+import { UI_MESSAGES } from '@/config/messages';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
 import { WhatsAppSendCenter } from '@/features/admin/WhatsAppSendCenter';
@@ -248,7 +249,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             rel="noopener noreferrer"
             className={buttonClass({ variant: 'outline' })}
           >
-            צפייה בהזמנה
+            צפייה בהזמנה <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
           </Link>
         </div>
 

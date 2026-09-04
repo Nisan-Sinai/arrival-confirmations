@@ -1,3 +1,5 @@
+import { UI_MESSAGES } from '@/config/messages';
+
 /**
  * Where to send a gift.
  *
@@ -51,7 +53,7 @@ export function GiftLink({ url }: { readonly url: string | null }) {
           <path d="M12 8v12" />
           <path d="M12 8S9.5 8 8.5 7A2 2 0 0 1 12 5a2 2 0 0 1 3.5 2c-1 1-3.5 1-3.5 1Z" />
         </svg>
-        רוצים לשלוח מתנה?
+        רוצים לשלוח מתנה? <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
       </a>
       <p className="text-muted-foreground mt-2.5 text-xs">הקישור נפתח באפליקציית התשלום</p>
     </div>

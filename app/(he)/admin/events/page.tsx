@@ -6,6 +6,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
+import { UI_MESSAGES } from '@/config/messages';
 import { formatEventDate } from '@/lib/eventDate';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 
@@ -155,7 +156,8 @@ export default async function AdminEventsPage({
                         rel="noopener noreferrer"
                         className={buttonClass({ variant: 'outline', size: 'sm' })}
                       >
-                        תצוגה מקדימה להזמנה
+                        תצוגה מקדימה להזמנה{' '}
+                        <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
                       </Link>
                     </div>
                   </Card>

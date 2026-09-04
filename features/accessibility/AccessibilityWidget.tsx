@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { Locale } from '@/lib/i18n';
 
@@ -60,7 +60,22 @@ function getInitialSettings(): AccessibilitySettings {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (!saved) return DEFAULT_SETTINGS;
 
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } as AccessibilitySettings;
+    const parsed: unknown = JSON.parse(saved);
+    if (typeof parsed !== 'object' || parsed === null) return DEFAULT_SETTINGS;
+
+    const candidate = parsed as Partial<AccessibilitySettings>;
+    const fontScale =
+      typeof candidate.fontScale === 'number' && Number.isFinite(candidate.fontScale)
+        ? Math.min(140, Math.max(80, candidate.fontScale))
+        : DEFAULT_SETTINGS.fontScale;
+
+    return {
+      fontScale,
+      contrast: candidate.contrast === true,
+      grayscale: candidate.grayscale === true,
+      underlineLinks: candidate.underlineLinks === true,
+      reduceMotion: candidate.reduceMotion === true,
+    };
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -79,6 +94,8 @@ function applySettings(settings: AccessibilitySettings) {
 export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<AccessibilitySettings>(getInitialSettings);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const labels = copy[locale];
 
   useEffect(() => {
@@ -94,12 +111,17 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
   useEffect(() => {
     if (!open) return;
 
+    closeRef.current?.focus();
+    const trigger = triggerRef.current;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
 
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      trigger?.focus();
+    };
   }, [open]);
 
   const update = (patch: Partial<AccessibilitySettings>) => {
@@ -118,13 +140,14 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
         <section
           id="accessibility-panel"
           aria-labelledby="accessibility-title"
-          className="border-border bg-card text-card-foreground shadow-overlay fixed bottom-20 left-4 z-[60] w-[min(21rem,calc(100vw-2rem))] rounded-2xl border p-4"
+          className="border-border bg-card text-card-foreground shadow-overlay fixed bottom-20 left-4 z-[60] max-h-[calc(100dvh-6rem)] w-[min(21rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-2xl border p-4"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 id="accessibility-title" className="text-lg font-bold">
               {labels.title}
             </h2>
             <button
+              ref={closeRef}
               type="button"
               onClick={() => setOpen(false)}
               aria-label={labels.close}
@@ -201,6 +224,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
       ) : null}
 
       <button
+        ref={triggerRef}
         type="button"
         aria-label={labels.open}
         aria-expanded={open}

@@ -54,6 +54,7 @@ export function Field({
   error,
   hint,
   required = false,
+  requiredLabel = 'שדה חובה',
   className,
   children,
 }: {
@@ -61,6 +62,7 @@ export function Field({
   error?: string | undefined;
   hint?: string | undefined;
   required?: boolean;
+  requiredLabel?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -89,8 +91,8 @@ export function Field({
                   only the glyph leaves "star" or nothing at all in a screen reader. */}
               <span aria-hidden="true" className="text-accent-strong ms-1">
                 *
-              </span>
-              <span className="sr-only"> (שדה חובה)</span>
+              </span>{' '}
+              <span className="sr-only"> ({requiredLabel})</span>
             </>
           )}
         </label>

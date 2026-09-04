@@ -10,6 +10,7 @@ import { Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
 import { getEventTypePreset } from '@/config/eventTypes';
+import { UI_MESSAGES } from '@/config/messages';
 import { EventManagementActions } from '@/features/admin/EventManagementActions';
 import { describeTimeUntilEvent, formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { resolveRequestOrigin } from '@/lib/server/origin';
@@ -189,7 +190,8 @@ export default async function DashboardPage() {
                             rel="noopener noreferrer"
                             className={buttonClass({ size: 'sm' })}
                           >
-                            הפעלה ב-WhatsApp
+                            הפעלה ב-WhatsApp{' '}
+                            <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
                           </a>
                         </div>
                       </div>

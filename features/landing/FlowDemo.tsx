@@ -29,6 +29,7 @@ export function FlowDemo({
 }) {
   const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -38,7 +39,28 @@ export function FlowDemo({
     // the close button rather than wherever it happened to be on the page.
     closeRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = [
+        ...(dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), video[controls]',
+        ) ?? []),
+      ].filter((element) => element.tabIndex >= 0);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     // The page must not scroll behind the overlay.
@@ -85,6 +107,7 @@ export function FlowDemo({
 
       {open && (
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={playLabel}
@@ -104,6 +127,7 @@ export function FlowDemo({
             {/* No <track>: a silent screen recording, and the steps carry the words. */}
             <video
               src="/media/walkthrough.mp4"
+              tabIndex={0}
               className="max-h-[85vh] w-auto rounded-2xl"
               controls
               autoPlay

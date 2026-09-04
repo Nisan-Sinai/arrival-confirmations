@@ -78,8 +78,7 @@ export function ShareInvitation({
           >
             <path d="M21 11.5a8.4 8.4 0 0 1-12.6 7.3L3 20.5l1.8-5.2A8.5 8.5 0 1 1 21 11.5Z" />
           </svg>
-          שליחה בוואטסאפ
-          <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
+          שליחה בוואטסאפ <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
         </a>
 
         <Link
@@ -140,8 +139,7 @@ export function ShareInvitation({
             className: 'lg:w-auto',
           })}
         >
-          תצוגה מקדימה
-          <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
+          תצוגה מקדימה <span className="sr-only"> ({UI_MESSAGES.a11y.externalLink})</span>
         </a>
       </div>
 

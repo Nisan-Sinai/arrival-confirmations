@@ -1,6 +1,7 @@
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/feedback';
+import { UI_MESSAGES } from '@/config/messages';
 import { formatStoredPhoneForDisplay } from '@/lib/phone';
 
 type AttendanceStatus = 'attending' | 'not_attending' | 'maybe';
@@ -135,7 +136,8 @@ export function PersonalInviteSendList({ guests }: { guests: readonly PersonalIn
                 rel="noopener noreferrer"
                 className={buttonClass({ variant: 'secondary', size: 'sm' })}
               >
-                {guest.inviteLinkIssuedAt === null ? 'שליחת לינק אישי' : 'שליחה מחדש'}
+                {guest.inviteLinkIssuedAt === null ? 'שליחת לינק אישי' : 'שליחה מחדש'}{' '}
+                <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
               </a>
             </li>
           ))}
