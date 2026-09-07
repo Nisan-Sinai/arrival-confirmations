@@ -44,9 +44,7 @@ export async function adminCreateCustomerAction(formData: FormData): Promise<voi
     const alreadyExists = (usersData?.users ?? []).some(
       (user) => user.email?.toLowerCase() === email,
     );
-    redirect(
-      adminCustomersPath({ error: alreadyExists ? 'customer-exists' : 'customer-create' }),
-    );
+    redirect(adminCustomersPath({ error: alreadyExists ? 'customer-exists' : 'customer-create' }));
   }
 
   if (typeof data.user.email_confirmed_at !== 'string') {
