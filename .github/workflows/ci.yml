@@ -77,10 +77,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prettier
-        run: |
-          pnpm prettier --write 'app/(he)/admin/events/[id]/page.tsx' app/actions/manageAdminCustomerEvent.ts
-          git diff -- 'app/(he)/admin/events/[id]/page.tsx' app/actions/manageAdminCustomerEvent.ts
-          exit 1
+        run: pnpm format:check
 
       - name: ESLint
         run: pnpm lint
