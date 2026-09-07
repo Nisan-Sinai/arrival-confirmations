@@ -180,7 +180,6 @@ export async function adminUpdateCustomerEventAction(
   redirect(adminEventPath(eventId, { saved: 'event' }));
 }
 
-
 export async function adminTransferCustomerEventAction(formData: FormData): Promise<void> {
   const admin = await assertPlatformOwner();
   const eventId = eventIdFrom(formData);
@@ -192,11 +191,7 @@ export async function adminTransferCustomerEventAction(formData: FormData): Prom
   const privileged = createPrivilegedClient() as unknown as SupabaseClient;
   const [{ data: event, error: eventError }, { data: targetData, error: targetError }] =
     await Promise.all([
-      privileged
-        .from('events')
-        .select('id, owner_user_id, title')
-        .eq('id', eventId)
-        .maybeSingle(),
+      privileged.from('events').select('id, owner_user_id, title').eq('id', eventId).maybeSingle(),
       privileged.auth.admin.getUserById(targetUserId),
     ]);
 
