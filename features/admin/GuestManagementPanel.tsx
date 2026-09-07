@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom';
 import { adminImportPhoneContactsAction } from '@/app/actions/adminGuestImports';
 import {
   adminDeleteGuestAction,
+  adminResetGuestListAction,
   adminSaveGuestAction,
 } from '@/app/actions/manageAdminCustomerEvent';
 import {
@@ -13,6 +14,7 @@ import {
   toggleGuestCheckInAction,
   importGuestFileAction,
   importPhoneContactsAction,
+  resetGuestListAction,
   saveGuestAction,
 } from '@/app/actions/manageGuests';
 import { Button, buttonClass } from '@/components/ui/button';
@@ -75,6 +77,12 @@ function messageFor(
   if (saved === 'guest-added') return { tone: 'success', text: 'המוזמן נוסף בהצלחה.' };
   if (saved === 'guest-updated') return { tone: 'success', text: 'פרטי המוזמן נשמרו.' };
   if (saved === 'guest-deleted') return { tone: 'success', text: 'המוזמן הוסר מהרשימה.' };
+  if (saved === 'guest-merged') {
+    return { tone: 'success', text: 'המספר כבר היה ברשימה — הפרטים עודכנו לפי הרשומה החדשה.' };
+  }
+  if (saved === 'guests-reset') {
+    return { tone: 'success', text: `רשימת המוזמנים אופסה. הוסרו ${count || 'כל'} רשומות פעילות.` };
+  }
   if (saved === 'contacts') {
     // The skipped count is the whole reason this is worth reporting. The old parser
     // dropped anything without a comma in silence, so a host who pasted forty names and
@@ -92,6 +100,9 @@ function messageFor(
   if (error === 'guest-duplicate') return { tone: 'error', text: 'כבר קיים מוזמן עם המספר הזה.' };
   if (error === 'guest-save') return { tone: 'error', text: 'שמירת המוזמן נכשלה.' };
   if (error === 'guest-delete') return { tone: 'error', text: 'מחיקת המוזמן נכשלה.' };
+  if (error === 'guests-reset') {
+    return { tone: 'error', text: 'איפוס רשימת המוזמנים נכשל. לא בוצעו שינויים נוספים.' };
+  }
   if (error === 'contacts-none') {
     return { tone: 'error', text: 'לא נמצא אף מספר טלפון ברשימה שהודבקה.' };
   }
@@ -272,6 +283,7 @@ export function GuestManagementPanel({
 
   const saveAction = mode === 'admin' ? adminSaveGuestAction : saveGuestAction;
   const deleteAction = mode === 'admin' ? adminDeleteGuestAction : deleteGuestAction;
+  const resetAction = mode === 'admin' ? adminResetGuestListAction : resetGuestListAction;
   const contactAction =
     mode === 'admin' ? adminImportPhoneContactsAction : importPhoneContactsAction;
   const status = messageFor(saved, error, count, skipped);
@@ -498,6 +510,41 @@ export function GuestManagementPanel({
               )}
             </div>
           </div>
+
+          {guests.length > 0 && (
+            <div className="border-destructive/30 bg-destructive/5 mt-6 rounded-2xl border p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-foreground font-semibold">צריך להתחיל את הרשימה מחדש?</p>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    מחיקת כל המוזמנים מאפסת את הרשימה הפעילה, מבטלת קישורי הזמנה ישנים ומאפשרת לייבא
+                    את אנשי הקשר מחדש. אישורי הגעה שכבר התקבלו נשמרים.
+                  </p>
+                </div>
+                <form
+                  action={resetAction}
+                  onSubmit={(submitEvent) => {
+                    if (
+                      !window.confirm(
+                        `למחוק את כל ${guests.length} המוזמנים מהאירוע? הפעולה תאפס גם נתוני הושבה ומעקב ולא ניתן לבטל אותה.`,
+                      )
+                    ) {
+                      submitEvent.preventDefault();
+                    }
+                  }}
+                  className="shrink-0"
+                >
+                  <input type="hidden" name="eventId" value={eventId} />
+                  <SubmitButton
+                    idleLabel="מחיקת כל המוזמנים"
+                    pendingLabel="מוחק את כל המוזמנים..."
+                    variant="destructive"
+                    className="w-full sm:w-auto"
+                  />
+                </form>
+              </div>
+            </div>
+          )}
 
           {guests.length === 0 ? (
             <div className="border-border bg-secondary/20 mt-6 rounded-2xl border border-dashed p-6 text-center">
