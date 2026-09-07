@@ -4,9 +4,10 @@ import { notFound } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { requirePlatformOwner } from '@/app/_lib/platformAdmin';
-import { buttonClass } from '@/components/ui/button';
+import { adminTransferCustomerEventAction } from '@/app/actions/manageAdminCustomerEvent';
+import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge, EmptyState } from '@/components/ui/feedback';
+import { Alert, Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
 import { UI_MESSAGES } from '@/config/messages';
 import { GuestFileImportForm } from '@/features/admin/GuestFileImportForm';
@@ -62,31 +63,46 @@ export default async function AdminCustomerEventPage({
     .maybeSingle();
   if (eventError || event === null) notFound();
 
-  const [{ data: guests, error: guestsError }, { data: rsvps, error: rsvpsError }] =
-    await Promise.all([
-      privileged
-        .from('guests')
-        .select(
-          'id, full_name, phone, email, party_size, table_name, seat_number, notes, checked_in_at, invite_link_issued_at, invite_first_opened_at, invite_last_opened_at, invite_open_count, invite_last_response_at, invite_last_response_status',
-        )
-        .eq('event_id', id)
-        .eq('is_active', true)
-        .order('full_name'),
-      privileged
-        .from('rsvps')
-        .select(
-          'id, full_name, phone, attendance_status, adults_count, children_count, babies_count, dietary_requirements, notes, submitted_at',
-        )
-        .eq('event_id', id)
-        .order('submitted_at', { ascending: false }),
-    ]);
-  if (guestsError || rsvpsError) throw new Error('Admin event data failed to load');
-
-  let ownerEmail = 'ללא בעלים';
-  if (event.owner_user_id !== null) {
-    const { data: ownerData } = await privileged.auth.admin.getUserById(event.owner_user_id);
-    ownerEmail = ownerData.user?.email ?? event.owner_user_id;
+  const [
+    { data: guests, error: guestsError },
+    { data: rsvps, error: rsvpsError },
+    { data: usersData, error: usersError },
+  ] = await Promise.all([
+    privileged
+      .from('guests')
+      .select(
+        'id, full_name, phone, email, party_size, table_name, seat_number, notes, checked_in_at, invite_link_issued_at, invite_first_opened_at, invite_last_opened_at, invite_open_count, invite_last_response_at, invite_last_response_status',
+      )
+      .eq('event_id', id)
+      .eq('is_active', true)
+      .order('full_name'),
+    privileged
+      .from('rsvps')
+      .select(
+        'id, full_name, phone, attendance_status, adults_count, children_count, babies_count, dietary_requirements, notes, submitted_at',
+      )
+      .eq('event_id', id)
+      .order('submitted_at', { ascending: false }),
+    privileged.auth.admin.listUsers({ page: 1, perPage: 1_000 }),
+  ]);
+  if (guestsError || rsvpsError || usersError) {
+    throw new Error('Admin event data failed to load');
   }
+
+  const registeredUsers = (usersData.users ?? [])
+    .filter(
+      (user) =>
+        typeof user.email === 'string' &&
+        typeof user.email_confirmed_at === 'string' &&
+        user.id !== event.owner_user_id,
+    )
+    .sort((left, right) => (left.email ?? '').localeCompare(right.email ?? ''));
+
+  const ownerEmail =
+    event.owner_user_id === null
+      ? 'ללא בעלים'
+      : (usersData.users.find((user) => user.id === event.owner_user_id)?.email ??
+        event.owner_user_id);
 
   const guestRows = (guests ?? []).map((guest) => ({
     id: guest.id,
@@ -163,6 +179,88 @@ export default async function AdminCustomerEventPage({
             </Link>
           </div>
         </header>
+
+        <section aria-labelledby="admin-event-owner" className="mt-8">
+          <Card padding="lg">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-eyebrow text-accent-strong font-semibold">בעלות על האירוע</p>
+                <h2 id="admin-event-owner" className="text-h2 text-primary mt-2 font-bold">
+                  העברת האירוע ללקוח רשום
+                </h2>
+                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+                  בחר לקוח שנרשם ואימת את כתובת האימייל שלו. לאחר ההעברה האירוע יופיע
+                  בדשבורד של הלקוח והוא יוכל לנהל אותו כרגיל.
+                </p>
+              </div>
+
+              <form
+                action={adminTransferCustomerEventAction}
+                className="flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-end"
+              >
+                <input type="hidden" name="eventId" value={event.id} />
+                <div className="min-w-0 flex-1">
+                  <label
+                    htmlFor="target-event-owner"
+                    className="text-foreground mb-1.5 block text-sm font-medium"
+                  >
+                    לקוח חדש
+                  </label>
+                  <select
+                    id="target-event-owner"
+                    name="targetUserId"
+                    required
+                    defaultValue=""
+                    className="border-border-strong bg-background text-foreground min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
+                  >
+                    <option value="" disabled>
+                      בחר משתמש לפי אימייל
+                    </option>
+                    {registeredUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button type="submit" disabled={registeredUsers.length === 0}>
+                  העבר אירוע ללקוח
+                </Button>
+              </form>
+            </div>
+
+            {registeredUsers.length === 0 && (
+              <Alert tone="info" className="mt-5">
+                אין כרגע משתמש רשום ומאומת אחר שאפשר להעביר אליו את האירוע.
+              </Alert>
+            )}
+            {saved === 'owner-transferred' && (
+              <Alert tone="success" className="mt-5">
+                האירוע הועבר בהצלחה ללקוח החדש.
+              </Alert>
+            )}
+            {error === 'owner-required' && (
+              <Alert tone="error" className="mt-5">
+                יש לבחור לקוח לפני העברת האירוע.
+              </Alert>
+            )}
+            {error === 'owner-same' && (
+              <Alert tone="error" className="mt-5">
+                המשתמש שבחרת כבר מוגדר כבעל האירוע.
+              </Alert>
+            )}
+            {error === 'owner-user' && (
+              <Alert tone="error" className="mt-5">
+                לא ניתן להעביר את האירוע למשתמש הזה. ודא שהחשבון קיים והאימייל מאומת.
+              </Alert>
+            )}
+            {error === 'owner-transfer' && (
+              <Alert tone="error" className="mt-5">
+                העברת האירוע נכשלה. רענן את הדף ונסה שוב.
+              </Alert>
+            )}
+          </Card>
+        </section>
 
         <section aria-labelledby="admin-event-summary" className="mt-8">
           <h2 id="admin-event-summary" className="sr-only">
