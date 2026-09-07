@@ -8,6 +8,7 @@ vi.mock('@/app/actions/adminGuestImports', () => ({
 
 vi.mock('@/app/actions/manageAdminCustomerEvent', () => ({
   adminDeleteGuestAction: vi.fn(),
+  adminResetGuestListAction: vi.fn(),
   adminSaveGuestAction: vi.fn(),
 }));
 
@@ -15,6 +16,7 @@ vi.mock('@/app/actions/manageGuests', () => ({
   deleteGuestAction: vi.fn(),
   importGuestFileAction: vi.fn(),
   importPhoneContactsAction: vi.fn(),
+  resetGuestListAction: vi.fn(),
   saveGuestAction: vi.fn(),
   toggleGuestCheckInAction: vi.fn(),
 }));
@@ -96,6 +98,36 @@ describe('GuestManagementPanel', () => {
     expect(screen.getByLabelText('הדבקת רשימה')).toBeInTheDocument();
   });
 
+  it('offers a guarded reset-all action only when guests exist', async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} />);
+
+    const reset = screen.getByRole('button', { name: 'מחיקת כל המוזמנים' });
+    expect(reset).toBeInTheDocument();
+
+    await user.click(reset);
+    expect(confirmSpy).toHaveBeenCalledWith(
+      'למחוק את כל 2 המוזמנים מהאירוע? הפעולה תאפס גם נתוני הושבה ומעקב ולא ניתן לבטל אותה.',
+    );
+    confirmSpy.mockRestore();
+  });
+
+  it('explains that a repeated phone number was merged into the newer details', () => {
+    render(
+      <GuestManagementPanel
+        mode="owner"
+        eventId="e1"
+        guests={guests}
+        saved="guest-merged"
+      />,
+    );
+
+    expect(
+      screen.getByText('המספר כבר היה ברשימה — הפרטים עודכנו לפי הרשומה החדשה.'),
+    ).toBeInTheDocument();
+  });
+
   it('turns an empty list into clear next actions', () => {
     render(<GuestManagementPanel mode="owner" eventId="e1" guests={[]} />);
 
@@ -108,6 +140,7 @@ describe('GuestManagementPanel', () => {
       'href',
       '#phone-import',
     );
+    expect(screen.queryByRole('button', { name: 'מחיקת כל המוזמנים' })).not.toBeInTheDocument();
   });
 });
 
