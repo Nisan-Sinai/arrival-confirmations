@@ -40,6 +40,9 @@ describe('WhatsAppSendCenter', () => {
 
     // The free plan never routes through a template — the route keeps its own wording.
     expect(sendLink()).toHaveAttribute('href', '/share/guest/g1');
+    // Keep the hand-off in the current tab. Opening the issuing route in a new tab leaves
+    // an about:blank tab behind on iOS and in WhatsApp's embedded browser.
+    expect(sendLink()).not.toHaveAttribute('target');
     // No message-type / audience controls on the free plan; the bulk workflow is the upsell.
     expect(screen.queryByRole('combobox')).toBeNull();
     expect(screen.getByRole('link', { name: 'שדרוג ל-Premium' })).toBeInTheDocument();
@@ -51,6 +54,28 @@ describe('WhatsAppSendCenter', () => {
     expect(sendLink()).toHaveAttribute('href', '/share/guest/g1?kind=invitation');
     // Premium reveals the controls.
     expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'התחלת שליחה לכולם (1)' })).toBeInTheDocument();
+  });
+
+  it('builds the bulk-send queue from the currently filtered unsent guests', async () => {
+    window.localStorage.setItem('whatsapp-send-progress:e1:invitation', JSON.stringify(['g1']));
+    render(
+      <WhatsAppSendCenter
+        eventId="e1"
+        eventTitle="הברית"
+        guests={[guest(), guest({ id: 'g2', fullName: 'שרה כהן', phone: '050-7654321' })]}
+        premium
+      />,
+    );
+
+    const selects = screen.getAllByRole('combobox');
+    const scopeSelect = selects[1];
+    if (scopeSelect === undefined) throw new Error('the audience select is missing');
+    await userEvent.selectOptions(scopeSelect, 'not_sent');
+
+    expect(screen.getByRole('button', { name: 'התחלת שליחה לכולם (1)' })).toBeInTheDocument();
+    expect(screen.getByText('שרה כהן')).toBeInTheDocument();
+    expect(screen.queryByText('דוד כהן')).toBeNull();
   });
 
   it('sends a thank-you straight to WhatsApp with no token', async () => {
