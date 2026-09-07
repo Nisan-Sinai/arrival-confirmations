@@ -364,9 +364,17 @@ export function GuestManagementPanel({
             אנשי קשר מהטלפון
           </a>
           {mode === 'owner' && (
-            <a href="#file-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>
-              ייבוא קובץ
-            </a>
+            <>
+              <a href="#file-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+                ייבוא קובץ
+              </a>
+              <a
+                href="#whatsapp-send-center"
+                className={buttonClass({ variant: 'outline', size: 'sm' })}
+              >
+                שליחה ב-WhatsApp
+              </a>
+            </>
           )}
           <a href="#guest-list" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
             הרשימה ({guests.length})
