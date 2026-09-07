@@ -274,11 +274,13 @@ export async function adminSaveGuestAction(formData: FormData): Promise<void> {
     .from('guests')
     .select('id')
     .eq('event_id', eventId)
-    .eq('phone_normalized', normalized)
-    .eq('is_active', true);
+    .eq('phone_normalized', normalized);
   if (guestId !== null) duplicateQuery = duplicateQuery.neq('id', guestId);
   const { data: duplicate } = await duplicateQuery.maybeSingle();
-  if (duplicate !== null) redirect(adminEventPath(eventId, { error: 'guest-duplicate' }));
+  if (guestId !== null && duplicate !== null) {
+    redirect(adminEventPath(eventId, { error: 'guest-duplicate' }));
+  }
+  const effectiveGuestId = guestId ?? duplicate?.id ?? null;
 
   const values: GuestWrite = {
     full_name: fullName.slice(0, 200),
@@ -293,8 +295,8 @@ export async function adminSaveGuestAction(formData: FormData): Promise<void> {
     token_revoked_at: null,
   };
 
-  let savedGuestId = guestId;
-  if (guestId === null) {
+  let savedGuestId = effectiveGuestId;
+  if (effectiveGuestId === null) {
     const { data, error } = await privileged
       .from('guests')
       .insert({
@@ -319,7 +321,7 @@ export async function adminSaveGuestAction(formData: FormData): Promise<void> {
       .from('guests')
       .update(values)
       .eq('event_id', eventId)
-      .eq('id', guestId)
+      .eq('id', effectiveGuestId)
       .select('id');
     if (error || data === null || data.length === 0) {
       redirect(adminEventPath(eventId, { error: 'guest-save' }));
@@ -327,18 +329,101 @@ export async function adminSaveGuestAction(formData: FormData): Promise<void> {
   }
 
   if (savedGuestId === null) throw new Error('Guest save returned no id');
+  const mergedDuplicate = guestId === null && duplicate !== null;
   await recordAudit({
     adminUserId: admin.id,
-    action: guestId === null ? 'admin_guest_added' : 'admin_guest_updated',
+    action: mergedDuplicate
+      ? 'admin_guest_merged'
+      : guestId === null
+        ? 'admin_guest_added'
+        : 'admin_guest_updated',
     entityType: 'guest',
     entityId: savedGuestId,
-    metadata: { eventId, fullName: values.full_name, phoneNormalized: normalized },
+    metadata: {
+      eventId,
+      fullName: values.full_name,
+      phoneNormalized: normalized,
+      mergedDuplicate,
+    },
   });
 
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  redirect(adminEventPath(eventId, { saved: guestId === null ? 'guest-added' : 'guest-updated' }));
+  redirect(
+    adminEventPath(eventId, {
+      saved: mergedDuplicate ? 'guest-merged' : guestId === null ? 'guest-added' : 'guest-updated',
+    }),
+  );
+}
+
+export async function adminResetGuestListAction(formData: FormData): Promise<void> {
+  const admin = await assertPlatformOwner();
+  const eventId = eventIdFrom(formData);
+  if (eventId === null) throw new Error('Invalid admin guest reset request');
+
+  await requireExistingEvent(eventId);
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
+  const now = new Date().toISOString();
+
+  const { error: sessionError } = await privileged
+    .from('invite_sessions')
+    .update({ revoked_at: now })
+    .eq('event_id', eventId)
+    .is('revoked_at', null);
+  if (sessionError) redirect(adminEventPath(eventId, { error: 'guests-reset' }));
+
+  const { data, error } = await privileged
+    .from('guests')
+    .update({
+      is_active: false,
+      email: null,
+      party_size: 1,
+      family_side: null,
+      table_id: null,
+      table_name: null,
+      seat_number: null,
+      seating_group: null,
+      meal_preference: null,
+      accessibility_needs: null,
+      seating_priority: 0,
+      seat_locked: false,
+      notes: null,
+      checked_in_at: null,
+      import_source: null,
+      invite_token_hash: null,
+      token_expires_at: null,
+      token_revoked_at: now,
+      invite_link_issued_at: null,
+      invite_first_opened_at: null,
+      invite_last_opened_at: null,
+      invite_open_count: 0,
+      invite_last_response_at: null,
+      invite_last_response_status: null,
+    })
+    .eq('event_id', eventId)
+    .eq('is_active', true)
+    .select('id');
+
+  if (error || data === null) redirect(adminEventPath(eventId, { error: 'guests-reset' }));
+
+  await recordAudit({
+    adminUserId: admin.id,
+    action: 'admin_guest_list_reset',
+    entityType: 'event',
+    entityId: eventId,
+    metadata: {
+      eventId,
+      guestCount: data.length,
+      softDelete: true,
+      inviteSessionsRevoked: true,
+    },
+  });
+
+  revalidatePath(`/admin/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
+  redirect(adminEventPath(eventId, { saved: 'guests-reset', count: String(data.length) }));
 }
 
 export async function adminDeleteGuestAction(formData: FormData): Promise<void> {
