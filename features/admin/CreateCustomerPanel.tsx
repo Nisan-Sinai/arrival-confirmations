@@ -56,8 +56,7 @@ export function CreateCustomerPanel({
           <p className="text-eyebrow text-accent-strong font-semibold">ניהול לקוחות</p>
           <h2 className="text-h2 text-primary mt-2 font-bold">יצירת לקוח חדש</h2>
           <p className="text-muted-foreground mt-2 leading-relaxed">
-            הזינו אימייל וסיסמה. הלקוח ייווצר כמאושר ויוכל להתחבר מיד, בלי ללחוץ על
-            אישור במייל.
+            הזינו אימייל וסיסמה. הלקוח ייווצר כמאושר ויוכל להתחבר מיד, בלי ללחוץ על אישור במייל.
           </p>
         </div>
 
@@ -79,11 +78,7 @@ export function CreateCustomerPanel({
             />
           </Field>
 
-          <Field
-            label="סיסמה"
-            required
-            hint="לפחות 8 תווים. הסיסמה נשמרת ב-Supabase בצורה מוצפנת."
-          >
+          <Field label="סיסמה" required hint="לפחות 8 תווים. הסיסמה נשמרת ב-Supabase בצורה מוצפנת.">
             <Input
               type="password"
               name="password"
