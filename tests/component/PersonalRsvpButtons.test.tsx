@@ -35,7 +35,8 @@ describe('PersonalRsvpButtons', () => {
     );
 
     expect(screen.getByRole('combobox', { name: 'כמות האנשים שמגיעים' })).toHaveValue('5');
-    expect(screen.getByText(/מגיע\/ה · 5 אנשים/)).toBeInTheDocument();
+    const currentSelection = screen.getByText('מגיע/ה', { selector: 'strong' }).closest('p');
+    expect(currentSelection).toHaveTextContent('מגיע/ה · 5 אנשים');
   });
 
   it('uses the host party size as the initial suggestion when available', () => {
