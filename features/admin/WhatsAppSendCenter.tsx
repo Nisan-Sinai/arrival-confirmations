@@ -238,7 +238,7 @@ export function WhatsAppSendCenter({
   };
 
   return (
-    <Card padding="lg">
+    <Card id="whatsapp-send-center" padding="lg" className="scroll-mt-24">
       <p className="text-eyebrow text-accent-strong font-semibold">
         {premium ? 'שליחה ומעקב · WhatsApp' : 'קישורים אישיים · אחד-אחד'}
       </p>
