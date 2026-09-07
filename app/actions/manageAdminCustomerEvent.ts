@@ -180,6 +180,75 @@ export async function adminUpdateCustomerEventAction(
   redirect(adminEventPath(eventId, { saved: 'event' }));
 }
 
+
+export async function adminTransferCustomerEventAction(formData: FormData): Promise<void> {
+  const admin = await assertPlatformOwner();
+  const eventId = eventIdFrom(formData);
+  const targetUserId = optional(formData.get('targetUserId'))?.slice(0, 100) ?? null;
+
+  if (eventId === null) throw new Error('Invalid admin event transfer request');
+  if (targetUserId === null) redirect(adminEventPath(eventId, { error: 'owner-required' }));
+
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
+  const [{ data: event, error: eventError }, { data: targetData, error: targetError }] =
+    await Promise.all([
+      privileged
+        .from('events')
+        .select('id, owner_user_id, title')
+        .eq('id', eventId)
+        .maybeSingle(),
+      privileged.auth.admin.getUserById(targetUserId),
+    ]);
+
+  if (eventError || event === null) {
+    redirect(adminEventPath(eventId, { error: 'owner-transfer' }));
+  }
+
+  const targetUser = targetData.user;
+  if (
+    targetError ||
+    targetUser === null ||
+    typeof targetUser.email !== 'string' ||
+    typeof targetUser.email_confirmed_at !== 'string'
+  ) {
+    redirect(adminEventPath(eventId, { error: 'owner-user' }));
+  }
+
+  if (event.owner_user_id === targetUser.id) {
+    redirect(adminEventPath(eventId, { error: 'owner-same' }));
+  }
+
+  const { data: updated, error: updateError } = await privileged
+    .from('events')
+    .update({ owner_user_id: targetUser.id })
+    .eq('id', eventId)
+    .select('id');
+
+  if (updateError || updated === null || updated.length === 0) {
+    redirect(adminEventPath(eventId, { error: 'owner-transfer' }));
+  }
+
+  await recordAudit({
+    adminUserId: admin.id,
+    action: 'admin_event_owner_transferred',
+    entityType: 'event',
+    entityId: eventId,
+    metadata: {
+      previousOwnerUserId: event.owner_user_id,
+      newOwnerUserId: targetUser.id,
+      newOwnerEmail: targetUser.email,
+    },
+  });
+
+  revalidatePath('/admin/events');
+  revalidatePath('/admin/plans');
+  revalidatePath(`/admin/events/${eventId}`);
+  revalidatePath('/dashboard');
+  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
+  redirect(adminEventPath(eventId, { saved: 'owner-transferred' }));
+}
+
 export async function adminSaveGuestAction(formData: FormData): Promise<void> {
   const admin = await assertPlatformOwner();
   const eventId = eventIdFrom(formData);
