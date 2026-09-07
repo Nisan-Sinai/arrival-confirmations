@@ -6,6 +6,7 @@ import { submitPersonalRsvpAction, type PersonalRsvpState } from '@/app/actions/
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
+import { Field, Select } from '@/components/ui/field';
 
 const INITIAL_STATE: PersonalRsvpState = { status: 'idle', message: '' };
 
@@ -25,13 +26,17 @@ export function PersonalRsvpButtons({
   guestName,
   partySize,
   currentStatus,
+  currentAttendeeCount,
 }: {
   guestName: string;
   partySize: number;
   currentStatus: 'attending' | 'not_attending' | 'maybe' | null;
+  currentAttendeeCount: number | null;
 }) {
   const [state, formAction, isPending] = useActionState(submitPersonalRsvpAction, INITIAL_STATE);
   const selected = state.selected ?? currentStatus;
+  const selectedAttendeeCount = state.attendeeCount ?? currentAttendeeCount;
+  const defaultAttendeeCount = Math.min(30, Math.max(1, selectedAttendeeCount ?? partySize));
 
   return (
     <Card padding="lg" className="border-accent/30">
@@ -39,34 +44,57 @@ export function PersonalRsvpButtons({
         <p className="text-eyebrow text-accent-strong font-semibold">קישור אישי</p>
         <h2 className="text-h2 text-primary mt-2 font-bold">שלום {guestName}</h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          אין צורך למלא שם או טלפון. בחרו תשובה אחת וזה הכול.
-          {partySize > 1 ? ` ההזמנה משויכת ל-${partySize} אנשים.` : ''}
+          אין צורך למלא שם או טלפון. בחרו כמה אנשים מגיעים ואז סמנו את התשובה שלכם.
+          {partySize > 1 ? ` ההזמנה משויכת ל-${partySize} אנשים, ואפשר לעדכן לפי מי שמגיע בפועל.` : ''}
         </p>
       </div>
 
       {selected !== null && state.status !== 'success' && (
         <p className="border-border bg-secondary/30 mt-5 rounded-xl border px-4 py-3 text-center text-sm">
           הבחירה הנוכחית: <strong>{statusLabel(selected)}</strong>
+          {selected === 'attending' && selectedAttendeeCount !== null
+            ? ` · ${selectedAttendeeCount} ${selectedAttendeeCount === 1 ? 'אדם' : 'אנשים'}`
+            : ''}
         </p>
       )}
 
-      <form action={formAction} className="mt-6 grid gap-3 sm:grid-cols-3">
-        {OPTIONS.map((option) => (
-          <Button
-            key={option.value}
-            type="submit"
-            name="attendanceStatus"
-            value={option.value}
-            variant={option.variant}
-            size="lg"
+      <form action={formAction} className="mt-6 space-y-5">
+        <Field
+          label="כמה אנשים מגיעים?"
+          hint="בחרו את מספר האנשים שיגיעו בפועל. הבחירה נשמרת רק כשמסמנים מגיע/ה."
+        >
+          <Select
+            name="attendeeCount"
+            defaultValue={String(defaultAttendeeCount)}
             disabled={isPending}
-            aria-pressed={selected === option.value}
-            className="h-auto min-h-16 flex-col gap-1 py-3"
+            aria-label="כמות האנשים שמגיעים"
           >
-            <span>{option.label}</span>
-            <span className="text-xs font-normal opacity-80">{option.description}</span>
-          </Button>
-        ))}
+            {Array.from({ length: 30 }, (_, index) => index + 1).map((count) => (
+              <option key={count} value={count}>
+                {count === 1 ? '1 אדם' : `${count} אנשים`}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          {OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              type="submit"
+              name="attendanceStatus"
+              value={option.value}
+              variant={option.variant}
+              size="lg"
+              disabled={isPending}
+              aria-pressed={selected === option.value}
+              className="h-auto min-h-16 flex-col gap-1 py-3"
+            >
+              <span>{option.label}</span>
+              <span className="text-xs font-normal opacity-80">{option.description}</span>
+            </Button>
+          ))}
+        </div>
       </form>
 
       {isPending && (
