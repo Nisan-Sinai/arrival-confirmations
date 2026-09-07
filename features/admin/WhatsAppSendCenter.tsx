@@ -7,7 +7,6 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert, Badge } from '@/components/ui/feedback';
-import { UI_MESSAGES } from '@/config/messages';
 import { formatStoredPhoneForDisplay } from '@/lib/phone';
 import {
   buildPersonalInviteSendPath,
@@ -179,6 +178,10 @@ export function WhatsAppSendCenter({
   const [scope, setScope] = useState<PremiumCampaignScope>('unanswered');
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
+  const [openingGuestId, setOpeningGuestId] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [bulkGuestIds, setBulkGuestIds] = useState<readonly string[]>([]);
+  const [bulkIndex, setBulkIndex] = useState(-1);
 
   const selectKind = (next: PremiumMessageKind) => {
     setKind(next);
@@ -236,6 +239,62 @@ export function WhatsAppSendCenter({
     }
     return buildPersonalInviteSendPath({ guestId: guest.id, kind, note });
   };
+
+  const openWhatsApp = async (guest: SendCenterGuest): Promise<boolean> => {
+    const href = sendHref(guest);
+    if (href === null) return false;
+
+    setOpeningGuestId(guest.id);
+    setSendError(null);
+    try {
+      let whatsappUrl = href;
+      if (href.startsWith('/share/guest/')) {
+        const separator = href.includes('?') ? '&' : '?';
+        const response = await fetch(`${href}${separator}format=json`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!response.ok) throw new Error('invite_link_failed');
+        const payload = (await response.json()) as { whatsappUrl?: unknown };
+        if (typeof payload.whatsappUrl !== 'string') throw new Error('invalid_whatsapp_url');
+        whatsappUrl = payload.whatsappUrl;
+      }
+
+      markSent(guest.id);
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+      const destination = isMobile
+        ? whatsappUrl.replace(/^https:\/\/api\.whatsapp\.com\/send\?/, 'whatsapp://send?')
+        : whatsappUrl;
+      window.location.assign(destination);
+      return true;
+    } catch {
+      setSendError('לא הצלחנו לפתוח את WhatsApp. נסו שוב.');
+      return false;
+    } finally {
+      setOpeningGuestId(null);
+    }
+  };
+
+  const startBulkSend = async () => {
+    const queue = shownGuests.filter((guest) => sendHref(guest) !== null).map((guest) => guest.id);
+    if (queue.length === 0) return;
+    setBulkGuestIds(queue);
+    setBulkIndex(0);
+    const firstGuest = guests.find((guest) => guest.id === queue[0]);
+    if (firstGuest !== undefined) await openWhatsApp(firstGuest);
+  };
+
+  const openNextBulkGuest = async () => {
+    const nextIndex = bulkIndex + 1;
+    const nextGuestId = bulkGuestIds[nextIndex];
+    if (nextGuestId === undefined) return;
+    const nextGuest = guests.find((guest) => guest.id === nextGuestId);
+    if (nextGuest === undefined) return;
+    setBulkIndex(nextIndex);
+    await openWhatsApp(nextGuest);
+  };
+
+  const bulkInProgress = bulkGuestIds.length > 0 && bulkIndex < bulkGuestIds.length - 1;
+  const bulkCompleted = bulkGuestIds.length > 0 && bulkIndex === bulkGuestIds.length - 1;
 
   return (
     <Card id="whatsapp-send-center" padding="lg" className="scroll-mt-24">
@@ -332,6 +391,46 @@ export function WhatsAppSendCenter({
               </Button>
             )}
           </div>
+
+          <div className="border-accent/30 bg-accent-soft/25 mt-4 rounded-xl border p-4">
+            <p className="text-primary font-semibold">שליחה מרוכזת לפי הסינון הנוכחי</p>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+              התור כולל רק את {shownGuests.length} המוזמנים שמוצגים כעת. לאחר כל שליחה חוזרים לאתר
+              ופותחים את המוזמן הבא.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              {bulkInProgress ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={openingGuestId !== null}
+                  onClick={() => void openNextBulkGuest()}
+                >
+                  {openingGuestId !== null
+                    ? 'פותח WhatsApp…'
+                    : `פתיחת המוזמן הבא (${bulkIndex + 2} מתוך ${bulkGuestIds.length})`}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={shownGuests.length === 0 || openingGuestId !== null}
+                  onClick={() => void startBulkSend()}
+                >
+                  {openingGuestId !== null
+                    ? 'פותח WhatsApp…'
+                    : `התחלת שליחה לכולם (${shownGuests.length})`}
+                </Button>
+              )}
+              {bulkCompleted && (
+                <span className="text-accent-strong text-sm font-medium">
+                  כל המוזמנים בתור נפתחו
+                </span>
+              )}
+            </div>
+          </div>
         </>
       ) : (
         // The free plan sends one at a time. The bulk workflow is the upsell, shown here as
@@ -348,6 +447,12 @@ export function WhatsAppSendCenter({
             שדרוג ל-Premium
           </Link>
         </div>
+      )}
+
+      {sendError !== null && (
+        <Alert tone="error" className="mt-4">
+          {sendError}
+        </Alert>
       )}
 
       {guests.length === 0 ? (
@@ -387,16 +492,19 @@ export function WhatsAppSendCenter({
                 ) : (
                   <a
                     href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => markSent(guest.id)}
+                    aria-disabled={openingGuestId === guest.id}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (openingGuestId === null) void openWhatsApp(guest);
+                    }}
                     className={buttonClass({ variant: 'secondary', size: 'sm' })}
                   >
-                    {isFirstSend ? 'שליחת לינק אישי' : 'שליחה מחדש'}
-                    <span className="sr-only">
-                      {' '}
-                      עבור {guest.fullName} ({UI_MESSAGES.a11y.externalLink})
-                    </span>
+                    {openingGuestId === guest.id
+                      ? 'פותח WhatsApp…'
+                      : isFirstSend
+                        ? 'שליחת לינק אישי'
+                        : 'שליחה מחדש'}
+                    <span className="sr-only"> עבור {guest.fullName}, פתיחה ב־WhatsApp</span>
                   </a>
                 )}
               </li>
