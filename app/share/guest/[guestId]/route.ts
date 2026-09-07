@@ -118,5 +118,12 @@ export async function GET(
   const phone = guest.phone_normalized.replace(/^\+/, '');
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(message)}`;
 
+  // The send centre fetches the prepared URL before launching WhatsApp. This keeps the
+  // dashboard mounted underneath the native app, so returning from WhatsApp resumes the
+  // host's filtered list and bulk-send progress instead of leaving an about:blank tab.
+  if (requestUrl.searchParams.get('format') === 'json') {
+    return NextResponse.json({ whatsappUrl });
+  }
+
   return NextResponse.redirect(whatsappUrl);
 }
