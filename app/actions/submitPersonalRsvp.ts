@@ -16,6 +16,7 @@ export interface PersonalRsvpState {
   readonly status: 'idle' | 'success' | 'error';
   readonly message: string;
   readonly selected?: 'attending' | 'not_attending' | 'maybe';
+  readonly attendeeCount?: number;
 }
 
 const RATE_LIMIT_PER_WINDOW = 10;
@@ -27,8 +28,20 @@ function attendanceStatus(
   return value === 'attending' || value === 'not_attending' || value === 'maybe' ? value : null;
 }
 
-function successMessage(status: 'attending' | 'not_attending' | 'maybe'): string {
-  if (status === 'attending') return 'תודה! סימנו שתגיעו בשמחה.';
+function attendeeCount(value: FormDataEntryValue | null): number | null {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 30 ? parsed : null;
+}
+
+function successMessage(
+  status: 'attending' | 'not_attending' | 'maybe',
+  attendingPeople: number,
+): string {
+  if (status === 'attending') {
+    return attendingPeople === 1
+      ? 'תודה! סימנו שיגיע אדם אחד.'
+      : `תודה! סימנו שיגיעו ${attendingPeople} אנשים.`;
+  }
   if (status === 'not_attending') return 'תודה על העדכון. סימנו שלא תוכלו להגיע.';
   return 'תודה! סימנו שעדיין אינכם בטוחים.';
 }
@@ -40,6 +53,15 @@ export async function submitPersonalRsvpAction(
   const selected = attendanceStatus(formData.get('attendanceStatus'));
   if (selected === null) {
     return { status: 'error', message: 'יש לבחור אחת משלוש האפשרויות.' };
+  }
+
+  const requestedAttendeeCount = attendeeCount(formData.get('attendeeCount'));
+  if (selected === 'attending' && requestedAttendeeCount === null) {
+    return {
+      status: 'error',
+      message: 'יש לבחור כמה אנשים מגיעים.',
+      selected,
+    };
   }
 
   const context = await getActiveInviteContext();
@@ -102,7 +124,7 @@ export async function submitPersonalRsvpAction(
     };
   }
 
-  const adults = selected === 'not_attending' ? 0 : context.guest.partySize;
+  const adults = selected === 'attending' ? (requestedAttendeeCount ?? 1) : 0;
   const fingerprint = hashIdentity(
     JSON.stringify([context.sessionId, selected, adults]),
     TOKEN_PURPOSES.idempotency,
@@ -160,5 +182,10 @@ export async function submitPersonalRsvpAction(
   revalidatePath(`/dashboard/events/${context.event.id}/guests`);
   revalidatePath(`/admin/events/${context.event.id}`);
 
-  return { status: 'success', message: successMessage(selected), selected };
+  return {
+    status: 'success',
+    message: successMessage(selected, adults),
+    selected,
+    attendeeCount: selected === 'attending' ? adults : undefined,
+  };
 }
