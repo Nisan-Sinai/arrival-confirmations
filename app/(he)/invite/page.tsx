@@ -56,7 +56,7 @@ export default async function PersonalInvitePage() {
   const privileged = createPrivilegedClient();
   const { data: existingRsvp } = await privileged
     .from('rsvps')
-    .select('attendance_status')
+    .select('attendance_status, adults_count')
     .eq('event_id', context.event.id)
     .eq('guest_id', context.guest.id)
     .maybeSingle();
@@ -119,6 +119,9 @@ export default async function PersonalInvitePage() {
           guestName={context.guest.fullName}
           partySize={context.guest.partySize}
           currentStatus={existingRsvp?.attendance_status ?? null}
+          currentAttendeeCount={
+            existingRsvp?.attendance_status === 'attending' ? existingRsvp.adults_count : null
+          }
         />
 
         <GiftLink url={context.event.giftUrl} />
