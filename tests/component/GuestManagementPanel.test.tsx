@@ -114,14 +114,7 @@ describe('GuestManagementPanel', () => {
   });
 
   it('explains that a repeated phone number was merged into the newer details', () => {
-    render(
-      <GuestManagementPanel
-        mode="owner"
-        eventId="e1"
-        guests={guests}
-        saved="guest-merged"
-      />,
-    );
+    render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} saved="guest-merged" />);
 
     expect(
       screen.getByText('המספר כבר היה ברשימה — הפרטים עודכנו לפי הרשומה החדשה.'),
