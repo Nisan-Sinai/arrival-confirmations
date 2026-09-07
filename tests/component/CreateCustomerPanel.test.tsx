@@ -16,12 +16,7 @@ describe('CreateCustomerPanel', () => {
   });
 
   it('shows success after an approved customer is created', () => {
-    render(
-      <CreateCustomerPanel
-        createCustomerAction={vi.fn()}
-        saved="customer-created"
-      />,
-    );
+    render(<CreateCustomerPanel createCustomerAction={vi.fn()} saved="customer-created" />);
 
     expect(
       screen.getByText('הלקוח נוצר בהצלחה ומאושר כבר לכניסה. אין צורך באישור במייל.'),
@@ -29,12 +24,7 @@ describe('CreateCustomerPanel', () => {
   });
 
   it('shows a clear duplicate-account error', () => {
-    render(
-      <CreateCustomerPanel
-        createCustomerAction={vi.fn()}
-        error="customer-exists"
-      />,
-    );
+    render(<CreateCustomerPanel createCustomerAction={vi.fn()} error="customer-exists" />);
 
     expect(screen.getByText('כבר קיים משתמש עם כתובת האימייל הזאת.')).toBeInTheDocument();
   });
