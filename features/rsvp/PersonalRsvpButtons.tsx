@@ -45,7 +45,9 @@ export function PersonalRsvpButtons({
         <h2 className="text-h2 text-primary mt-2 font-bold">שלום {guestName}</h2>
         <p className="text-muted-foreground mt-3 leading-relaxed">
           אין צורך למלא שם או טלפון. בחרו כמה אנשים מגיעים ואז סמנו את התשובה שלכם.
-          {partySize > 1 ? ` ההזמנה משויכת ל-${partySize} אנשים, ואפשר לעדכן לפי מי שמגיע בפועל.` : ''}
+          {partySize > 1
+            ? ` ההזמנה משויכת ל-${partySize} אנשים, ואפשר לעדכן לפי מי שמגיע בפועל.`
+            : ''}
         </p>
       </div>
 
