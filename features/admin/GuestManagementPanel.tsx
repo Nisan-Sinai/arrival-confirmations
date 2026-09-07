@@ -517,8 +517,8 @@ export function GuestManagementPanel({
                 <div>
                   <p className="text-foreground font-semibold">צריך להתחיל את הרשימה מחדש?</p>
                   <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                    מחיקת כל המוזמנים מאפסת את הרשימה הפעילה, מבטלת קישורי הזמנה ישנים ומאפשרת
-                    לייבא את אנשי הקשר מחדש. אישורי הגעה שכבר התקבלו נשמרים.
+                    מחיקת כל המוזמנים מאפסת את הרשימה הפעילה, מבטלת קישורי הזמנה ישנים ומאפשרת לייבא
+                    את אנשי הקשר מחדש. אישורי הגעה שכבר התקבלו נשמרים.
                   </p>
                 </div>
                 <form
