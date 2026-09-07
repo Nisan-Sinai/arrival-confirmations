@@ -63,6 +63,10 @@ describe('GuestManagementPanel', () => {
       'href',
       '#phone-import',
     );
+    expect(screen.getByRole('link', { name: 'שליחה ב-WhatsApp' })).toHaveAttribute(
+      'href',
+      '#whatsapp-send-center',
+    );
     expect(screen.getByText('2 רשומות')).toBeInTheDocument();
     expect(screen.getByText('5 אנשים')).toBeInTheDocument();
     expect(screen.getByText('2 שובצו')).toBeInTheDocument();
