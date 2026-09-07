@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { requirePlatformOwner } from '@/app/_lib/platformAdmin';
+import { adminCreateCustomerAction } from '@/app/actions/manageAdminCustomers';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge, EmptyState } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
 import { UI_MESSAGES } from '@/config/messages';
+import { CreateCustomerPanel } from '@/features/admin/CreateCustomerPanel';
 import { formatEventDate } from '@/lib/eventDate';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 
@@ -23,10 +25,10 @@ const fieldClass =
 export default async function AdminEventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; saved?: string; error?: string }>;
 }) {
   await requirePlatformOwner();
-  const { q = '' } = await searchParams;
+  const { q = '', saved = '', error: actionError = '' } = await searchParams;
   const query = q.trim().toLowerCase();
   const privileged = createPrivilegedClient();
 
@@ -68,6 +70,12 @@ export default async function AdminEventsPage({
           </div>
           <Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>
         </div>
+
+        <CreateCustomerPanel
+          createCustomerAction={adminCreateCustomerAction}
+          saved={saved}
+          error={actionError}
+        />
 
         <form role="search" className="mt-8 flex max-w-2xl gap-3">
           <label className="sr-only" htmlFor="customer-event-search">
