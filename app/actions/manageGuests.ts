@@ -7,7 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { GuestImportError, importGuestsFromFile } from '@/lib/guestImport';
 import { parsePastedGuests } from '@/lib/guestPaste';
 import { normalizeIsraeliPhone, PhoneNormalizationError } from '@/lib/phone';
-import { createUserClient } from '@/lib/server/supabase';
+import { createPrivilegedClient, createUserClient } from '@/lib/server/supabase';
 import type { GuestInsert, GuestUpdate } from '@/types/guestDatabase.types';
 
 type GuestWrite = GuestUpdate;
@@ -42,21 +42,20 @@ async function requireOwnedEvent(eventId: string): Promise<SupabaseClient | null
   return error === null && data !== null ? guestDb : null;
 }
 
-async function duplicateExists(
+async function duplicateGuestId(
   supabase: SupabaseClient,
   eventId: string,
   normalized: string,
   excludedGuestId: string | null,
-): Promise<boolean> {
+): Promise<string | null> {
   let query = supabase
     .from('guests')
     .select('id')
     .eq('event_id', eventId)
-    .eq('phone_normalized', normalized)
-    .eq('is_active', true);
+    .eq('phone_normalized', normalized);
   if (excludedGuestId !== null) query = query.neq('id', excludedGuestId);
   const { data } = await query.maybeSingle();
-  return data !== null;
+  return data?.id ?? null;
 }
 
 export async function saveGuestAction(formData: FormData): Promise<void> {
@@ -83,9 +82,11 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
     throw error;
   }
 
-  if (await duplicateExists(supabase, eventId, normalized, guestId)) {
+  const duplicateId = await duplicateGuestId(supabase, eventId, normalized, guestId);
+  if (guestId !== null && duplicateId !== null) {
     redirect(eventPath(eventId, { error: 'guest-duplicate' }));
   }
+  const effectiveGuestId = guestId ?? duplicateId;
 
   const values: GuestWrite = {
     full_name: fullName.slice(0, 200),
@@ -100,7 +101,7 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
     token_revoked_at: null,
   };
 
-  if (guestId === null) {
+  if (effectiveGuestId === null) {
     const { error } = await supabase.from('guests').insert({
       event_id: eventId,
       full_name: values.full_name ?? '',
@@ -120,7 +121,7 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
       .from('guests')
       .update(values)
       .eq('event_id', eventId)
-      .eq('id', guestId)
+      .eq('id', effectiveGuestId)
       .select('id');
     if (error || data === null || data.length === 0) {
       redirect(eventPath(eventId, { error: 'guest-save' }));
@@ -129,7 +130,63 @@ export async function saveGuestAction(formData: FormData): Promise<void> {
 
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath(`/dashboard/events/${eventId}/guests`);
-  redirect(eventPath(eventId, { saved: guestId === null ? 'guest-added' : 'guest-updated' }));
+  const saved =
+    guestId !== null ? 'guest-updated' : duplicateId !== null ? 'guest-merged' : 'guest-added';
+  redirect(eventPath(eventId, { saved }));
+}
+
+export async function resetGuestListAction(formData: FormData): Promise<void> {
+  const eventId = optional(formData.get('eventId'));
+  if (eventId === null) throw new Error('Invalid guest reset request');
+
+  const supabase = await requireOwnedEvent(eventId);
+  if (supabase === null) redirect('/dashboard');
+
+  const now = new Date().toISOString();
+  const privileged = createPrivilegedClient() as unknown as SupabaseClient;
+  const { error: sessionError } = await privileged
+    .from('invite_sessions')
+    .update({ revoked_at: now })
+    .eq('event_id', eventId)
+    .is('revoked_at', null);
+  if (sessionError) redirect(eventPath(eventId, { error: 'guests-reset' }));
+
+  const { data, error } = await supabase
+    .from('guests')
+    .update({
+      is_active: false,
+      email: null,
+      party_size: 1,
+      family_side: null,
+      table_id: null,
+      table_name: null,
+      seat_number: null,
+      seating_group: null,
+      meal_preference: null,
+      accessibility_needs: null,
+      seating_priority: 0,
+      seat_locked: false,
+      notes: null,
+      checked_in_at: null,
+      import_source: null,
+      invite_token_hash: null,
+      token_expires_at: null,
+      token_revoked_at: now,
+      invite_link_issued_at: null,
+      invite_first_opened_at: null,
+      invite_last_opened_at: null,
+      invite_open_count: 0,
+      invite_last_response_at: null,
+      invite_last_response_status: null,
+    })
+    .eq('event_id', eventId)
+    .eq('is_active', true)
+    .select('id');
+  if (error || data === null) redirect(eventPath(eventId, { error: 'guests-reset' }));
+
+  revalidatePath(`/dashboard/events/${eventId}`);
+  revalidatePath(`/dashboard/events/${eventId}/guests`);
+  redirect(eventPath(eventId, { saved: 'guests-reset', count: String(data.length) }));
 }
 
 export async function deleteGuestAction(formData: FormData): Promise<void> {
