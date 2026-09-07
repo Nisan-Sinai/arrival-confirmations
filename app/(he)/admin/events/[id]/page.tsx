@@ -189,8 +189,8 @@ export default async function AdminCustomerEventPage({
                   העברת האירוע ללקוח רשום
                 </h2>
                 <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-                  בחר לקוח שנרשם ואימת את כתובת האימייל שלו. לאחר ההעברה האירוע יופיע
-                  בדשבורד של הלקוח והוא יוכל לנהל אותו כרגיל.
+                  בחר לקוח שנרשם ואימת את כתובת האימייל שלו. לאחר ההעברה האירוע יופיע בדשבורד של
+                  הלקוח והוא יוכל לנהל אותו כרגיל.
                 </p>
               </div>
 
