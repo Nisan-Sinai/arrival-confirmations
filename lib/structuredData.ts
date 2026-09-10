@@ -22,7 +22,8 @@ import { PUBLISHER_URL, SITE_ORIGIN, absoluteUrl } from '@/lib/seo';
  *     missing name guarantees the fallback rather than merely risking it.
  *   - `Organization` is the entity record. Without one, Google resolved the publisher's
  *     name against an unrelated business and published a summary saying the studio is
- *     not connected to RSVP systems. `description` and `sameAs` are the correction.
+ *     not connected to RSVP systems. `description`, `logo` and `sameAs` keep that entity
+ *     unambiguous for crawlers.
  */
 export function structuredData(locale: Locale) {
   const { landing, site, footer } = getDictionary(locale);
@@ -39,6 +40,7 @@ export function structuredData(locale: Locale) {
         '@id': organizationId,
         name: footer.builderName,
         url: SITE_ORIGIN,
+        logo: absoluteUrl('/favicon.ico'),
         description: site.publisherDescription,
         areaServed: 'IL',
         knowsLanguage: ['he-IL', 'en-GB'],
