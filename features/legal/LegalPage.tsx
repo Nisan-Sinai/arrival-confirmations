@@ -44,16 +44,30 @@ export type LegalContent = {
   readonly sections: readonly LegalSection[];
 };
 
+function legalSeo(locale: Locale, meta: LegalContent['meta']) {
+  if (locale === 'he') {
+    return {
+      title: `${meta.title} | אישורי הגעה לאירועים`,
+      description: `${meta.description} מידע נוסף על מערכת אישורי ההגעה לאירועים של ניסן סיני טכנולוגיות.`,
+    };
+  }
+
+  return {
+    title: `${meta.title} | Arrival Confirmations`,
+    description: meta.description,
+  };
+}
+
 /** Metadata for a legal page, pairing the two languages with `hreflang`. */
 export function buildLegalMetadata(
   locale: Locale,
   path: string,
   content: Record<Locale, LegalContent>,
 ): Metadata {
-  const { meta } = content[locale];
+  const seo = legalSeo(locale, content[locale].meta);
   return {
-    title: meta.title,
-    description: meta.description,
+    title: { absolute: seo.title },
+    description: seo.description,
     alternates: { canonical: localePath(locale, path), languages: languageAlternates(path) },
   };
 }
@@ -115,9 +129,21 @@ export function LegalPageBody({
   tokens?: Record<string, string>;
 }) {
   const page = content[locale];
+  const seo = legalSeo(locale, page.meta);
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: seo.title,
+    description: seo.description,
+    inLanguage: locale === 'he' ? 'he-IL' : 'en-GB',
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
+      />
       <SiteHeader locale={locale} showLanguageSwitch />
       <main id="main" className="flex-1 py-12 sm:py-16">
         <Container width="prose">
