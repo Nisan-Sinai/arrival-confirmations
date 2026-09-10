@@ -12,7 +12,9 @@ onlyBuiltDependencies:
 # Verify every change with `pnpm audit`, the production build and the complete CI suite.
 overrides:
   postcss: '^8.5.18'
-  'next>sharp': '0.35.3'
+  # sharp 0.35.3 is affected by the libheif advisories reported by npm audit;
+  # 0.35.4 is the first patched release and remains compatible with Next 16.3.x.
+  'next>sharp': '0.35.4'
   'brace-expansion@<1.1.18': '1.1.18'
   'brace-expansion@>=4.0.0 <5.0.9': '5.0.9'
   # Two advisories published against 6.14.2–6.15.3 (GHSA-x5fp-wj9c-mxmx and the
