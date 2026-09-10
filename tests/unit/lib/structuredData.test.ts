@@ -73,6 +73,10 @@ describe('Organization', () => {
     expect(node(locale, 'Organization').sameAs).toEqual([PUBLISHER_URL]);
   });
 
+  it.each(locales)('publishes an absolute logo URL for search engines (%s)', (locale) => {
+    expect(node(locale, 'Organization').logo).toBe(`${SITE_ORIGIN}/favicon.ico`);
+  });
+
   it.each(locales)('publishes a dialable support number in E.164 (%s)', (locale) => {
     const contact = node(locale, 'Organization').contactPoint as Node;
     expect(contact.telephone).toMatch(/^\+972\d{9}$/);
