@@ -7,6 +7,7 @@ import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
 import { languageAlternates, localePath, type Locale } from '@/lib/i18n';
+import { absoluteUrl } from '@/lib/seo';
 
 /**
  * The pricing page, shared by both locales (§12).
@@ -52,7 +53,8 @@ const CONTENT: Record<Locale, PricingContent> = {
   en: {
     meta: {
       title: 'Pricing for event RSVPs',
-      description: 'Basic at ₪99, Premium at ₪199 or Pro at ₪349 — paid once, per event.',
+      description:
+        'Compare Basic, Premium and Pro RSVP plans for one event, with a free trial and a single activation payment from ₪99.',
     },
     eyebrow: 'Simple, clear pricing',
     title: 'Paid once, per event',
@@ -88,9 +90,21 @@ export function buildPricingMetadata(locale: Locale): Metadata {
 
 export function PricingPageBody({ locale }: { locale: Locale }) {
   const content = CONTENT[locale];
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: content.meta.title,
+    description: content.meta.description,
+    url: absoluteUrl(localePath(locale, '/pricing')),
+    inLanguage: locale === 'he' ? 'he-IL' : 'en-GB',
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
+      />
       <SiteHeader locale={locale} showLanguageSwitch />
       <main id="main" className="flex-1">
         <Section as="div" spacing="sm">
