@@ -34,5 +34,5 @@ overrides:
   # a green `pnpm audit` is not on its own evidence that nothing is outstanding — check
   # the Dependabot alerts as well.
   'fast-uri@>=3.0.0 <3.1.6': '3.1.6'
-  # GHSA-2883-xcg3-v3hh is patched in 4.3.2; keep every ESLint path above it.
+  # GHSA-2883-xcg3-v3hh is patched in 4.3.2; keep every ESLint path on the patched release.
   'js-yaml@>=4.0.0 <4.3.2': '4.3.2'
