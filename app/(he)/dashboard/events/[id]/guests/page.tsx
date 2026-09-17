@@ -6,8 +6,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getEventLicense } from '@/app/_lib/eventLicenses';
 import { getPlanDefinition, isMonetizedEvent } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
+import { BackLink, PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat';
 import { UI_MESSAGES } from '@/config/messages';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
@@ -74,16 +76,6 @@ interface SeatingTableRow {
   readonly zone: string | null;
   readonly notes: string | null;
   readonly sort_order: number;
-}
-
-function SummaryCard({ label, value, hint }: { label: string; value: number; hint: string }) {
-  return (
-    <Card padding="md" className="min-w-0">
-      <p className="text-muted-foreground text-sm">{label}</p>
-      <p className="text-primary mt-1 text-3xl font-bold tabular-nums">{value}</p>
-      <p className="text-muted-foreground mt-1 text-xs">{hint}</p>
-    </Card>
-  );
 }
 
 export default async function GuestPage({ params, searchParams }: GuestPageProps) {
@@ -225,42 +217,58 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
   }));
 
   return (
-    <main id="main" className="flex-1 py-10 sm:py-14">
+    <main id="main" className="flex-1 py-8 sm:py-12">
       <Container width="wide">
-        <Link
-          href={`/dashboard/events/${id}`}
-          className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 rounded-sm text-sm"
-        >
-          חזרה לאירוע
-        </Link>
+        <BackLink href={`/dashboard/events/${id}`}>חזרה לאירוע</BackLink>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-eyebrow text-accent-strong font-semibold">מוזמנים וכלים מתקדמים</p>
-            <h1 className="text-h1 text-primary mt-2 font-bold">{event.title}</h1>
-            <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              הוספה ועריכה ידנית, ייבוא אנשי קשר, שליחת קישורים אישיים ומעקב — ומתחת, כל הכלים
-              המתקדמים: ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג והושבה.
-            </p>
-          </div>
-          <Link
-            href={`/e/${event.public_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClass({ variant: 'outline' })}
-          >
-            צפייה בהזמנה <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
-          </Link>
-        </div>
+        <PageHeader
+          className="mt-4"
+          eyebrow="מוזמנים וכלים מתקדמים"
+          title={event.title}
+          lede="הוספה ועריכה ידנית, ייבוא אנשי קשר, שליחת קישורים אישיים ומעקב — ומתחת, כל הכלים המתקדמים: ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג והושבה."
+          actions={
+            <Link
+              href={`/e/${event.public_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass({ variant: 'outline' })}
+            >
+              <Icon name="eye" />
+              צפייה בהזמנה <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
+            </Link>
+          }
+        />
 
         <section
           aria-label="סיכום רשימת המוזמנים"
           className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4"
         >
-          <SummaryCard label="רשומות" value={guestRows.length} hint="אנשי קשר פעילים" />
-          <SummaryCard label="סה״כ אנשים" value={totalPeople} hint="לפי הכמות בכל רשומה" />
-          <SummaryCard label="פתחו הזמנה" value={openedInvites} hint="קישור אישי שנפתח" />
-          <SummaryCard label="כבר ענו" value={answeredInvites} hint="מגיעים, לא מגיעים או אולי" />
+          <StatCard
+            label="רשומות"
+            value={guestRows.length}
+            hint="אנשי קשר פעילים"
+            icon={<Icon name="contacts" />}
+          />
+          <StatCard
+            label="סה״כ אנשים"
+            value={totalPeople}
+            hint="לפי הכמות בכל רשומה"
+            icon={<Icon name="users" />}
+          />
+          <StatCard
+            label="פתחו הזמנה"
+            value={openedInvites}
+            hint="קישור אישי שנפתח"
+            icon={<Icon name="eye" />}
+            progress={guestRows.length === 0 ? null : (openedInvites / guestRows.length) * 100}
+          />
+          <StatCard
+            label="כבר ענו"
+            value={answeredInvites}
+            hint="מגיעים, לא מגיעים או אולי"
+            icon={<Icon name="check-circle" />}
+            progress={guestRows.length === 0 ? null : (answeredInvites / guestRows.length) * 100}
+          />
         </section>
 
         <div className="mt-8 space-y-6">

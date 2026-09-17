@@ -11,7 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CheckboxField, Field, Input, RadioCard, Select, Textarea } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { Icon, type IconName } from '@/components/ui/icons';
 import { Rule } from '@/components/ui/layout';
+import { NumberStepper } from '@/components/ui/stepper';
 import { UI_MESSAGES } from '@/config/messages';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { AddToCalendar } from '@/features/invite/AddToCalendar';
@@ -38,11 +40,16 @@ const COUNT_FIELDS = [
   { name: 'babiesCount', label: 'תינוקות', fallback: '0' },
 ] as const;
 
-const STATUS_OPTIONS = [
-  { value: 'attending', label: 'נגיע בשמחה' },
-  { value: 'maybe', label: 'עדיין לא בטוח' },
-  { value: 'not_attending', label: 'לא נוכל להגיע' },
-] as const;
+const STATUS_OPTIONS: readonly {
+  value: string;
+  label: string;
+  description: string;
+  icon: IconName;
+}[] = [
+  { value: 'attending', label: 'נגיע בשמחה', description: 'נשמור לכם מקום', icon: 'heart' },
+  { value: 'maybe', label: 'עדיין לא בטוח', description: 'אפשר לעדכן אחר כך', icon: 'help-circle' },
+  { value: 'not_attending', label: 'לא נוכל להגיע', description: 'תודה שהודעתם', icon: 'x' },
+];
 
 interface RsvpFormProps {
   readonly eventId: string;
@@ -240,6 +247,8 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
                 name="attendanceStatus"
                 value={option.value}
                 label={option.label}
+                description={option.description}
+                icon={<Icon name={option.icon} />}
                 defaultChecked={option.value === status}
                 onChange={setStatus}
               />
@@ -255,17 +264,19 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
         {showCounts && (
           <fieldset>
             <legend className="text-primary text-sm font-semibold">כמה תגיעו?</legend>
+            {/* Steppers rather than bare number inputs: two 44px buttons need neither a
+                keyboard nor the tiny native spinner, which matters on a phone held by a
+                guest who may be seventy. The input inside is unchanged. */}
             <div className="mt-2 grid grid-cols-3 gap-3">
               {COUNT_FIELDS.map((field) => (
                 <Field key={field.name} label={field.label} error={error(field.name)}>
-                  <Input
+                  <NumberStepper
                     name={field.name}
-                    type="number"
                     min={0}
                     max={30}
-                    inputMode="numeric"
-                    className="text-center"
                     defaultValue={previous?.[field.name] ?? field.fallback}
+                    decrementLabel={`פחות ${field.label}`}
+                    incrementLabel={`עוד ${field.label}`}
                   />
                 </Field>
               ))}
@@ -322,7 +333,7 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
           <Alert tone="error">{state.message}</Alert>
         )}
 
-        <Button type="submit" size="lg" block disabled={isPending}>
+        <Button type="submit" size="lg" block loading={isPending}>
           {isPending ? UI_MESSAGES.rsvp.submitting : UI_MESSAGES.rsvp.submit}
         </Button>
 

@@ -6,6 +6,8 @@ import { deleteRsvpAction, updateRsvpAction, type ManageRsvpState } from '@/app/
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert, Badge } from '@/components/ui/feedback';
+import { IconButton } from '@/components/ui/icon-button';
+import { Icon } from '@/components/ui/icons';
 import { formatIsraeliPhoneForDisplay } from '@/lib/phone';
 
 /**
@@ -77,7 +79,7 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
   const total = rsvp.adults_count + rsvp.children_count + rsvp.babies_count;
 
   return (
-    <li className="border-border bg-card lg:hover:bg-secondary/25 rounded-xl border p-4 transition-colors lg:rounded-none lg:border-x-0 lg:border-t-0 lg:px-3 lg:py-3.5">
+    <li className="lg:hover:bg-secondary/25 p-4 transition-colors lg:px-4 lg:py-3">
       <div className="grid gap-3 lg:grid-cols-[1.4fr_1.1fr_0.8fr_0.9fr_1.5fr_auto] lg:items-center lg:gap-4">
         <Cell label="שם">
           <span className="text-foreground font-semibold">{rsvp.full_name}</span>
@@ -86,15 +88,16 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
         <Cell label="טלפון">
           <a
             href={`tel:${rsvp.phone_normalized.replace(/[^\d+]/g, '')}`}
-            className="text-primary rounded-sm underline-offset-4 hover:underline"
+            className="text-primary inline-flex items-center gap-1.5 rounded-sm underline-offset-4 hover:underline"
             dir="ltr"
           >
+            <Icon name="phone" className="text-muted-foreground size-3.5" />
             {formatIsraeliPhoneForDisplay(rsvp.phone_normalized)}
           </a>
         </Cell>
 
         <Cell label="סטטוס">
-          <Badge tone={STATUS_TONES[rsvp.attendance_status]}>
+          <Badge tone={STATUS_TONES[rsvp.attendance_status]} dot>
             {STATUS_LABELS[rsvp.attendance_status]}
           </Badge>
         </Cell>
@@ -126,28 +129,15 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
         </Cell>
 
         <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-primary size-9"
+          <IconButton
+            compact
+            label={`עריכת התשובה של ${rsvp.full_name}`}
+            icon={<Icon name="edit" />}
             aria-expanded={editing}
             aria-controls={editorId}
+            className="text-muted-foreground hover:text-primary"
             onClick={() => setEditing((open) => !open)}
-          >
-            <span className="sr-only">עריכת התשובה של {rsvp.full_name}</span>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.7}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4.5"
-            >
-              <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-          </Button>
+          />
 
           {confirmingDelete ? (
             // Two steps, no `window.confirm`: a native dialog is unstyleable, blocks
@@ -163,26 +153,13 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
               </Button>
             </form>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive size-9"
+            <IconButton
+              compact
+              label={`מחיקת התשובה של ${rsvp.full_name}`}
+              icon={<Icon name="trash" />}
+              className="text-muted-foreground hover:text-destructive"
               onClick={() => setConfirmingDelete(true)}
-            >
-              <span className="sr-only">מחיקת התשובה של {rsvp.full_name}</span>
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.7}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-4.5"
-              >
-                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
-              </svg>
-            </Button>
+            />
           )}
         </div>
       </div>
@@ -232,7 +209,7 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
             )}
 
             <div className="flex gap-2">
-              <Button type="submit" size="sm" disabled={isPending}>
+              <Button type="submit" size="sm" loading={isPending}>
                 {isPending ? 'שומר…' : 'שמירת השינויים'}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>

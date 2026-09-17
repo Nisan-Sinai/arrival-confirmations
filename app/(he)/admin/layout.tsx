@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <>
       <ConsoleHeader email={owner.email ?? null} isPlatformOwner signOut={signOutAction} />
-      {children}
+      <div className="console-grid flex flex-1 flex-col">{children}</div>
     </>
   );
 }

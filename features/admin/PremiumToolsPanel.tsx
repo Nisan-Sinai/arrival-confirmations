@@ -13,6 +13,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { Icon } from '@/components/ui/icons';
 import { ProSeatingStudio } from '@/features/admin/ProSeatingStudio';
 import { VisualSeatingFloor } from '@/features/admin/VisualSeatingFloor';
 import { seatingSummary } from '@/lib/premiumEventTools';
@@ -155,7 +156,7 @@ export function PremiumToolsPanel({
               <option value="minimal">מינימליסטי</option>
             </Select>
           </Field>
-          <Button type="submit" disabled={savingBranding}>
+          <Button type="submit" loading={savingBranding}>
             {savingBranding ? 'שומר…' : 'שמירת המיתוג'}
           </Button>
           <Result state={brandingState} />
@@ -247,7 +248,7 @@ export function PremiumToolsPanel({
                   </tbody>
                 </table>
               </div>
-              <Button type="submit" disabled={savingSeating}>
+              <Button type="submit" loading={savingSeating}>
                 {savingSeating ? 'שומר…' : 'שמירת כל ההושבה'}
               </Button>
               <Result state={seatingState} />
@@ -290,19 +291,7 @@ export function PremiumToolsPanel({
       <div className="border-accent/40 bg-accent-soft/40 flex flex-col items-start gap-4 rounded-2xl border p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <span className="bg-card text-accent-strong shadow-paper mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full">
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4.5"
-            >
-              <rect x="5" y="11" width="14" height="9" rx="2" />
-              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-            </svg>
+            <Icon name="sparkles" strokeWidth={1.8} className="size-4.5" />
           </span>
           <div>
             <h2 className="text-h2 text-primary font-bold">הכלים המתקדמים — עם Premium</h2>

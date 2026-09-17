@@ -74,17 +74,53 @@ const buttonVariants = cva(
   },
 );
 
-export type ButtonProps = ComponentProps<'button'> & VariantProps<typeof buttonVariants>;
+export type ButtonProps = ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    /**
+     * A pending action. The button disables itself, announces `aria-busy`, and shows a
+     * spinner in front of its label — the label stays, because "שומר…" beside a spinner
+     * reads as progress where a spinner alone reads as a hang.
+     */
+    loading?: boolean;
+  };
 
-export function Button({ className, variant, size, block, type, ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant,
+  size,
+  block,
+  type,
+  loading = false,
+  disabled,
+  children,
+  ...props
+}: ButtonProps) {
   return (
     <button
       // A button inside a form with no explicit type submits it. That has caused a
       // "delete" control to save a form more than once in this codebase's lifetime.
       type={type ?? 'button'}
+      aria-busy={loading || undefined}
+      disabled={disabled || loading}
       className={cn(buttonVariants({ variant, size, block }), className)}
       {...props}
-    />
+    >
+      {loading && (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          className="animate-spin"
+        >
+          <circle cx="12" cy="12" r="9" strokeOpacity="0.3" />
+          <path d="M21 12a9 9 0 0 0-9-9" />
+        </svg>
+      )}
+      {children}
+    </button>
   );
 }
 

@@ -6,10 +6,13 @@ import { adminCreateCustomerAction } from '@/app/actions/manageAdminCustomers';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge, EmptyState } from '@/components/ui/feedback';
+import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
+import { PageHeader } from '@/components/ui/page-header';
+import { SearchInput } from '@/components/ui/search-input';
 import { UI_MESSAGES } from '@/config/messages';
 import { CreateCustomerPanel } from '@/features/admin/CreateCustomerPanel';
-import { formatEventDate } from '@/lib/eventDate';
+import { DateTile } from '@/features/admin/DateTile';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
@@ -18,9 +21,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
-
-const fieldClass =
-  'border-border-strong bg-background text-foreground min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]';
 
 export default async function AdminEventsPage({
   searchParams,
@@ -57,19 +57,14 @@ export default async function AdminEventsPage({
   });
 
   return (
-    <main id="main" className="flex-1 py-10 sm:py-14">
+    <main id="main" className="flex-1 py-8 sm:py-12">
       <Container width="wide">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-eyebrow text-accent-strong font-semibold">ניהול מערכת</p>
-            <h1 className="text-h1 text-primary mt-2 font-bold">לקוחות ואירועים</h1>
-            <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              לחיצה על שם האירוע או על אימייל הלקוח פותחת את האירוע במצב מנהל־על, כולל עריכה,
-              מוזמנים, ייבוא מהטלפון ואישורי הגעה.
-            </p>
-          </div>
-          <Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>
-        </div>
+        <PageHeader
+          eyebrow="ניהול מערכת"
+          title="לקוחות ואירועים"
+          lede="לחיצה על שם האירוע או על אימייל הלקוח פותחת את האירוע במצב מנהל־על, כולל עריכה, מוזמנים, ייבוא מהטלפון ואישורי הגעה."
+          actions={<Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>}
+        />
 
         <CreateCustomerPanel
           createCustomerAction={adminCreateCustomerAction}
@@ -77,16 +72,13 @@ export default async function AdminEventsPage({
           error={actionError}
         />
 
-        <form role="search" className="mt-8 flex max-w-2xl gap-3">
-          <label className="sr-only" htmlFor="customer-event-search">
-            חיפוש לקוח או אירוע
-          </label>
-          <input
-            id="customer-event-search"
+        <form role="search" className="mt-8 flex max-w-2xl gap-2">
+          <SearchInput
+            label="חיפוש לקוח או אירוע"
             name="q"
             defaultValue={q}
             placeholder="שם אירוע, אימייל, טלפון או מזהה"
-            className={fieldClass}
+            className="flex-1"
           />
           <Button type="submit" variant="outline">
             חיפוש
@@ -96,11 +88,12 @@ export default async function AdminEventsPage({
         {rows.length === 0 ? (
           <EmptyState
             className="mt-10"
+            icon={<Icon name="search" strokeWidth={1.5} className="size-6" />}
             title="לא נמצאו אירועים"
             description="נסו לחפש לפי שם האירוע, אימייל הלקוח, טלפון או מזהה."
           />
         ) : (
-          <ul className="mt-10 grid gap-4 lg:grid-cols-2">
+          <ul className="mt-8 grid gap-4 lg:grid-cols-2">
             {rows.map((event) => {
               const ownerEmail =
                 event.owner_user_id === null
@@ -111,10 +104,14 @@ export default async function AdminEventsPage({
 
               return (
                 <li key={event.id}>
-                  <Card interactive padding="lg" className="flex h-full flex-col">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h2 className="text-h3 text-primary font-semibold">
+                  <Card interactive padding="md" className="flex h-full flex-col">
+                    <div className="flex items-start gap-4">
+                      <DateTile isoDate={event.event_date} />
+                      <div className="min-w-0 flex-1">
+                        <Badge tone={event.is_active ? 'success' : 'warning'} dot>
+                          {event.is_active ? 'מפורסם' : 'טיוטה'}
+                        </Badge>
+                        <h2 className="text-primary mt-2 text-xl leading-snug font-bold">
                           <Link
                             href={adminUrl}
                             className="rounded-sm underline-offset-4 hover:underline"
@@ -124,38 +121,30 @@ export default async function AdminEventsPage({
                         </h2>
                         <Link
                           href={adminUrl}
-                          className="text-muted-foreground mt-1 block rounded-sm text-sm underline-offset-4 hover:underline"
-                          dir="ltr"
+                          className="text-muted-foreground mt-1 inline-flex items-center gap-1.5 rounded-sm text-sm underline-offset-4 hover:underline"
                         >
-                          {ownerEmail}
+                          <Icon name="user" className="size-3.5" />
+                          <span dir="ltr">{ownerEmail}</span>
                         </Link>
                       </div>
-                      <Badge tone={event.is_active ? 'success' : 'warning'}>
-                        {event.is_active ? 'מפורסם' : 'טיוטה'}
-                      </Badge>
                     </div>
 
-                    <dl className="mt-5 space-y-2 text-sm">
-                      <div className="flex gap-2">
-                        <dt className="text-muted-foreground">תאריך:</dt>
-                        <dd className="text-foreground font-medium">
-                          {formatEventDate(event.event_date)}
-                        </dd>
+                    <dl className="text-muted-foreground mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <dt className="sr-only">מקום</dt>
+                        <Icon name="map-pin" className="text-accent-strong size-4" />
+                        <dd>{event.venue_name}</dd>
                       </div>
-                      <div className="flex gap-2">
-                        <dt className="text-muted-foreground">מקום:</dt>
-                        <dd className="text-foreground font-medium">{event.venue_name}</dd>
-                      </div>
-                      <div className="flex gap-2">
-                        <dt className="text-muted-foreground">טלפון:</dt>
-                        <dd className="text-foreground font-medium" dir="ltr">
-                          {event.contact_phone ?? 'לא הוגדר'}
-                        </dd>
+                      <div className="flex items-center gap-1.5">
+                        <dt className="sr-only">טלפון</dt>
+                        <Icon name="phone" className="text-accent-strong size-4" />
+                        <dd dir="ltr">{event.contact_phone ?? 'לא הוגדר'}</dd>
                       </div>
                     </dl>
 
-                    <div className="border-border mt-auto flex flex-wrap gap-2 border-t pt-5">
+                    <div className="border-border mt-auto flex flex-wrap gap-2 border-t pt-4">
                       <Link href={adminUrl} className={buttonClass({ size: 'sm' })}>
+                        <Icon name="dashboard" />
                         כניסה לאירוע הלקוח
                       </Link>
                       <Link
@@ -164,7 +153,8 @@ export default async function AdminEventsPage({
                         rel="noopener noreferrer"
                         className={buttonClass({ variant: 'outline', size: 'sm' })}
                       >
-                        תצוגה מקדימה להזמנה{' '}
+                        <Icon name="eye" />
+                        תצוגה מקדימה{' '}
                         <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
                       </Link>
                     </div>

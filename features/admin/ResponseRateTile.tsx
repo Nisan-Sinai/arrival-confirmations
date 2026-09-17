@@ -4,7 +4,8 @@ import { useActionState, useId, useState } from 'react';
 
 import { updateExpectedGuestsAction, type ExpectedGuestsState } from '@/app/actions/manageEvent';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icons';
+import { StatCard } from '@/components/ui/stat';
 import { UI_MESSAGES } from '@/config/messages';
 
 /**
@@ -52,10 +53,10 @@ export function ResponseRateTile({
 
   if (editing) {
     return (
-      <Card padding="none" className="p-4 sm:p-5">
+      <div className="border-primary/40 bg-card shadow-raised flex flex-col rounded-2xl border p-4 sm:p-5">
         <form action={formAction} className="flex flex-col gap-2">
           <input type="hidden" name="eventId" value={eventId} />
-          <label htmlFor={fieldId} className="text-muted-foreground text-xs sm:text-sm">
+          <label htmlFor={fieldId} className="text-primary text-xs font-semibold sm:text-sm">
             כמה הזמנות שלחתם?
           </label>
           <input
@@ -80,7 +81,7 @@ export function ResponseRateTile({
             </p>
           )}
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={isPending}>
+            <Button type="submit" size="sm" loading={isPending}>
               {isPending ? 'שומר…' : 'שמירה'}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
@@ -91,28 +92,33 @@ export function ResponseRateTile({
             משמש רק לחישוב האחוז. השאירו ריק אם אינכם יודעים.
           </p>
         </form>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card padding="none" className="flex flex-col justify-between p-4 sm:p-5">
-      <p className="text-muted-foreground text-xs sm:text-sm">אחוז מענה</p>
-      <p className="text-primary mt-2 font-[family-name:var(--font-display)] text-2xl leading-none font-bold tabular-nums">
-        {/* §8.1: with no denominator there is no percentage, and none is invented. */}
-        {percentage === null ? UI_MESSAGES.admin.responseRateUnavailable : `${percentage}%`}
-      </p>
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className="text-accent-strong mt-1.5 self-start rounded-sm text-xs underline underline-offset-2 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
-      >
-        {percentage === null ? 'הזינו כמה הזמנות שלחתם' : `מתוך ${invited} הזמנות · שינוי`}
-      </button>
-      {/* Announced once, after the form has closed and the button is back. */}
-      <p role="status" aria-live="polite" className="sr-only">
-        {state.status === 'saved' ? state.message : ''}
-      </p>
-    </Card>
+    <StatCard
+      label="אחוז מענה"
+      icon={<Icon name="send" />}
+      /* §8.1: with no denominator there is no percentage, and none is invented. */
+      value={percentage === null ? UI_MESSAGES.admin.responseRateUnavailable : `${percentage}%`}
+      progress={percentage}
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-accent-strong inline-flex items-center gap-1 rounded-sm text-xs underline underline-offset-2 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
+          >
+            <Icon name="edit" className="size-3" />
+            {percentage === null ? 'הזינו כמה הזמנות שלחתם' : `מתוך ${invited} הזמנות · שינוי`}
+          </button>
+          {/* Announced once, after the form has closed and the button is back. */}
+          <p role="status" aria-live="polite" className="sr-only">
+            {state.status === 'saved' ? state.message : ''}
+          </p>
+        </>
+      }
+    />
   );
 }

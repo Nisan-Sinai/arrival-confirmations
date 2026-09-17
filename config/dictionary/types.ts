@@ -85,6 +85,9 @@ export type Dictionary = {
     pricing: string;
     login: string;
     signup: string;
+    /** The hamburger's accessible name, open and closed. */
+    menuOpen: string;
+    menuClose: string;
   };
   /**
    * The three-step explainer under the hero: what a guest does after the link
@@ -136,6 +139,12 @@ export type Dictionary = {
    * `{min}` is filled with the minimum password length.
    */
   auth: {
+    /** The brand panel beside every credential form on a wide screen. */
+    aside: {
+      eyebrow: string;
+      title: string;
+      points: readonly [string, string, string];
+    };
     fields: {
       email: string;
       password: string;
@@ -233,6 +242,13 @@ export type Dictionary = {
     pricing: string;
     privacy: string;
     accessibility: string;
+    /** One sentence under the brand mark: what the product is, for a reader who
+     * reached the footer without reading the page. */
+    tagline: string;
+    productHeading: string;
+    legalHeading: string;
+    login: string;
+    signup: string;
   };
   landing: {
     meta: {
@@ -297,6 +313,22 @@ export type Dictionary = {
         { question: string; answer: string },
         { question: string; answer: string },
       ];
+    };
+    /**
+     * The strip of occasions under the hero. Eleven kinds of event, in the order the
+     * type picker lists them, so a visitor sees their simcha named before scrolling.
+     */
+    occasions: {
+      lead: string;
+      items: readonly string[];
+    };
+    /** The closing call to action at the foot of the page. */
+    closing: {
+      eyebrow: string;
+      title: string;
+      body: string;
+      cta: string;
+      secondary: string;
     };
   };
 };

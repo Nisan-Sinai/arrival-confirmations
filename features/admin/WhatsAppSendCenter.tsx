@@ -7,6 +7,8 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert, Badge } from '@/components/ui/feedback';
+import { Icon } from '@/components/ui/icons';
+import { StatCard } from '@/components/ui/stat';
 import { formatStoredPhoneForDisplay } from '@/lib/phone';
 import {
   buildPersonalInviteSendPath,
@@ -297,16 +299,28 @@ export function WhatsAppSendCenter({
   const bulkCompleted = bulkGuestIds.length > 0 && bulkIndex === bulkGuestIds.length - 1;
 
   return (
-    <Card id="whatsapp-send-center" padding="lg" className="scroll-mt-24">
-      <p className="text-eyebrow text-accent-strong font-semibold">
-        {premium ? 'שליחה ומעקב · WhatsApp' : 'קישורים אישיים · אחד-אחד'}
-      </p>
-      <h2 className="text-h2 text-primary mt-2 font-bold">שליחה אישית ב־WhatsApp</h2>
-      <p className="text-muted-foreground mt-3 leading-relaxed">
-        לכל מוזמן נוצר קישור אישי, וכאן רואים לכל אחד אם הקישור נוצר, אם ההזמנה נפתחה וכמה פעמים,
-        ומה הייתה התשובה האחרונה. ההודעה נפתחת ב-WhatsApp הפרטי עם הקישור מוכן — ללא חיבור API וללא
-        עלות.
-      </p>
+    <Card id="whatsapp-send-center" padding="lg" className="scroll-mt-32">
+      <div className="flex items-start gap-4">
+        <span
+          aria-hidden="true"
+          className="bg-accent-soft/70 text-accent-strong flex size-11 shrink-0 items-center justify-center rounded-xl"
+        >
+          <Icon name="whatsapp" className="size-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-eyebrow text-accent-strong font-semibold">
+            {premium ? 'שליחה ומעקב · WhatsApp' : 'קישורים אישיים · אחד-אחד'}
+          </p>
+          <h2 className="text-primary mt-1 text-xl font-bold sm:text-2xl">
+            שליחה אישית ב־WhatsApp
+          </h2>
+          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+            לכל מוזמן נוצר קישור אישי, וכאן רואים לכל אחד אם הקישור נוצר, אם ההזמנה נפתחה וכמה
+            פעמים, ומה הייתה התשובה האחרונה. ההודעה נפתחת ב-WhatsApp הפרטי עם הקישור מוכן — ללא
+            חיבור API וללא עלות.
+          </p>
+        </div>
+      </div>
 
       {premium ? (
         <>
@@ -314,23 +328,11 @@ export function WhatsAppSendCenter({
             המערכת מכינה ופותחת את השיחה בלבד. בעל האירוע לוחץ בעצמו על כפתור השליחה ב-WhatsApp.
           </Alert>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 text-center text-sm sm:grid-cols-4">
-            <div className="bg-secondary/35 rounded-xl p-3">
-              <span className="text-primary block text-2xl font-bold">{guests.length}</span>
-              מוזמנים
-            </div>
-            <div className="bg-secondary/35 rounded-xl p-3">
-              <span className="text-primary block text-2xl font-bold">{answeredCount}</span>
-              כבר ענו
-            </div>
-            <div className="bg-secondary/35 rounded-xl p-3">
-              <span className="text-primary block text-2xl font-bold">{unansweredCount}</span>
-              טרם ענו
-            </div>
-            <div className="bg-secondary/35 rounded-xl p-3">
-              <span className="text-primary block text-2xl font-bold">{sentGuestIds.size}</span>
-              סומנו כנשלחו
-            </div>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard label="מוזמנים" value={guests.length} icon={<Icon name="users" />} />
+            <StatCard label="כבר ענו" value={answeredCount} icon={<Icon name="check-circle" />} />
+            <StatCard label="טרם ענו" value={unansweredCount} icon={<Icon name="clock" />} />
+            <StatCard label="סומנו כנשלחו" value={sentGuestIds.size} icon={<Icon name="send" />} />
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -471,7 +473,7 @@ export function WhatsAppSendCenter({
             return (
               <li
                 key={guest.id}
-                className="border-border flex flex-col justify-between gap-4 rounded-2xl border p-4"
+                className="border-border bg-card hover:border-border-strong flex flex-col justify-between gap-4 rounded-2xl border p-4 transition-colors"
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -499,6 +501,7 @@ export function WhatsAppSendCenter({
                     }}
                     className={buttonClass({ variant: 'secondary', size: 'sm' })}
                   >
+                    <Icon name="whatsapp" />
                     {openingGuestId === guest.id
                       ? 'פותח WhatsApp…'
                       : isFirstSend

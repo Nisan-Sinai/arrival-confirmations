@@ -76,6 +76,8 @@ export const en: Dictionary = {
     pricing: 'Pricing',
     login: 'Log in',
     signup: 'Create an event',
+    menuOpen: 'Open menu',
+    menuClose: 'Close menu',
   },
   flow: {
     eyebrow: 'What happens after you send the link?',
@@ -116,6 +118,15 @@ export const en: Dictionary = {
     requestNewLink: 'Request a new link',
   },
   auth: {
+    aside: {
+      eyebrow: 'For hosts',
+      title: 'Every RSVP in one place',
+      points: [
+        'A digital invitation sent on WhatsApp, opened without an app',
+        'A dashboard that updates the moment a guest replies',
+        'A free trial run, and a single payment only when you activate',
+      ],
+    },
     fields: {
       email: 'Email address',
       password: 'Password',
@@ -211,6 +222,12 @@ export const en: Dictionary = {
     pricing: 'Plans and pricing',
     privacy: 'Privacy policy',
     accessibility: 'Accessibility statement',
+    tagline:
+      'A digital invitation, WhatsApp sharing and a live RSVP dashboard — no subscription, no per-guest fee.',
+    productHeading: 'Product',
+    legalHeading: 'Information and policies',
+    login: 'Sign in to your account',
+    signup: 'Create a trial event',
   },
   landing: {
     meta: {
@@ -297,6 +314,29 @@ export const en: Dictionary = {
             'No. Guests open the link, fill in their details and confirm — no account, nothing to install.',
         },
       ],
+    },
+    occasions: {
+      lead: 'Made for every celebration',
+      items: [
+        'Brit milah',
+        'Zeved habat',
+        'Pidyon haben',
+        'Upsherin',
+        'Bar mitzvah',
+        'Bat mitzvah',
+        'Engagement',
+        'Henna',
+        'Wedding',
+        'Birthday',
+        'Family event',
+      ],
+    },
+    closing: {
+      eyebrow: 'Get started',
+      title: 'Your next invitation is a few minutes away',
+      body: 'Create an event, design the invitation and test it with up to 10 replies — free, with no credit card. Pay only when you activate.',
+      cta: 'Create a trial event',
+      secondary: 'Talk to us on WhatsApp',
     },
   },
 };

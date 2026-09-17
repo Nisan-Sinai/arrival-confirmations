@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -104,17 +104,21 @@ describe('GuestManagementPanel', () => {
 
   it('offers a guarded reset-all action only when guests exist', async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} />);
 
     const reset = screen.getByRole('button', { name: 'מחיקת כל המוזמנים' });
     expect(reset).toBeInTheDocument();
 
+    // The question is asked by the page, in the page's language, not by `window.confirm`.
     await user.click(reset);
-    expect(confirmSpy).toHaveBeenCalledWith(
-      'למחוק את כל 2 המוזמנים מהאירוע? הפעולה תאפס גם נתוני הושבה ומעקב ולא ניתן לבטל אותה.',
-    );
-    confirmSpy.mockRestore();
+    const dialog = screen.getByRole('dialog', { name: 'למחוק את כל 2 המוזמנים מהאירוע?' });
+    expect(dialog).toHaveTextContent('הפעולה תאפס גם נתוני הושבה ומעקב ולא ניתן לבטל אותה.');
+
+    // Cancelling closes it without touching the form.
+    await user.click(within(dialog).getByRole('button', { name: 'ביטול' }));
+    expect(
+      screen.queryByRole('dialog', { name: 'למחוק את כל 2 המוזמנים מהאירוע?' }),
+    ).not.toBeInTheDocument();
   });
 
   it('explains that a repeated phone number was merged into the newer details', () => {

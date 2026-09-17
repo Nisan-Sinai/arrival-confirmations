@@ -1,4 +1,3 @@
-import { Card } from '@/components/ui/card';
 import { LoadingState, Skeleton } from '@/components/ui/feedback';
 import { Container } from '@/components/ui/layout';
 
@@ -12,22 +11,24 @@ import { Container } from '@/components/ui/layout';
  */
 export default function EventLoading() {
   return (
-    <main id="main" className="flex-1 py-10 sm:py-14" role="status" aria-live="polite">
+    <main id="main" className="flex-1 py-8 sm:py-12" role="status" aria-live="polite">
       <span className="sr-only">טוען את אישורי ההגעה…</span>
       <Container width="wide">
         <Skeleton className="h-4 w-28" />
-        <Skeleton className="mt-4 h-4 w-20" />
+        <Skeleton className="mt-5 h-5 w-32 rounded-full" />
         <Skeleton className="mt-3 h-11 w-72" />
         <Skeleton className="mt-3 h-4 w-96 max-w-full" />
 
-        <Skeleton className="mt-9 h-44 w-full rounded-2xl" />
+        <Skeleton className="mt-8 h-44 w-full rounded-2xl" />
 
-        <div className="mt-9 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[0, 1, 2, 3].map((index) => (
-            <Card key={index} padding="none" className="p-4 sm:p-5">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="mt-3 h-9 w-16" />
-            </Card>
+            <Skeleton key={index} className="h-28 rounded-2xl" />
+          ))}
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((index) => (
+            <Skeleton key={index} className="h-24 rounded-2xl" />
           ))}
         </div>
 

@@ -5,7 +5,7 @@ import { Alert } from '@/components/ui/feedback';
 import { getDictionary } from '@/config/dictionary';
 import { AuthForm } from '@/features/auth/AuthForm';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
-import { SiteHeader } from '@/features/layout/SiteHeader';
+import { AuthShell } from '@/features/auth/AuthShell';
 import { localePath, type Locale } from '@/lib/i18n';
 
 /**
@@ -19,36 +19,36 @@ export function SignInPageBody({ locale, error }: { locale: Locale; error?: stri
   const { auth } = getDictionary(locale);
 
   return (
-    <>
-      <SiteHeader minimal locale={locale} />
-      <main
-        id="main"
-        className="from-secondary/30 flex flex-1 flex-col items-center justify-center gap-5 bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
-      >
-        {/* Expired and generic are separated because the advice differs: one is
-            "request another", the other is "something went wrong". */}
-        {error === 'expired' && (
-          <Alert tone="error" className="w-full max-w-md">
-            {auth.loginNotice.expiredLead}{' '}
-            <Link
-              href={localePath(locale, '/forgot-password')}
-              className="font-semibold underline underline-offset-2"
-            >
-              {auth.loginNotice.expiredLink}
-            </Link>
-            .
-          </Alert>
-        )}
-        {error === 'auth' && (
-          <Alert tone="error" className="w-full max-w-md">
-            {auth.loginNotice.authFailed}
-          </Alert>
-        )}
-        {/* Supabase reports an expired link in the URL fragment when it falls back to
-            the Site URL, and the server cannot see a fragment. */}
-        <AuthFragmentNotice locale={locale} />
-        <AuthForm action={signInAction} mode="signIn" locale={locale} />
-      </main>
-    </>
+    <AuthShell
+      locale={locale}
+      notices={
+        <>
+          {/* Expired and generic are separated because the advice differs: one is
+              "request another", the other is "something went wrong". */}
+          {error === 'expired' && (
+            <Alert tone="error" className="w-full max-w-md">
+              {auth.loginNotice.expiredLead}{' '}
+              <Link
+                href={localePath(locale, '/forgot-password')}
+                className="font-semibold underline underline-offset-2"
+              >
+                {auth.loginNotice.expiredLink}
+              </Link>
+              .
+            </Alert>
+          )}
+          {error === 'auth' && (
+            <Alert tone="error" className="w-full max-w-md">
+              {auth.loginNotice.authFailed}
+            </Alert>
+          )}
+          {/* Supabase reports an expired link in the URL fragment when it falls back to
+              the Site URL, and the server cannot see a fragment. */}
+          <AuthFragmentNotice locale={locale} />
+        </>
+      }
+    >
+      <AuthForm action={signInAction} mode="signIn" locale={locale} />
+    </AuthShell>
   );
 }

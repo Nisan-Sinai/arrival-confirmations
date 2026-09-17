@@ -7,8 +7,12 @@ import { requirePlatformOwner } from '@/app/_lib/platformAdmin';
 import { adminTransferCustomerEventAction } from '@/app/actions/manageAdminCustomerEvent';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Field, Select } from '@/components/ui/field';
 import { Alert, Badge, EmptyState } from '@/components/ui/feedback';
+import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
+import { BackLink, MetaItem, PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat';
 import { UI_MESSAGES } from '@/config/messages';
 import { GuestFileImportForm } from '@/features/admin/GuestFileImportForm';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
@@ -131,54 +135,59 @@ export default async function AdminCustomerEventPage({
   }, 0);
 
   return (
-    <main id="main" className="flex-1 py-10 sm:py-14">
+    <main id="main" className="flex-1 py-8 sm:py-12">
       <Container width="wide">
-        <Link
-          href="/admin/events"
-          className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 rounded-sm text-sm"
-        >
-          חזרה לכל הלקוחות והאירועים
-        </Link>
+        <BackLink href="/admin/events">חזרה לכל הלקוחות והאירועים</BackLink>
 
-        <header className="mt-4 flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
+        <PageHeader
+          className="mt-4"
+          badges={
+            <>
               <Badge tone="gold">מצב מנהל־על</Badge>
-              <Badge tone={event.is_active ? 'success' : 'warning'}>
+              <Badge tone={event.is_active ? 'success' : 'warning'} dot>
                 {event.is_active ? 'הזמנה מפורסמת' : 'טיוטה'}
               </Badge>
-            </div>
-            <h1 className="text-h1 text-primary mt-3 font-bold">{event.title}</h1>
-            <p className="text-muted-foreground mt-2" dir="ltr">
-              {ownerEmail}
-            </p>
-            <p className="text-muted-foreground mt-2">
-              יום {formatEventWeekday(event.event_date)}, {formatEventDate(event.event_date)} ·{' '}
-              {event.venue_name}
-            </p>
-            <p className="text-muted-foreground mt-1 text-sm">{event.address}</p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/admin/events/${event.id}/edit`}
-              className={buttonClass({ variant: 'outline' })}
-            >
-              עריכת ההזמנה
-            </Link>
-            <Link
-              href={`/admin/events/${event.id}/preview`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonClass({ variant: 'outline' })}
-            >
-              תצוגה מקדימה להזמנה <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
-            </Link>
-            <Link href="/admin/plans" className={buttonClass({ variant: 'ghost' })}>
-              מסלול ותשלום
-            </Link>
-          </div>
-        </header>
+            </>
+          }
+          title={event.title}
+          meta={
+            <>
+              <MetaItem icon={<Icon name="user" />}>
+                <span dir="ltr">{ownerEmail}</span>
+              </MetaItem>
+              <MetaItem icon={<Icon name="calendar" />}>
+                יום {formatEventWeekday(event.event_date)}, {formatEventDate(event.event_date)}
+              </MetaItem>
+              <MetaItem icon={<Icon name="map-pin" />}>
+                {event.venue_name} · {event.address}
+              </MetaItem>
+            </>
+          }
+          actions={
+            <>
+              <Link
+                href={`/admin/events/${event.id}/edit`}
+                className={buttonClass({ variant: 'outline' })}
+              >
+                <Icon name="edit" />
+                עריכת ההזמנה
+              </Link>
+              <Link
+                href={`/admin/events/${event.id}/preview`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass({ variant: 'outline' })}
+              >
+                <Icon name="eye" />
+                תצוגה מקדימה <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
+              </Link>
+              <Link href="/admin/plans" className={buttonClass({ variant: 'ghost' })}>
+                <Icon name="credit-card" />
+                מסלול ותשלום
+              </Link>
+            </>
+          }
+        />
 
         <section aria-labelledby="admin-event-owner" className="mt-8">
           <Card padding="lg">
@@ -199,20 +208,8 @@ export default async function AdminCustomerEventPage({
                 className="flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-end"
               >
                 <input type="hidden" name="eventId" value={event.id} />
-                <div className="min-w-0 flex-1">
-                  <label
-                    htmlFor="target-event-owner"
-                    className="text-foreground mb-1.5 block text-sm font-medium"
-                  >
-                    לקוח חדש
-                  </label>
-                  <select
-                    id="target-event-owner"
-                    name="targetUserId"
-                    required
-                    defaultValue=""
-                    className="border-border-strong bg-background text-foreground min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
-                  >
+                <Field label="לקוח חדש" required className="min-w-0 flex-1">
+                  <Select name="targetUserId" defaultValue="">
                     <option value="" disabled>
                       בחר משתמש לפי אימייל
                     </option>
@@ -221,8 +218,8 @@ export default async function AdminCustomerEventPage({
                         {user.email}
                       </option>
                     ))}
-                  </select>
-                </div>
+                  </Select>
+                </Field>
                 <Button type="submit" disabled={registeredUsers.length === 0}>
                   העבר אירוע ללקוח
                 </Button>
@@ -266,29 +263,20 @@ export default async function AdminCustomerEventPage({
           <h2 id="admin-event-summary" className="sr-only">
             סיכום האירוע
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Card padding="md">
-              <p className="text-muted-foreground text-sm">מוזמנים פעילים</p>
-              <p className="text-primary mt-2 text-3xl font-bold tabular-nums">
-                {guestRows.length}
-              </p>
-            </Card>
-            <Card padding="md">
-              <p className="text-muted-foreground text-sm">תשובות שהתקבלו</p>
-              <p className="text-primary mt-2 text-3xl font-bold tabular-nums">{rsvpRows.length}</p>
-            </Card>
-            <Card padding="md">
-              <p className="text-muted-foreground text-sm">תשובות מגיעים</p>
-              <p className="text-primary mt-2 text-3xl font-bold tabular-nums">
-                {attendingReplies}
-              </p>
-            </Card>
-            <Card padding="md">
-              <p className="text-muted-foreground text-sm">סה״כ צפויים להגיע</p>
-              <p className="text-primary mt-2 text-3xl font-bold tabular-nums">
-                {expectedAttendees}
-              </p>
-            </Card>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard
+              label="מוזמנים פעילים"
+              value={guestRows.length}
+              icon={<Icon name="contacts" />}
+            />
+            <StatCard label="תשובות שהתקבלו" value={rsvpRows.length} icon={<Icon name="mail" />} />
+            <StatCard label="תשובות מגיעים" value={attendingReplies} tone="success" />
+            <StatCard
+              label="סה״כ צפויים להגיע"
+              value={expectedAttendees}
+              emphasis
+              icon={<Icon name="users" />}
+            />
           </div>
         </section>
 
@@ -327,10 +315,10 @@ export default async function AdminCustomerEventPage({
               description="כאשר אורחים יאשרו הגעה, התשובות יופיעו כאן גם למנהל המערכת."
             />
           ) : (
-            <ul className="mt-5 space-y-3">
+            <ul className="mt-5 grid gap-3 lg:grid-cols-2">
               {rsvpRows.map((response) => (
                 <li key={response.id}>
-                  <Card padding="md">
+                  <Card padding="md" className="h-full">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <p className="text-primary font-semibold">{response.full_name}</p>
@@ -338,7 +326,7 @@ export default async function AdminCustomerEventPage({
                           {response.phone}
                         </p>
                       </div>
-                      <Badge tone={attendanceTone(response.attendance_status)}>
+                      <Badge tone={attendanceTone(response.attendance_status)} dot>
                         {attendanceLabel(response.attendance_status)}
                       </Badge>
                     </div>
