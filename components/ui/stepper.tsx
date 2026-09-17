@@ -66,7 +66,7 @@ export function NumberStepper({
         min={min}
         max={max}
         inputMode="numeric"
-        className="min-w-0 flex-1 rounded-none border-0 border-x px-1 text-center font-semibold tabular-nums hover:border-inherit focus-visible:outline-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="min-w-0 flex-1 [appearance:textfield] rounded-none border-0 border-x px-1 text-center font-semibold tabular-nums hover:border-inherit focus-visible:outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         {...props}
       />
       <button

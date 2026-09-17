@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         isPlatformOwner={user.email?.toLowerCase() === PLATFORM_OWNER_EMAIL}
         signOut={signOutAction}
       />
-      {children}
+      <div className="console-grid flex flex-1 flex-col">{children}</div>
     </>
   );
 }

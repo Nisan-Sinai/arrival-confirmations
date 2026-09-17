@@ -251,20 +251,31 @@ export function RadioCard({
   name,
   value,
   label,
+  description,
+  icon,
   defaultChecked,
   onChange,
 }: {
   name: string;
   value: string;
   label: string;
+  /** A second, quieter line under the label. */
+  description?: string;
+  /** A glyph at the inline end, drawn in the accent once the option is chosen. */
+  icon?: ReactNode;
   defaultChecked?: boolean;
   onChange?: (value: string) => void;
 }) {
+  // The wrapping label would otherwise fold the description into the option's name,
+  // and "נגיע בשמחה נשמור לכם מקום" is not what a screen reader should call it.
+  const uid = useId();
+  const labelId = `${uid}-label`;
+  const descriptionId = `${uid}-description`;
   return (
     <label
       className={cn(
-        'border-input bg-card flex cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-3',
-        'transition-[background-color,border-color] duration-[--duration-fast] ease-[--ease-out]',
+        'group border-input bg-card flex cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-3',
+        'transition-[background-color,border-color,box-shadow] duration-[--duration-fast] ease-[--ease-out]',
         'hover:border-border-strong',
         'has-checked:border-primary has-checked:bg-secondary/55 has-checked:shadow-paper',
         'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-[--color-ring]',
@@ -276,9 +287,28 @@ export function RadioCard({
         value={value}
         defaultChecked={defaultChecked}
         onChange={(event) => onChange?.(event.target.value)}
+        aria-labelledby={labelId}
+        aria-describedby={description !== undefined ? descriptionId : undefined}
         className="accent-primary size-5 shrink-0 cursor-pointer"
       />
-      <span className="text-base font-medium">{label}</span>
+      <span className="min-w-0 flex-1">
+        <span id={labelId} className="block text-base font-medium">
+          {label}
+        </span>
+        {description !== undefined && (
+          <span id={descriptionId} className="text-muted-foreground block text-xs">
+            {description}
+          </span>
+        )}
+      </span>
+      {icon !== undefined && (
+        <span
+          aria-hidden="true"
+          className="text-muted-foreground/70 group-has-checked:text-accent-strong flex size-9 shrink-0 items-center justify-center rounded-full transition-colors duration-[--duration-fast] [&_svg]:size-5"
+        >
+          {icon}
+        </span>
+      )}
     </label>
   );
 }

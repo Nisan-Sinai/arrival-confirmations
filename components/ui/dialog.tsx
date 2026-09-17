@@ -51,10 +51,14 @@ export function ConfirmDialog({
     if (open) {
       if (dialog.open) return;
       // jsdom and very old engines lack `showModal`; the `open` attribute still shows it.
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-      else dialog.setAttribute('open', '');
+      try {
+        dialog.showModal();
+      } catch {
+        dialog.setAttribute('open', '');
+      }
     } else if (dialog.open) {
-      dialog.close();
+      if (typeof dialog.close === 'function') dialog.close();
+      else dialog.removeAttribute('open');
     }
   }, [open]);
 
@@ -87,14 +91,20 @@ export function ConfirmDialog({
                 : 'bg-accent-soft text-accent-strong',
             )}
           >
-            <Icon name={tone === 'destructive' ? 'alert-triangle' : 'help-circle'} className="size-5" />
+            <Icon
+              name={tone === 'destructive' ? 'alert-triangle' : 'help-circle'}
+              className="size-5"
+            />
           </span>
           <div className="min-w-0 flex-1">
             <h2 id={titleId} className="text-primary text-lg leading-snug font-bold">
               {title}
             </h2>
             {description !== undefined && (
-              <div id={descriptionId} className="text-muted-foreground mt-2 text-sm leading-relaxed">
+              <div
+                id={descriptionId}
+                className="text-muted-foreground mt-2 text-sm leading-relaxed"
+              >
                 {description}
               </div>
             )}

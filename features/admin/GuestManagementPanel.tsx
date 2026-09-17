@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { adminImportPhoneContactsAction } from '@/app/actions/adminGuestImports';
@@ -19,9 +19,14 @@ import {
 } from '@/app/actions/manageGuests';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Alert } from '@/components/ui/feedback';
+import { ConfirmDialog } from '@/components/ui/dialog';
+import { Field, Input, Textarea } from '@/components/ui/field';
+import { Alert, Badge } from '@/components/ui/feedback';
+import { Icon, type IconName } from '@/components/ui/icons';
+import { SearchInput } from '@/components/ui/search-input';
 import { UI_MESSAGES } from '@/config/messages';
 import { formatStoredPhoneForDisplay } from '@/lib/phone';
+import { cn } from '@/lib/utils';
 
 export interface ManagedGuest {
   readonly id: string;
@@ -60,10 +65,6 @@ function getServerContactPickerSnapshot(): boolean {
   return false;
 }
 type SubmitVariant = 'primary' | 'secondary' | 'outline' | 'destructive';
-
-const fieldClass =
-  'border-border-strong bg-background text-foreground min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]';
-const textareaClass = `${fieldClass} min-h-24 resize-y`;
 
 function messageFor(
   saved: string,
@@ -136,16 +137,28 @@ function whatsappUrl(phone: string): string {
   return `https://wa.me/${international}`;
 }
 
+/** The first letters of a name, for the avatar disc beside it. */
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join('');
+}
+
 function SubmitButton({
   idleLabel,
   pendingLabel,
   variant = 'primary',
   className,
+  icon,
 }: {
   readonly idleLabel: string;
   readonly pendingLabel: string;
   readonly variant?: SubmitVariant;
   readonly className?: string;
+  readonly icon?: IconName;
 }) {
   const { pending } = useFormStatus();
 
@@ -153,104 +166,106 @@ function SubmitButton({
     <Button
       type="submit"
       variant={variant}
-      disabled={pending}
+      loading={pending}
       aria-disabled={pending}
       className={className}
     >
-      {pending && (
-        <svg aria-hidden="true" viewBox="0 0 24 24" className="animate-spin" fill="none">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
-          <path
-            d="M21 12a9 9 0 0 0-9-9"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
-      )}
+      {!pending && icon !== undefined && <Icon name={icon} />}
       {pending ? pendingLabel : idleLabel}
     </Button>
   );
 }
 
+const OPTIONAL = 'לא חובה';
+
 function GuestFields({ guest }: { readonly guest?: ManagedGuest }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <label className="text-foreground text-sm font-medium">
-        שם מלא
-        <input
-          name="fullName"
-          autoComplete="name"
-          required
-          defaultValue={guest?.fullName ?? ''}
-          className={`${fieldClass} mt-1.5`}
-        />
-      </label>
-      <label className="text-foreground text-sm font-medium">
-        טלפון
-        <input
+      <Field label="שם מלא" required>
+        <Input name="fullName" autoComplete="name" defaultValue={guest?.fullName ?? ''} />
+      </Field>
+      <Field label="טלפון" required>
+        <Input
           name="phone"
           type="tel"
           inputMode="tel"
           autoComplete="tel"
           dir="ltr"
-          required
+          className="text-start"
           defaultValue={guest?.phone ?? ''}
-          className={`${fieldClass} mt-1.5 text-start`}
         />
-      </label>
-      <label className="text-foreground text-sm font-medium">
-        כמות
-        <input
+      </Field>
+      <Field label="כמות" required>
+        <Input
           name="partySize"
           type="number"
           inputMode="numeric"
           min="1"
           max="100"
-          required
           defaultValue={guest?.partySize ?? 1}
-          className={`${fieldClass} mt-1.5`}
         />
-      </label>
-      <label className="text-foreground text-sm font-medium">
-        אימייל <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <input
+      </Field>
+      <Field label="אימייל" hint={OPTIONAL}>
+        <Input
           name="email"
           type="email"
           inputMode="email"
           autoComplete="email"
           dir="ltr"
+          className="text-start"
           defaultValue={guest?.email ?? ''}
-          className={`${fieldClass} mt-1.5 text-start`}
         />
-      </label>
-      <label className="text-foreground text-sm font-medium">
-        שולחן <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <input
-          name="tableName"
-          defaultValue={guest?.tableName ?? ''}
-          className={`${fieldClass} mt-1.5`}
-        />
-      </label>
-      <label className="text-foreground text-sm font-medium">
-        מושב <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <input
-          name="seatNumber"
-          defaultValue={guest?.seatNumber ?? ''}
-          className={`${fieldClass} mt-1.5`}
-        />
-      </label>
-      <label className="text-foreground text-sm font-medium sm:col-span-2 lg:col-span-3">
-        הערות <span className="text-muted-foreground font-normal">(לא חובה)</span>
-        <textarea
-          name="notes"
-          defaultValue={guest?.notes ?? ''}
-          className={`${textareaClass} mt-1.5`}
-        />
-      </label>
+      </Field>
+      <Field label="שולחן" hint={OPTIONAL}>
+        <Input name="tableName" defaultValue={guest?.tableName ?? ''} />
+      </Field>
+      <Field label="מושב" hint={OPTIONAL}>
+        <Input name="seatNumber" defaultValue={guest?.seatNumber ?? ''} />
+      </Field>
+      <Field label="הערות" hint={OPTIONAL} className="sm:col-span-2 lg:col-span-3">
+        <Textarea name="notes" rows={2} defaultValue={guest?.notes ?? ''} />
+      </Field>
     </div>
   );
 }
+
+/** A card's eyebrow, heading and lede, with an icon disc at the start. */
+function SectionIntro({
+  id,
+  icon,
+  eyebrow,
+  title,
+  children,
+}: {
+  id: string;
+  icon: IconName;
+  eyebrow: string;
+  title: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <span
+        aria-hidden="true"
+        className="bg-accent-soft/70 text-accent-strong flex size-11 shrink-0 items-center justify-center rounded-xl"
+      >
+        <Icon name={icon} className="size-5" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-eyebrow text-accent-strong font-semibold">{eyebrow}</p>
+        <h2 id={id} className="text-primary mt-1 text-xl font-bold sm:text-2xl">
+          {title}
+        </h2>
+        {children !== undefined && (
+          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{children}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** What a confirmation dialog is currently asking about. */
+type PendingDelete = { kind: 'reset' } | { kind: 'guest'; guest: ManagedGuest } | null;
 
 export function GuestManagementPanel({
   mode,
@@ -273,8 +288,11 @@ export function GuestManagementPanel({
   const [pickerMessage, setPickerMessage] = useState('');
   const [selectingContacts, setSelectingContacts] = useState(false);
   const [query, setQuery] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
   const contactsFormRef = useRef<HTMLFormElement>(null);
   const contactsJsonRef = useRef<HTMLInputElement>(null);
+  const resetFormRef = useRef<HTMLFormElement>(null);
+  const deleteFormRefs = useRef(new Map<string, HTMLFormElement>());
   const supportsContactPicker = useSyncExternalStore(
     subscribeToContactPicker,
     getContactPickerSnapshot,
@@ -348,70 +366,92 @@ export function GuestManagementPanel({
     }
   };
 
+  /**
+   * The dialog confirms; the form that was already on the page submits. Nothing about
+   * the write changes — the same action, the same hidden fields — only the question is
+   * asked by the page instead of by the browser.
+   */
+  const confirmPendingDelete = () => {
+    if (pendingDelete === null) return;
+    const form =
+      pendingDelete.kind === 'reset'
+        ? resetFormRef.current
+        : deleteFormRefs.current.get(pendingDelete.guest.id);
+    setPendingDelete(null);
+    form?.requestSubmit();
+  };
+
+  const quickLink = (href: string, label: string, icon: IconName, primary = false) => (
+    <a
+      href={href}
+      className={cn(
+        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold whitespace-nowrap',
+        'transition-[background-color,color] duration-[--duration-fast]',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]',
+        primary
+          ? 'bg-primary text-primary-foreground hover:bg-primary-hover shadow-paper'
+          : 'text-primary hover:bg-card',
+      )}
+    >
+      <Icon name={icon} className="size-4" />
+      {label}
+    </a>
+  );
+
   return (
     <div className="space-y-6">
       {status !== null && <Alert tone={status.tone}>{status.text}</Alert>}
 
       <nav
         aria-label="פעולות מהירות לניהול המוזמנים"
-        className="border-border bg-card/95 sticky top-2 z-10 overflow-x-auto rounded-2xl border p-2 shadow-sm backdrop-blur"
+        className="border-border bg-secondary/60 shadow-paper sticky top-[4.5rem] z-10 [scrollbar-width:none] overflow-x-auto rounded-full border p-1 backdrop-blur"
       >
-        <div className="flex min-w-max gap-2">
-          <a href="#manual-add" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
-            הוספה ידנית
-          </a>
-          <a href="#phone-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>
-            אנשי קשר מהטלפון
-          </a>
+        <div className="flex min-w-max gap-1">
+          {quickLink('#manual-add', 'הוספה ידנית', 'user-plus', true)}
+          {quickLink('#phone-import', 'אנשי קשר מהטלפון', 'contacts')}
           {mode === 'owner' && (
             <>
-              <a href="#file-import" className={buttonClass({ variant: 'outline', size: 'sm' })}>
-                ייבוא קובץ
-              </a>
-              <a
-                href="#whatsapp-send-center"
-                className={buttonClass({ variant: 'outline', size: 'sm' })}
-              >
-                שליחה ב-WhatsApp
-              </a>
+              {quickLink('#file-import', 'ייבוא קובץ', 'file-spreadsheet')}
+              {quickLink('#whatsapp-send-center', 'שליחה ב-WhatsApp', 'whatsapp')}
             </>
           )}
-          <a href="#guest-list" className={buttonClass({ variant: 'ghost', size: 'sm' })}>
-            הרשימה ({guests.length})
-          </a>
+          {quickLink('#guest-list', `הרשימה (${guests.length})`, 'users')}
         </div>
       </nav>
 
-      <section id="manual-add" className="scroll-mt-24" aria-labelledby="manual-add-title">
+      <section id="manual-add" className="scroll-mt-32" aria-labelledby="manual-add-title">
         <Card padding="lg">
-          <p className="text-eyebrow text-accent-strong font-semibold">הוספה ידנית</p>
-          <h2 id="manual-add-title" className="text-h2 text-primary mt-2 font-bold">
-            מוזמן חדש
-          </h2>
-          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          <SectionIntro
+            id="manual-add-title"
+            icon="user-plus"
+            eyebrow="הוספה ידנית"
+            title="מוזמן חדש"
+          >
             ממלאים שם, טלפון וכמות. אימייל, שולחן, מושב והערות הם שדות לא חובה.
-          </p>
+          </SectionIntro>
           <form action={saveAction} className="mt-6 space-y-5">
             <input type="hidden" name="eventId" value={eventId} />
             <GuestFields />
             <SubmitButton
               idleLabel="הוספת מוזמן"
               pendingLabel="מוסיף מוזמן..."
+              icon="plus"
               className="w-full sm:w-auto"
             />
           </form>
         </Card>
       </section>
 
-      <section id="phone-import" className="scroll-mt-24" aria-labelledby="phone-import-title">
+      <section id="phone-import" className="scroll-mt-32" aria-labelledby="phone-import-title">
         <Card padding="lg">
-          <p className="text-eyebrow text-accent-strong font-semibold">ייבוא מהיר</p>
-          <h2 id="phone-import-title" className="text-h2 text-primary mt-2 font-bold">
-            אנשי קשר מהטלפון
-          </h2>
-          <p className="text-muted-foreground mt-3 leading-relaxed">
+          <SectionIntro
+            id="phone-import-title"
+            icon="contacts"
+            eyebrow="ייבוא מהיר"
+            title="אנשי קשר מהטלפון"
+          >
             באנדרואיד ובדפדפן תומך אפשר לבחור כמה אנשי קשר יחד. בכל מכשיר אפשר גם להדביק רשימה.
-          </p>
+          </SectionIntro>
 
           <form ref={contactsFormRef} action={contactAction} className="mt-6 space-y-4">
             <input type="hidden" name="eventId" value={eventId} />
@@ -430,6 +470,7 @@ export function GuestManagementPanel({
               aria-disabled={supportsContactPicker !== true || selectingContacts}
               className="w-full sm:w-auto"
             >
+              <Icon name="contacts" />
               {selectingContacts ? 'פותח אנשי קשר...' : 'בחירת אנשי קשר מהטלפון'}
             </Button>
 
@@ -440,23 +481,21 @@ export function GuestManagementPanel({
             )}
 
             <div className="border-border border-t pt-5">
-              <label className="text-foreground block text-sm font-medium">
-                הדבקת רשימה
-                <textarea
+              <Field
+                label="הדבקת רשימה"
+                hint="שורה לכל מוזמן, שם ומספר טלפון בכל סדר. פסיק לא חובה — אפשר להדביק ישר מוואטסאפ או מפתק."
+              >
+                <Textarea
                   name="pastedContacts"
-                  className={`${textareaClass} mt-1.5`}
+                  rows={4}
                   placeholder={'ישראל ישראלי, 050-1234567\nשרה כהן, 052-7654321'}
-                  aria-describedby="pasted-contacts-help"
                 />
-              </label>
-              <p id="pasted-contacts-help" className="text-muted-foreground mt-2 text-xs">
-                שורה לכל מוזמן, שם ומספר טלפון בכל סדר. פסיק לא חובה — אפשר להדביק ישר מוואטסאפ או
-                מפתק.
-              </p>
+              </Field>
               <SubmitButton
                 idleLabel="ייבוא הרשימה המודבקת"
                 pendingLabel="מייבא אנשי קשר..."
                 variant="outline"
+                icon="upload"
                 className="mt-4 w-full sm:w-auto"
               />
             </div>
@@ -466,30 +505,32 @@ export function GuestManagementPanel({
             <form
               id="file-import"
               action={importGuestFileAction}
-              className="border-border mt-6 scroll-mt-24 space-y-4 border-t pt-6"
+              className="border-border mt-6 scroll-mt-32 space-y-4 border-t pt-6"
             >
-              <div>
-                <h3 className="text-primary font-semibold">ייבוא מהיר מקובץ</h3>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  שם וטלפון בלבד, מ-Excel/CSV/TSV, עד 5MB. לייבוא עם שולחן, מנה וצד — ייבוא ה-Excel
-                  המלא שבכלים המתקדמים.
-                </p>
+              <div className="flex items-start gap-3">
+                <Icon name="file-spreadsheet" className="text-accent-strong mt-0.5 size-5" />
+                <div>
+                  <h3 className="text-primary font-semibold">ייבוא מהיר מקובץ</h3>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    שם וטלפון בלבד, מ-Excel/CSV/TSV, עד 5MB. לייבוא עם שולחן, מנה וצד — ייבוא
+                    ה-Excel המלא שבכלים המתקדמים.
+                  </p>
+                </div>
               </div>
               <input type="hidden" name="eventId" value={eventId} />
-              <label className="text-foreground block text-sm font-medium">
-                קובץ מהטלפון או מהמחשב
-                <input
+              <Field label="קובץ מהטלפון או מהמחשב" required>
+                <Input
                   name="guestFile"
                   type="file"
                   accept=".xlsx,.csv,.tsv,.txt"
-                  required
-                  className={`${fieldClass} mt-1.5 file:me-3 file:rounded-full file:border-0 file:px-3 file:py-1.5`}
+                  className="file:bg-secondary file:text-secondary-foreground py-2 file:me-3 file:rounded-full file:border-0 file:px-3 file:py-1 file:text-sm file:font-semibold"
                 />
-              </label>
+              </Field>
               <SubmitButton
                 idleLabel="ייבוא קובץ"
                 pendingLabel="מייבא קובץ..."
                 variant="outline"
+                icon="upload"
                 className="w-full sm:w-auto"
               />
             </form>
@@ -497,70 +538,32 @@ export function GuestManagementPanel({
         </Card>
       </section>
 
-      <section id="guest-list" className="scroll-mt-24" aria-labelledby="guest-list-title">
+      <section id="guest-list" className="scroll-mt-32" aria-labelledby="guest-list-title">
         <Card padding="lg">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-eyebrow text-accent-strong font-semibold">רשימת מוזמנים</p>
-              <h2 id="guest-list-title" className="text-h2 text-primary mt-2 font-bold">
-                ניהול ועריכה
-              </h2>
-            </div>
-            <div className="text-muted-foreground text-sm">
-              <span>{guests.length} רשומות</span>
-              <span aria-hidden="true"> · </span>
-              <span>{totalPeople} אנשים</span>
-              {assignedGuests > 0 && (
-                <>
-                  <span aria-hidden="true"> · </span>
-                  <span>{assignedGuests} שובצו</span>
-                </>
-              )}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <SectionIntro
+              id="guest-list-title"
+              icon="users"
+              eyebrow="רשימת מוזמנים"
+              title="ניהול ועריכה"
+            />
+            <div className="text-muted-foreground flex flex-wrap gap-2 text-sm">
+              <Badge tone="outline">{guests.length} רשומות</Badge>
+              <Badge tone="outline">{totalPeople} אנשים</Badge>
+              {assignedGuests > 0 && <Badge tone="gold">{assignedGuests} שובצו</Badge>}
             </div>
           </div>
 
-          {guests.length > 0 && (
-            <div className="border-destructive/30 bg-destructive/5 mt-6 rounded-2xl border p-4">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-foreground font-semibold">צריך להתחיל את הרשימה מחדש?</p>
-                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                    מחיקת כל המוזמנים מאפסת את הרשימה הפעילה, מבטלת קישורי הזמנה ישנים ומאפשרת לייבא
-                    את אנשי הקשר מחדש. אישורי הגעה שכבר התקבלו נשמרים.
-                  </p>
-                </div>
-                <form
-                  action={resetAction}
-                  onSubmit={(submitEvent) => {
-                    if (
-                      !window.confirm(
-                        `למחוק את כל ${guests.length} המוזמנים מהאירוע? הפעולה תאפס גם נתוני הושבה ומעקב ולא ניתן לבטל אותה.`,
-                      )
-                    ) {
-                      submitEvent.preventDefault();
-                    }
-                  }}
-                  className="shrink-0"
-                >
-                  <input type="hidden" name="eventId" value={eventId} />
-                  <SubmitButton
-                    idleLabel="מחיקת כל המוזמנים"
-                    pendingLabel="מוחק את כל המוזמנים..."
-                    variant="destructive"
-                    className="w-full sm:w-auto"
-                  />
-                </form>
-              </div>
-            </div>
-          )}
-
           {guests.length === 0 ? (
-            <div className="border-border bg-secondary/20 mt-6 rounded-2xl border border-dashed p-6 text-center">
-              <p className="text-primary font-semibold">עדיין אין מוזמנים ברשימה</p>
-              <p className="text-muted-foreground mt-2 text-sm">
+            <div className="border-border bg-secondary/20 mt-6 flex flex-col items-center rounded-2xl border border-dashed p-8 text-center">
+              <span className="border-accent-strong/30 text-accent-strong flex size-12 items-center justify-center rounded-full border">
+                <Icon name="user-plus" className="size-5" />
+              </span>
+              <p className="text-primary mt-4 font-semibold">עדיין אין מוזמנים ברשימה</p>
+              <p className="text-muted-foreground mt-1 text-sm">
                 התחילו בהוספה ידנית או בייבוא אנשי קשר מהטלפון.
               </p>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <a href="#manual-add" className={buttonClass({ size: 'sm' })}>
                   הוספת מוזמן
                 </a>
@@ -571,16 +574,13 @@ export function GuestManagementPanel({
             </div>
           ) : (
             <>
-              <label className="text-foreground mt-6 block text-sm font-medium">
-                חיפוש ברשימה
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="שם, טלפון, אימייל או שולחן"
-                  className={`${fieldClass} mt-1.5`}
-                />
-              </label>
+              <SearchInput
+                label="חיפוש ברשימה"
+                placeholder="שם, טלפון, אימייל או שולחן"
+                value={query}
+                onValueChange={setQuery}
+                className="mt-6"
+              />
 
               {filteredGuests.length === 0 ? (
                 <div className="border-border mt-5 rounded-2xl border border-dashed p-6 text-center">
@@ -592,31 +592,54 @@ export function GuestManagementPanel({
                     className="mt-2"
                     onClick={() => setQuery('')}
                   >
-                    ניקוי החיפוש
+                    הצגת כל המוזמנים
                   </Button>
                 </div>
               ) : (
                 <ul className="mt-5 space-y-3">
-                  {filteredGuests.map((guest) => (
-                    <li key={guest.id} className="border-border rounded-2xl border p-4">
-                      <details className="group">
-                        <summary className="cursor-pointer list-none rounded-sm">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
+                  {filteredGuests.map((guest) => {
+                    const arrived = guest.checkedInAt !== null;
+                    return (
+                      <li
+                        key={guest.id}
+                        className={cn(
+                          'border-border rounded-2xl border transition-colors duration-[--duration-fast]',
+                          arrived ? 'border-success/30 bg-success-soft/30' : 'bg-card',
+                        )}
+                      >
+                        <details className="group">
+                          <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 [&::-webkit-details-marker]:hidden">
+                            <span
+                              aria-hidden="true"
+                              className={cn(
+                                'flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                                arrived
+                                  ? 'bg-success text-success-foreground'
+                                  : 'bg-secondary text-primary',
+                              )}
+                            >
+                              {arrived ? (
+                                <Icon name="check" strokeWidth={2.4} className="size-4" />
+                              ) : (
+                                initials(guest.fullName)
+                              )}
+                            </span>
+                            <div className="min-w-0 flex-1">
                               <p className="text-primary truncate font-semibold">
                                 {guest.fullName}
                               </p>
-                              <p
-                                className="text-muted-foreground mt-1 text-sm break-words"
-                                dir="ltr"
-                              >
-                                {formatStoredPhoneForDisplay(guest.phone)}
-                              </p>
-                              <p className="text-muted-foreground mt-1 text-xs">
-                                כמות: {guest.partySize}
-                                {guest.tableName !== null && guest.tableName.trim() !== ''
-                                  ? ` · שולחן ${guest.tableName}`
-                                  : ''}
+                              <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                                <span dir="ltr">{formatStoredPhoneForDisplay(guest.phone)}</span>
+                                <span aria-hidden="true">·</span>
+                                <span>
+                                  {guest.partySize === 1 ? 'אדם אחד' : `${guest.partySize} אנשים`}
+                                </span>
+                                {guest.tableName !== null && guest.tableName.trim() !== '' && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span>שולחן {guest.tableName}</span>
+                                  </>
+                                )}
                               </p>
                             </div>
                             {/*
@@ -632,107 +655,148 @@ export function GuestManagementPanel({
                                 <input
                                   type="hidden"
                                   name="checkedIn"
-                                  value={guest.checkedInAt === null ? 'true' : 'false'}
+                                  value={arrived ? 'false' : 'true'}
                                 />
                                 <Button
                                   type="submit"
-                                  variant={guest.checkedInAt === null ? 'outline' : 'primary'}
+                                  variant={arrived ? 'primary' : 'outline'}
                                   size="sm"
-                                  aria-pressed={guest.checkedInAt !== null}
+                                  aria-pressed={arrived}
                                   className="gap-1.5"
                                   /* Inside a <summary>: a click here must mark an arrival,
                                      not open the edit panel underneath it. */
                                   onClick={(event) => event.stopPropagation()}
                                 >
-                                  <svg
-                                    aria-hidden="true"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="m4 12.5 5 5L20 6.5" />
-                                  </svg>
-                                  {guest.checkedInAt === null ? 'סימון הגעה' : 'הגיע'}
+                                  <Icon name="check" strokeWidth={2.2} />
+                                  {arrived ? 'הגיע' : 'סימון הגעה'}
                                 </Button>
                               </form>
                             )}
                             <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-sm">
-                              עריכה
-                              <svg
-                                aria-hidden="true"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                className="size-4 transition-transform group-open:rotate-180"
-                              >
-                                <path d="m6 9 6 6 6-6" />
-                              </svg>
+                              <span className="hidden sm:inline">עריכה</span>
+                              <Icon
+                                name="chevron-down"
+                                strokeWidth={2}
+                                className="size-4 transition-transform duration-[--duration-base] group-open:rotate-180"
+                              />
                             </span>
-                          </div>
-                        </summary>
+                          </summary>
 
-                        <div className="border-border mt-4 border-t pt-5">
-                          <div className="mb-5 flex flex-wrap gap-2">
-                            <a
-                              href={`tel:${guest.phone}`}
-                              className={buttonClass({ variant: 'outline', size: 'sm' })}
+                          <div className="border-border border-t p-4 pt-5">
+                            <div className="mb-5 flex flex-wrap gap-2">
+                              <a
+                                href={`tel:${guest.phone}`}
+                                className={buttonClass({ variant: 'outline', size: 'sm' })}
+                              >
+                                <Icon name="phone" />
+                                חיוג
+                              </a>
+                              <a
+                                href={whatsappUrl(guest.phone)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={buttonClass({ variant: 'outline', size: 'sm' })}
+                              >
+                                <Icon name="whatsapp" />
+                                WhatsApp{' '}
+                                <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
+                              </a>
+                            </div>
+
+                            <form action={saveAction} className="space-y-5">
+                              <input type="hidden" name="eventId" value={eventId} />
+                              <input type="hidden" name="guestId" value={guest.id} />
+                              <GuestFields guest={guest} />
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <SubmitButton
+                                  idleLabel="שמירת שינויים"
+                                  pendingLabel="שומר שינויים..."
+                                  className="w-full sm:w-auto"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:bg-destructive-soft hover:text-destructive w-full sm:w-auto"
+                                  onClick={() => setPendingDelete({ kind: 'guest', guest })}
+                                >
+                                  <Icon name="trash" />
+                                  מחיקת המוזמן
+                                </Button>
+                              </div>
+                            </form>
+
+                            {/* The write itself: hidden, submitted by the dialog above. */}
+                            <form
+                              action={deleteAction}
+                              ref={(element) => {
+                                if (element === null) deleteFormRefs.current.delete(guest.id);
+                                else deleteFormRefs.current.set(guest.id, element);
+                              }}
+                              className="hidden"
                             >
-                              חיוג
-                            </a>
-                            <a
-                              href={whatsappUrl(guest.phone)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={buttonClass({ variant: 'ghost', size: 'sm' })}
-                            >
-                              WhatsApp{' '}
-                              <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
-                            </a>
+                              <input type="hidden" name="eventId" value={eventId} />
+                              <input type="hidden" name="guestId" value={guest.id} />
+                            </form>
                           </div>
-
-                          <form action={saveAction} className="space-y-5">
-                            <input type="hidden" name="eventId" value={eventId} />
-                            <input type="hidden" name="guestId" value={guest.id} />
-                            <GuestFields guest={guest} />
-                            <SubmitButton
-                              idleLabel="שמירת שינויים"
-                              pendingLabel="שומר שינויים..."
-                              className="w-full sm:w-auto"
-                            />
-                          </form>
-
-                          <form
-                            action={deleteAction}
-                            className="mt-3"
-                            onSubmit={(submitEvent) => {
-                              if (!window.confirm(`למחוק את ${guest.fullName} מרשימת המוזמנים?`)) {
-                                submitEvent.preventDefault();
-                              }
-                            }}
-                          >
-                            <input type="hidden" name="eventId" value={eventId} />
-                            <input type="hidden" name="guestId" value={guest.id} />
-                            <SubmitButton
-                              idleLabel="מחיקת המוזמן"
-                              pendingLabel="מוחק מוזמן..."
-                              variant="destructive"
-                              className="w-full sm:w-auto"
-                            />
-                          </form>
-                        </div>
-                      </details>
-                    </li>
-                  ))}
+                        </details>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
+
+              <div className="border-destructive/25 bg-destructive-soft/40 mt-8 rounded-2xl border p-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <Icon
+                      name="alert-triangle"
+                      className="text-destructive mt-0.5 size-5 shrink-0"
+                    />
+                    <div>
+                      <p className="text-foreground font-semibold">צריך להתחיל את הרשימה מחדש?</p>
+                      <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                        מחיקת כל המוזמנים מאפסת את הרשימה הפעילה, מבטלת קישורי הזמנה ישנים ומאפשרת
+                        לייבא את אנשי הקשר מחדש. אישורי הגעה שכבר התקבלו נשמרים.
+                      </p>
+                    </div>
+                  </div>
+                  <form ref={resetFormRef} action={resetAction} className="shrink-0">
+                    <input type="hidden" name="eventId" value={eventId} />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="w-full sm:w-auto"
+                      onClick={() => setPendingDelete({ kind: 'reset' })}
+                    >
+                      <Icon name="trash" />
+                      מחיקת כל המוזמנים
+                    </Button>
+                  </form>
+                </div>
+              </div>
             </>
           )}
         </Card>
       </section>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        tone="destructive"
+        title={
+          pendingDelete?.kind === 'guest'
+            ? `למחוק את ${pendingDelete.guest.fullName} מרשימת המוזמנים?`
+            : `למחוק את כל ${guests.length} המוזמנים מהאירוע?`
+        }
+        description={
+          pendingDelete?.kind === 'guest'
+            ? 'הקישור האישי של המוזמן יבוטל. אישור הגעה שכבר התקבל נשמר.'
+            : 'הפעולה תאפס גם נתוני הושבה ומעקב ולא ניתן לבטל אותה. אישורי הגעה שכבר התקבלו נשמרים.'
+        }
+        confirmLabel={pendingDelete?.kind === 'guest' ? 'מחיקת המוזמן' : 'מחיקת כל המוזמנים'}
+        onConfirm={confirmPendingDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

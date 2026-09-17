@@ -48,7 +48,9 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </div>
 
             <nav aria-label={footer.productHeading}>
-              <p className="text-eyebrow text-accent-strong font-semibold">{footer.productHeading}</p>
+              <p className="text-eyebrow text-accent-strong font-semibold">
+                {footer.productHeading}
+              </p>
               <ul className="mt-3 flex flex-col gap-1">
                 <li>
                   <Link className={linkClass} href={localePath(locale, '/pricing')}>

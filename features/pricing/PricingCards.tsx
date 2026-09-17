@@ -74,7 +74,7 @@ export function PricingCards({
             )}
           >
             {plan.highlighted && (
-              <span className="bg-primary text-primary-foreground shadow-paper absolute -top-3.5 start-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap rtl:translate-x-1/2">
+              <span className="bg-primary text-primary-foreground shadow-paper absolute start-1/2 -top-3.5 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap rtl:translate-x-1/2">
                 <Icon name="sparkles" className="size-3.5" />
                 {copy.highlightedBadge}
               </span>

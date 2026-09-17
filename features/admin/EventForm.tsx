@@ -6,6 +6,7 @@ import type { EventFormState } from '@/app/actions/manageEvent';
 import { Button } from '@/components/ui/button';
 import { CheckboxField, Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Alert } from '@/components/ui/feedback';
+import { Icon, type IconName } from '@/components/ui/icons';
 import { getEventTypePreset, listEventTypePresets } from '@/config/eventTypes';
 
 /**
@@ -57,13 +58,37 @@ interface EventFormProps {
   readonly defaults?: Partial<EventFormValues>;
 }
 
-/** A hairline heading that groups the fields below it. */
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * A group of fields under one heading.
+ *
+ * A `fieldset` with a real `legend`, so a screen reader announces the group as it
+ * enters it; the icon and the rule are the visual half of the same structure. The
+ * legend is positioned over the rule rather than floated in the fieldset's border,
+ * which browsers still draw inconsistently.
+ */
+function Group({
+  title,
+  icon,
+  hint,
+  children,
+}: {
+  title: string;
+  icon: IconName;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <fieldset className="border-border border-t pt-7 first:border-t-0 first:pt-0">
-      <legend className="text-eyebrow text-accent-strong -mt-2.5 pe-3 font-semibold">
-        {title}
-      </legend>
+      <legend className="sr-only">{title}</legend>
+      <div aria-hidden="true" className="mb-5 flex items-center gap-3">
+        <span className="bg-accent-soft/70 text-accent-strong flex size-9 shrink-0 items-center justify-center rounded-full">
+          <Icon name={icon} className="size-4" />
+        </span>
+        <div>
+          <p className="text-primary text-base font-bold">{title}</p>
+          {hint !== undefined && <p className="text-muted-foreground text-xs">{hint}</p>}
+        </div>
+      </div>
       <div className="space-y-5">{children}</div>
     </fieldset>
   );
@@ -118,7 +143,7 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
     <form action={formAction} className="space-y-8" noValidate>
       {defaults.id !== undefined && <input type="hidden" name="eventId" value={defaults.id} />}
 
-      <Group title="האירוע">
+      <Group title="האירוע" icon="sparkles" hint="סוג האירוע קובע את הנוסח שהאורחים יראו">
         <Field label="סוג האירוע" required error={err('eventType')}>
           <Select
             key={submissionKey}
@@ -152,7 +177,7 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
         </Field>
       </Group>
 
-      <Group title="מתי">
+      <Group title="מתי" icon="calendar">
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="תאריך" required error={err('eventDate')}>
             <Input name="eventDate" type="date" defaultValue={value('event_date')} />
@@ -174,7 +199,7 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
         </div>
       </Group>
 
-      <Group title="איפה">
+      <Group title="איפה" icon="map-pin">
         <Field label="שם המקום" required error={err('venueName')}>
           <Input name="venueName" defaultValue={value('venue_name')} placeholder="אולמי הדר" />
         </Field>
@@ -225,7 +250,7 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
         </div>
       </Group>
 
-      <Group title="פרטים להזמנה">
+      <Group title="פרטים להזמנה" icon="mail">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="תווית צד א׳" hint={`ריק = ${preset.defaultSideALabel}`}>
             <Input name="sideALabel" defaultValue={value('side_a_label')} />
@@ -251,7 +276,7 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
         </Field>
       </Group>
 
-      <Group title="מעקב">
+      <Group title="מעקב" icon="send">
         {/* The denominator for the response-rate tile. Optional, and the tile says
             "not available" without it rather than inventing a figure (§8.1). */}
         <Field
@@ -270,7 +295,7 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
         </Field>
       </Group>
 
-      <Group title="פרסום">
+      <Group title="פרסום" icon="eye">
         <CheckboxField name="isActive" defaultChecked={isPublished}>
           פרסום ההזמנה. כשהתיבה מסומנת הקישור פתוח לאורחים; אחרת הוא מחזיר 404, ואף אחד לא יכול לאשר
           הגעה.
@@ -284,9 +309,11 @@ export function EventForm({ action, submitLabel, defaults = {} }: EventFormProps
         <Alert tone="error">יש שדות חסרים או שגויים. הם מסומנים למעלה.</Alert>
       )}
 
-      <Button type="submit" size="lg" block disabled={isPending}>
-        {isPending ? 'שומר…' : submitLabel}
-      </Button>
+      <div className="border-border bg-card/95 sticky bottom-0 -mx-6 -mb-6 border-t px-6 py-4 backdrop-blur sm:-mx-9 sm:-mb-9 sm:px-9">
+        <Button type="submit" size="lg" block loading={isPending}>
+          {isPending ? 'שומר…' : submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }

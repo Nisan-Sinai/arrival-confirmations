@@ -137,7 +137,7 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
                   >
                     <span
                       aria-hidden="true"
-                      className="bg-primary text-primary-foreground absolute -top-3.5 start-5 flex size-7 items-center justify-center rounded-full font-[family-name:var(--font-display)] text-sm font-bold"
+                      className="bg-primary text-primary-foreground absolute start-5 -top-3.5 flex size-7 items-center justify-center rounded-full font-[family-name:var(--font-display)] text-sm font-bold"
                     >
                       {index + 1}
                     </span>

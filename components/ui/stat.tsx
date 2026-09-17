@@ -48,7 +48,7 @@ export function StatCard({
       className={cn(
         'relative flex min-w-0 flex-col justify-between overflow-hidden rounded-2xl border p-4 transition-shadow duration-[--duration-base] sm:p-5',
         emphasis
-          ? 'border-accent-strong/25 from-accent-soft/55 to-card bg-gradient-to-b shadow-paper'
+          ? 'border-accent-strong/25 from-accent-soft/55 to-card shadow-paper bg-gradient-to-b'
           : 'border-border bg-card shadow-paper',
         className,
       )}

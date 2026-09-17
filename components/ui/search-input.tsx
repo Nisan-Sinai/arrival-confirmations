@@ -37,7 +37,10 @@ export function SearchInput({
 
   return (
     <div className={cn('min-w-0', className)}>
-      <label htmlFor={id} className={showLabel ? 'text-primary mb-1.5 block text-sm font-semibold' : 'sr-only'}>
+      <label
+        htmlFor={id}
+        className={showLabel ? 'text-primary mb-1.5 block text-sm font-semibold' : 'sr-only'}
+      >
         {label}
       </label>
       <div className="relative">

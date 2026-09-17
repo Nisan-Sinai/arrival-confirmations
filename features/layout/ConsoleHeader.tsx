@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { Button, buttonClass } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
 import { BrandMark } from '@/features/layout/BrandMark';
+import { cn } from '@/lib/utils';
 
 /**
  * The one header for every signed-in screen.
@@ -23,16 +25,16 @@ import { BrandMark } from '@/features/layout/BrandMark';
  * owner and a customer is which navigation sits in the middle, and that is settled once
  * per session rather than per page, so nothing moves as you navigate.
  *
- * Labels shorten below `sm` rather than wrapping or scrolling. Three tabs plus two
- * account actions do not fit 390px at full length — this is the same arithmetic that
- * pushed the public header's call to action off the screen — and a shorter label a
- * reader can see beats a full one they have to scroll sideways to find.
+ * The section tabs are a segmented strip — a single quiet track with the current section
+ * filled — rather than a row of loose buttons, which is what lets the bar hold three
+ * tabs, an account chip and two actions without any of them competing for the one
+ * primary colour. Labels shorten below `sm` rather than wrapping or scrolling.
  */
 
 const OWNER_TABS = [
-  { href: '/dashboard', label: 'האירועים שלי', short: 'אירועים' },
-  { href: '/admin/events', label: 'לקוחות ואירועים', short: 'לקוחות' },
-  { href: '/admin/plans', label: 'מסלולים ותשלומים', short: 'מסלולים' },
+  { href: '/dashboard', label: 'האירועים שלי', short: 'אירועים', icon: 'calendar' },
+  { href: '/admin/events', label: 'לקוחות ואירועים', short: 'לקוחות', icon: 'users' },
+  { href: '/admin/plans', label: 'מסלולים ותשלומים', short: 'מסלולים', icon: 'credit-card' },
 ] as const;
 
 /** Matches the section, not just the page, so a nested route keeps its tab lit. */
@@ -40,11 +42,35 @@ function isCurrentSection(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/**
- * Sized to hold the widest label at each breakpoint without the row reflowing when the
- * active tab changes weight. `whitespace-nowrap` comes from `buttonClass` already.
- */
-const NAV_BUTTON = 'h-9 min-w-0 px-2 text-xs sm:h-10 sm:px-4 sm:text-sm';
+function Tab({
+  href,
+  active,
+  icon,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  icon: (typeof OWNER_TABS)[number]['icon'] | 'home';
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'inline-flex h-9 min-w-0 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap sm:px-3.5 sm:text-sm',
+        'transition-[background-color,color,box-shadow] duration-[--duration-fast] ease-[--ease-out]',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]',
+        active
+          ? 'bg-card text-primary shadow-paper'
+          : 'text-muted-foreground hover:text-primary hover:bg-card/60',
+      )}
+    >
+      <Icon name={icon} className="hidden size-4 sm:block" />
+      {children}
+    </Link>
+  );
+}
 
 export function ConsoleHeader({
   email,
@@ -62,7 +88,7 @@ export function ConsoleHeader({
     <header className="border-border/70 bg-background/90 sticky top-0 z-[var(--z-header)] border-b backdrop-blur-md">
       <Container
         width="wide"
-        className="flex min-h-16 flex-nowrap items-center justify-between gap-1 px-3 py-2 sm:gap-3 sm:px-8"
+        className="flex min-h-16 flex-nowrap items-center justify-between gap-2 px-3 py-2 sm:gap-4 sm:px-8"
       >
         <Link
           href="/dashboard"
@@ -75,76 +101,57 @@ export function ConsoleHeader({
 
         <nav
           aria-label="ניווט אזור הניהול"
-          className="flex min-w-0 flex-1 flex-nowrap items-center justify-end gap-0.5 sm:gap-2"
+          className="bg-secondary/50 flex min-w-0 items-center gap-0.5 rounded-full p-1"
         >
           {isPlatformOwner ? (
-            OWNER_TABS.map((tab) => {
-              const isActive = isCurrentSection(pathname, tab.href);
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  aria-current={isActive ? 'page' : undefined}
-                  /*
-                   * The active tab is `outline`, not `primary`.
-                   *
-                   * It was `primary`, which put two filled burgundy pills in one bar —
-                   * the selected tab and "אירוע חדש" — competing for the same attention.
-                   * The button system's own note rules that out: exactly one `primary`
-                   * per view, and here it belongs to the action, not to a statement of
-                   * where you already are.
-                   *
-                   * `outline` rather than `secondary` because `--secondary` sits at
-                   * lightness 0.94 and `--border` at 0.90, so a secondary fill is
-                   * literally paler than the outline beneath it in the hierarchy. The
-                   * border reads as "selected" against borderless siblings and stays
-                   * out of the call to action's way.
-                   */
-                  className={buttonClass({
-                    variant: isActive ? 'outline' : 'ghost',
-                    size: 'sm',
-                    className: NAV_BUTTON,
-                  })}
-                >
-                  <span className="sm:hidden">{tab.short}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </Link>
-              );
-            })
+            OWNER_TABS.map((tab) => (
+              <Tab
+                key={tab.href}
+                href={tab.href}
+                icon={tab.icon}
+                active={isCurrentSection(pathname, tab.href)}
+              >
+                <span className="sm:hidden">{tab.short}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </Tab>
+            ))
           ) : (
             /*
              * A customer has no sections to move between, so the home link stands in for
              * the tab strip and the row keeps its shape. For the owner the same
              * destination is the first tab, which is why it is not repeated there.
              */
-            <Link
-              href="/dashboard"
-              aria-current={pathname === '/dashboard' ? 'page' : undefined}
-              className={buttonClass({
-                variant: pathname === '/dashboard' ? 'primary' : 'ghost',
-                size: 'sm',
-                className: NAV_BUTTON,
-              })}
-            >
+            <Tab href="/dashboard" icon="home" active={pathname === '/dashboard'}>
               <span className="sm:hidden">בית</span>
               <span className="hidden sm:inline">דף הבית שלי</span>
-            </Link>
+            </Tab>
           )}
+        </nav>
 
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {/* Identification, not navigation — the first thing to go when space is tight. */}
           {email !== null && (
             <span
-              className="text-muted-foreground hidden max-w-[13rem] truncate px-1 text-sm xl:inline"
-              dir="ltr"
+              className="text-muted-foreground border-border bg-card hidden max-w-[13rem] items-center gap-2 rounded-full border py-1 ps-1 pe-3 text-xs xl:inline-flex"
+              title={email}
             >
-              {email}
+              <span className="bg-secondary text-primary flex size-6 items-center justify-center rounded-full text-[11px] font-bold uppercase">
+                {email.slice(0, 1)}
+              </span>
+              <span className="truncate" dir="ltr">
+                {email}
+              </span>
             </span>
           )}
 
           <Link
             href="/dashboard/events/new"
-            className={buttonClass({ size: 'sm', className: NAV_BUTTON })}
+            className={buttonClass({
+              size: 'sm',
+              className: 'h-9 px-3 text-xs sm:px-4 sm:text-sm',
+            })}
           >
+            <Icon name="plus" strokeWidth={2.2} />
             <span className="sm:hidden">חדש</span>
             <span className="hidden sm:inline">אירוע חדש</span>
           </Link>
@@ -155,29 +162,14 @@ export function ConsoleHeader({
               variant="ghost"
               size="sm"
               aria-label="התנתקות"
-              className={NAV_BUTTON}
+              data-tooltip="התנתקות"
+              className="tooltip-host text-muted-foreground hover:text-primary h-9 w-9 px-0 sm:w-auto sm:px-3"
             >
-              {/* Icon only below `sm`: the label is the least useful two words in the row
-                  on a phone, and the door glyph is unambiguous. `aria-label` above keeps
-                  the accessible name at both sizes. */}
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.7}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="sm:hidden"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <path d="m16 17 5-5-5-5" />
-                <path d="M21 12H9" />
-              </svg>
+              <Icon name="logout" />
               <span className="hidden sm:inline">התנתקות</span>
             </Button>
           </form>
-        </nav>
+        </div>
       </Container>
     </header>
   );

@@ -41,7 +41,9 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0">
-        {badges !== undefined && <div className="mb-3 flex flex-wrap items-center gap-2">{badges}</div>}
+        {badges !== undefined && (
+          <div className="mb-3 flex flex-wrap items-center gap-2">{badges}</div>
+        )}
         {eyebrow !== undefined && (
           <p className="text-eyebrow text-accent-strong flex items-center gap-2.5 font-semibold">
             <span aria-hidden="true" className="bg-accent h-px w-5" />

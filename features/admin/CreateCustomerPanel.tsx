@@ -2,6 +2,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
 import { Field, Input } from '@/components/ui/field';
+import { Icon } from '@/components/ui/icons';
 
 type CreateCustomerAction = (formData: FormData) => Promise<void>;
 
@@ -49,7 +50,15 @@ export function CreateCustomerPanel({
 
   return (
     <details id="create-customer" className="mt-8" open={shouldOpen || undefined}>
-      <summary className={buttonClass({ variant: 'primary' })}>הוספת לקוח</summary>
+      <summary
+        className={buttonClass({
+          variant: 'primary',
+          className: 'cursor-pointer list-none [&::-webkit-details-marker]:hidden',
+        })}
+      >
+        <Icon name="user-plus" />
+        הוספת לקוח
+      </summary>
 
       <Card padding="lg" className="mt-4 max-w-2xl">
         <div>

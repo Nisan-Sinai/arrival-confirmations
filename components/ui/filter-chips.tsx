@@ -21,7 +21,12 @@ export function FilterChips<T extends string>({
   className,
 }: {
   label: string;
-  options: readonly { value: T; label: string; count?: number; tone?: 'success' | 'danger' | 'warning' }[];
+  options: readonly {
+    value: T;
+    label: string;
+    count?: number;
+    tone?: 'success' | 'danger' | 'warning';
+  }[];
   value: T;
   onChange: (value: T) => void;
   className?: string;
@@ -30,7 +35,10 @@ export function FilterChips<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className={cn('-mx-1 flex gap-1.5 overflow-x-auto px-1 py-1 [scrollbar-width:none]', className)}
+      className={cn(
+        '-mx-1 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-1 py-1',
+        className,
+      )}
     >
       {options.map((option) => {
         const active = option.value === value;

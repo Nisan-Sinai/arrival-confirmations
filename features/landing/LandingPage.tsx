@@ -203,7 +203,9 @@ export function LandingPage({ locale }: { locale: Locale }) {
         */}
         <section aria-label={occasions.lead} className="border-border/60 border-y py-6 sm:py-7">
           <Container width="wide" className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
-            <p className="text-eyebrow text-accent-strong shrink-0 font-semibold">{occasions.lead}</p>
+            <p className="text-eyebrow text-accent-strong shrink-0 font-semibold">
+              {occasions.lead}
+            </p>
             <div className="marquee-mask w-full min-w-0 flex-1 overflow-hidden" aria-hidden="true">
               <div className="marquee-track flex w-max gap-3">
                 {[0, 1].map((copy) =>
@@ -326,11 +328,16 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 <h2 className="text-h2 text-primary mt-3 font-bold">{closing.title}</h2>
                 <p className="text-lead text-muted-foreground mt-4">{closing.body}</p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
-                  <Link href={localePath(locale, '/signup')} className={buttonClass({ size: 'lg' })}>
+                  <Link
+                    href={localePath(locale, '/signup')}
+                    className={buttonClass({ size: 'lg' })}
+                  >
                     {closing.cta}
                   </Link>
                   <a
-                    href={supportWhatsAppUrl(dictionary.pricing.whatsappIntro.replace('{plan}', 'Basic'))}
+                    href={supportWhatsAppUrl(
+                      dictionary.pricing.whatsappIntro.replace('{plan}', 'Basic'),
+                    )}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={buttonClass({ variant: 'outline', size: 'lg' })}

@@ -3,12 +3,14 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { buttonClass } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/feedback';
+import { Badge, EmptyState } from '@/components/ui/feedback';
+import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
+import { BackLink, MetaItem, PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat';
 import { getEventTypePreset } from '@/config/eventTypes';
 import { ResponseRateTile } from '@/features/admin/ResponseRateTile';
-import { RsvpRow } from '@/features/admin/RsvpRow';
+import { RsvpList } from '@/features/admin/RsvpList';
 import { ShareInvitation } from '@/features/admin/ShareInvitation';
 import { describeTimeUntilEvent, formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { resolveRequestOrigin } from '@/lib/server/origin';
@@ -32,41 +34,33 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 /**
- * A statistic, sized by how much it matters.
+ * The replies as one bar, split three ways.
  *
- * The head count the caterer needs and the number of replies are not peers of "how
- * many babies", and a row of eight identical tiles said they were. `emphasis` is the
- * whole difference between a dashboard you can scan and a dashboard you have to read.
+ * Three numbers in three tiles are a table; the same three as widths on one line are a
+ * picture of the event. The bar is decorative — every figure it draws is also in the
+ * tiles and the chips — so it carries no text of its own.
  */
-function Stat({
-  label,
-  value,
-  emphasis = false,
-  hint,
+function AttendanceBar({
+  attending,
+  maybe,
+  notAttending,
 }: {
-  label: string;
-  value: string | number;
-  emphasis?: boolean;
-  hint?: string;
+  attending: number;
+  maybe: number;
+  notAttending: number;
 }) {
+  const total = attending + maybe + notAttending;
+  if (total === 0) return null;
+  const width = (part: number) => `${(part / total) * 100}%`;
   return (
-    <Card
-      variant={emphasis ? 'accent' : 'paper'}
-      padding="none"
-      className="flex flex-col justify-between p-4 sm:p-5"
+    <div
+      aria-hidden="true"
+      className="bg-border/70 mt-3 flex h-2 w-full overflow-hidden rounded-full"
     >
-      <p className="text-muted-foreground text-xs sm:text-sm">{label}</p>
-      <p
-        className={
-          emphasis
-            ? 'text-primary mt-2 font-[family-name:var(--font-display)] text-4xl leading-none font-bold tabular-nums'
-            : 'text-primary mt-2 font-[family-name:var(--font-display)] text-2xl leading-none font-bold tabular-nums'
-        }
-      >
-        {value}
-      </p>
-      {hint !== undefined && <p className="text-muted-foreground mt-1.5 text-xs">{hint}</p>}
-    </Card>
+      <span className="bg-success h-full" style={{ width: width(attending) }} />
+      <span className="bg-accent-strong h-full" style={{ width: width(maybe) }} />
+      <span className="bg-destructive/80 h-full" style={{ width: width(notAttending) }} />
+    </div>
   );
 }
 
@@ -106,51 +100,53 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
   const preset = getEventTypePreset(event.event_type);
 
   return (
-    <main id="main" className="flex-1 py-10 sm:py-14">
+    <main id="main" className="flex-1 py-8 sm:py-12">
       <Container width="wide">
-        <Link
-          href="/dashboard"
-          className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 rounded-sm text-sm"
-        >
-          {/* The arrow points right, because "back" in an RTL document is rightwards.
-              A left-pointing chevron here is the single most common RTL mistake. */}
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-4"
-          >
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-          כל האירועים
-        </Link>
+        <BackLink href="/dashboard">כל האירועים</BackLink>
 
-        <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-eyebrow text-accent-strong font-semibold">{preset.label}</p>
-            <h1 className="text-h1 text-primary mt-2 font-bold">{event.title}</h1>
-            <p className="text-muted-foreground mt-2">
-              יום {formatEventWeekday(event.event_date)}, {formatEventDate(event.event_date)} ·{' '}
-              {event.venue_name}
-              <span className="text-accent-strong">
-                {' '}
-                · {describeTimeUntilEvent(event.event_date)}
-              </span>
-            </p>
-          </div>
-          <Link
-            href={`/dashboard/events/${event.id}/edit`}
-            className={buttonClass({ variant: 'outline' })}
-          >
-            עריכת ההזמנה
-          </Link>
-        </header>
+        <PageHeader
+          className="mt-4"
+          badges={
+            <>
+              <Badge tone="gold">{preset.label}</Badge>
+              <Badge tone={event.is_active ? 'success' : 'warning'} dot>
+                {event.is_active ? 'מפורסם' : 'טיוטה'}
+              </Badge>
+            </>
+          }
+          title={event.title}
+          meta={
+            <>
+              <MetaItem icon={<Icon name="calendar" />}>
+                יום {formatEventWeekday(event.event_date)}, {formatEventDate(event.event_date)}
+              </MetaItem>
+              <MetaItem icon={<Icon name="map-pin" />}>{event.venue_name}</MetaItem>
+              <MetaItem icon={<Icon name="clock" />} className="text-accent-strong font-semibold">
+                {describeTimeUntilEvent(event.event_date)}
+              </MetaItem>
+            </>
+          }
+          actions={
+            <>
+              <Link
+                href={`/dashboard/events/${event.id}/guests`}
+                className={buttonClass({ variant: 'outline' })}
+              >
+                <Icon name="users" />
+                מוזמנים וכלים
+              </Link>
+              <Link
+                href={`/dashboard/events/${event.id}/edit`}
+                className={buttonClass({ variant: 'outline' })}
+              >
+                <Icon name="edit" />
+                עריכת ההזמנה
+              </Link>
+            </>
+          }
+        />
 
-        <div className="mt-9">
+        <div className="mt-8">
           <ShareInvitation
             publicId={event.public_id}
             origin={await resolveRequestOrigin()}
@@ -161,68 +157,63 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
         </div>
 
         {/* The two numbers a host opens this page for, then the breakdown. */}
-        <div className="mt-9 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat
-            label="סה״כ צפויים להגיע"
-            value={stats.expectedAttendees}
-            emphasis
-            hint="המספר שהקייטרינג צריך"
-          />
-          <Stat
-            label="תשובות שהתקבלו"
-            value={stats.total}
-            emphasis
-            hint={`${stats.receivedToday} היום`}
-          />
-          <Stat label="מגיעים" value={stats.attending} />
-          <Stat label="לא מגיעים" value={stats.notAttending} />
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="מתלבטים" value={stats.maybe} />
-          <Stat label="מבוגרים" value={stats.adults} />
-          <Stat label="ילדים" value={stats.children} />
-          {/* The only editable tile: its denominator is a number the host knows while
-              looking at this screen, and sending them to a separate form to change it
-              is what left it reading "not available" on every event. */}
-          <ResponseRateTile
-            eventId={event.id}
-            percentage={rate.percentage}
-            invited={rate.invited}
-            expectedGuests={event.expected_guests}
-          />
-        </div>
+        <section aria-label="סיכום התשובות" className="mt-8">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard
+              label="סה״כ צפויים להגיע"
+              value={stats.expectedAttendees}
+              emphasis
+              icon={<Icon name="users" />}
+              hint="המספר שהקייטרינג צריך"
+            />
+            <StatCard
+              label="תשובות שהתקבלו"
+              value={stats.total}
+              emphasis
+              icon={<Icon name="mail" />}
+              hint={stats.receivedToday > 0 ? `${stats.receivedToday} התקבלו היום` : 'אף אחת היום'}
+              footer={
+                <AttendanceBar
+                  attending={stats.attending}
+                  maybe={stats.maybe}
+                  notAttending={stats.notAttending}
+                />
+              }
+            />
+            <StatCard label="מגיעים" value={stats.attending} tone="success" />
+            <StatCard label="לא מגיעים" value={stats.notAttending} tone="danger" />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard label="מתלבטים" value={stats.maybe} tone="warning" />
+            <StatCard label="מבוגרים" value={stats.adults} />
+            <StatCard
+              label="ילדים"
+              value={stats.children}
+              hint={stats.babies > 0 ? `ועוד ${stats.babies} תינוקות` : undefined}
+            />
+            {/* The only editable tile: its denominator is a number the host knows while
+                looking at this screen, and sending them to a separate form to change it
+                is what left it reading "not available" on every event. */}
+            <ResponseRateTile
+              eventId={event.id}
+              percentage={rate.percentage}
+              invited={rate.invited}
+              expectedGuests={event.expected_guests}
+            />
+          </div>
+        </section>
 
         <section aria-labelledby="replies" className="mt-12">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 id="replies" className="text-h2 text-primary font-bold">
               התשובות
             </h2>
-            {rows.length > 0 && (
-              <p className="text-muted-foreground text-sm">
-                {stats.babies > 0 && `כולל ${stats.babies} תינוקות · `}
-                המספרים בסוגריים: מבוגרים / ילדים / תינוקות
-              </p>
-            )}
           </div>
 
           {rows.length === 0 ? (
             <EmptyState
               className="mt-5"
-              icon={
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="size-6"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9.5" cy="7" r="4" />
-                  <path d="M19 8v6M22 11h-6" />
-                </svg>
-              }
+              icon={<Icon name="user-plus" strokeWidth={1.5} className="size-6" />}
               title="עדיין לא התקבלו אישורי הגעה"
               description={
                 event.is_active
@@ -247,27 +238,10 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
              * This used to be a mobile card list and a desktop table side by side,
              * both in the DOM at every width with one of them hidden — so every guest
              * was rendered twice, and a 300-reply wedding paid for 600 rows of markup
-             * on a phone. The list below reflows instead: stacked with a visible label
-             * per datum on a phone, aligned into columns under the header at lg.
+             * on a phone. The list reflows instead: stacked with a visible label per
+             * datum on a phone, aligned into columns under the header at lg.
              */
-            <>
-              <div
-                aria-hidden="true"
-                className="text-muted-foreground mt-5 hidden grid-cols-[1.4fr_1.1fr_0.8fr_0.9fr_1.5fr_auto] gap-4 border-b px-3 pb-2.5 text-xs font-semibold lg:grid"
-              >
-                <span>שם</span>
-                <span>טלפון</span>
-                <span>סטטוס</span>
-                <span>כמות</span>
-                <span>תזונה והערות</span>
-                <span className="w-20 text-end">פעולות</span>
-              </div>
-              <ul className="mt-3 space-y-3 lg:mt-0 lg:space-y-0">
-                {rows.map((rsvp) => (
-                  <RsvpRow key={rsvp.id} rsvp={rsvp} eventId={event.id} />
-                ))}
-              </ul>
-            </>
+            <RsvpList rows={rows} eventId={event.id} />
           )}
         </section>
       </Container>

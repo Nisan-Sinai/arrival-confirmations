@@ -300,9 +300,7 @@ const PATHS = {
       <path d="M2 10h20" />
     </>
   ),
-  heart: (
-    <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" />
-  ),
+  heart: <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" />,
   loader: (
     <>
       <circle cx="12" cy="12" r="9" strokeOpacity="0.25" />

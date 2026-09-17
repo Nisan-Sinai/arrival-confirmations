@@ -14,8 +14,12 @@ import {
 } from '@/app/_lib/plans';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge, EmptyState } from '@/components/ui/feedback';
+import { Field, Input, Select } from '@/components/ui/field';
+import { Alert, Badge, EmptyState } from '@/components/ui/feedback';
+import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
+import { PageHeader } from '@/components/ui/page-header';
+import { SearchInput } from '@/components/ui/search-input';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
@@ -24,9 +28,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
-
-const fieldClass =
-  'border-border-strong bg-background text-foreground min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]';
 
 function statusLabel(status: string): string {
   if (status === 'trial') return 'בדיקה';
@@ -92,30 +93,22 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
   });
 
   return (
-    <main id="main" className="flex-1 py-10 sm:py-14">
+    <main id="main" className="flex-1 py-8 sm:py-12">
       <Container width="wide">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-eyebrow text-accent-strong font-semibold">ניהול ידני</p>
-            <h1 className="text-h1 text-primary mt-2 font-bold">מסלולים ותשלומים</h1>
-            <p className="text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              לאחר קבלת תשלום בטלפון, ב-Bit או בהעברה, בוחרים מסלול ומפעילים אותו לאירוע. כל שינוי
-              נשמר ביומן פעולות בלתי מחיק.
-            </p>
-          </div>
-          <Badge tone="outline">{eventRows.length} אירועים במערכת</Badge>
-        </div>
+        <PageHeader
+          eyebrow="ניהול ידני"
+          title="מסלולים ותשלומים"
+          lede="לאחר קבלת תשלום בטלפון, ב-Bit או בהעברה, בוחרים מסלול ומפעילים אותו לאירוע. כל שינוי נשמר ביומן פעולות בלתי מחיק."
+          actions={<Badge tone="outline">{eventRows.length} אירועים במערכת</Badge>}
+        />
 
-        <form role="search" className="mt-8 flex max-w-2xl gap-3">
-          <label className="sr-only" htmlFor="admin-event-search">
-            חיפוש אירוע
-          </label>
-          <input
-            id="admin-event-search"
+        <form role="search" className="mt-8 flex max-w-2xl gap-2">
+          <SearchInput
+            label="חיפוש אירוע"
             name="q"
             defaultValue={q}
             placeholder="שם אירוע, אימייל, טלפון או מזהה"
-            className={fieldClass}
+            className="flex-1"
           />
           <Button type="submit" variant="outline">
             חיפוש
@@ -123,16 +116,10 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
         </form>
 
         {updatedEvent !== undefined && updatedLicense !== undefined && (
-          <div
-            role="status"
-            className="border-success/30 bg-success-soft text-foreground mt-6 rounded-2xl border px-5 py-4"
-          >
-            <p className="font-semibold">המסלול נשמר והמסכים עודכנו בהצלחה.</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {updatedEvent.title}: {getPlanLabel(updatedLicense.plan)} ·{' '}
-              {statusLabel(updatedLicense.status)} · {formatPlanPrice(updatedLicense.priceAgorot)}
-            </p>
-          </div>
+          <Alert tone="success" className="mt-6" title="המסלול נשמר והמסכים עודכנו בהצלחה.">
+            {updatedEvent.title}: {getPlanLabel(updatedLicense.plan)} ·{' '}
+            {statusLabel(updatedLicense.status)} · {formatPlanPrice(updatedLicense.priceAgorot)}
+          </Alert>
         )}
 
         {filtered.length === 0 ? (
@@ -142,7 +129,7 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
             description="נסו לחפש לפי שם האירוע, כתובת האימייל, הטלפון או המזהה."
           />
         ) : (
-          <ul className="mt-10 space-y-5">
+          <ul className="mt-8 space-y-5">
             {filtered.map((event) => {
               const license = licenses.get(event.id);
               const currentPlan = license?.plan ?? 'legacy';
@@ -183,7 +170,7 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                       </div>
                     </div>
 
-                    <dl className="border-border mt-5 grid gap-3 border-y py-4 text-sm sm:grid-cols-3">
+                    <dl className="border-border bg-secondary/25 mt-5 grid gap-3 rounded-xl border px-4 py-3 text-sm sm:grid-cols-3">
                       <div>
                         <dt className="text-muted-foreground">מזהה אירוע</dt>
                         <dd className="text-foreground mt-1 font-mono text-xs" dir="ltr">
@@ -218,31 +205,24 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                       <input type="hidden" name="currentPriceAgorot" value={String(defaultPrice)} />
                       <input type="hidden" name="q" value={q} />
 
-                      <label className="text-foreground text-sm font-medium">
-                        מסלול
-                        <select
-                          name="plan"
-                          defaultValue={formPlan}
-                          className={`${fieldClass} mt-1.5`}
-                        >
+                      <Field
+                        label="מסלול"
+                        hint="מעבר ממצב בדיקה למסלול בתשלום מפעיל אותו אוטומטית ומעדכן למחיר המחירון, אלא אם הזנת מחיר אחר."
+                        className="lg:col-span-2"
+                      >
+                        <Select name="plan" defaultValue={formPlan}>
                           {PLAN_CATALOG.map((plan) => (
                             <option key={plan.code} value={plan.code}>
                               {plan.name} — {formatPlanPrice(plan.priceAgorot)}
                             </option>
                           ))}
-                        </select>
-                        <span className="text-muted-foreground mt-1.5 block text-xs font-normal">
-                          מעבר ממצב בדיקה למסלול בתשלום מפעיל אותו אוטומטית ומעדכן למחיר המחירון,
-                          אלא אם הזנת מחיר אחר.
-                        </span>
-                      </label>
+                        </Select>
+                      </Field>
 
-                      <label className="text-foreground text-sm font-medium">
-                        סטטוס
-                        <select
+                      <Field label="סטטוס">
+                        <Select
                           name="status"
                           defaultValue={currentStatus === 'legacy' ? 'active' : currentStatus}
-                          className={`${fieldClass} mt-1.5`}
                         >
                           {(
                             [
@@ -257,57 +237,49 @@ export default async function AdminPlansPage({ searchParams }: AdminPlansPagePro
                               {statusLabel(status)}
                             </option>
                           ))}
-                        </select>
-                      </label>
+                        </Select>
+                      </Field>
 
-                      <label className="text-foreground text-sm font-medium">
-                        סכום בשקלים
-                        <input
+                      <Field label="סכום בשקלים">
+                        <Input
                           name="price"
                           type="number"
                           min="0"
                           max="10000"
                           step="0.01"
                           defaultValue={defaultPrice / 100}
-                          className={`${fieldClass} mt-1.5`}
                         />
-                      </label>
+                      </Field>
 
-                      <label className="text-foreground text-sm font-medium">
-                        אמצעי תשלום
-                        <select
+                      <Field label="אמצעי תשלום">
+                        <Select
                           name="paymentMethod"
                           defaultValue={license?.paymentMethod ?? 'phone'}
-                          className={`${fieldClass} mt-1.5`}
                         >
                           {PAYMENT_METHODS.map((method) => (
                             <option key={method} value={method}>
                               {PAYMENT_METHOD_LABELS[method]}
                             </option>
                           ))}
-                        </select>
-                      </label>
+                        </Select>
+                      </Field>
 
-                      <label className="text-foreground text-sm font-medium">
-                        אסמכתה
-                        <input
+                      <Field label="אסמכתה">
+                        <Input
                           name="paymentReference"
                           defaultValue={license?.paymentReference ?? ''}
-                          className={`${fieldClass} mt-1.5`}
                         />
-                      </label>
+                      </Field>
 
-                      <label className="text-foreground text-sm font-medium">
-                        הערה
-                        <input
-                          name="notes"
-                          defaultValue={license?.notes ?? ''}
-                          className={`${fieldClass} mt-1.5`}
-                        />
-                      </label>
+                      <Field label="הערה" className="lg:col-span-3">
+                        <Input name="notes" defaultValue={license?.notes ?? ''} />
+                      </Field>
 
-                      <div className="lg:col-span-6">
-                        <Button type="submit">שמירה והפעלת המסלול</Button>
+                      <div className="flex items-end lg:col-span-3 lg:justify-end">
+                        <Button type="submit">
+                          <Icon name="check" strokeWidth={2.2} />
+                          שמירה והפעלת המסלול
+                        </Button>
                       </div>
                     </form>
                   </Card>

@@ -6,13 +6,7 @@ import { getDictionary } from '@/config/dictionary';
 import { BrandMark } from '@/features/layout/BrandMark';
 import { LanguageSwitch } from '@/features/layout/LanguageSwitch';
 import { MobileNav, type MobileNavItem } from '@/features/layout/MobileNav';
-import {
-  alternateLocale,
-  defaultLocale,
-  languageTag,
-  localePath,
-  type Locale,
-} from '@/lib/i18n';
+import { alternateLocale, defaultLocale, languageTag, localePath, type Locale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /**
