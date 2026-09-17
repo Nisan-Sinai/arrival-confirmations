@@ -284,7 +284,9 @@ export default async function AdminCustomerEventPage({
           <h2 id="admin-guests" className="sr-only">
             ניהול מוזמנים
           </h2>
-          <PersonalInviteSendList guests={guestRows} />
+          {/* Build and import the guest list first, then send — so the management
+              panel (add, import, the list itself) sits above the personal WhatsApp
+              send, not under it. */}
           <GuestManagementPanel
             mode="admin"
             eventId={event.id}
@@ -295,6 +297,7 @@ export default async function AdminCustomerEventPage({
             skipped={skipped}
           />
           <GuestFileImportForm mode="admin" eventId={event.id} />
+          <PersonalInviteSendList guests={guestRows} />
         </section>
 
         <section aria-labelledby="admin-rsvps" className="mt-12">
