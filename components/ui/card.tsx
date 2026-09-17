@@ -58,9 +58,3 @@ export function CardTitle({
 }) {
   return <Tag className={cn('text-h3 text-primary font-semibold', className)}>{children}</Tag>;
 }
-
-export function CardBody({ className, children }: { className?: string; children: ReactNode }) {
-  return (
-    <p className={cn('text-muted-foreground mt-2.5 leading-relaxed', className)}>{children}</p>
-  );
-}

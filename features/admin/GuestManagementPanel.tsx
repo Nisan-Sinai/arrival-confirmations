@@ -603,12 +603,53 @@ export function GuestManagementPanel({
                       <li
                         key={guest.id}
                         className={cn(
-                          'border-border rounded-2xl border transition-colors duration-[--duration-fast]',
+                          'border-border relative rounded-2xl border transition-colors duration-[--duration-fast]',
                           arrived ? 'border-success/30 bg-success-soft/30' : 'bg-card',
                         )}
                       >
+                        {/*
+                          Owner mode only, and deliberately so: the person standing at the
+                          door is the host, and giving the platform admin a second path to
+                          the same write would need a second action with its own ownership
+                          check for no one who would use it.
+
+                          Positioned over the row's header rather than inside the
+                          `<summary>`: a button nested in a disclosure control is two
+                          interactive elements in one, which a screen reader cannot
+                          separate and axe reports as a serious failure. The summary
+                          reserves the space with its end padding.
+                        */}
+                        {mode === 'owner' && (
+                          <form
+                            action={toggleGuestCheckInAction}
+                            className="absolute end-12 top-4 z-10 shrink-0 sm:end-24"
+                          >
+                            <input type="hidden" name="eventId" value={eventId} />
+                            <input type="hidden" name="guestId" value={guest.id} />
+                            <input
+                              type="hidden"
+                              name="checkedIn"
+                              value={arrived ? 'false' : 'true'}
+                            />
+                            <Button
+                              type="submit"
+                              variant={arrived ? 'primary' : 'outline'}
+                              size="sm"
+                              aria-pressed={arrived}
+                              className="gap-1.5"
+                            >
+                              <Icon name="check" strokeWidth={2.2} />
+                              {arrived ? 'הגיע' : 'סימון הגעה'}
+                            </Button>
+                          </form>
+                        )}
                         <details className="group">
-                          <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 [&::-webkit-details-marker]:hidden">
+                          <summary
+                            className={cn(
+                              'flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 [&::-webkit-details-marker]:hidden',
+                              mode === 'owner' && 'pe-40 sm:pe-56',
+                            )}
+                          >
                             <span
                               aria-hidden="true"
                               className={cn(
@@ -642,37 +683,7 @@ export function GuestManagementPanel({
                                 )}
                               </p>
                             </div>
-                            {/*
-                              Owner mode only, and deliberately so: the person standing
-                              at the door is the host, and giving the platform admin a
-                              second path to the same write would need a second action
-                              with its own ownership check for no one who would use it.
-                            */}
-                            {mode === 'owner' && (
-                              <form action={toggleGuestCheckInAction} className="shrink-0">
-                                <input type="hidden" name="eventId" value={eventId} />
-                                <input type="hidden" name="guestId" value={guest.id} />
-                                <input
-                                  type="hidden"
-                                  name="checkedIn"
-                                  value={arrived ? 'false' : 'true'}
-                                />
-                                <Button
-                                  type="submit"
-                                  variant={arrived ? 'primary' : 'outline'}
-                                  size="sm"
-                                  aria-pressed={arrived}
-                                  className="gap-1.5"
-                                  /* Inside a <summary>: a click here must mark an arrival,
-                                     not open the edit panel underneath it. */
-                                  onClick={(event) => event.stopPropagation()}
-                                >
-                                  <Icon name="check" strokeWidth={2.2} />
-                                  {arrived ? 'הגיע' : 'סימון הגעה'}
-                                </Button>
-                              </form>
-                            )}
-                            <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-sm">
+                            <span className="text-muted-foreground absolute end-4 top-1/2 inline-flex shrink-0 -translate-y-1/2 items-center gap-1 text-sm group-open:top-8">
                               <span className="hidden sm:inline">עריכה</span>
                               <Icon
                                 name="chevron-down"
