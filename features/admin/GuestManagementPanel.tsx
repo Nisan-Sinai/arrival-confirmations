@@ -289,6 +289,19 @@ export function GuestManagementPanel({
   const [selectingContacts, setSelectingContacts] = useState(false);
   const [query, setQuery] = useState('');
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
+  // The ids of rows whose edit panel is open. Each panel is a full form — seven fields, a
+  // submit-status hook, a delete form — so rendering one per guest up front froze the tab
+  // on a real list of hundreds. The summary is always there; the panel mounts on open.
+  const [openGuestIds, setOpenGuestIds] = useState<ReadonlySet<string>>(() => new Set());
+  const setGuestOpen = (guestId: string, open: boolean) => {
+    setOpenGuestIds((current) => {
+      if (open === current.has(guestId)) return current;
+      const next = new Set(current);
+      if (open) next.add(guestId);
+      else next.delete(guestId);
+      return next;
+    });
+  };
   const contactsFormRef = useRef<HTMLFormElement>(null);
   const contactsJsonRef = useRef<HTMLInputElement>(null);
   const resetFormRef = useRef<HTMLFormElement>(null);
@@ -381,16 +394,16 @@ export function GuestManagementPanel({
     form?.requestSubmit();
   };
 
-  const quickLink = (href: string, label: string, icon: IconName, primary = false) => (
+  // Every chip is an equal jump link, styled the same. An earlier version filled the
+  // first one as if it were a selected tab, so "הוספה ידנית" always looked like the
+  // current section when it was only ever an anchor.
+  const quickLink = (href: string, label: string, icon: IconName) => (
     <a
       href={href}
       className={cn(
-        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold whitespace-nowrap',
+        'text-primary hover:bg-card inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold whitespace-nowrap sm:h-9 sm:px-3.5 sm:text-sm',
         'transition-[background-color,color] duration-[--duration-fast]',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]',
-        primary
-          ? 'bg-primary text-primary-foreground hover:bg-primary-hover shadow-paper'
-          : 'text-primary hover:bg-card',
       )}
     >
       <Icon name={icon} className="size-4" />
@@ -402,12 +415,18 @@ export function GuestManagementPanel({
     <div className="space-y-6">
       {status !== null && <Alert tone={status.tone}>{status.text}</Alert>}
 
+      {/*
+        The chips wrap onto as many rows as they need instead of a horizontal scroll
+        strip — on a phone the row would otherwise slide left/right with links hidden
+        off-screen. A solid background (no backdrop blur) keeps the sticky bar cheap to
+        repaint while the long guest list scrolls under it.
+      */}
       <nav
         aria-label="פעולות מהירות לניהול המוזמנים"
-        className="border-border bg-secondary/60 shadow-paper sticky top-[4.5rem] z-10 [scrollbar-width:none] overflow-x-auto rounded-full border p-1 backdrop-blur"
+        className="border-border bg-secondary shadow-paper sticky top-[4.5rem] z-10 rounded-2xl border p-1.5"
       >
-        <div className="flex min-w-max gap-1">
-          {quickLink('#manual-add', 'הוספה ידנית', 'user-plus', true)}
+        <div className="flex flex-wrap gap-1">
+          {quickLink('#manual-add', 'הוספה ידנית', 'user-plus')}
           {quickLink('#phone-import', 'אנשי קשר מהטלפון', 'contacts')}
           {mode === 'owner' && (
             <>
@@ -602,8 +621,14 @@ export function GuestManagementPanel({
                     return (
                       <li
                         key={guest.id}
+                        // content-visibility lets the browser skip layout and paint for
+                        // rows off-screen — on a list of hundreds of guests, each holding
+                        // a full edit form, rendering them all at once is what made the
+                        // page feel stuck. The intrinsic size reserves a collapsed row's
+                        // height so the scrollbar stays stable.
                         className={cn(
                           'border-border relative rounded-2xl border transition-colors duration-[--duration-fast]',
+                          '[contain-intrinsic-size:auto_76px] [content-visibility:auto]',
                           arrived ? 'border-success/30 bg-success-soft/30' : 'bg-card',
                         )}
                       >
@@ -643,7 +668,10 @@ export function GuestManagementPanel({
                             </Button>
                           </form>
                         )}
-                        <details className="group">
+                        <details
+                          className="group"
+                          onToggle={(event) => setGuestOpen(guest.id, event.currentTarget.open)}
+                        >
                           <summary
                             className={cn(
                               'flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 [&::-webkit-details-marker]:hidden',
@@ -693,63 +721,65 @@ export function GuestManagementPanel({
                             </span>
                           </summary>
 
-                          <div className="border-border border-t p-4 pt-5">
-                            <div className="mb-5 flex flex-wrap gap-2">
-                              <a
-                                href={`tel:${guest.phone}`}
-                                className={buttonClass({ variant: 'outline', size: 'sm' })}
-                              >
-                                <Icon name="phone" />
-                                חיוג
-                              </a>
-                              <a
-                                href={whatsappUrl(guest.phone)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={buttonClass({ variant: 'outline', size: 'sm' })}
-                              >
-                                <Icon name="whatsapp" />
-                                WhatsApp{' '}
-                                <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
-                              </a>
-                            </div>
-
-                            <form action={saveAction} className="space-y-5">
-                              <input type="hidden" name="eventId" value={eventId} />
-                              <input type="hidden" name="guestId" value={guest.id} />
-                              <GuestFields guest={guest} />
-                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                <SubmitButton
-                                  idleLabel="שמירת שינויים"
-                                  pendingLabel="שומר שינויים..."
-                                  className="w-full sm:w-auto"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:bg-destructive-soft hover:text-destructive w-full sm:w-auto"
-                                  onClick={() => setPendingDelete({ kind: 'guest', guest })}
+                          {openGuestIds.has(guest.id) && (
+                            <div className="border-border border-t p-4 pt-5">
+                              <div className="mb-5 flex flex-wrap gap-2">
+                                <a
+                                  href={`tel:${guest.phone}`}
+                                  className={buttonClass({ variant: 'outline', size: 'sm' })}
                                 >
-                                  <Icon name="trash" />
-                                  מחיקת המוזמן
-                                </Button>
+                                  <Icon name="phone" />
+                                  חיוג
+                                </a>
+                                <a
+                                  href={whatsappUrl(guest.phone)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={buttonClass({ variant: 'outline', size: 'sm' })}
+                                >
+                                  <Icon name="whatsapp" />
+                                  WhatsApp{' '}
+                                  <span className="sr-only">({UI_MESSAGES.a11y.externalLink})</span>
+                                </a>
                               </div>
-                            </form>
 
-                            {/* The write itself: hidden, submitted by the dialog above. */}
-                            <form
-                              action={deleteAction}
-                              ref={(element) => {
-                                if (element === null) deleteFormRefs.current.delete(guest.id);
-                                else deleteFormRefs.current.set(guest.id, element);
-                              }}
-                              className="hidden"
-                            >
-                              <input type="hidden" name="eventId" value={eventId} />
-                              <input type="hidden" name="guestId" value={guest.id} />
-                            </form>
-                          </div>
+                              <form action={saveAction} className="space-y-5">
+                                <input type="hidden" name="eventId" value={eventId} />
+                                <input type="hidden" name="guestId" value={guest.id} />
+                                <GuestFields guest={guest} />
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                  <SubmitButton
+                                    idleLabel="שמירת שינויים"
+                                    pendingLabel="שומר שינויים..."
+                                    className="w-full sm:w-auto"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive-soft hover:text-destructive w-full sm:w-auto"
+                                    onClick={() => setPendingDelete({ kind: 'guest', guest })}
+                                  >
+                                    <Icon name="trash" />
+                                    מחיקת המוזמן
+                                  </Button>
+                                </div>
+                              </form>
+
+                              {/* The write itself: hidden, submitted by the dialog above. */}
+                              <form
+                                action={deleteAction}
+                                ref={(element) => {
+                                  if (element === null) deleteFormRefs.current.delete(guest.id);
+                                  else deleteFormRefs.current.set(guest.id, element);
+                                }}
+                                className="hidden"
+                              >
+                                <input type="hidden" name="eventId" value={eventId} />
+                                <input type="hidden" name="guestId" value={guest.id} />
+                              </form>
+                            </div>
+                          )}
                         </details>
                       </li>
                     );
