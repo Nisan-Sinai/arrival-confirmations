@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ComponentProps, ReactNode } from 'react';
 
+import { Icon, type IconName } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 
 /**
@@ -28,10 +29,19 @@ const badgeVariants = cva(
   },
 );
 
-export type BadgeProps = ComponentProps<'span'> & VariantProps<typeof badgeVariants>;
+export type BadgeProps = ComponentProps<'span'> &
+  VariantProps<typeof badgeVariants> & {
+    /** A status dot in front of the label, for a badge that reports a state. */
+    dot?: boolean;
+  };
 
-export function Badge({ className, tone, ...props }: BadgeProps) {
-  return <span className={cn(badgeVariants({ tone }), className)} {...props} />;
+export function Badge({ className, tone, dot = false, children, ...props }: BadgeProps) {
+  return (
+    <span className={cn(badgeVariants({ tone }), className)} {...props}>
+      {dot && <span aria-hidden="true" className="size-1.5 rounded-full bg-current opacity-80" />}
+      {children}
+    </span>
+  );
 }
 
 const alertVariants = cva('flex gap-3 rounded-xl border p-4 text-sm', {
@@ -45,6 +55,13 @@ const alertVariants = cva('flex gap-3 rounded-xl border p-4 text-sm', {
   },
   defaultVariants: { tone: 'info' },
 });
+
+const ALERT_ICON: Record<'info' | 'success' | 'error' | 'warning', IconName> = {
+  info: 'info',
+  success: 'check-circle',
+  error: 'alert-triangle',
+  warning: 'alert-triangle',
+};
 
 /**
  * An inline message about something that just happened.
@@ -72,6 +89,11 @@ export function Alert({
       role={role ?? (tone === 'error' ? 'alert' : 'status')}
       className={cn(alertVariants({ tone }), className)}
     >
+      <Icon
+        name={ALERT_ICON[tone]}
+        className="mt-0.5 size-4.5 shrink-0 opacity-90"
+        strokeWidth={1.8}
+      />
       <div className="min-w-0 flex-1">
         {title !== undefined && <p className="font-semibold">{title}</p>}
         {children !== undefined && (

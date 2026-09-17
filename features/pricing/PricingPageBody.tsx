@@ -127,13 +127,22 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
               <PricingCards locale={locale} headingLevel="h2" />
             </div>
 
-            <section className="reveal border-border bg-card/60 mt-14 rounded-2xl border p-7 text-center sm:p-10">
+            <section className="reveal border-border bg-card/70 shadow-paper mt-14 rounded-3xl border p-7 text-center sm:p-10">
               <SectionHeader title={content.howTitle} />
-              <ol className="text-muted-foreground mx-auto mt-6 grid max-w-4xl gap-5 text-start sm:grid-cols-3">
-                {content.steps.map((step) => (
-                  <li key={step.title}>
+              <ol className="text-muted-foreground mx-auto mt-8 grid max-w-4xl gap-5 text-start sm:grid-cols-3">
+                {content.steps.map((step, index) => (
+                  <li
+                    key={step.title}
+                    className="border-border bg-background/70 relative rounded-2xl border p-5 pt-6"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="bg-primary text-primary-foreground absolute -top-3.5 start-5 flex size-7 items-center justify-center rounded-full font-[family-name:var(--font-display)] text-sm font-bold"
+                    >
+                      {index + 1}
+                    </span>
                     <strong className="text-foreground block">{step.title}</strong>
-                    {step.body}
+                    <span className="mt-1 block text-sm leading-relaxed">{step.body}</span>
                   </li>
                 ))}
               </ol>

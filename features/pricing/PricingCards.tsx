@@ -2,21 +2,13 @@ import Link from 'next/link';
 
 import { formatPlanPrice, getPlanCatalog } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
-import { Card, CardBody, CardTitle } from '@/components/ui/card';
-import { appConfig } from '@/config/event.config';
+import { Card, CardTitle } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icons';
 import { getDictionary } from '@/config/dictionary';
 import { TiltCard } from '@/features/landing/TiltCard';
 import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
+import { supportWhatsAppUrl } from '@/lib/supportContact';
 import { cn } from '@/lib/utils';
-
-function whatsappPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
-}
-
-function whatsappPlanUrl(message: string): string {
-  return `https://wa.me/${whatsappPhone(appConfig.supportPhone)}?text=${encodeURIComponent(message)}`;
-}
 
 export function PricingCards({
   showTrial = true,
@@ -76,10 +68,14 @@ export function PricingCards({
             padding="lg"
             variant={plan.highlighted ? 'accent' : 'paper'}
             interactive
-            className="relative flex h-full flex-col"
+            className={cn(
+              'relative flex h-full flex-col',
+              plan.highlighted && 'ring-accent-strong/35 shadow-raised ring-2',
+            )}
           >
             {plan.highlighted && (
-              <span className="bg-primary text-primary-foreground absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-semibold">
+              <span className="bg-primary text-primary-foreground shadow-paper absolute -top-3.5 start-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap rtl:translate-x-1/2">
+                <Icon name="sparkles" className="size-3.5" />
                 {copy.highlightedBadge}
               </span>
             )}
@@ -88,30 +84,31 @@ export function PricingCards({
               <CardTitle as={headingLevel} className="text-accent-strong text-sm">
                 {plan.name}
               </CardTitle>
-              <p className="text-primary mt-3 font-[family-name:var(--font-display)] text-4xl font-bold">
+              <p className="text-primary mt-3 flex items-baseline gap-1 font-[family-name:var(--font-display)] text-[2.75rem] leading-none font-bold tabular-nums">
                 {formatPlanPrice(plan.priceAgorot)}
               </p>
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="text-muted-foreground mt-2 text-sm">
                 {plan.code === 'trial' ? copy.trialNote : copy.oneTimeNote}
               </p>
-              <CardBody className="text-foreground mt-5">{plan.description}</CardBody>
+              <p className="text-foreground border-border mt-5 border-t pt-5 leading-relaxed">
+                {plan.description}
+              </p>
             </div>
 
             <ul className="text-muted-foreground mt-6 flex-1 space-y-3 text-sm">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex gap-2.5">
-                  <svg
+                  <span
                     aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-accent-strong mt-0.5 size-4 shrink-0"
+                    className={cn(
+                      'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full',
+                      plan.highlighted
+                        ? 'bg-accent-strong text-primary-foreground'
+                        : 'bg-accent-soft text-accent-strong',
+                    )}
                   >
-                    <path d="m5 12.5 4.5 4.5L19 7.5" />
-                  </svg>
+                    <Icon name="check" strokeWidth={2.4} className="size-3" />
+                  </span>
                   <span>{feature}</span>
                 </li>
               ))}
@@ -124,7 +121,7 @@ export function PricingCards({
                 </Link>
               ) : (
                 <a
-                  href={whatsappPlanUrl(copy.whatsappIntro.replace('{plan}', plan.name))}
+                  href={supportWhatsAppUrl(copy.whatsappIntro.replace('{plan}', plan.name))}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={buttonClass({

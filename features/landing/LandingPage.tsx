@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Icon, type IconName } from '@/components/ui/icons';
 import { Container, Rule } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
@@ -15,6 +16,10 @@ import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
 import { languageAlternates, localePath, openGraphLocale, type Locale } from '@/lib/i18n';
 import { structuredData } from '@/lib/structuredData';
+import { supportWhatsAppUrl } from '@/lib/supportContact';
+
+/** One glyph per benefit, in the order the dictionary lists them. */
+const BENEFIT_ICONS: readonly IconName[] = ['calendar', 'dashboard', 'globe'];
 
 /**
  * The marketing home page, shared by both locales (§12).
@@ -49,7 +54,8 @@ export function buildLandingMetadata(locale: Locale): Metadata {
 
 export function LandingPage({ locale }: { locale: Locale }) {
   const { landing } = getDictionary(locale);
-  const { hero, invitationPreview: preview, benefits, plans, faq } = landing;
+  const { hero, invitationPreview: preview, benefits, plans, faq, occasions, closing } = landing;
+  const dictionary = getDictionary(locale);
   const countdown: readonly [string, string][] = [
     ['42', preview.countdownDays],
     ['06', preview.countdownHours],
@@ -187,6 +193,40 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
+        {/*
+          Every kind of simcha the product serves, in one line under the hero.
+
+          The list is what a visitor scans for their own occasion — "does this do a
+          henna?" — and answering it before the first scroll is worth a strip. The band
+          drifts slowly and pauses under the pointer; it is `aria-hidden` and duplicated
+          for the seamless loop, so the real list is the one that follows it.
+        */}
+        <section aria-label={occasions.lead} className="border-border/60 border-y py-6 sm:py-7">
+          <Container width="wide" className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
+            <p className="text-eyebrow text-accent-strong shrink-0 font-semibold">{occasions.lead}</p>
+            <div className="marquee-mask w-full min-w-0 flex-1 overflow-hidden" aria-hidden="true">
+              <div className="marquee-track flex w-max gap-3">
+                {[0, 1].map((copy) =>
+                  occasions.items.map((item) => (
+                    <span
+                      key={`${copy}-${item}`}
+                      className="border-border bg-card text-primary shadow-paper inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold whitespace-nowrap"
+                    >
+                      <span aria-hidden="true" className="bg-accent-strong size-1.5 rounded-full" />
+                      {item}
+                    </span>
+                  )),
+                )}
+              </div>
+            </div>
+            <ul className="sr-only">
+              {occasions.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+
         <RsvpFlowSteps locale={locale} />
 
         {/*
@@ -207,12 +247,18 @@ export function LandingPage({ locale }: { locale: Locale }) {
               </h2>
             </div>
             <div className="reveal-stagger mt-10 grid gap-5 md:grid-cols-3">
-              {benefits.items.map((benefit) => (
+              {benefits.items.map((benefit, index) => (
                 // Five degrees, not the hero's nine: the same angle on a short wide box
                 // reads as the grid being crooked rather than as a card being tipped.
                 <TiltCard key={benefit.title} degrees={5} className="reveal h-full">
                   <Card padding="lg" interactive className="h-full">
-                    <h3 className="text-h3 text-primary font-semibold">{benefit.title}</h3>
+                    <span
+                      aria-hidden="true"
+                      className="border-accent-strong/30 bg-accent-soft/50 text-accent-strong flex size-12 items-center justify-center rounded-2xl border"
+                    >
+                      <Icon name={BENEFIT_ICONS[index] ?? 'check'} className="size-6" />
+                    </span>
+                    <h3 className="text-h3 text-primary mt-5 font-semibold">{benefit.title}</h3>
                     <p className="text-muted-foreground mt-3 leading-relaxed">{benefit.body}</p>
                   </Card>
                 </TiltCard>
@@ -249,14 +295,51 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 {faq.items.map((item) => (
                   <details
                     key={item.question}
-                    className="reveal border-border bg-card rounded-xl border px-5"
+                    className="faq-item reveal border-border bg-card shadow-paper open:border-accent-strong/30 rounded-2xl border px-5 transition-colors duration-[--duration-fast]"
                   >
-                    <summary className="text-primary cursor-pointer list-none py-4 font-semibold">
+                    <summary className="text-primary flex cursor-pointer items-center justify-between gap-4 rounded-lg py-4 font-semibold">
                       {item.question}
+                      <span
+                        aria-hidden="true"
+                        className="faq-chevron border-border text-accent-strong flex size-8 shrink-0 items-center justify-center rounded-full border transition-transform duration-[--duration-base] ease-[--ease-out]"
+                      >
+                        <Icon name="chevron-down" strokeWidth={2} className="size-4" />
+                      </span>
                     </summary>
-                    <p className="text-muted-foreground pb-5 leading-relaxed">{item.answer}</p>
+                    <p className="faq-body text-muted-foreground pb-5 leading-relaxed">
+                      {item.answer}
+                    </p>
                   </details>
                 ))}
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* The last thing on the page is the first thing it asked for. */}
+        <section className="pb-16 sm:pb-24">
+          <Container width="wide">
+            <div className="reveal border-accent-strong/30 from-accent-soft/60 via-card to-card shadow-raised relative overflow-hidden rounded-3xl border bg-gradient-to-br px-6 py-12 text-center sm:px-12 sm:py-16">
+              <div aria-hidden="true" className="hero-glow opacity-40" />
+              <div className="relative mx-auto max-w-2xl">
+                <p className="text-eyebrow text-accent-strong font-semibold">{closing.eyebrow}</p>
+                <h2 className="text-h2 text-primary mt-3 font-bold">{closing.title}</h2>
+                <p className="text-lead text-muted-foreground mt-4">{closing.body}</p>
+                <div className="mt-8 flex flex-wrap justify-center gap-3">
+                  <Link href={localePath(locale, '/signup')} className={buttonClass({ size: 'lg' })}>
+                    {closing.cta}
+                  </Link>
+                  <a
+                    href={supportWhatsAppUrl(dictionary.pricing.whatsappIntro.replace('{plan}', 'Basic'))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonClass({ variant: 'outline', size: 'lg' })}
+                  >
+                    <Icon name="whatsapp" />
+                    {closing.secondary}
+                    <span className="sr-only"> ({dictionary.a11y.externalLink})</span>
+                  </a>
+                </div>
               </div>
             </div>
           </Container>

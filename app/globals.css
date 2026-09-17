@@ -1037,6 +1037,10 @@
     will-change: transform;
   }
 
+  [dir='ltr'] .marquee-track {
+    animation-name: marquee-ltr;
+  }
+
   .marquee-mask {
     /* The strip fades out at both edges instead of being cut, so it reads as
        continuing rather than as clipped. */
@@ -1048,6 +1052,211 @@
       animation-play-state: paused;
     }
   }
+
+  /**
+   * A tooltip drawn from `data-tooltip`.
+   *
+   * CSS only, so it works before hydration and never needs a portal or a positioning
+   * library for a one-word label above an icon button. Physical `left: 50%` on purpose:
+   * the tooltip is centred, so the same rule holds in both writing directions.
+   */
+  .tooltip-host {
+    position: relative;
+  }
+
+  .tooltip-host::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.4rem);
+    translate: -50% 4px;
+    z-index: var(--z-overlay);
+    padding: 0.3rem 0.65rem;
+    border-radius: 0.5rem;
+    background: var(--color-surface-ink);
+    color: var(--color-primary-foreground);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: var(--shadow-raised);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      translate var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .tooltip-host:hover::after {
+      opacity: 1;
+      translate: -50% 0;
+    }
+  }
+
+  .tooltip-host:focus-visible::after {
+    opacity: 1;
+    translate: -50% 0;
+  }
+
+  /**
+   * The confirmation dialog arriving.
+   *
+   * Native `<dialog>` in the top layer, so the only thing to add is how it enters: a
+   * short rise and a fade, and the backdrop fading with it. Both have real durations,
+   * so the blanket reduced-motion rule collapses them.
+   */
+  .dialog-card[open] {
+    animation: dialog-in var(--duration-base) var(--ease-out) both;
+  }
+
+  .dialog-card[open]::backdrop {
+    animation: backdrop-in var(--duration-base) var(--ease-out) both;
+  }
+
+  /**
+   * The header lifting off the page as it scrolls.
+   *
+   * At the top of the page the bar is flush with the hero — no border, no shadow —
+   * because a line under the logo at rest reads as a frame around nothing. Once the
+   * page moves it needs an edge to be a bar. Scroll-driven, so no listener; a browser
+   * without `scroll()` keeps the resting border, which is the safe state.
+   */
+  .header-elevate {
+    border-bottom-color: var(--color-border);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .header-elevate {
+      border-bottom-color: transparent;
+      animation: header-elevate linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 72px;
+    }
+  }
+
+  /**
+   * FAQ item: the marker replaced by a chevron that turns, the answer sliding open.
+   */
+  .faq-item > summary {
+    list-style: none;
+  }
+
+  .faq-item > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-item[open] .faq-chevron {
+    rotate: 180deg;
+  }
+
+  .faq-item[open] > .faq-body {
+    animation: faq-open var(--duration-base) var(--ease-out) both;
+  }
+
+  /**
+   * The footer's upper tier is a product website's footer, and an invitation is not a
+   * product website: under `/e/…` and `/invite` only the credit and legal bar remain.
+   * The invitation `<main>` is the one element carrying `data-invitation-style`.
+   */
+  body:has([data-invitation-style]) .footer-columns {
+    display: none;
+  }
+
+  /** The auth panel's warm glow — the hero's wash, on ink. */
+  .auth-aside-glow {
+    position: absolute;
+    inset: -30% -20%;
+    pointer-events: none;
+    background:
+      radial-gradient(38rem 26rem at 20% 15%, oklch(0.78 0.1 78 / 0.22), transparent 62%),
+      radial-gradient(34rem 24rem at 85% 90%, oklch(0.5 0.12 16 / 0.5), transparent 66%);
+  }
+
+  /**
+   * A glyph drawn for right-to-left, mirrored for a left-to-right document.
+   */
+  [dir='ltr'] .dir-flip {
+    scale: -1 1;
+  }
+
+  /**
+   * The mobile navigation sheet sliding down from the bar.
+   */
+  .nav-sheet {
+    animation: nav-sheet-in var(--duration-base) var(--ease-out) both;
+  }
+
+  /**
+   * A soft grid behind the console pages, so the app surface reads as a workspace and
+   * not as the same cream field the marketing page sits on. Two 1px lines at a very low
+   * alpha, fading out downward so the first screen has it and a long list does not.
+   */
+  .console-grid {
+    background-image:
+      linear-gradient(to bottom, var(--color-background) 0%, transparent 100%),
+      linear-gradient(to right, oklch(0.25 0.022 20 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.25 0.022 20 / 0.045) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      32px 32px,
+      32px 32px;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+    scale: 0.985;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes header-elevate {
+  from {
+    border-bottom-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  to {
+    border-bottom-color: var(--color-border);
+    box-shadow: var(--shadow-paper);
+  }
+}
+
+@keyframes faq-open {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes nav-sheet-in {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
 
 @keyframes marquee {
@@ -1058,6 +1267,16 @@
     /* RTL: the track starts shifted and moves rightwards, matching the reading
        direction of everything around it. */
     transform: translate3d(50%, 0, 0);
+  }
+}
+
+/* The same loop for a left-to-right document: the track moves leftwards. */
+@keyframes marquee-ltr {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
   }
 }
 

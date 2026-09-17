@@ -5,7 +5,7 @@ import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { getDictionary } from '@/config/dictionary';
 import { AuthForm } from '@/features/auth/AuthForm';
-import { SiteHeader } from '@/features/layout/SiteHeader';
+import { AuthShell } from '@/features/auth/AuthShell';
 import { localePath, type Locale } from '@/lib/i18n';
 import { createUserClient } from '@/lib/server/supabase';
 
@@ -27,36 +27,24 @@ export async function ResetPasswordPageBody({ locale }: { locale: Locale }) {
 
   if (user === null) {
     return (
-      <>
-        <SiteHeader minimal locale={locale} />
-        <main
-          id="main"
-          className="from-secondary/30 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
-        >
-          <Card padding="lg" className="mx-auto w-full max-w-md text-center">
-            <h1 className="text-h2 text-primary font-bold">{auth.resetExpired.title}</h1>
-            <p className="text-muted-foreground mt-3 leading-relaxed">{auth.resetExpired.body}</p>
-            <Link
-              href={localePath(locale, '/forgot-password')}
-              className={buttonClass({ size: 'lg', className: 'mt-7' })}
-            >
-              {auth.resetExpired.cta}
-            </Link>
-          </Card>
-        </main>
-      </>
+      <AuthShell locale={locale}>
+        <Card padding="lg" className="animate-rise mx-auto w-full max-w-md text-center">
+          <h1 className="text-h2 text-primary font-bold">{auth.resetExpired.title}</h1>
+          <p className="text-muted-foreground mt-3 leading-relaxed">{auth.resetExpired.body}</p>
+          <Link
+            href={localePath(locale, '/forgot-password')}
+            className={buttonClass({ size: 'lg', className: 'mt-7' })}
+          >
+            {auth.resetExpired.cta}
+          </Link>
+        </Card>
+      </AuthShell>
     );
   }
 
   return (
-    <>
-      <SiteHeader minimal locale={locale} />
-      <main
-        id="main"
-        className="from-secondary/30 flex flex-1 items-center justify-center bg-gradient-to-b to-transparent px-5 py-16 sm:py-24"
-      >
-        <AuthForm action={updatePasswordAction} mode="setPassword" locale={locale} />
-      </main>
-    </>
+    <AuthShell locale={locale}>
+      <AuthForm action={updatePasswordAction} mode="setPassword" locale={locale} />
+    </AuthShell>
   );
 }
