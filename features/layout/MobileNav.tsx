@@ -82,7 +82,14 @@ export function MobileNav({
       {open && (
         <div
           id={sheetId}
-          className="nav-sheet border-border bg-background/95 shadow-lifted absolute inset-x-0 top-full z-[var(--z-overlay)] border-b backdrop-blur-md"
+          /*
+           * Solid, not frosted. The sheet drops over whatever the page happens to show
+           * beneath the bar — the hero heading, a photo, the console grid — and a
+           * translucent panel let that content ghost through the links (the big hero
+           * title read straight through the menu). An opaque surface keeps the menu
+           * legible regardless of what sits behind it.
+           */
+          className="nav-sheet border-border bg-background shadow-lifted absolute inset-x-0 top-full z-[var(--z-overlay)] border-b"
         >
           <ul className="flex flex-col gap-1 px-4 py-3">
             {items.map((item) => (
