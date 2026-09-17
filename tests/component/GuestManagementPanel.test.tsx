@@ -94,6 +94,20 @@ describe('GuestManagementPanel', () => {
     expect(screen.getByText('שרה כהן')).toBeInTheDocument();
   });
 
+  it('mounts a row edit form only once the row is opened', async () => {
+    const user = userEvent.setup();
+    render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} />);
+
+    // The heavy per-row edit form (seven fields, a submit-status hook, a delete form) is
+    // not in the DOM while the row is collapsed — rendering one per guest up front is what
+    // froze large lists.
+    expect(screen.queryByRole('button', { name: 'שמירת שינויים' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByText('ישראל ישראלי'));
+
+    expect(screen.getByRole('button', { name: 'שמירת שינויים' })).toBeInTheDocument();
+  });
+
   it('explains the fallback before the user tries an unsupported contact picker', async () => {
     render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} />);
 
