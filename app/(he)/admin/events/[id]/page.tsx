@@ -16,6 +16,7 @@ import { StatCard } from '@/components/ui/stat';
 import { UI_MESSAGES } from '@/config/messages';
 import { GuestFileImportForm } from '@/features/admin/GuestFileImportForm';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
+import { GuestQuickNav } from '@/features/admin/GuestQuickNav';
 import { PersonalInviteSendList } from '@/features/admin/PersonalInviteSendList';
 import { formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { createPrivilegedClient } from '@/lib/server/supabase';
@@ -284,6 +285,7 @@ export default async function AdminCustomerEventPage({
           <h2 id="admin-guests" className="sr-only">
             ניהול מוזמנים
           </h2>
+          <GuestQuickNav mode="admin" guestCount={guestRows.length} />
           {/* Build and import the guest list first, then send — so the management
               panel (add, import, the list itself) sits above the personal WhatsApp
               send, not under it. */}

@@ -49,24 +49,9 @@ const guests = [
 ] as const;
 
 describe('GuestManagementPanel', () => {
-  it('shows the main workflows and a useful list summary', () => {
+  it('shows a useful list summary', () => {
     render(<GuestManagementPanel mode="owner" eventId="e1" guests={guests} />);
 
-    expect(
-      screen.getByRole('navigation', { name: 'פעולות מהירות לניהול המוזמנים' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'הוספה ידנית' })).toHaveAttribute(
-      'href',
-      '#manual-add',
-    );
-    expect(screen.getByRole('link', { name: 'אנשי קשר מהטלפון' })).toHaveAttribute(
-      'href',
-      '#phone-import',
-    );
-    expect(screen.getByRole('link', { name: 'שליחה ב-WhatsApp' })).toHaveAttribute(
-      'href',
-      '#whatsapp-send-center',
-    );
     expect(screen.getByText('2 רשומות')).toBeInTheDocument();
     expect(screen.getByText('5 אנשים')).toBeInTheDocument();
     expect(screen.getByText('2 שובצו')).toBeInTheDocument();

@@ -12,6 +12,7 @@ import { BackLink, PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat';
 import { UI_MESSAGES } from '@/config/messages';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
+import { GuestQuickNav } from '@/features/admin/GuestQuickNav';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
 import { WhatsAppSendCenter } from '@/features/admin/WhatsAppSendCenter';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
@@ -272,6 +273,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
         </section>
 
         <div className="mt-8 space-y-6">
+          <GuestQuickNav mode="owner" guestCount={guestRows.length} />
           <GuestManagementPanel
             mode="owner"
             eventId={event.id}
