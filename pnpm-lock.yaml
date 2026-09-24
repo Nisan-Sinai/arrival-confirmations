@@ -22,8 +22,8 @@ importers:
         specifier: 1.5.0
         version: 1.5.0
       '@hebcal/core':
-        specifier: 6.9.2
-        version: 6.9.2
+        specifier: 6.9.3
+        version: 6.9.3
       '@supabase/ssr':
         specifier: 0.12.7
         version: 0.12.7(@supabase/supabase-js@2.116.0)
@@ -711,8 +711,8 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@hebcal/core@6.9.2':
-    resolution: {integrity: sha512-6GNcu3dWPAcngSWC4SB9nZebl99l+x2fN+GFQOrll+CXg+VX9yuXjzv91c9/Q/RF5HaHQwy1GkKTbCvQPPWIbA==}
+  '@hebcal/core@6.9.3':
+    resolution: {integrity: sha512-VqsVdCY/un1aF8h5Bnra0+C3nrmj+fylcKbSi18soDrFHe7WTnW06BihU47E7i09PoopK1zcvazIAUzhGblbLA==}
     engines: {node: '>= 18'}
 
   '@hebcal/hdate@0.22.8':
@@ -3725,14 +3725,14 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
-  temporal-polyfill@1.0.4:
-    resolution: {integrity: sha512-MLEU0qOD2uXlz24oINNtdLZQl8RgmMxSnRtKEGZGGetTJjlRwQJjk+VsJ4EREaUoiaTb8NJOcUiKtoAiWn9EBg==}
+  temporal-polyfill@1.0.5:
+    resolution: {integrity: sha512-+H/mmY74i6wXCMcjIhGuSnODcyZnc4eois2myhOyX0UqRAKNXQY5m9iB1en5jQ/n4SXtjLXo1ElBI5bmn8tZwQ==}
 
   temporal-spec@1.0.1:
     resolution: {integrity: sha512-wxVoanmDeavXie1vu2JaQ3WIc3JZnWAOYFBsJyATaVsXsycKYUflGsyBmrRSnoCpZJpwPyr38VpgSUlQ8CbFxg==}
 
-  temporal-utils@1.0.2:
-    resolution: {integrity: sha512-1B8Dl4KzrOvsNUlpoWGno2VLQlxroLjDgc5NBjVC9ax9ymdo+ezfyvhyjEMx+IVfhINr6CIG2gcnlP95iRrybQ==}
+  temporal-utils@1.0.3:
+    resolution: {integrity: sha512-9jbTSX3HvkOWvDpNpFzwX/d1mkCrgQgwLmVTOEiuocZGKHsrQJtttGZFmybJ2zYP5zCSZuU5ZyeS8+eOEPABiQ==}
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -4630,18 +4630,18 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
-  '@hebcal/core@6.9.2':
+  '@hebcal/core@6.9.3':
     dependencies:
       '@hebcal/hdate': 0.22.8
       '@hebcal/noaa': 0.12.3
       quick-lru: 7.3.0
-      temporal-polyfill: 1.0.4
+      temporal-polyfill: 1.0.5
 
   '@hebcal/hdate@0.22.8': {}
 
   '@hebcal/noaa@0.12.3':
     dependencies:
-      temporal-polyfill: 1.0.4
+      temporal-polyfill: 1.0.5
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -7586,14 +7586,14 @@ snapshots:
 
   tapable@2.3.3: {}
 
-  temporal-polyfill@1.0.4:
+  temporal-polyfill@1.0.5:
     dependencies:
       temporal-spec: 1.0.1
-      temporal-utils: 1.0.2
+      temporal-utils: 1.0.3
 
   temporal-spec@1.0.1: {}
 
-  temporal-utils@1.0.2: {}
+  temporal-utils@1.0.3: {}
 
   tinybench@2.9.0: {}
 
