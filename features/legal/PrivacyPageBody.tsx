@@ -22,7 +22,7 @@ const CONTENT: Record<Locale, LegalContent> = {
     },
     eyebrow: 'מסמך משפטי',
     title: 'מדיניות פרטיות',
-    updated: 'עודכן ביולי 2026',
+    updated: 'עודכן בספטמבר 2026',
     sections: [
       {
         title: 'מי אחראי למידע',
@@ -106,6 +106,17 @@ const CONTENT: Record<Locale, LegalContent> = {
         ],
       },
       {
+        title: 'עוזר AI',
+        blocks: [
+          {
+            kind: 'p',
+            runs: [
+              'אם בוחרים לשאול את עוזר ה־AI, תוכן השיחה נשלח ל־Google Gemini כדי ליצור תשובה. אין לכלול בשאלה שמות, מספרי טלפון, דרישות תזונה או פרטים אישיים של אורחים. העוזר אינו ניגש לרשימות המוזמנים או לתשובות השמורות ואינו מבצע שינויים באירוע. השיחה אינה נשמרת במסד הנתונים של האתר.',
+            ],
+          },
+        ],
+      },
+      {
         title: 'כמה זמן המידע נשמר',
         blocks: [
           {
@@ -168,7 +179,7 @@ const CONTENT: Record<Locale, LegalContent> = {
     },
     eyebrow: 'Legal document',
     title: 'Privacy policy',
-    updated: 'Last updated July 2026',
+    updated: 'Last updated September 2026',
     sections: [
       {
         title: 'Who is responsible for the data',
@@ -247,6 +258,17 @@ const CONTENT: Record<Locale, LegalContent> = {
               ' servers in the European Union (Frankfurt), and the site itself runs on ',
               { b: 'Vercel' },
               '. Both providers are subject to the GDPR.',
+            ],
+          },
+        ],
+      },
+      {
+        title: 'AI assistant',
+        blocks: [
+          {
+            kind: 'p',
+            runs: [
+              'If you choose to ask the AI assistant, the conversation is sent to Google Gemini to generate an answer. Do not include guest names, phone numbers, dietary requirements or other personal details. The assistant cannot access guest lists or saved replies and cannot change an event. The conversation is not stored in the site database.',
             ],
           },
         ],

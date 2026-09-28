@@ -4,6 +4,7 @@ import { Assistant, Frank_Ruhl_Libre } from 'next/font/google';
 import { getDictionary } from '@/config/dictionary';
 import { assertNoPlaceholders } from '@/config/event.config';
 import { SiteFooter } from '@/features/layout/SiteFooter';
+import { EventAssistant } from '@/features/assistant/EventAssistant';
 import {
   directionOf,
   languageAlternates,
@@ -167,6 +168,7 @@ export function RootDocument({
           {dictionary.a11y.skipToContent}
         </a>
         {children}
+        <EventAssistant locale={locale} />
         <SiteFooter locale={locale} />
       </body>
     </html>
