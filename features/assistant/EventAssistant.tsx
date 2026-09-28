@@ -21,8 +21,12 @@ export function EventAssistant({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
-    else triggerRef.current?.focus();
   }, [open]);
+
+  function close() {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
@@ -48,7 +52,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
             : pathname?.includes('/e/') || pathname?.includes('/invite')
               ? 'invitation'
               : 'site',
-          messages: next.slice(-8),
+          messages: next.slice(-7),
         }),
       });
       const data: { answer?: string; error?: string } = await response.json();
@@ -56,6 +60,8 @@ export function EventAssistant({ locale }: { locale: Locale }) {
         throw new Error(data.error || (isHe ? 'לא התקבלה תשובה.' : 'No answer received.'));
       setMessages([...next, { role: 'assistant', content: data.answer }]);
     } catch (cause) {
+      setMessages(messages);
+      setInput(content);
       setError(cause instanceof Error ? cause.message : isHe ? 'נסו שוב.' : 'Please try again.');
     } finally {
       setPending(false);
@@ -70,7 +76,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
           aria-modal="false"
           aria-label={isHe ? 'עוזר AI לאישורי הגעה' : 'RSVP AI assistant'}
           onKeyDown={(event) => {
-            if (event.key === 'Escape') setOpen(false);
+            if (event.key === 'Escape') close();
           }}
           className="bg-card text-card-foreground border-border shadow-overlay mb-3 flex h-[min(36rem,calc(100dvh-6rem))] w-[min(25rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border"
         >
@@ -87,7 +93,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
             </div>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={close}
               aria-label={isHe ? 'סגירת העוזר' : 'Close assistant'}
               className="rounded-full px-2 py-1 text-xl focus-visible:outline-2 focus-visible:outline-offset-2"
             >
@@ -145,7 +151,10 @@ export function EventAssistant({ locale }: { locale: Locale }) {
               <p className="text-muted-foreground text-xs leading-snug">
                 {isHe
                   ? 'השאלה נשלחת ל־Google AI. אל תכללו פרטים אישיים של אורחים.'
-                  : 'Your question is sent to Google AI. Do not include guest personal data.'}
+                  : 'Your question is sent to Google AI. Do not include guest personal data.'}{' '}
+                <a className="underline" href={isHe ? '/privacy' : '/en/privacy'}>
+                  {isHe ? 'פרטיות' : 'Privacy'}
+                </a>
               </p>
               <button
                 type="submit"
