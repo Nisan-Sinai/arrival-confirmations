@@ -3,10 +3,10 @@ import { z } from 'zod';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import { resolveClientIpHash } from '@/lib/server/ip';
 
-const messageSchema = z.object({
-  role: z.enum(['user', 'assistant']),
-  content: z.string().trim().min(1).max(1200),
-});
+const messageSchema = z.discriminatedUnion('role', [
+  z.object({ role: z.literal('user'), content: z.string().trim().min(1).max(1200) }),
+  z.object({ role: z.literal('assistant'), content: z.string().trim().min(1).max(4000) }),
+]);
 const requestSchema = z.object({
   locale: z.enum(['he', 'en']),
   context: z.enum(['site', 'event', 'invitation']),
@@ -22,34 +22,57 @@ export async function POST(request: Request) {
   }
 
   const length = Number(request.headers.get('content-length') ?? 0);
-  if (length > 12000) return Response.json({ error: 'Request is too large' }, { status: 413 });
+  if (length > 64000) return Response.json({ error: 'Request is too large' }, { status: 413 });
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || parsed.data.messages.at(-1)?.role !== 'user') {
     return Response.json({ error: 'Invalid message' }, { status: 400 });
   }
 
+  const { locale, context, messages } = parsed.data;
+  const fail = (code: string, hebrew: string, english: string, status = 503) =>
+    Response.json(
+      { code, error: locale === 'he' ? hebrew : english },
+      { status, headers: { 'Cache-Control': 'no-store' } },
+    );
   const key = process.env.GEMINI_API_KEY?.trim();
-  if (!key)
-    return Response.json({ error: 'העוזר אינו זמין כרגע. נסו שוב מאוחר יותר.' }, { status: 503 });
-
-  // A shared database limit remains effective across serverless instances and protects
-  // the free Gemini quota from anonymous automated traffic.
-  const { hash } = resolveClientIpHash(request.headers);
-  const { data: limit, error: limitError } = await createPrivilegedClient().rpc(
-    'consume_rate_limit',
-    {
-      p_bucket_key: `assistant:${hash}`,
-      p_limit: 12,
-      p_window_seconds: 3600,
-    },
-  );
-  if (limitError) return Response.json({ error: 'העוזר אינו זמין כרגע.' }, { status: 503 });
-  if (limit?.[0]?.allowed === false) {
-    return Response.json({ error: 'הגעתם למגבלת השימוש. נסו שוב בעוד שעה.' }, { status: 429 });
+  if (!key) {
+    console.error('AI_NOT_CONFIGURED: GEMINI_API_KEY is missing');
+    return fail(
+      'AI_NOT_CONFIGURED',
+      'עוזר ה־AI עדיין לא הופעל באתר. יש לפנות לתמיכה.',
+      'The AI assistant has not been activated yet. Please contact support.',
+    );
   }
 
-  const { locale, context, messages } = parsed.data;
   try {
+    // A shared database limit remains effective across serverless instances and protects
+    // the free Gemini quota from anonymous automated traffic.
+    const { hash } = resolveClientIpHash(request.headers);
+    const { data: limit, error: limitError } = await createPrivilegedClient().rpc(
+      'consume_rate_limit',
+      {
+        p_bucket_key: `assistant:${hash}`,
+        p_limit: 12,
+        p_window_seconds: 3600,
+      },
+    );
+    if (limitError || !limit?.[0]) {
+      console.error('AI_RATE_LIMIT_UNAVAILABLE', limitError?.code ?? 'empty_result');
+      return fail(
+        'AI_UNAVAILABLE',
+        'העוזר אינו זמין כרגע.',
+        'The assistant is temporarily unavailable.',
+      );
+    }
+    if (!limit[0].allowed) {
+      return fail(
+        'AI_RATE_LIMITED',
+        'הגעתם למגבלת השימוש. נסו שוב בעוד שעה.',
+        'Usage limit reached. Please try again in an hour.',
+        429,
+      );
+    }
+
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent',
       {
@@ -75,7 +98,11 @@ export async function POST(request: Request) {
     );
     if (!response.ok) {
       console.error('Gemini assistant failed', response.status);
-      return Response.json({ error: 'העוזר אינו זמין כרגע. נסו שוב מאוחר יותר.' }, { status: 503 });
+      return fail(
+        'AI_PROVIDER_UNAVAILABLE',
+        'העוזר אינו זמין כרגע. נסו שוב מאוחר יותר.',
+        'The assistant is temporarily unavailable. Please try again later.',
+      );
     }
     const payload: unknown = await response.json();
     const result = z
@@ -93,12 +120,22 @@ export async function POST(request: Request) {
           .join('')
           .trim()
       : '';
-    if (!answer) return Response.json({ error: 'לא התקבלה תשובה. נסו שוב.' }, { status: 503 });
+    if (!answer)
+      return fail(
+        'AI_EMPTY_RESPONSE',
+        'לא התקבלה תשובה. נסו שוב.',
+        'No answer received. Please try again.',
+      );
     return Response.json(
       { answer: answer.slice(0, 4000) },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch {
-    return Response.json({ error: 'החיבור לעוזר נכשל. נסו שוב.' }, { status: 503 });
+    console.error('AI_REQUEST_FAILED');
+    return fail(
+      'AI_REQUEST_FAILED',
+      'החיבור לעוזר נכשל. נסו שוב.',
+      'The connection failed. Please try again.',
+    );
   }
 }

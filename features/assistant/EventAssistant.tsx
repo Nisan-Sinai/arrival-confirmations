@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
 
+import { Icon } from '@/components/ui/icons';
 import type { Locale } from '@/lib/i18n';
 
 type Message = { role: 'user' | 'assistant'; content: string };
@@ -69,7 +70,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
   }
 
   return (
-    <div className="fixed end-4 bottom-4 z-[var(--z-overlay)] sm:end-6 sm:bottom-6">
+    <div className="fixed right-4 bottom-4 z-[var(--z-overlay)] flex flex-col items-end sm:right-6 sm:bottom-6 rtl:items-start">
       {open && (
         <section
           role="dialog"
@@ -172,10 +173,20 @@ export function EventAssistant({ locale }: { locale: Locale }) {
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        aria-label={isHe ? 'פתיחת עוזר AI' : 'Open AI assistant'}
-        className="bg-primary text-primary-foreground shadow-raised rounded-full px-5 py-3 text-base font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
+        aria-label={
+          isHe
+            ? open
+              ? 'סגירת עוזר AI'
+              : 'פתיחת עוזר AI'
+            : open
+              ? 'Close AI assistant'
+              : 'Open AI assistant'
+        }
+        className="bg-primary text-primary-foreground shadow-raised flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring] sm:h-12 sm:gap-2 sm:px-4"
       >
-        ✨ {isHe ? 'שאלו את ה־AI' : 'Ask AI'}
+        <Icon name="sparkles" className="size-4 sm:size-5" />
+        <span className="sm:hidden">AI</span>
+        <span className="hidden sm:inline">{isHe ? 'שאלו את ה־AI' : 'Ask AI'}</span>
       </button>
     </div>
   );
