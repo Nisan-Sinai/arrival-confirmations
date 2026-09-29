@@ -2,11 +2,11 @@ import { expect, test } from '@playwright/test';
 
 for (const width of [320, 390]) {
   for (const locale of ['he', 'en'] as const) {
-    test(`AI launcher and conversation fit ${width}px in ${locale}`, async ({ page }) => {
+    test(`assistant launcher and conversation fit ${width}px in ${locale}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 720 });
       await page.goto(locale === 'he' ? '/' : '/en');
       const trigger = page.getByRole('button', {
-        name: locale === 'he' ? 'פתיחת עוזר AI' : 'Open AI assistant',
+        name: locale === 'he' ? 'פתיחת העוזר' : 'Open assistant',
         exact: true,
       });
       const accessibility = page.getByRole('button', {
@@ -40,8 +40,7 @@ for (const width of [320, 390]) {
   }
 }
 
-test('an AI service error preserves the question for retry', async ({ page }) => {
-  // This verifies error UI only; a live model response remains a separate release gate.
+test('an assistant service error preserves the question for retry', async ({ page }) => {
   await page.route('**/api/assistant', (route) =>
     route.fulfill({
       status: 503,
@@ -50,7 +49,7 @@ test('an AI service error preserves the question for retry', async ({ page }) =>
     }),
   );
   await page.goto('/');
-  await page.getByRole('button', { name: 'פתיחת עוזר AI', exact: true }).click();
+  await page.getByRole('button', { name: 'פתיחת העוזר', exact: true }).click();
   await page.getByRole('textbox', { name: 'השאלה שלכם' }).fill('איך שולחים הזמנה?');
   await page.getByRole('button', { name: 'שליחה', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('העוזר אינו זמין כרגע.');
@@ -67,12 +66,12 @@ test('a suggested question produces a grounded answer with a safe site link', as
       body: JSON.stringify({
         answer: 'המחיר נקבע לפי המסלול ומפורט בעמוד המחירים.',
         links: [{ href: '/pricing', label: 'מחירים ומסלולים' }],
-        source: 'model',
+        source: 'guide',
       }),
     });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'פתיחת עוזר AI', exact: true }).click();
+  await page.getByRole('button', { name: 'פתיחת העוזר', exact: true }).click();
   await page.getByRole('button', { name: 'כמה עולה?', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('המחיר נקבע לפי המסלול');
   await expect(page.getByRole('link', { name: 'מחירים ומסלולים' })).toHaveAttribute(
@@ -81,7 +80,7 @@ test('a suggested question produces a grounded answer with a safe site link', as
   );
 });
 
-test('private local answers never enter a later Gemini conversation', async ({ page }) => {
+test('private event answers are omitted from later guide requests', async ({ page }) => {
   let calls = 0;
   await page.route('**/api/assistant', async (route) => {
     calls += 1;
@@ -96,12 +95,12 @@ test('private local answers never enter a later Gemini conversation', async ({ p
       body: JSON.stringify(
         calls === 1
           ? { answer: 'אורחת א אישרה הגעה.', source: 'event', links: [] }
-          : { answer: 'אפשר לערוך את האירוע בדשבורד.', source: 'model', links: [] },
+          : { answer: 'אפשר לערוך את האירוע בדשבורד.', source: 'guide', links: [] },
       ),
     });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'פתיחת עוזר AI', exact: true }).click();
+  await page.getByRole('button', { name: 'פתיחת העוזר', exact: true }).click();
   await page.getByRole('textbox', { name: 'השאלה שלכם' }).fill('מי אישר?');
   await page.getByRole('button', { name: 'שליחה', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('אורחת א אישרה');
