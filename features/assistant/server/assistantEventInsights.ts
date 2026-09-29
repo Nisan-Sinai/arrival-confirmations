@@ -58,13 +58,13 @@ export async function getHostEventAnswer({
     return {
       answer:
         locale === 'he'
-          ? 'כדי לענות מתוך הנתונים, פתחו את האירוע שלכם בדשבורד ושאלו שוב בעמוד האירוע. הנתונים לא נשלחים ל־Google.'
-          : 'Open your event in the dashboard and ask again on its page. Event data is not sent to Google.',
+          ? 'כדי לענות מתוך הנתונים, פתחו את האירוע שלכם בדשבורד ושאלו שוב בעמוד האירוע. הנתונים נשארים באתר.'
+          : 'Open your event in the dashboard and ask again on its page. The data stays on this site.',
       links: [{ href: '/dashboard', label: locale === 'he' ? 'האירועים שלי' : 'My events' }],
     };
   }
 
-  // This path uses the caller's session and RLS. No guest data enters a Gemini request.
+  // This path uses the caller's session and RLS. Guest data stays on the site.
   const supabase = await createUserClient();
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) throw new Error('ASSISTANT_AUTH_REQUIRED');

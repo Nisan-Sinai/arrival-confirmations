@@ -79,8 +79,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
           locale,
           context,
           eventId,
-          // A local event answer contains private host data. Never replay it or its
-          // question into a later Gemini request as conversation history.
+          // Private event answers stay out of later requests, even to our own server.
           messages: next.filter((message) => !message.local).slice(-7),
         }),
       });
@@ -88,7 +87,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
         answer?: string;
         error?: string;
         links?: AssistantLink[];
-        source?: 'event' | 'model';
+        source?: 'event' | 'guide';
       } = await response.json();
       if (!response.ok || !data.answer)
         throw new Error(data.error || (isHe ? 'לא התקבלה תשובה.' : 'No answer received.'));
@@ -118,7 +117,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
         <section
           role="dialog"
           aria-modal="false"
-          aria-label={isHe ? 'עוזר AI לאישורי הגעה' : 'RSVP AI assistant'}
+          aria-label={isHe ? 'עוזר לאישורי הגעה' : 'RSVP assistant'}
           onKeyDown={(event) => {
             if (event.key === 'Escape') close();
           }}
@@ -127,7 +126,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
           <div className="bg-primary text-primary-foreground flex items-center justify-between gap-3 px-5 py-4">
             <div>
               <h2 className="text-base font-bold">
-                {isHe ? 'עוזר AI לאישורי הגעה' : 'RSVP AI assistant'}
+                {isHe ? 'עוזר לאישורי הגעה' : 'RSVP assistant'}
               </h2>
               <p className="text-sm opacity-85">
                 {isHe
@@ -222,8 +221,8 @@ export function EventAssistant({ locale }: { locale: Locale }) {
             <div className="mt-2 flex items-center justify-between gap-2">
               <p className="text-muted-foreground text-xs leading-snug">
                 {isHe
-                  ? 'שאלות כלליות נשלחות ל־Google AI. מידע על האירוע נבדק באתר בלבד. אל תכתבו כאן פרטי אורחים.'
-                  : 'General questions go to Google AI. Event lookups stay on this site. Do not type guest details here.'}{' '}
+                  ? 'השאלות נענות באתר ולא נשלחות לספק AI חיצוני. מידע על מוזמנים זמין רק לבעל האירוע.'
+                  : 'Questions are answered on this site, without an external AI provider. Guest information is available only to the event host.'}{' '}
                 <a className="underline" href={isHe ? '/privacy' : '/en/privacy'}>
                   {isHe ? 'פרטיות' : 'Privacy'}
                 </a>
@@ -247,17 +246,16 @@ export function EventAssistant({ locale }: { locale: Locale }) {
         aria-label={
           isHe
             ? open
-              ? 'סגירת עוזר AI'
-              : 'פתיחת עוזר AI'
+              ? 'סגירת העוזר'
+              : 'פתיחת העוזר'
             : open
-              ? 'Close AI assistant'
-              : 'Open AI assistant'
+              ? 'Close assistant'
+              : 'Open assistant'
         }
         className="bg-primary text-primary-foreground shadow-raised flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring] sm:h-12 sm:gap-2 sm:px-4"
       >
         <Icon name="sparkles" className="size-4 sm:size-5" />
-        <span className="sm:hidden">AI</span>
-        <span className="hidden sm:inline">{isHe ? 'שאלו את ה־AI' : 'Ask AI'}</span>
+        <span className="hidden sm:inline">{isHe ? 'שאלו את העוזר' : 'Ask the assistant'}</span>
       </button>
     </div>
   );

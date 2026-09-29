@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { buildProductGuide } from '@/features/assistant/productGuide';
+import { answerProductQuestion } from '@/features/assistant/productGuide';
 import { getHostEventAnswer } from '@/features/assistant/server/assistantEventInsights';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import { resolveClientIpHash } from '@/lib/server/ip';
@@ -15,17 +15,6 @@ const requestSchema = z.object({
   eventId: z.uuid().optional(),
   messages: z.array(messageSchema).min(1).max(8),
 });
-
-const models = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'] as const;
-
-function plainTextAnswer(text: string) {
-  return text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '')
-    .trim();
-}
 
 export async function POST(request: Request) {
   const origin = request.headers.get('origin');
@@ -47,8 +36,8 @@ export async function POST(request: Request) {
       { status, headers: { 'Cache-Control': 'no-store' } },
     );
   try {
-    // A shared database limit remains effective across serverless instances and protects
-    // the free Gemini quota from anonymous automated traffic.
+    // A shared database limit remains effective across serverless instances and
+    // protects the private event lookup from anonymous automated traffic.
     const { hash } = resolveClientIpHash(request.headers);
     const { data: limit, error: limitError } = await createPrivilegedClient().rpc(
       'consume_rate_limit',
@@ -87,91 +76,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const key = process.env.GEMINI_API_KEY?.trim();
-    if (!key) {
-      console.error('AI_NOT_CONFIGURED: GEMINI_API_KEY is missing');
-      return fail(
-        'AI_NOT_CONFIGURED',
-        'עוזר ה־AI עדיין לא הופעל באתר. יש לפנות לתמיכה.',
-        'The AI assistant has not been activated yet. Please contact support.',
-      );
-    }
-    const guide = buildProductGuide({
+    const guide = answerProductQuestion({
       locale,
       context,
       questions: messages.filter(({ role }) => role === 'user').map(({ content }) => content),
     });
-
-    const options: RequestInit = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        system_instruction: {
-          parts: [
-            {
-              text: guide.instructions,
-            },
-          ],
-        },
-        contents: messages.map(({ role, content }) => ({
-          role: role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: content }],
-        })),
-        generationConfig: { temperature: 0.3, maxOutputTokens: 500 },
-      }),
-      cache: 'no-store',
-      signal: AbortSignal.timeout(25000),
-    };
-    let response: Response | undefined;
-    for (const [index, model] of models.entries()) {
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        options,
-      );
-      if (response.ok) break;
-      console.warn('Gemini model failed', model, response.status);
-      const canTryAnotherModel =
-        response.status === 404 ||
-        response.status === 408 ||
-        response.status === 429 ||
-        response.status >= 500;
-      if (!canTryAnotherModel || index === models.length - 1) break;
-      if (response.status !== 404) {
-        // A short backoff reduces load during temporary provider failures.
-        await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** index));
-      }
-    }
-    if (!response?.ok) {
-      console.error('Gemini assistant failed', response?.status ?? 'no_response');
-      return fail(
-        'AI_PROVIDER_UNAVAILABLE',
-        'העוזר אינו זמין כרגע. נסו שוב מאוחר יותר.',
-        'The assistant is temporarily unavailable. Please try again later.',
-      );
-    }
-    const payload: unknown = await response.json();
-    const result = z
-      .object({
-        candidates: z
-          .array(
-            z.object({ content: z.object({ parts: z.array(z.object({ text: z.string() })) }) }),
-          )
-          .min(1),
-      })
-      .safeParse(payload);
-    const answer = result.success
-      ? plainTextAnswer(
-          result.data.candidates[0]?.content.parts.map((part) => part.text).join('') ?? '',
-        )
-      : '';
-    if (!answer)
-      return fail(
-        'AI_EMPTY_RESPONSE',
-        'לא התקבלה תשובה. נסו שוב.',
-        'No answer received. Please try again.',
-      );
     return Response.json(
-      { answer: answer.slice(0, 4000), links: guide.links, source: 'model' },
+      { ...guide, source: 'guide' },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (cause) {

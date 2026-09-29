@@ -106,12 +106,12 @@ const CONTENT: Record<Locale, LegalContent> = {
         ],
       },
       {
-        title: 'עוזר AI',
+        title: 'עוזר האתר',
         blocks: [
           {
             kind: 'p',
             runs: [
-              'שאלות כלליות לעוזר ה־AI נשלחות ל־Google Gemini כדי ליצור תשובה. במסלול החינמי Google עשויה להשתמש בתוכן לשיפור מוצריה, לרבות בדיקה אנושית. אין לכלול בשאלות שמות, מספרי טלפון, דרישות תזונה או פרטים אישיים של אורחים. בעל אירוע מחובר יכול לשאול בעמוד האירוע על רשימת המוזמנים ואישורי ההגעה שלו; השאילתה נבדקת בשרת האתר לפי הרשאותיו, והתשובה מוחזרת אליו ישירות בלי לשלוח את הרשימות או התשובות האישיות ל־Google. העוזר אינו משנה אירועים או שולח הזמנות, והשיחה אינה נשמרת במסד הנתונים של האתר.',
+              'העוזר עונה על שאלות כלליות מתוך מידע האתר, ללא שליחת שאלות או תשובות לספק AI חיצוני. בעל אירוע מחובר יכול לשאול בעמוד האירוע על רשימת המוזמנים ואישורי ההגעה שלו; שרת האתר בודק את הרשאותיו ומשיב לו ישירות. העוזר אינו משנה אירועים או שולח הזמנות, והשיחה אינה נשמרת במסד הנתונים של האתר.',
             ],
           },
         ],
@@ -263,12 +263,12 @@ const CONTENT: Record<Locale, LegalContent> = {
         ],
       },
       {
-        title: 'AI assistant',
+        title: 'Site assistant',
         blocks: [
           {
             kind: 'p',
             runs: [
-              'General questions to the AI assistant are sent to Google Gemini to generate an answer. On the free tier, Google may use that content to improve its products, including human review. Do not include guest names, phone numbers, dietary requirements or other personal details. A signed-in host can ask on their event page about their own guest list and RSVPs; the site server checks their permissions and answers directly without sending guest lists or individual replies to Google. The assistant cannot change events or send invitations, and the conversation is not stored in the site database.',
+              'The assistant answers general questions from the site’s own information without sending questions or replies to an external AI provider. A signed-in host can ask about their own guest list and RSVPs on an event page; the site server checks their permissions and answers directly. The assistant cannot change events or send invitations, and the conversation is not stored in the site database.',
             ],
           },
         ],
