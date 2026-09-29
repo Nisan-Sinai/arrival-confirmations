@@ -93,6 +93,20 @@ describe('RSVP AI service failures and conversation continuity', () => {
     });
   });
 
+  it('recovers from one transient provider failure', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(
+        Response.json({
+          candidates: [{ content: { parts: [{ text: 'פתחו את האירוע ואז מוזמנים וכלים.' }] } }],
+        }),
+      );
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ answer: 'פתחו את האירוע ואז מוזמנים וכלים.' });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('never substitutes a fabricated answer for an upstream error', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response('private upstream error', { status: 403 }));
     const response = await POST(request());

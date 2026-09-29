@@ -82,29 +82,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [
-              {
-                text: `${guide}\nCurrent page context: ${context}. Reply in ${locale === 'he' ? 'Hebrew' : 'English'}.`,
-              },
-            ],
-          },
-          contents: messages.map(({ role, content }) => ({
-            role: role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: content }],
-          })),
-          generationConfig: { temperature: 0.3, maxOutputTokens: 500 },
-        }),
-        cache: 'no-store',
-        signal: AbortSignal.timeout(15000),
-      },
-    );
+    const endpoint =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent';
+    const options: RequestInit = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [
+            {
+              text: `${guide}\nCurrent page context: ${context}. Reply in ${locale === 'he' ? 'Hebrew' : 'English'}.`,
+            },
+          ],
+        },
+        contents: messages.map(({ role, content }) => ({
+          role: role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: content }],
+        })),
+        generationConfig: { temperature: 0.3, maxOutputTokens: 500 },
+      }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15000),
+    };
+    let response = await fetch(endpoint, options);
+    // The free provider occasionally returns a short-lived 503. Retry once within
+    // the same overall timeout before showing an error to the visitor.
+    if ([500, 502, 503, 504].includes(response.status)) {
+      response = await fetch(endpoint, options);
+    }
     if (!response.ok) {
       console.error('Gemini assistant failed', response.status);
       return fail(
