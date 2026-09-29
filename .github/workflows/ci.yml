@@ -236,5 +236,8 @@ jobs:
             echo "E2E_EVENT_PUBLIC_ID=${EVENT_PUBLIC_ID}"
           } >> "$GITHUB_ENV"
 
-      # No `env:` on either step below. They read whatever the step above exported, or
-      # the workflow-level placeholders when it did not run. `E2E_EVENT_PUBLIC_ID` is
+      - name: Build the application for browser tests
+        run: pnpm build
+
+      - name: Run end-to-end and accessibility tests
+        run: pnpm test:e2e

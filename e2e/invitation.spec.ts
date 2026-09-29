@@ -110,8 +110,9 @@ test.describe('the landing page', () => {
   test('states the product and links to both legal pages', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('מנהלים את המוזמנים');
-    await expect(page.getByRole('link', { name: 'מדיניות פרטיות' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'הצהרת נגישות' })).toBeVisible();
+    const legalLinks = page.getByRole('navigation', { name: 'קישורי חובה' });
+    await expect(legalLinks.getByRole('link', { name: 'מדיניות פרטיות' })).toBeVisible();
+    await expect(legalLinks.getByRole('link', { name: 'הצהרת נגישות' })).toBeVisible();
   });
 
   test('offers a route to sign in and to sign up', async ({ page }) => {
