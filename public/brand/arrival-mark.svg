@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>אישורי הגעה — הזמנה ואישור</title>
+  <rect width="64" height="64" rx="14" fill="#5E1B28" />
+  <g stroke="#E7C17D" stroke-width="4.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M38 24H16a4 4 0 0 0-4 4v18a5 5 0 0 0 5 5h30a5 5 0 0 0 5-5V31" />
+    <path d="m13 27 16 15 23-26" />
+  </g>
+</svg>
