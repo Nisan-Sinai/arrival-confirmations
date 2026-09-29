@@ -56,3 +56,57 @@ test('an AI service error preserves the question for retry', async ({ page }) =>
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('העוזר אינו זמין כרגע.');
   await expect(page.getByRole('textbox', { name: 'השאלה שלכם' })).toHaveValue('איך שולחים הזמנה?');
 });
+
+test('a suggested question produces a grounded answer with a safe site link', async ({ page }) => {
+  await page.route('**/api/assistant', async (route) => {
+    const body = route.request().postDataJSON();
+    expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'כמה עולה?' });
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        answer: 'המחיר נקבע לפי המסלול ומפורט בעמוד המחירים.',
+        links: [{ href: '/pricing', label: 'מחירים ומסלולים' }],
+        source: 'model',
+      }),
+    });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'פתיחת עוזר AI', exact: true }).click();
+  await page.getByRole('button', { name: 'כמה עולה?', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('המחיר נקבע לפי המסלול');
+  await expect(page.getByRole('link', { name: 'מחירים ומסלולים' })).toHaveAttribute(
+    'href',
+    '/pricing',
+  );
+});
+
+test('private local answers never enter a later Gemini conversation', async ({ page }) => {
+  let calls = 0;
+  await page.route('**/api/assistant', async (route) => {
+    calls += 1;
+    const body = route.request().postDataJSON();
+    if (calls === 2) {
+      expect(JSON.stringify(body.messages)).not.toContain('אורחת א');
+      expect(JSON.stringify(body.messages)).not.toContain('מי אישר?');
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        calls === 1
+          ? { answer: 'אורחת א אישרה הגעה.', source: 'event', links: [] }
+          : { answer: 'אפשר לערוך את האירוע בדשבורד.', source: 'model', links: [] },
+      ),
+    });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'פתיחת עוזר AI', exact: true }).click();
+  await page.getByRole('textbox', { name: 'השאלה שלכם' }).fill('מי אישר?');
+  await page.getByRole('button', { name: 'שליחה', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('אורחת א אישרה');
+  await page.getByRole('textbox', { name: 'השאלה שלכם' }).fill('איך עורכים אירוע?');
+  await page.getByRole('button', { name: 'שליחה', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('אפשר לערוך את האירוע בדשבורד.');
+  expect(calls).toBe(2);
+});
