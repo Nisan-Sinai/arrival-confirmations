@@ -111,7 +111,7 @@ const CONTENT: Record<Locale, LegalContent> = {
           {
             kind: 'p',
             runs: [
-              'אם בוחרים לשאול את עוזר ה־AI, תוכן השיחה נשלח ל־Google Gemini כדי ליצור תשובה. אין לכלול בשאלה שמות, מספרי טלפון, דרישות תזונה או פרטים אישיים של אורחים. העוזר אינו ניגש לרשימות המוזמנים או לתשובות השמורות ואינו מבצע שינויים באירוע. השיחה אינה נשמרת במסד הנתונים של האתר.',
+              'שאלות כלליות לעוזר ה־AI נשלחות ל־Google Gemini כדי ליצור תשובה. במסלול החינמי Google עשויה להשתמש בתוכן לשיפור מוצריה, לרבות בדיקה אנושית. אין לכלול בשאלות שמות, מספרי טלפון, דרישות תזונה או פרטים אישיים של אורחים. בעל אירוע מחובר יכול לשאול בעמוד האירוע על רשימת המוזמנים ואישורי ההגעה שלו; השאילתה נבדקת בשרת האתר לפי הרשאותיו, והתשובה מוחזרת אליו ישירות בלי לשלוח את הרשימות או התשובות האישיות ל־Google. העוזר אינו משנה אירועים או שולח הזמנות, והשיחה אינה נשמרת במסד הנתונים של האתר.',
             ],
           },
         ],
@@ -268,7 +268,7 @@ const CONTENT: Record<Locale, LegalContent> = {
           {
             kind: 'p',
             runs: [
-              'If you choose to ask the AI assistant, the conversation is sent to Google Gemini to generate an answer. Do not include guest names, phone numbers, dietary requirements or other personal details. The assistant cannot access guest lists or saved replies and cannot change an event. The conversation is not stored in the site database.',
+              'General questions to the AI assistant are sent to Google Gemini to generate an answer. On the free tier, Google may use that content to improve its products, including human review. Do not include guest names, phone numbers, dietary requirements or other personal details. A signed-in host can ask on their event page about their own guest list and RSVPs; the site server checks their permissions and answers directly without sending guest lists or individual replies to Google. The assistant cannot change events or send invitations, and the conversation is not stored in the site database.',
             ],
           },
         ],

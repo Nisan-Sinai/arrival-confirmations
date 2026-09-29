@@ -2,11 +2,18 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 import { Icon } from '@/components/ui/icons';
+import type { AssistantLink, AssistantContext } from '@/features/assistant/productGuide';
 import type { Locale } from '@/lib/i18n';
 
-type Message = { role: 'user' | 'assistant'; content: string };
+type Message = {
+  role: 'user' | 'assistant';
+  content: string;
+  links?: AssistantLink[];
+  local?: boolean;
+};
 
 export function EventAssistant({ locale }: { locale: Locale }) {
   const pathname = usePathname();
@@ -19,6 +26,29 @@ export function EventAssistant({ locale }: { locale: Locale }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const isHe = locale === 'he';
+  const eventId = pathname?.match(/^\/dashboard\/events\/([0-9a-f-]{36})(?:\/|$)/i)?.[1];
+  const context: AssistantContext =
+    pathname?.includes('/guests') && eventId
+      ? 'guests'
+      : eventId
+        ? 'event'
+        : pathname?.includes('/e/') || pathname?.includes('/invite')
+          ? 'invitation'
+          : pathname?.endsWith('/pricing')
+            ? 'pricing'
+            : 'site';
+  const suggestions =
+    context === 'invitation'
+      ? isHe
+        ? ['איך מאשרים הגעה?', 'איך משנים תשובה?']
+        : ['How do I RSVP?', 'Can I change my answer?']
+      : eventId
+        ? isHe
+          ? ['כמה אישרו הגעה?', 'מי טרם ענה?', 'איך שולחים הזמנה אישית?']
+          : ['How many replied?', 'Who has not replied?', 'How do I share a personal invite?']
+        : isHe
+          ? ['איך יוצרים אירוע?', 'איך שולחים הזמנה אישית?', 'כמה עולה?']
+          : ['How do I create an event?', 'How do I share invites?', 'What does it cost?'];
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -33,9 +63,8 @@ export function EventAssistant({ locale }: { locale: Locale }) {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [messages, pending]);
 
-  async function send(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const content = input.trim();
+  async function sendQuestion(question: string) {
+    const content = question.trim();
     if (!content || pending) return;
     const next: Message[] = [...messages, { role: 'user', content }];
     setMessages(next);
@@ -48,18 +77,27 @@ export function EventAssistant({ locale }: { locale: Locale }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           locale,
-          context: pathname?.includes('/dashboard/')
-            ? 'event'
-            : pathname?.includes('/e/') || pathname?.includes('/invite')
-              ? 'invitation'
-              : 'site',
-          messages: next.slice(-7),
+          context,
+          eventId,
+          // A local event answer contains private host data. Never replay it or its
+          // question into a later Gemini request as conversation history.
+          messages: next.filter((message) => !message.local).slice(-7),
         }),
       });
-      const data: { answer?: string; error?: string } = await response.json();
+      const data: {
+        answer?: string;
+        error?: string;
+        links?: AssistantLink[];
+        source?: 'event' | 'model';
+      } = await response.json();
       if (!response.ok || !data.answer)
         throw new Error(data.error || (isHe ? 'לא התקבלה תשובה.' : 'No answer received.'));
-      setMessages([...next, { role: 'assistant', content: data.answer }]);
+      const local = data.source === 'event';
+      setMessages([
+        ...messages,
+        { role: 'user', content, local },
+        { role: 'assistant', content: data.answer, links: data.links, local },
+      ]);
     } catch (cause) {
       setMessages(messages);
       setInput(content);
@@ -67,6 +105,11 @@ export function EventAssistant({ locale }: { locale: Locale }) {
     } finally {
       setPending(false);
     }
+  }
+
+  function send(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void sendQuestion(input);
   }
 
   return (
@@ -109,19 +152,47 @@ export function EventAssistant({ locale }: { locale: Locale }) {
             className="flex-1 space-y-3 overflow-y-auto p-4 text-base"
           >
             {messages.length === 0 && (
-              <p className="text-muted-foreground leading-relaxed">
-                {isHe
-                  ? 'איך אפשר לעזור? למשל: איך שולחים הזמנה אישית או איך רואים מי אישר הגעה?'
-                  : 'How can I help? For example: how do I share an invitation or see who replied?'}
-              </p>
+              <div className="space-y-3">
+                <p className="text-muted-foreground leading-relaxed">
+                  {isHe ? 'איך אפשר לעזור?' : 'How can I help?'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      type="button"
+                      key={suggestion}
+                      disabled={pending}
+                      onClick={() => void sendQuestion(suggestion)}
+                      className="border-border bg-secondary/60 text-secondary-foreground rounded-full border px-3 py-2 text-sm leading-snug hover:underline disabled:opacity-50"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
             {messages.map((message, index) => (
-              <p
+              <div
                 key={index}
                 className={`max-w-[92%] rounded-xl px-3 py-2 leading-relaxed whitespace-pre-wrap ${message.role === 'user' ? 'bg-primary text-primary-foreground ms-auto' : 'bg-secondary text-secondary-foreground me-auto'}`}
               >
-                {message.content}
-              </p>
+                <p>{message.content}</p>
+                {message.links && message.links.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2 border-t border-current/15 pt-2 text-sm">
+                    {message.links
+                      .filter(({ href }) => href.startsWith('/') && !href.startsWith('//'))
+                      .map(({ href, label }) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          className="font-semibold underline underline-offset-2"
+                        >
+                          {label}
+                        </Link>
+                      ))}
+                  </div>
+                )}
+              </div>
             ))}
             {pending && (
               <p className="text-muted-foreground" role="status">
@@ -151,8 +222,8 @@ export function EventAssistant({ locale }: { locale: Locale }) {
             <div className="mt-2 flex items-center justify-between gap-2">
               <p className="text-muted-foreground text-xs leading-snug">
                 {isHe
-                  ? 'השאלה נשלחת ל־Google AI. אל תכללו פרטים אישיים של אורחים.'
-                  : 'Your question is sent to Google AI. Do not include guest personal data.'}{' '}
+                  ? 'שאלות כלליות נשלחות ל־Google AI. מידע על האירוע נבדק באתר בלבד. אל תכתבו כאן פרטי אורחים.'
+                  : 'General questions go to Google AI. Event lookups stay on this site. Do not type guest details here.'}{' '}
                 <a className="underline" href={isHe ? '/privacy' : '/en/privacy'}>
                   {isHe ? 'פרטיות' : 'Privacy'}
                 </a>
