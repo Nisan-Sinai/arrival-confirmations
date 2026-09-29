@@ -93,7 +93,7 @@ describe('RSVP AI service failures and conversation continuity', () => {
     });
   });
 
-  it('recovers from one transient provider failure', async () => {
+  it('recovers from a transient provider failure using a different free model', async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(new Response(null, { status: 503 }))
       .mockResolvedValueOnce(
@@ -105,6 +105,23 @@ describe('RSVP AI service failures and conversation continuity', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ answer: 'פתחו את האירוע ואז מוזמנים וכלים.' });
     expect(fetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => String(url))).toEqual([
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+    ]);
+  });
+
+  it('uses the third model if both newer models are unavailable', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(
+        Response.json({ candidates: [{ content: { parts: [{ text: 'תשובה אמיתית.' }] } }] }),
+      );
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ answer: 'תשובה אמיתית.' });
+    expect(vi.mocked(fetch).mock.calls[2]?.[0]).toContain('gemini-3.1-flash-lite');
   });
 
   it('never substitutes a fabricated answer for an upstream error', async () => {
@@ -115,5 +132,6 @@ describe('RSVP AI service failures and conversation continuity', () => {
     expect(payload.code).toBe('AI_PROVIDER_UNAVAILABLE');
     expect(payload.answer).toBeUndefined();
     expect(JSON.stringify(payload)).not.toContain('private upstream error');
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
