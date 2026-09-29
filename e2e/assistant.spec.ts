@@ -53,6 +53,6 @@ test('an AI service error preserves the question for retry', async ({ page }) =>
   await page.getByRole('button', { name: 'פתיחת עוזר AI', exact: true }).click();
   await page.getByRole('textbox', { name: 'השאלה שלכם' }).fill('איך שולחים הזמנה?');
   await page.getByRole('button', { name: 'שליחה', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('העוזר אינו זמין כרגע.');
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('העוזר אינו זמין כרגע.');
   await expect(page.getByRole('textbox', { name: 'השאלה שלכם' })).toHaveValue('איך שולחים הזמנה?');
 });
