@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { answerProductQuestion } from '@/features/assistant/productGuide';
 import { getHostEventAnswer } from '@/features/assistant/server/assistantEventInsights';
+import { phrasePublicGuide } from '@/features/assistant/server/publicGuideAI';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 import { resolveClientIpHash } from '@/lib/server/ip';
 
@@ -81,8 +82,9 @@ export async function POST(request: Request) {
       context,
       questions: messages.filter(({ role }) => role === 'user').map(({ content }) => content),
     });
+    const generated = guide.generation ? await phrasePublicGuide(guide.generation) : null;
     return Response.json(
-      { ...guide, source: 'guide' },
+      { answer: generated ?? guide.answer, links: guide.links, source: generated ? 'ai' : 'guide' },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (cause) {

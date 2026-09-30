@@ -65,6 +65,42 @@ describe('private host answers', () => {
     expect(result?.answer).toContain('3 אנשים');
   });
 
+  it.each([
+    ['כמה אנשים יגיעו?', '3 אנשים'],
+    ['כמה מגיעים?', '3 אנשים'],
+    ['כמה מבוגרים מגיעים?', '2 מבוגרים'],
+    ['כמה ילדים מגיעים?', '1 ילדים'],
+    ['כמה תינוקות מגיעים?', '0 תינוקות'],
+    ['כמה אישרו?', 'מגיעים: 1.'],
+    ['כמה מוזמנים יש?', 'מוזמנים: 2.'],
+    ['מה מצב האירוע?', '1 תשובות'],
+    ['מי עדיין לא אישר?', 'אורח ב'],
+    ['Who has not replied?', 'אורח ב'],
+    ['How many people are coming?', '3 אנשים'],
+  ])('distinguishes replies, people and unanswered invites: %s', async (question, expected) => {
+    expect((await ask(question))?.answer).toContain(expected);
+  });
+
+  it.each([
+    'אני לא מגיע, איך משנים תשובה?',
+    'איך מאשרים הגעה?',
+    'How can I change my RSVP to not attending?',
+  ])('does not send a guest how-to question through host authorization: %s', async (question) => {
+    expect(await ask(question)).toBeNull();
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it('does not disclose names in a request for an aggregate count', async () => {
+    expect((await ask('כמה אישרו?'))?.answer).not.toContain('אורחת א');
+  });
+
+  it('counts declined people separately instead of using the attending population', async () => {
+    const result = await ask('כמה אנשים לא מגיעים?');
+    expect(result?.answer).toContain('לא מגיעים');
+    expect(result?.answer).toContain('0 אנשים');
+    expect(result?.answer).not.toContain('3 אנשים');
+  });
+
   it('rejects a caller without an authenticated Supabase user', async () => {
     getUser.mockResolvedValueOnce({ data: { user: null }, error: null });
     await expect(ask('מי טרם ענה?')).rejects.toThrow('ASSISTANT_AUTH_REQUIRED');

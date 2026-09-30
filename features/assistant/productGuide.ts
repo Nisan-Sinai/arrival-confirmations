@@ -3,6 +3,11 @@ import { localePath, type Locale } from '@/lib/i18n';
 
 export type AssistantContext = 'site' | 'event' | 'guests' | 'invitation' | 'pricing';
 export type AssistantLink = { label: string; href: string };
+export type PublicGuideGeneration = {
+  locale: Locale;
+  facts: string;
+  format: 'concise' | 'steps';
+};
 
 type Article = {
   id: string;
@@ -12,14 +17,19 @@ type Article = {
   link?: { path: string; he: string; en: string };
 };
 
-// Product answers are maintained here, not generated from visitor text. The
-// private event lookup is handled separately with the host's own permissions.
+// These are the only facts allowed into the public AI prompt. Visitor text,
+// conversation history and private event data never enter that prompt.
 const articles: readonly Article[] = [
   {
     id: 'setup',
     terms: [
       'אירוע חדש',
       'ליצור אירוע',
+      'ליצר אירוע',
+      'פותחים אירוע',
+      'עורכים אירוע',
+      'להתחיל',
+      'מתחילים',
       'יוצרים אירוע',
       'יצירת אירוע',
       'לפתוח אירוע',
@@ -47,6 +57,9 @@ const articles: readonly Article[] = [
       'שולח',
       'שליח',
       'וואטסאפ',
+      'ווטסאפ',
+      'ווצאפ',
+      'וואצאפ',
       'אוטומט',
       'לכולם',
       'תזכור',
@@ -68,10 +81,17 @@ const articles: readonly Article[] = [
     terms: [
       'משנים תשובה',
       'לשנות תשובה',
+      'שיניתי את דעתי',
+      'התחרטתי',
+      'לעדכן תשובה',
+      'מעדכנים תשובה',
+      'טעיתי בתשובה',
       'שינוי תשובה',
       'עדכון תשובה',
       'לשנות אישור',
       'change my answer',
+      'changed my mind',
+      'edit my rsvp',
       'change answer',
       'update rsvp',
     ],
@@ -85,9 +105,12 @@ const articles: readonly Article[] = [
     id: 'rsvp',
     terms: [
       'אישור הגעה',
+      'אישורי הגעה',
+      'לאשר הגעה',
       'מאשר',
       'מאשרים',
       'מגיע',
+      'נרשמים',
       'כמות אנשים',
       'תשוב',
       'rsvp',
@@ -108,9 +131,15 @@ const articles: readonly Article[] = [
       'מוזמנ',
       'אנשי קשר',
       'ייבוא',
+      'יבוא',
+      'לייבא',
+      'מייבאים',
       'אקסל',
       'csv',
       'מחיק',
+      'למחוק',
+      'מוחקים',
+      'למחוק אורחים',
       'guest',
       'contact',
       'import',
@@ -140,10 +169,20 @@ const articles: readonly Article[] = [
       'מחיר',
       'עולה',
       'חינם',
+      'חינמי',
+      'חינמית',
+      'משלמים',
+      'כסף',
+      'עלות',
+      'יקר',
+      'הבדל',
+      'השווא',
       'תשלום',
       'מסלול',
       'פרימיום',
       'בייסיק',
+      'פרו',
+      'ניסיון',
       'pro',
       'premium',
       'basic',
@@ -151,6 +190,9 @@ const articles: readonly Article[] = [
       'cost',
       'free',
       'plan',
+      'plans',
+      'compare',
+      'difference',
       'trial',
     ],
     contexts: ['pricing'],
@@ -171,8 +213,8 @@ const articles: readonly Article[] = [
       'legal',
     ],
     answer: {
-      he: 'השאלות נענות מתוך מידע האתר, ללא שליחה לספק AI חיצוני. רק בעל אירוע מחובר יכול לשאול על המוזמנים והתשובות באירוע שלו, והשרת בודק את ההרשאות. השיחה אינה נשמרת במסד הנתונים. לפרטים על השימוש במידע קראו את מדיניות הפרטיות.',
-      en: 'Questions are answered from the site’s own information without sending them to an external AI provider. Only a signed-in event host can ask about their own guests and replies, subject to server permission checks. The conversation is not saved in the site database. See the privacy policy for details.',
+      he: 'טקסט השיחה ופרטי המוזמנים אינם נשלחים לספק AI חיצוני. לניסוח עזרה כללית, המודל מקבל רק מידע ציבורי מאומת על האתר והנחיית ניסוח קבועה. רק בעל אירוע מחובר יכול לקבל מידע על המוזמנים והתשובות באירוע שלו, והשרת בודק את ההרשאות. השיחה אינה נשמרת במסד הנתונים. לפרטים קראו את מדיניות הפרטיות.',
+      en: 'Conversation text and guest details are never sent to an external AI provider. To phrase general help, the model receives only verified public site information and a fixed writing instruction. Only a signed-in event host can access their own guests and replies, subject to server permission checks. The conversation is not saved in the database. See the privacy policy for details.',
     },
     link: { path: '/privacy', he: 'מדיניות פרטיות', en: 'Privacy policy' },
   },
@@ -182,7 +224,10 @@ function normalized(value: string): string {
   return value
     .normalize('NFKC')
     .toLocaleLowerCase()
-    .replace(/[\u200e\u200f]/g, '');
+    .replace(/[\u0591-\u05c7\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, '')
+    .replace(/[?!.,:;־–—]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function pricingAnswer(locale: Locale, question: string): string {
@@ -195,12 +240,25 @@ function pricingAnswer(locale: Locale, question: string): string {
         return (
           new RegExp(`\\b${plan.code}\\b`, 'i').test(text) ||
           (plan.code === 'premium' && text.includes('פרימיום')) ||
-          (plan.code === 'basic' && text.includes('בייסיק'))
+          (plan.code === 'basic' && text.includes('בייסיק')) ||
+          (plan.code === 'pro' && /(?:^|\s)ב?פרו(?:\s|$)/.test(text))
         );
       }) ??
     (/חינמ|ניסיון|free|trial/.test(text) ? plans.find((plan) => plan.code === 'trial') : undefined);
   const format = (value: number) =>
     new Intl.NumberFormat(locale === 'he' ? 'he-IL' : 'en-US').format(value);
+  if (/הבדל|השווא|compare|difference/.test(text)) {
+    return (
+      plans
+        .map((plan) =>
+          locale === 'he'
+            ? `${plan.name}: ₪${format(plan.priceAgorot / 100)}, עד ${format(plan.attendeeLimit)} ${plan.code === 'trial' ? 'אישורי הגעה לניסיון' : 'מוזמנים'}. ${plan.description}`
+            : `${plan.name}: ₪${format(plan.priceAgorot / 100)}, up to ${format(plan.attendeeLimit)} ${plan.code === 'trial' ? 'test replies' : 'guests'}. ${plan.description}`,
+        )
+        .join('\n') +
+      (locale === 'he' ? '\nהתשלום חד־פעמי לכל אירוע.' : '\nPayment is once per event.')
+    );
+  }
   if (chosen) {
     if (chosen.code === 'trial') {
       return locale === 'he'
@@ -227,15 +285,40 @@ export function answerProductQuestion({
   locale: Locale;
   context: AssistantContext;
   questions: readonly string[];
-}): { answer: string; links: AssistantLink[] } {
+}): { answer: string; links: AssistantLink[]; generation?: PublicGuideGeneration } {
   const latest = normalized(questions.at(-1) ?? '');
-  const previous = normalized(questions.at(-2) ?? '');
-  const followUp = /^(ו?מה עוד|ו?איך זה|ומה לגבי|what else|how about|more)/.test(latest);
+  const recentQuestions = questions.slice(0, -1).map(normalized).reverse();
+  const previous =
+    recentQuestions.find((question) =>
+      articles.some((article) => article.terms.some((term) => question.includes(normalized(term)))),
+    ) ?? '';
+  if (/^(היי|הי|שלום|אהלן|תודה|תודה רבה|hi|hello|thanks|thank you)$/.test(latest)) {
+    return {
+      answer:
+        locale === 'he'
+          ? 'בשמחה. במה לעזור — יצירת אירוע, הזמנות, אישורי הגעה או מחירים?'
+          : 'Happy to help. What do you need: event setup, invitations, RSVPs or pricing?',
+      links: [],
+    };
+  }
+  const followUp =
+    /^(ו?מה עוד|ו?איך זה|ומה לגבי|וכמה|כמה זה|ו?זה|איך עושים את זה|תסביר|בקצרה|שלב|what else|how about|how much is it|and how|is it|explain|shorter|step)/.test(
+      latest,
+    );
+  // A follow-up carries only the selected public topic/plan into the answer.
+  // The combined text is used locally and is never passed to a model.
+  const effectiveQuestion = followUp ? `${previous} ${latest}` : latest;
+  const matchesTerm = (text: string, term: string) => {
+    const normalizedTerm = normalized(term);
+    return /^[a-z ]+$/.test(normalizedTerm)
+      ? new RegExp(`\\b${normalizedTerm}\\b`).test(text)
+      : text.includes(normalizedTerm);
+  };
   const scored = articles
     .map((article) => {
-      const matches = article.terms.filter((term) => latest.includes(normalized(term)));
+      const matches = article.terms.filter((term) => matchesTerm(latest, term));
       const priorMatches = followUp
-        ? article.terms.filter((term) => previous.includes(normalized(term))).length
+        ? article.terms.filter((term) => matchesTerm(previous, term)).length
         : 0;
       return {
         article,
@@ -251,6 +334,11 @@ export function answerProductQuestion({
     .sort((a, b) => b.score - a.score)
     .slice(0, 2)
     .map(({ article }) => article);
+  // Updating a reply is a more specific task than the general RSVP article.
+  if (scored.some(({ id }) => id === 'rsvp_update')) {
+    const general = scored.findIndex(({ id }) => id === 'rsvp');
+    if (general >= 0) scored.splice(general, 1);
+  }
 
   if (scored.length === 0) {
     return {
@@ -264,7 +352,14 @@ export function answerProductQuestion({
 
   const answer = scored
     .map(({ id, answer: copy }) =>
-      id === 'pricing' ? pricingAnswer(locale, latest) : copy[locale],
+      id === 'pricing'
+        ? pricingAnswer(
+            locale,
+            /\b(?:basic|premium|pro)\b|בייסיק|פרימיום|(?:^|\s)ב?פרו(?:\s|$)/.test(latest)
+              ? latest
+              : effectiveQuestion,
+          )
+        : copy[locale],
     )
     .join('\n\n');
   const links = scored
@@ -279,5 +374,18 @@ export function answerProductQuestion({
         : [],
     )
     .filter((link, index, all) => all.findIndex(({ href }) => href === link.href) === index);
-  return { answer, links };
+  return {
+    answer,
+    links,
+    // Keep prices and privacy exact. Only curated public help may be rephrased.
+    ...(scored.some(({ id }) => id === 'pricing' || id === 'privacy')
+      ? {}
+      : {
+          generation: {
+            locale,
+            facts: answer,
+            format: /שלב|צעד|איך|how|step/.test(latest) ? ('steps' as const) : ('concise' as const),
+          },
+        }),
+  };
 }

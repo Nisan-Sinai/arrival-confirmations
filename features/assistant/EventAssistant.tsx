@@ -13,10 +13,19 @@ type Message = {
   content: string;
   links?: AssistantLink[];
   local?: boolean;
+  source?: 'event' | 'guide' | 'ai';
 };
 
 export function EventAssistant({ locale }: { locale: Locale }) {
   const pathname = usePathname();
+  // Changing page or event creates a fresh conversation. Private answers from
+  // one event must not remain visible under a different event or after logout.
+  return (
+    <AssistantConversation key={`${locale}:${pathname}`} locale={locale} pathname={pathname} />
+  );
+}
+
+function AssistantConversation({ locale, pathname }: { locale: Locale; pathname: string }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -74,6 +83,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
     try {
       const response = await fetch('/api/assistant', {
         method: 'POST',
+        signal: AbortSignal.timeout(20000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           locale,
@@ -87,7 +97,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
         answer?: string;
         error?: string;
         links?: AssistantLink[];
-        source?: 'event' | 'guide';
+        source?: 'event' | 'guide' | 'ai';
       } = await response.json();
       if (!response.ok || !data.answer)
         throw new Error(data.error || (isHe ? 'לא התקבלה תשובה.' : 'No answer received.'));
@@ -95,7 +105,7 @@ export function EventAssistant({ locale }: { locale: Locale }) {
       setMessages([
         ...messages,
         { role: 'user', content, local },
-        { role: 'assistant', content: data.answer, links: data.links, local },
+        { role: 'assistant', content: data.answer, links: data.links, local, source: data.source },
       ]);
     } catch (cause) {
       setMessages(messages);
@@ -176,6 +186,21 @@ export function EventAssistant({ locale }: { locale: Locale }) {
                 className={`max-w-[92%] rounded-xl px-3 py-2 leading-relaxed whitespace-pre-wrap ${message.role === 'user' ? 'bg-primary text-primary-foreground ms-auto' : 'bg-secondary text-secondary-foreground me-auto'}`}
               >
                 <p>{message.content}</p>
+                {message.role === 'assistant' && message.source && (
+                  <p className="mt-2 text-xs opacity-75">
+                    {message.source === 'ai'
+                      ? isHe
+                        ? 'נוסח בעזרת AI מתוך מידע האתר'
+                        : 'AI phrasing based on site information'
+                      : message.source === 'event'
+                        ? isHe
+                          ? 'נתוני האירוע שלכם · באתר בלבד'
+                          : 'Your event data · on this site only'
+                        : isHe
+                          ? 'מתוך מדריך האתר'
+                          : 'From the site guide'}
+                  </p>
+                )}
                 {message.links && message.links.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2 border-t border-current/15 pt-2 text-sm">
                     {message.links
@@ -221,8 +246,8 @@ export function EventAssistant({ locale }: { locale: Locale }) {
             <div className="mt-2 flex items-center justify-between gap-2">
               <p className="text-muted-foreground text-xs leading-snug">
                 {isHe
-                  ? 'השאלות נענות באתר ולא נשלחות לספק AI חיצוני. מידע על מוזמנים זמין רק לבעל האירוע.'
-                  : 'Questions are answered on this site, without an external AI provider. Guest information is available only to the event host.'}{' '}
+                  ? 'טקסט השיחה ופרטי האורחים נשארים באתר. AI מקבל מידע ציבורי על האתר בלבד.'
+                  : 'Conversation text and guest details stay on this site. AI receives public site information only.'}{' '}
                 <a className="underline" href={isHe ? '/privacy' : '/en/privacy'}>
                   {isHe ? 'פרטיות' : 'Privacy'}
                 </a>

@@ -3,7 +3,17 @@ import 'server-only';
 import { createUserClient } from '@/lib/server/supabase';
 import type { Locale } from '@/lib/i18n';
 
-type Intent = 'summary' | 'attending' | 'not_attending' | 'maybe' | 'unanswered' | 'guests';
+type Intent =
+  | 'summary'
+  | 'attending'
+  | 'not_attending'
+  | 'maybe'
+  | 'unanswered'
+  | 'guests'
+  | 'people'
+  | 'adults'
+  | 'children'
+  | 'babies';
 type Guest = { id: string; full_name: string };
 type Reply = {
   guest_id: string | null;
@@ -15,19 +25,42 @@ type Reply = {
 };
 
 function detectIntent(question: string): Intent | null {
-  const text = question.toLocaleLowerCase().replace(/[\u200e\u200f]/g, '');
+  const text = question
+    .normalize('NFKC')
+    .toLocaleLowerCase()
+    .replace(/[\u0591-\u05c7\u200b-\u200f]/g, '');
+  // An invitation guest asking how to decline needs instructions, not a host lookup.
+  if (/איך|כיצד|לשנות|לעדכן|how (?:do|can|to)|change|update/.test(text)) return null;
   if (
-    /מי לא ענה|מי טרם ענה|טרם ענו|לא השיב|לא ענו|ממתינ.*לתשובה|unanswered|not replied|no response/.test(
+    !/מי|כמה|רשימ|תראה|הצג|מצב|סיכום|סטטיסט|מה עם|who|how many|list|show|stats|count|summary/.test(
+      text,
+    )
+  )
+    return null;
+  if (/כמה.*(?:תינוק|פעוט)|how many.*bab/.test(text)) return 'babies';
+  if (/כמה.*ילד|how many.*child|how many.*kids/.test(text)) return 'children';
+  if (/כמה.*מבוגר|how many.*adult/.test(text)) return 'adults';
+  if (
+    /כמה.*(?:אנשים|אורחים|יגיעו|מגיעים)|how many.*(?:people|attendees|will attend|are coming)/.test(
+      text,
+    )
+  )
+    return 'people';
+  if (
+    /מי לא ענה|מי טרם ענה|טרם ענו|לא השיב|לא ענו|לא הגיב|עדיין לא אישר|טרם אישר|עוד לא אישר|ממתינ.*לתשובה|unanswered|not replied|not responded|has not replied|haven.t replied|hasn.t replied|no response|not yet confirmed/.test(
       text,
     )
   )
     return 'unanswered';
-  if (/לא מגיע|לא יגיע|לא בא|declined|not attending/.test(text)) return 'not_attending';
+  if (/לא מגיע|לא יגיע|לא בא|מי לא\??$|declined|not attending|not coming/.test(text))
+    return 'not_attending';
   if (/מתלבט|אולי|maybe|undecided/.test(text)) return 'maybe';
-  if (/מי מגיע|מי אישר|כמה אישרו|אישרו הגעה|attending|who confirmed/.test(text)) return 'attending';
-  if (/רשימת מוזמנ|מי המוזמנ|כל המוזמנ|guest list|all guests/.test(text)) return 'guests';
+  if (/מי מגיע|מי בא|מי אישר|כמה אישרו|אישרו הגעה|attending|who confirmed|who is coming/.test(text))
+    return 'attending';
+  if (/רשימת מוזמנ|מי המוזמנ|כל המוזמנ|כמה מוזמנ|guest list|all guests|how many guests/.test(text))
+    return 'guests';
   if (
-    /כמה תשוב|כמה אישורי הגעה|סיכום האירוע|סטטיסטיק|rsvp count|event stats|how many replies/.test(
+    /כמה תשוב|כמה אישורי הגעה|סיכום|מצב האירוע|סטטיסטיק|rsvp count|event stats|how many repl|summary/.test(
       text,
     )
   )
@@ -111,6 +144,27 @@ export async function getHostEventAnswer({
     href: `/dashboard/events/${eventId}${intent === 'unanswered' || intent === 'guests' ? '/guests' : ''}`,
     label: locale === 'he' ? 'פתיחת האירוע' : 'Open event',
   };
+  const population = /לא מגיע|לא יגיע|not attending|not coming|declined/.test(
+    question.toLocaleLowerCase(),
+  )
+    ? 'not_attending'
+    : /מתלבט|אולי|maybe|undecided/.test(question.toLocaleLowerCase())
+      ? 'maybe'
+      : 'attending';
+  const attendingReplies = replies.filter((row) => row.attendance_status === population);
+  const adults = attendingReplies.reduce((sum, row) => sum + row.adults_count, 0);
+  const children = attendingReplies.reduce((sum, row) => sum + row.children_count, 0);
+  const babies = attendingReplies.reduce((sum, row) => sum + row.babies_count, 0);
+  if (intent === 'people' || intent === 'adults' || intent === 'children' || intent === 'babies') {
+    const total = { people: adults + children + babies, adults, children, babies }[intent];
+    return {
+      answer:
+        locale === 'he'
+          ? `לפי התשובות שסומנו כ${{ attending: 'מגיעים', not_attending: 'לא מגיעים', maybe: 'מתלבטים' }[population]}: ${intent === 'people' ? `סה״כ ${total} אנשים — ${adults} מבוגרים, ${children} ילדים ו־${babies} תינוקות` : `${total} ${{ adults: 'מבוגרים', children: 'ילדים', babies: 'תינוקות' }[intent]}`}. הספירה היא של אנשים, ולא של מספר הטפסים שנענו.`
+          : `Based on ${population === 'not_attending' ? 'declined' : population} replies: ${intent === 'people' ? `${total} people — ${adults} adults, ${children} children and ${babies} babies` : `${total} ${intent}`}. This counts people, not response forms.`,
+      links: [link],
+    };
+  }
   if (intent === 'summary') {
     const attending = replies.filter((row) => row.attendance_status === 'attending');
     const declined = replies.filter((row) => row.attendance_status === 'not_attending').length;
@@ -159,11 +213,15 @@ export async function getHostEventAnswer({
           intent
         ];
   return {
-    answer: `${label}: ${rows.length}. ${namesReply(
-      rows.map(({ full_name }) => full_name),
-      rows.length,
-      locale,
-    )}`,
+    answer: `${label}: ${rows.length}.${
+      /כמה|how many|count/.test(question.toLocaleLowerCase())
+        ? ''
+        : ` ${namesReply(
+            rows.map(({ full_name }) => full_name),
+            rows.length,
+            locale,
+          )}`
+    }`,
     links: [link],
   };
 }

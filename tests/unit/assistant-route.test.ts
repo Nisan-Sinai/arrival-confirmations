@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { rpc, getHostEventAnswer } = vi.hoisted(() => ({
+const { rpc, getHostEventAnswer, phrasePublicGuide } = vi.hoisted(() => ({
   rpc: vi.fn(),
   getHostEventAnswer: vi.fn(),
+  phrasePublicGuide: vi.fn(),
 }));
 vi.mock('@/lib/server/supabase', () => ({ createPrivilegedClient: () => ({ rpc }) }));
 vi.mock('@/lib/server/ip', () => ({ resolveClientIpHash: () => ({ hash: 'test-hash' }) }));
 vi.mock('@/features/assistant/server/assistantEventInsights', () => ({ getHostEventAnswer }));
+vi.mock('@/features/assistant/server/publicGuideAI', () => ({ phrasePublicGuide }));
 
 import { POST } from '@/app/api/assistant/route';
 
@@ -24,6 +26,7 @@ describe('private, on-site assistant', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     rpc.mockReset().mockResolvedValue({ data: [{ allowed: true }], error: null });
     getHostEventAnswer.mockReset().mockResolvedValue(null);
+    phrasePublicGuide.mockReset().mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -39,6 +42,19 @@ describe('private, on-site assistant', () => {
       links: [{ href: '/dashboard/events/new', label: 'יצירת אירוע' }],
     });
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('identifies a successful real model reply and exposes only trusted site links', async () => {
+    phrasePublicGuide.mockResolvedValueOnce('פתחו את הדשבורד ובחרו ביצירת אירוע חדש.');
+    const response = await POST(
+      request([{ role: 'user', content: 'איך יוצרים אירוע? דנה 0501234567' }]),
+    );
+    expect(await response.json()).toMatchObject({
+      source: 'ai',
+      answer: 'פתחו את הדשבורד ובחרו ביצירת אירוע חדש.',
+    });
+    expect(JSON.stringify(phrasePublicGuide.mock.calls)).not.toContain('0501234567');
+    expect(JSON.stringify(phrasePublicGuide.mock.calls)).not.toContain('דנה');
   });
 
   it('keeps manually entered personal details away from any external service', async () => {
@@ -83,6 +99,7 @@ describe('private, on-site assistant', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ source: 'event', answer: 'באירוע יש 3 תשובות.' });
     expect(fetch).not.toHaveBeenCalled();
+    expect(phrasePublicGuide).not.toHaveBeenCalled();
   });
 
   it('does not answer a foreign event question from the public guide', async () => {
