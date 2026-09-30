@@ -81,17 +81,14 @@ describe('Gemini public AI with no visitor data', () => {
     expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash-lite');
   });
 
-  it.each([400, 401, 402, 403])(
-    'does not retry or change providers on HTTP %i',
-    async (status) => {
-      vi.mocked(fetch).mockResolvedValueOnce(new Response('private provider error', { status }));
-      expect(await phrasePublicGuide(input)).toBeNull();
-      expect(fetch).toHaveBeenCalledTimes(1);
-      expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(
-        'private provider error',
-      );
-    },
-  );
+  it.each([400, 401, 402, 403])('does not retry or change providers on HTTP %i', async (status) => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response('private provider error', { status }));
+    expect(await phrasePublicGuide(input)).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(
+      'private provider error',
+    );
+  });
 
   it('stops after all three models are unavailable', async () => {
     vi.mocked(fetch).mockImplementation(async () => unavailable());
