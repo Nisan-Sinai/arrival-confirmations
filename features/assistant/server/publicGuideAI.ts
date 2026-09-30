@@ -67,7 +67,15 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
     // Provider errors may contain request content or credentials. Log no payloads.
     const status =
       error && typeof error === 'object' && 'statusCode' in error ? error.statusCode : 0;
-    console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', typeof status === 'number' ? status : 0);
+    const message = error instanceof Error ? error.message : '';
+    const reason = /credit|billing|free.?tier|purchase|payment/i.test(message)
+      ? 'free_tier_access'
+      : /oidc|auth|permission|access|verif/i.test(message)
+        ? 'identity_access'
+        : /provider|model/i.test(message)
+          ? 'model_access'
+          : 'unavailable';
+    console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', typeof status === 'number' ? status : 0, reason);
     return null;
   }
 }

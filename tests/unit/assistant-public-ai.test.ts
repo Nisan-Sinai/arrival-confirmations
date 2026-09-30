@@ -61,7 +61,7 @@ describe('free public AI with no visitor data', () => {
   it('falls back to the site guide when the provider times out or is rate limited', async () => {
     generateText.mockRejectedValueOnce(new Error('provider unavailable'));
     expect(await phrasePublicGuide(input)).toBeNull();
-    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_FALLBACK', 0);
+    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_FALLBACK', 0, 'model_access');
   });
 
   it.each([
