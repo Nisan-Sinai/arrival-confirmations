@@ -15,8 +15,10 @@ overrides:
   # sharp 0.35.3 is affected by the libheif advisories reported by npm audit;
   # 0.35.4 is the first patched release and remains compatible with Next 16.3.x.
   'next>sharp': '0.35.4'
-  'brace-expansion@<1.1.18': '1.1.18'
-  'brace-expansion@>=4.0.0 <5.0.9': '5.0.9'
+  # GHSA-qhr7-859c-m2p7, GHSA-6j4f-fj2g-mc7p and GHSA-q2hr-2g5m-vwhr
+  # require the newer maintenance fixes on both brace-expansion lines.
+  'brace-expansion@<1.1.21': '1.1.21'
+  'brace-expansion@>=4.0.0 <5.0.12': '5.0.12'
   # Two advisories published against 6.14.2–6.15.3 (GHSA-x5fp-wj9c-mxmx and the
   # isBuffer denial of service) moved the ceiling past the 6.15.2 this used to pin.
   # Both name ">=6.15.4" as patched and no such version exists on npm, so 6.16.0 is
@@ -25,8 +27,8 @@ overrides:
   # production audit was never affected.
   'qs@>=6.11.1 <=6.15.3': '6.16.0'
   'nanoid@<3.3.18': '3.3.18'
-  # GHSA-qw65-cvwx-89v3 and GHSA-58mr-gqgx-xq4g also affect 3.1.6.
-  # Both are patched in 3.1.7; this is only reached through dev tooling.
-  'fast-uri@>=3.0.0 <3.1.7': '3.1.7'
+  # GHSA-hrr3-gc8f-f4qj requires 3.1.8 in addition to the earlier URI fixes.
+  # This is only reached through dev tooling.
+  'fast-uri@>=3.0.0 <3.1.8': '3.1.8'
   # GHSA-2883-xcg3-v3hh is patched in 4.3.2; keep every ESLint path on the patched release.
   'js-yaml@>=4.0.0 <4.3.2': '4.3.2'

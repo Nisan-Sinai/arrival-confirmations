@@ -104,6 +104,24 @@ describe('assistant product grounding', () => {
     expect(guide.answer).not.toContain('₪99');
   });
 
+  it.each([
+    ['he', 'כמה עולה פרו?', 'אפשר לפרט?'],
+    ['he', 'כמה עולה פרו?', 'תפרט בבקשה'],
+    ['en', 'How much does Pro cost?', 'Can you elaborate?'],
+  ] as const)(
+    'keeps the chosen plan for a natural clarification in %s',
+    (locale, question, followUp) => {
+      const guide = answerProductQuestion({
+        locale,
+        context: 'site',
+        questions: [question, followUp],
+      });
+      expect(guide.answer).toContain('₪349');
+      expect(guide.answer).toContain('2,500');
+      expect(guide.generation).toBeUndefined();
+    },
+  );
+
   it('retains a topic for a request for steps', () => {
     const guide = answerProductQuestion({
       locale: 'he',

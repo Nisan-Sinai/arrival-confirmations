@@ -302,7 +302,7 @@ export function answerProductQuestion({
     };
   }
   const followUp =
-    /^(ו?מה עוד|ו?איך זה|ומה לגבי|וכמה|כמה זה|ו?זה|איך עושים את זה|תסביר|בקצרה|שלב|what else|how about|how much is it|and how|is it|explain|shorter|step)/.test(
+    /^(ו?מה עוד|ו?איך זה|ומה לגבי|וכמה|כמה זה|ו?זה|איך עושים את זה|תסביר|תפרטי?|אפשר (?:לפרט|להסביר)|תוכלי? (?:לפרט|להסביר)|בקצרה|שלב|what else|how about|how much is it|and how|is it|explain|tell me more|can you (?:explain|elaborate)|more detail|shorter|step)/.test(
       latest,
     );
   // A follow-up carries only the selected public topic/plan into the answer.
