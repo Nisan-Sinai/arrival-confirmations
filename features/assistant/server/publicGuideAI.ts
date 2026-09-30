@@ -6,7 +6,10 @@ import type { PublicGuideGeneration } from '@/features/assistant/productGuide';
 
 // Both models have a Gemini API free tier. Use this site's own Free Tier key;
 // linking its Google project to billing would change the account's pricing.
-const MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'] as const;
+const MODELS = [
+  { name: 'gemini-3.8-flash', timeoutMs: 5500 },
+  { name: 'gemini-3.5-flash-lite', timeoutMs: 12000 },
+] as const;
 const responseSchema = z.object({
   candidates: z.array(
     z.object({
@@ -35,38 +38,44 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
       (input.format === 'steps'
         ? 'Give up to four short numbered steps and any essential limitation.'
         : 'Give a concise answer in up to four short sentences.');
-    // One deadline covers both requests. No tools, search, paid models, stored
-    // conversation or cross-provider fallback. Never retry a quota/billing error.
-    const signal = AbortSignal.timeout(14000);
+    // Give the fallback its own deadline so a slow primary cannot consume the
+    // whole client budget. No tools, search, paid models or cross-provider fallback.
+    // Never retry a quota/billing/authentication error.
     let response: Response | undefined;
-    let selectedModel: string = MODELS[0];
-    for (const model of MODELS) {
+    let selectedModel: string | undefined;
+    const body = JSON.stringify({
+      systemInstruction: { parts: [{ text: instructions }] },
+      contents: [{ role: 'user', parts: [{ text: `Verified public facts:\n${input.facts}` }] }],
+      generationConfig: {
+        maxOutputTokens: 2048,
+        thinkingConfig: { thinkingLevel: 'LOW' },
+      },
+      store: false,
+    });
+    for (const { name: model, timeoutMs } of MODELS) {
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+            body,
+            cache: 'no-store',
+            signal: AbortSignal.timeout(timeoutMs),
+          },
+        );
+      } catch {
+        // Do not log provider errors: they may contain request content or credentials.
+        console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', 'unavailable', model);
+        response = undefined;
+        continue;
+      }
       selectedModel = model;
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: instructions }] },
-            contents: [
-              { role: 'user', parts: [{ text: `Verified public facts:\n${input.facts}` }] },
-            ],
-            generationConfig: {
-              maxOutputTokens: 2048,
-              thinkingConfig: { thinkingLevel: 'LOW' },
-            },
-            store: false,
-          }),
-          cache: 'no-store',
-          signal,
-        },
-      );
       if (response.ok) break;
       console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', response.status, model);
       if (response.status !== 404 && response.status < 500) return null;
     }
-    if (!response?.ok) return null;
+    if (!response?.ok || !selectedModel) return null;
     const parsed = responseSchema.safeParse(await response.json());
     const candidate = parsed.success ? parsed.data.candidates[0] : undefined;
     if (candidate?.finishReason !== 'STOP') return null;

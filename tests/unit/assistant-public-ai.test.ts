@@ -56,7 +56,7 @@ describe('Gemini public AI with no visitor data', () => {
     const second = vi.mocked(fetch).mock.calls[1]!;
     expect(second[0]).toContain('/models/gemini-3.5-flash-lite:generateContent');
     expect(first[1]!.body).toBe(second[1]!.body);
-    expect(first[1]!.signal).toBe(second[1]!.signal);
+    expect(first[1]!.signal).not.toBe(second[1]!.signal);
     expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash-lite');
   });
 
@@ -78,12 +78,26 @@ describe('Gemini public AI with no visitor data', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('falls back without logging credentials or request content on network errors', async () => {
+  it('gives the fallback a fresh deadline after a primary network error', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('test-project-key visitor private text'));
-    expect(await phrasePublicGuide(input)).toBeNull();
-    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_FALLBACK', 'unavailable');
+    expect(await phrasePublicGuide(input)).toBe(answer);
+    expect(console.warn).toHaveBeenCalledWith(
+      'ASSISTANT_PUBLIC_AI_FALLBACK',
+      'unavailable',
+      'gemini-3.8-flash',
+    );
     expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain('test-project-key');
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls[0]![1]!.signal).not.toBe(
+      vi.mocked(fetch).mock.calls[1]![1]!.signal,
+    );
+  });
+
+  it('returns the local guide after both model requests fail without leaking errors', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('test-project-key visitor private text'));
+    expect(await phrasePublicGuide(input)).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain('test-project-key');
   });
 
   it.each([
