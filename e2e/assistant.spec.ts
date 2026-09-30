@@ -66,7 +66,7 @@ test('a suggested question produces a grounded answer with a safe site link', as
       body: JSON.stringify({
         answer: 'המחיר נקבע לפי המסלול ומפורט בעמוד המחירים.',
         links: [{ href: '/pricing', label: 'מחירים ומסלולים' }],
-        source: 'guide',
+        source: 'ai',
       }),
     });
   });
@@ -74,6 +74,7 @@ test('a suggested question produces a grounded answer with a safe site link', as
   await page.getByRole('button', { name: 'פתיחת העוזר', exact: true }).click();
   await page.getByRole('button', { name: 'כמה עולה?', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('המחיר נקבע לפי המסלול');
+  await expect(page.getByRole('dialog')).toContainText('נוסח בעזרת AI מתוך מידע האתר');
   await expect(page.getByRole('link', { name: 'מחירים ומסלולים' })).toHaveAttribute(
     'href',
     '/pricing',
