@@ -83,7 +83,7 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
     try {
       const response = await fetch('/api/assistant', {
         method: 'POST',
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(27000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           locale,
