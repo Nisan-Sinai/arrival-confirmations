@@ -49,8 +49,8 @@ function isGroundedAnswer(answer: string, input: PublicGuideGeneration): boolean
   return !(prose.match(/\d[\d,]*/g) ?? []).some((number) => !knownNumbers.has(number));
 }
 
-async function waitForRetry(response: Response): Promise<void> {
-  const retryAfter = response.headers.get('retry-after');
+async function waitForRetry(response?: Response): Promise<void> {
+  const retryAfter = response?.headers.get('retry-after');
   const retryDelay = retryAfter?.match(/^\d+$/)
     ? Math.min(Number(retryAfter) * 1000, MAX_RETRY_DELAY_MS)
     : DEFAULT_RETRY_DELAY_MS;
@@ -120,6 +120,11 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
           return answer;
         } catch {
           // Do not log provider errors: they may contain request content or credentials.
+          if (attemptIndex + 1 < timeoutsMs.length) {
+            console.warn('ASSISTANT_PUBLIC_AI_RETRY', 'unavailable', model);
+            await waitForRetry();
+            continue;
+          }
           console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', 'unavailable', model);
           break;
         }
