@@ -7,8 +7,8 @@ import type { PublicGuideGeneration } from '@/features/assistant/productGuide';
 // Both models have a Gemini API free tier. Use this site's own Free Tier key;
 // linking its Google project to billing would change the account's pricing.
 const MODELS = [
-  { name: 'gemini-3.5-flash', timeoutsMs: [9000, 6000] },
-  { name: 'gemini-3.5-flash-lite', timeoutsMs: [7000] },
+  { name: 'gemini-3.8-flash', timeoutsMs: [9000, 6000], thinkingLevel: 'LOW' },
+  { name: 'gemini-3.5-flash-lite', timeoutsMs: [7000], thinkingLevel: 'MINIMAL' },
 ] as const;
 const DEFAULT_RETRY_DELAY_MS = 600;
 const MAX_RETRY_DELAY_MS = 1500;
@@ -78,16 +78,16 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
     // whole client budget. No tools, search, paid models or cross-provider fallback.
     // Never retry a quota/billing/authentication error.
     const facts = `Verified public facts:\n${input.facts}`;
-    const body = JSON.stringify({
-      systemInstruction: { parts: [{ text: instructions }] },
-      contents: [{ role: 'user', parts: [{ text: facts }] }],
-      generationConfig: {
-        maxOutputTokens: 2048,
-        thinkingConfig: { thinkingLevel: 'MINIMAL' },
-      },
-      store: false,
-    });
-    for (const { name: model, timeoutsMs } of MODELS) {
+    for (const { name: model, timeoutsMs, thinkingLevel } of MODELS) {
+      const body = JSON.stringify({
+        systemInstruction: { parts: [{ text: instructions }] },
+        contents: [{ role: 'user', parts: [{ text: facts }] }],
+        generationConfig: {
+          maxOutputTokens: 2048,
+          thinkingConfig: { thinkingLevel },
+        },
+        store: false,
+      });
       for (const [attemptIndex, timeoutMs] of timeoutsMs.entries()) {
         try {
           const response = await fetch(
