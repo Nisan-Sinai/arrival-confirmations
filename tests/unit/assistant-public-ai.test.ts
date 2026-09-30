@@ -13,7 +13,7 @@ import { answerProductQuestion } from '@/features/assistant/productGuide';
 const input = { locale: 'he', facts: 'פתחו את הדשבורד וצרו אירוע חדש.', format: 'steps' } as const;
 const freeCatalogue = () =>
   Response.json({
-    data: [{ id: 'inclusionai/ling-3.1-flash-free', pricing: { input: '0', output: '0' } }],
+    data: [{ id: 'inclusionai/ling-3.1-flash', pricing: { input: '0', output: '0' } }],
   });
 
 describe('free public AI with no visitor data', () => {
@@ -37,7 +37,7 @@ describe('free public AI with no visitor data', () => {
   it('uses project identity, a single free model, bounded output and no paid fallback', async () => {
     expect(await phrasePublicGuide(input)).toContain('הדשבורד');
     expect(createGateway).toHaveBeenCalledWith({ apiKey: '' });
-    expect(model).toHaveBeenCalledWith('inclusionai/ling-3.1-flash-free');
+    expect(model).toHaveBeenCalledWith('inclusionai/ling-3.1-flash');
     expect(generateText).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: `Verified public facts:\n${input.facts}`,
@@ -50,8 +50,8 @@ describe('free public AI with no visitor data', () => {
 
   it.each([
     { data: [] },
-    { data: [{ id: 'inclusionai/ling-3.1-flash-free', pricing: { input: '0.01', output: '0' } }] },
-    { data: [{ id: 'inclusionai/ling-3.1-flash-free', pricing: { input: '0', output: '0.01' } }] },
+    { data: [{ id: 'inclusionai/ling-3.1-flash', pricing: { input: '0.01', output: '0' } }] },
+    { data: [{ id: 'inclusionai/ling-3.1-flash', pricing: { input: '0', output: '0.01' } }] },
   ])('never calls a provider if the model is absent or costs money: %j', async (catalogue) => {
     vi.mocked(fetch).mockResolvedValueOnce(Response.json(catalogue));
     expect(await phrasePublicGuide(input)).toBeNull();

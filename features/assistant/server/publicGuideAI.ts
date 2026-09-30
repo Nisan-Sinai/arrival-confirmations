@@ -4,7 +4,7 @@ import { createGateway, generateText } from 'ai';
 
 import type { PublicGuideGeneration } from '@/features/assistant/productGuide';
 
-const FREE_MODEL = 'inclusionai/ling-3.1-flash-free';
+const FREE_MODEL = 'inclusionai/ling-3.1-flash';
 
 /**
  * The input contains curated public copy only. Do not add question text,
@@ -68,13 +68,17 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
     const status =
       error && typeof error === 'object' && 'statusCode' in error ? error.statusCode : 0;
     const message = error instanceof Error ? error.message : '';
-    const reason = /credit|billing|free.?tier|purchase|payment/i.test(message)
-      ? 'free_tier_access'
-      : /oidc|auth|permission|access|verif/i.test(message)
-        ? 'identity_access'
-        : /provider|model/i.test(message)
-          ? 'model_access'
-          : 'unavailable';
+    const reason = /customer.?verification|credit card|payment method|card on file/i.test(message)
+      ? 'customer_verification_required'
+      : /free.?tier/i.test(message)
+        ? 'free_tier_model_restricted'
+        : /credit|billing|purchase|payment/i.test(message)
+          ? 'credit_access'
+          : /oidc|auth|permission|access|verif/i.test(message)
+            ? 'identity_access'
+            : /provider|model/i.test(message)
+              ? 'model_access'
+              : 'unavailable';
     console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', typeof status === 'number' ? status : 0, reason);
     return null;
   }
