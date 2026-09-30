@@ -133,6 +133,7 @@ describe('Gemini public AI with no visitor data', () => {
   ])('rejects ungrounded or incomplete output: %s', async (text, finishReason) => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(completion(text, finishReason))
+      .mockResolvedValueOnce(unavailable())
       .mockResolvedValueOnce(unavailable());
     expect(await phrasePublicGuide(input)).toBeNull();
     expect(console.warn).not.toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', expect.any(String));
@@ -159,6 +160,7 @@ describe('Gemini public AI with no visitor data', () => {
     async (payload) => {
       vi.mocked(fetch)
         .mockResolvedValueOnce(Response.json(payload))
+        .mockResolvedValueOnce(unavailable())
         .mockResolvedValueOnce(unavailable());
       expect(await phrasePublicGuide(input)).toBeNull();
     },
