@@ -111,7 +111,7 @@ const CONTENT: Record<Locale, LegalContent> = {
           {
             kind: 'p',
             runs: [
-              'טקסט השיחה, פרטי האירוע ופרטי המוזמנים אינם מועברים לספק AI חיצוני. לניסוח עזרה כללית בלבד, Vercel AI Gateway והספק Novita מקבלים מידע ציבורי מאומת על האתר והנחיית ניסוח קבועה. בעל אירוע מחובר יכול לשאול בעמוד האירוע על רשימת המוזמנים ואישורי ההגעה שלו; שרת האתר בודק את הרשאותיו ומשיב לו ישירות, ללא מודל חיצוני. אם המודל אינו זמין, העוזר משיב מתוך מדריך האתר. העוזר אינו משנה אירועים או שולח הזמנות, והשיחה אינה נשמרת במסד הנתונים של האתר.',
+              'טקסט השיחה, פרטי האירוע ופרטי המוזמנים אינם מועברים לספק AI חיצוני. לניסוח עזרה כללית בלבד, Google Gemini מקבל מידע ציבורי מאומת על האתר והנחיית ניסוח קבועה. במסלול החינמי Google עשויה להשתמש במידע הציבורי הזה לשיפור מוצריה, לרבות בדיקה אנושית. בעל אירוע מחובר יכול לשאול בעמוד האירוע על רשימת המוזמנים ואישורי ההגעה שלו; שרת האתר בודק את הרשאותיו ומשיב לו ישירות, ללא מודל חיצוני. אם המודל אינו זמין, העוזר משיב מתוך מדריך האתר. העוזר אינו משנה אירועים או שולח הזמנות, והשיחה אינה נשמרת במסד הנתונים של האתר.',
             ],
           },
         ],
@@ -268,7 +268,7 @@ const CONTENT: Record<Locale, LegalContent> = {
           {
             kind: 'p',
             runs: [
-              'Conversation text, event details and guest information are not sent to an external AI provider. To phrase general help only, Vercel AI Gateway and Novita receive verified public site information and a fixed writing instruction. A signed-in host can ask about their own guests and RSVPs on an event page; the site server checks their permissions and answers directly without an external model. If the model is unavailable, the assistant uses the site guide. It cannot change events or send invitations, and the conversation is not stored in the site database.',
+              'Conversation text, event details and guest information are not sent to an external AI provider. To phrase general help only, Google Gemini receives verified public site information and a fixed writing instruction. On the free tier, Google may use that public information to improve its products, including human review. A signed-in host can ask about their own guests and RSVPs on an event page; the site server checks their permissions and answers directly without an external model. If the model is unavailable, the assistant uses the site guide. It cannot change events or send invitations, and the conversation is not stored in the site database.',
             ],
           },
         ],

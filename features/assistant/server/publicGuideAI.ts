@@ -1,55 +1,81 @@
 import 'server-only';
 
-import { createGateway, generateText } from 'ai';
+import { z } from 'zod';
 
 import type { PublicGuideGeneration } from '@/features/assistant/productGuide';
 
-const FREE_MODEL = 'inclusionai/ling-3.1-flash';
+// Both models have a Gemini API free tier. Use this site's own Free Tier key;
+// linking its Google project to billing would change the account's pricing.
+const MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'] as const;
+const responseSchema = z.object({
+  candidates: z.array(
+    z.object({
+      finishReason: z.string(),
+      content: z.object({
+        parts: z.array(z.object({ text: z.string().optional(), thought: z.boolean().optional() })),
+      }),
+    }),
+  ),
+});
 
 /**
  * The input contains curated public copy only. Do not add question text,
  * messages, event IDs, guest data or user identifiers to this interface.
  */
 export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<string | null> {
-  // Vercel supplies project-scoped OIDC. No Gemini key or shared API key is used.
-  if (!process.env.VERCEL && !process.env.VERCEL_OIDC_TOKEN) return null;
+  const key = process.env.GEMINI_API_KEY?.trim();
+  if (!key) return null;
   try {
-    // Fail closed if the free model is removed or its advertised price changes.
-    // There are no paid model fallbacks, tools, search or billable routing extras.
-    const response = await fetch('https://ai-gateway.vercel.sh/v1/models', {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!response.ok) return null;
-    const catalogue: {
-      data?: { id?: string; pricing?: { input?: string; output?: string } }[];
-    } = await response.json();
-    const model = catalogue.data?.find(({ id }) => id === FREE_MODEL);
-    if (model?.pricing?.input !== '0' || model.pricing.output !== '0') return null;
-
-    // An explicit empty API key selects OIDC instead of an unrelated team key.
-    const gateway = createGateway({ apiKey: '' });
-    const result = await generateText({
-      model: gateway(FREE_MODEL),
-      instructions:
-        'You write help for an RSVP website. Use only the supplied public facts. ' +
-        'Preserve limitations and plan requirements. Never invent features, facts or links. ' +
-        'Do not claim to read guest data, send invitations, change records or perform actions. ' +
-        'Do not add a greeting, disclaimer, question, markdown heading or website URL. ' +
-        (input.locale === 'he' ? 'Write natural Hebrew. ' : 'Write natural English. ') +
-        (input.format === 'steps'
-          ? 'Give up to four short numbered steps and any essential limitation.'
-          : 'Give a concise answer in up to four short sentences.'),
-      prompt: `Verified public facts:\n${input.facts}`,
-      maxOutputTokens: 650,
-      temperature: 0.2,
-      maxRetries: 0,
-      timeout: 12000,
-      providerOptions: { gateway: { only: ['novita'] } },
-    });
-    const answer = result.text.trim();
+    const instructions =
+      'You write help for an RSVP website. Use only the supplied public facts. ' +
+      'Preserve limitations and plan requirements. Never invent features, facts or links. ' +
+      'Do not claim to read guest data, send invitations, change records or perform actions. ' +
+      'Do not add a greeting, disclaimer, question, markdown heading or website URL. ' +
+      (input.locale === 'he' ? 'Write natural Hebrew. ' : 'Write natural English. ') +
+      (input.format === 'steps'
+        ? 'Give up to four short numbered steps and any essential limitation.'
+        : 'Give a concise answer in up to four short sentences.');
+    // One deadline covers both requests. No tools, search, paid models, stored
+    // conversation or cross-provider fallback. Never retry a quota/billing error.
+    const signal = AbortSignal.timeout(14000);
+    let response: Response | undefined;
+    let selectedModel: string = MODELS[0];
+    for (const model of MODELS) {
+      selectedModel = model;
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: instructions }] },
+            contents: [
+              { role: 'user', parts: [{ text: `Verified public facts:\n${input.facts}` }] },
+            ],
+            generationConfig: {
+              maxOutputTokens: 2048,
+              thinkingConfig: { thinkingLevel: 'LOW' },
+            },
+            store: false,
+          }),
+          cache: 'no-store',
+          signal,
+        },
+      );
+      if (response.ok) break;
+      console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', response.status, model);
+      if (response.status !== 404 && response.status < 500) return null;
+    }
+    if (!response?.ok) return null;
+    const parsed = responseSchema.safeParse(await response.json());
+    const candidate = parsed.success ? parsed.data.candidates[0] : undefined;
+    if (candidate?.finishReason !== 'STOP') return null;
+    const answer = candidate.content.parts
+      .filter(({ thought }) => !thought)
+      .map(({ text }) => text ?? '')
+      .join('')
+      .trim();
     if (
-      result.finishReason === 'length' ||
       answer.length < 30 ||
       answer.length > 2200 ||
       /https?:|www\.|<\/?[a-z]|\[[^\]]+\]\(/i.test(answer) ||
@@ -62,24 +88,12 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
     const knownNumbers = new Set(input.facts.match(/\d[\d,]*/g) ?? []);
     const prose = answer.replace(/^\s*[1-4][.)]\s+/gm, '');
     if ((prose.match(/\d[\d,]*/g) ?? []).some((number) => !knownNumbers.has(number))) return null;
+    // Log the model only, so deployment QA can distinguish the primary from fallback.
+    console.warn('ASSISTANT_PUBLIC_AI_OK', selectedModel);
     return answer;
-  } catch (error) {
+  } catch {
     // Provider errors may contain request content or credentials. Log no payloads.
-    const status =
-      error && typeof error === 'object' && 'statusCode' in error ? error.statusCode : 0;
-    const message = error instanceof Error ? error.message : '';
-    const reason = /customer.?verification|credit card|payment method|card on file/i.test(message)
-      ? 'customer_verification_required'
-      : /free.?tier/i.test(message)
-        ? 'free_tier_model_restricted'
-        : /credit|billing|purchase|payment/i.test(message)
-          ? 'credit_access'
-          : /oidc|auth|permission|access|verif/i.test(message)
-            ? 'identity_access'
-            : /provider|model/i.test(message)
-              ? 'model_access'
-              : 'unavailable';
-    console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', typeof status === 'number' ? status : 0, reason);
+    console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', 'unavailable');
     return null;
   }
 }
