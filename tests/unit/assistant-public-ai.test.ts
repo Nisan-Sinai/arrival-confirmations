@@ -96,14 +96,15 @@ describe('Gemini public AI with no visitor data', () => {
     expect(fetch).toHaveBeenCalledTimes(3);
   });
 
-  it('gives the fallback a fresh deadline after a primary network error', async () => {
+  it('retries a primary network error with a fresh deadline', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('test-project-key visitor private text'));
     expect(await phrasePublicGuide(input)).toBe(answer);
     expect(console.warn).toHaveBeenCalledWith(
-      'ASSISTANT_PUBLIC_AI_FALLBACK',
+      'ASSISTANT_PUBLIC_AI_RETRY',
       'unavailable',
       'gemini-3.5-flash',
     );
+    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash');
     expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain('test-project-key');
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(vi.mocked(fetch).mock.calls[0]![1]!.signal).not.toBe(
@@ -114,7 +115,7 @@ describe('Gemini public AI with no visitor data', () => {
   it('returns the local guide after both model requests fail without leaking errors', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('test-project-key visitor private text'));
     expect(await phrasePublicGuide(input)).toBeNull();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
     expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain('test-project-key');
   });
 
