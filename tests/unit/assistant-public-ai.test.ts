@@ -28,7 +28,7 @@ describe('Gemini public AI with no visitor data', () => {
     expect(await phrasePublicGuide(input)).toBe(answer);
     const [url, options] = vi.mocked(fetch).mock.calls[0]!;
     expect(url).toBe(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
     );
     expect(String(url)).not.toContain('test-project-key');
     expect(options).toMatchObject({
@@ -40,45 +40,50 @@ describe('Gemini public AI with no visitor data', () => {
     const body = JSON.parse(options!.body as string);
     expect(body).toMatchObject({
       contents: [{ role: 'user', parts: [{ text: `Verified public facts:\n${input.facts}` }] }],
-      generationConfig: { maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: 'MINIMAL' } },
+      generationConfig: { maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: 'LOW' } },
       store: false,
     });
     expect(body).not.toHaveProperty('tools');
     expect(body).not.toHaveProperty('cachedContent');
     expect(body.generationConfig).not.toHaveProperty('temperature');
-    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash');
+    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.8-flash');
   });
 
-  it.each([
-    [404, 2],
-    [503, 3],
-  ])('uses the free-tier Flash-Lite fallback for HTTP %i', async (status, expectedRequests) => {
-    vi.mocked(fetch).mockImplementationOnce(() => Promise.resolve(unavailable(status)));
-    if (status === 503)
+  it.each([404, 429, 503])(
+    'falls back from Gemini 3.8 Flash to Gemini 3.5 Flash for HTTP %i',
+    async (status) => {
       vi.mocked(fetch).mockImplementationOnce(() => Promise.resolve(unavailable(status)));
+      expect(await phrasePublicGuide(input)).toBe(answer);
+      expect(fetch).toHaveBeenCalledTimes(2);
+      const primary = vi.mocked(fetch).mock.calls[0]!;
+      const fallback = vi.mocked(fetch).mock.calls[1]!;
+      expect(primary[0]).toContain('/models/gemini-3.8-flash:generateContent');
+      expect(fallback[0]).toContain('/models/gemini-3.5-flash:generateContent');
+      expect(JSON.parse(primary[1]!.body as string).generationConfig.thinkingConfig).toEqual({
+        thinkingLevel: 'LOW',
+      });
+      expect(JSON.parse(fallback[1]!.body as string).generationConfig.thinkingConfig).toEqual({
+        thinkingLevel: 'MINIMAL',
+      });
+      expect(primary[1]!.signal).not.toBe(fallback[1]!.signal);
+      expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash');
+    },
+  );
+
+  it('uses Flash-Lite when both stronger models are unavailable', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(unavailable())
+      .mockResolvedValueOnce(unavailable())
+      .mockResolvedValueOnce(completion());
     expect(await phrasePublicGuide(input)).toBe(answer);
-    expect(fetch).toHaveBeenCalledTimes(expectedRequests);
-    const first = vi.mocked(fetch).mock.calls[0]!;
-    const fallback = vi.mocked(fetch).mock.calls.at(-1)!;
-    expect(fallback[0]).toContain('/models/gemini-3.5-flash-lite:generateContent');
-    expect(first[1]!.body).toBe(fallback[1]!.body);
-    expect(first[1]!.signal).not.toBe(fallback[1]!.signal);
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(vi.mocked(fetch).mock.calls[2]![0]).toContain(
+      '/models/gemini-3.5-flash-lite:generateContent',
+    );
     expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash-lite');
   });
 
-  it('retries one transient 503 and keeps Gemini 3.5 Flash as the answering model', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(unavailable()).mockResolvedValueOnce(completion());
-    expect(await phrasePublicGuide(input)).toBe(answer);
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_RETRY', 503, 'gemini-3.5-flash');
-    expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash');
-    expect(console.warn).not.toHaveBeenCalledWith(
-      'ASSISTANT_PUBLIC_AI_OK',
-      'gemini-3.5-flash-lite',
-    );
-  });
-
-  it.each([400, 401, 402, 403, 429])(
+  it.each([400, 401, 402, 403])(
     'does not retry or change providers on HTTP %i',
     async (status) => {
       vi.mocked(fetch).mockResolvedValueOnce(new Response('private provider error', { status }));
@@ -90,19 +95,19 @@ describe('Gemini public AI with no visitor data', () => {
     },
   );
 
-  it('stops after two unavailable models', async () => {
+  it('stops after all three models are unavailable', async () => {
     vi.mocked(fetch).mockImplementation(async () => unavailable());
     expect(await phrasePublicGuide(input)).toBeNull();
     expect(fetch).toHaveBeenCalledTimes(3);
   });
 
-  it('retries a primary network error with a fresh deadline', async () => {
+  it('falls back immediately after a primary network error with a fresh deadline', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('test-project-key visitor private text'));
     expect(await phrasePublicGuide(input)).toBe(answer);
     expect(console.warn).toHaveBeenCalledWith(
-      'ASSISTANT_PUBLIC_AI_RETRY',
+      'ASSISTANT_PUBLIC_AI_FALLBACK',
       'unavailable',
-      'gemini-3.5-flash',
+      'gemini-3.8-flash',
     );
     expect(console.warn).toHaveBeenCalledWith('ASSISTANT_PUBLIC_AI_OK', 'gemini-3.5-flash');
     expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain('test-project-key');
@@ -112,7 +117,7 @@ describe('Gemini public AI with no visitor data', () => {
     );
   });
 
-  it('returns the local guide after both model requests fail without leaking errors', async () => {
+  it('returns the local guide after all model requests fail without leaking errors', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('test-project-key visitor private text'));
     expect(await phrasePublicGuide(input)).toBeNull();
     expect(fetch).toHaveBeenCalledTimes(3);
