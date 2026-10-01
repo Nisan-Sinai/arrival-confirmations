@@ -40,6 +40,22 @@ for (const width of [320, 390]) {
   }
 }
 
+
+test('assistant launcher stays clear of page actions at the desktop viewport edge', async ({ page }) => {
+  const width = 1440;
+  const height = 900;
+  await page.setViewportSize({ width, height });
+  await page.goto('/');
+
+  const trigger = page.getByRole('button', { name: 'פתיחת העוזר', exact: true });
+  await expect(trigger).toBeVisible();
+  const box = await trigger.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.height).toBe(48);
+  expect(width - box!.x - box!.width).toBeCloseTo(16, 0);
+  expect(height - box!.y - box!.height).toBeCloseTo(4, 0);
+});
+
 test('an assistant service error preserves the question for retry', async ({ page }) => {
   await page.route('**/api/assistant', (route) =>
     route.fulfill({
