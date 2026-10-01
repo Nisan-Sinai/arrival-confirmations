@@ -164,7 +164,6 @@ export async function POST(
           status: 'processing',
           attempt_count: 1,
           last_attempt_at: now,
-          attempt_count: existingMessage.attempt_count + 1,
         })
         .select('id')
         .single();
@@ -183,6 +182,7 @@ export async function POST(
           error_message: null,
           updated_at: now,
           last_attempt_at: now,
+          attempt_count: existingMessage.attempt_count + 1,
         })
         .eq('id', messageId);
 
