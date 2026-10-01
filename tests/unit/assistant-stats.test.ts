@@ -47,6 +47,26 @@ describe('assistant stats summary', () => {
     ]);
   });
 
+  it('orders tied topics alphabetically and unknown page kinds by volume', () => {
+    const summary = summarizeAssistantStats([
+      row('2026-10-01', 'site', 'guide', 'venue', 2),
+      row('2026-10-01', 'site', 'guide', 'branding', 2),
+      row('2026-10-01', 'legacy_a', 'guide', 'rsvp', 1),
+      row('2026-10-01', 'legacy_b', 'guide', 'rsvp', 3),
+      row('2026-10-01', 'legacy_b', 'unknown_outcome', 'rsvp', 1),
+    ]);
+    expect(summary.topTopics.slice(0, 2)).toEqual([
+      { topic: 'rsvp', count: 5 },
+      { topic: 'branding', count: 2 },
+    ]);
+    expect(summary.topTopics[2]).toEqual({ topic: 'venue', count: 2 });
+    expect(summary.byContext.map(({ context }) => context)).toEqual([
+      'legacy_b',
+      'legacy_a',
+      'site',
+    ]);
+  });
+
   it('has no rate rather than 0% when there were no questions', () => {
     expect(summarizeAssistantStats([]).unmatchedRate).toBeNull();
   });
