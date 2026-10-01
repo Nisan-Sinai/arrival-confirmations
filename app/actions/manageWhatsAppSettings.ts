@@ -48,7 +48,17 @@ export async function adminSaveWhatsAppSenderAction(formData: FormData): Promise
   }
 
   const db = createPrivilegedClient();
-  const { error } = await db.from('audit_logs').insert({
+  const { error } = await db.from('platform_whatsapp_settings').upsert({
+    id: 'default',
+    sender_phone: parsed.data.senderPhone,
+    phone_number_id: parsed.data.phoneNumberId,
+    updated_by: admin.id,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) throw new Error(`WhatsApp settings write failed: ${error.code}`);
+
+  const { error: auditError } = await db.from('audit_logs').insert({
     admin_user_id: admin.id,
     action: 'platform_whatsapp_settings_updated',
     entity_type: 'platform_whatsapp_settings',
@@ -59,7 +69,7 @@ export async function adminSaveWhatsAppSenderAction(formData: FormData): Promise
     },
   });
 
-  if (error) throw new Error(`WhatsApp settings write failed: ${error.code}`);
+  if (auditError) throw new Error(`WhatsApp settings audit failed: ${auditError.code}`);
 
   revalidatePath('/admin/settings/whatsapp');
   redirect(settingsUrl({ saved: '1' }));
