@@ -2,10 +2,11 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-interface SettingsAuditRow {
-  readonly created_at: string;
-  readonly admin_user_id: string | null;
-  readonly metadata: unknown;
+interface SettingsRow {
+  readonly sender_phone: string;
+  readonly phone_number_id: string;
+  readonly updated_at: string;
+  readonly updated_by: string | null;
 }
 
 export interface PlatformWhatsAppSettings {
@@ -15,23 +16,11 @@ export interface PlatformWhatsAppSettings {
   readonly updatedBy: string | null;
 }
 
-function record(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-export function parsePlatformWhatsAppSettings(
-  row: SettingsAuditRow | null,
-): PlatformWhatsAppSettings | null {
+export function parsePlatformWhatsAppSettings(row: SettingsRow | null): PlatformWhatsAppSettings | null {
   if (row === null) return null;
-  const metadata = record(row.metadata);
-  if (metadata === null) return null;
 
-  const senderPhone =
-    typeof metadata['senderPhone'] === 'string' ? metadata['senderPhone'].trim() : '';
-  const phoneNumberId =
-    typeof metadata['phoneNumberId'] === 'string' ? metadata['phoneNumberId'].trim() : '';
+  const senderPhone = row.sender_phone.trim();
+  const phoneNumberId = row.phone_number_id.trim();
 
   if (!/^\+?[0-9]{8,15}$/.test(senderPhone) || !/^[0-9]{5,32}$/.test(phoneNumberId)) {
     return null;
@@ -40,8 +29,8 @@ export function parsePlatformWhatsAppSettings(
   return {
     senderPhone,
     phoneNumberId,
-    updatedAt: row.created_at,
-    updatedBy: row.admin_user_id,
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
   };
 }
 
@@ -49,14 +38,11 @@ export async function loadPlatformWhatsAppSettings(
   db: SupabaseClient,
 ): Promise<PlatformWhatsAppSettings | null> {
   const { data, error } = await db
-    .from('audit_logs')
-    .select('created_at, admin_user_id, metadata')
-    .eq('entity_type', 'platform_whatsapp_settings')
-    .eq('action', 'platform_whatsapp_settings_updated')
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .from('platform_whatsapp_settings')
+    .select('sender_phone, phone_number_id, updated_at, updated_by')
+    .eq('id', 'default')
     .maybeSingle();
 
   if (error) throw new Error(`whatsapp_settings_read_failed_${error.code}`);
-  return parsePlatformWhatsAppSettings((data as SettingsAuditRow | null) ?? null);
+  return parsePlatformWhatsAppSettings((data as SettingsRow | null) ?? null);
 }
