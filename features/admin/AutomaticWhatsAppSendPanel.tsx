@@ -71,6 +71,7 @@ export function AutomaticWhatsAppSendPanel({
     invalid: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
 
   const shownGuests = useMemo(
     () => filterPremiumCampaignGuests(guests, scope, sentGuestIds, query),
@@ -88,6 +89,7 @@ export function AutomaticWhatsAppSendPanel({
     setConfirming(false);
     setSummary(null);
     setError(null);
+    setCampaignId(null);
   };
 
   const sendAll = async () => {
@@ -99,7 +101,8 @@ export function AutomaticWhatsAppSendPanel({
     setSummary(null);
     setError(null);
 
-    const campaignId = crypto.randomUUID();
+    const activeCampaignId = campaignId ?? crypto.randomUUID();
+    setCampaignId(activeCampaignId);
     const guestBatches = chunks(reachableGuests, BATCH_SIZE);
     const totals = { sent: 0, failed: 0, alreadySent: 0, invalid: invalidCount };
     const delivered = new Set(sentGuestIds);
@@ -110,7 +113,7 @@ export function AutomaticWhatsAppSendPanel({
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            campaignId,
+            campaignId: activeCampaignId,
             guestIds: batch.map((guest) => guest.id),
             kind,
             note: kind === 'update' ? note.trim() : undefined,
@@ -144,6 +147,7 @@ export function AutomaticWhatsAppSendPanel({
       }
 
       setSummary(totals);
+      setCampaignId(null);
     } catch (sendError) {
       const code = sendError instanceof Error ? sendError.message : 'batch_failed';
       setError(
@@ -221,6 +225,7 @@ export function AutomaticWhatsAppSendPanel({
                 onChange={(event) => {
                   setScope(event.target.value as PremiumCampaignScope);
                   setConfirming(false);
+                  setCampaignId(null);
                 }}
                 disabled={sending}
               >
@@ -237,6 +242,7 @@ export function AutomaticWhatsAppSendPanel({
                 onChange={(event) => {
                   setQuery(event.target.value);
                   setConfirming(false);
+                  setCampaignId(null);
                 }}
                 disabled={sending}
                 placeholder="שם או מספר טלפון"
