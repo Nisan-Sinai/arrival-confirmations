@@ -90,21 +90,13 @@ export async function adminTestWhatsAppSenderAction(formData: FormData): Promise
     );
   }
 
+  let tested: { readonly displayPhoneNumber: string; readonly verifiedName: string | null };
   try {
-    const result = await testWhatsAppSenderConnection({
+    tested = await testWhatsAppSenderConnection({
       accessToken,
       phoneNumberId: parsed.data.phoneNumberId,
       graphVersion: process.env.WHATSAPP_GRAPH_VERSION?.trim() || 'v23.0',
     });
-
-    redirect(
-      settingsUrl({
-        tested: '1',
-        phone: result.displayPhoneNumber,
-        phoneNumberId: parsed.data.phoneNumberId,
-        name: result.verifiedName ?? '',
-      }),
-    );
   } catch (error) {
     const code =
       error instanceof Error && /^whatsapp_http_[a-z0-9_]+$/i.test(error.message)
@@ -118,4 +110,13 @@ export async function adminTestWhatsAppSenderAction(formData: FormData): Promise
       }),
     );
   }
+
+  redirect(
+    settingsUrl({
+      tested: '1',
+      phone: tested.displayPhoneNumber,
+      phoneNumberId: parsed.data.phoneNumberId,
+      name: tested.verifiedName ?? '',
+    }),
+  );
 }
