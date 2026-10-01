@@ -71,8 +71,8 @@ const articles: readonly Article[] = [
     ],
     contexts: ['event', 'guests'],
     answer: {
-      he: 'בעמוד האירוע אפשר להעתיק או לשתף את הקישור הציבורי. באירוע Premium או Pro, פתחו ״מוזמנים וכלים״ כדי לשלוח אוטומטית הזמנות, תזכורות ועדכונים דרך מספר WhatsApp Business המרכזי של המערכת. לכל מוזמן נוצר קישור אישי, והשליחה מתבצעת מהשרת בלי לפתוח את WhatsApp במכשיר.',
-      en: 'Copy or share the public link from the event page. On a Premium or Pro event, open Guests and tools to automatically send invitations, reminders and updates through the platform WhatsApp Business number. Each guest receives a personal RSVP link, and the server sends the messages without opening WhatsApp on your device.',
+      he: 'בעמוד האירוע אפשר להעתיק או לשתף את הקישור הציבורי. באירוע Premium או Pro, ב״מוזמנים וכלים״ יש מרכז שליחה עם קישור אישי לכל מוזמן. כשהשליחה דרך WhatsApp Business מופעלת במערכת, אפשר לשלוח אוטומטית הזמנות, תזכורות ועדכונים מהמספר המרכזי, בלי לפתוח את WhatsApp במכשיר; עד אז פותחים WhatsApp ושולחים כל הודעה בעצמכם.',
+      en: 'Copy or share the public link from the event page. On a Premium or Pro event, Guests and tools has a send centre with a personal RSVP link for every guest. Once WhatsApp Business sending is enabled on the platform, you can automatically send invitations, reminders and updates from the central number without opening WhatsApp on your device; until then you open WhatsApp and send each message yourself.',
     },
     link: { path: '/dashboard', he: 'האירועים שלי', en: 'My events' },
   },
