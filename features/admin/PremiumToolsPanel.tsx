@@ -206,7 +206,7 @@ export function PremiumToolsPanel({
             <form action={seatingAction} className="mt-6 space-y-4">
               <input type="hidden" name="eventId" value={eventId} />
               <div className="border-border overflow-x-auto rounded-xl border">
-                <table className="w-full min-w-[720px] text-sm">
+                <table className="stack-table w-full min-w-[720px] text-sm">
                   <thead className="bg-secondary/35 text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3 text-start">מוזמן</th>
@@ -223,11 +223,13 @@ export function PremiumToolsPanel({
                           {guest.fullName}
                           <input type="hidden" name="guestId" value={guest.id} />
                         </td>
-                        <td className="px-4 py-3" dir="ltr">
-                          {guest.phone}
+                        <td data-label="טלפון" data-inline="" className="px-4 py-3">
+                          <span dir="ltr">{guest.phone}</span>
                         </td>
-                        <td className="px-4 py-3">{guest.partySize}</td>
-                        <td className="px-4 py-2">
+                        <td data-label="כמות" data-inline="" className="px-4 py-3">
+                          {guest.partySize}
+                        </td>
+                        <td data-label="שולחן" className="px-4 py-2">
                           <input
                             name="tableName"
                             defaultValue={guest.tableName ?? ''}
@@ -235,7 +237,7 @@ export function PremiumToolsPanel({
                             className="border-input bg-card text-foreground w-full rounded-xl border px-3.5 py-2.5 text-base"
                           />
                         </td>
-                        <td className="px-4 py-2">
+                        <td data-label="מושב" className="px-4 py-2">
                           <input
                             name="seatNumber"
                             defaultValue={guest.seatNumber ?? ''}

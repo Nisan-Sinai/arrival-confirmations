@@ -108,7 +108,7 @@ export function ResponseRateTile({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="text-accent-strong inline-flex items-center gap-1 rounded-sm text-xs underline underline-offset-2 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
+            className="text-accent-strong -my-2 inline-flex items-center gap-1 rounded-sm py-2 text-xs underline underline-offset-2 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
           >
             <Icon name="edit" className="size-3" />
             {percentage === null ? 'הזינו כמה הזמנות שלחתם' : `מתוך ${invited} הזמנות · שינוי`}

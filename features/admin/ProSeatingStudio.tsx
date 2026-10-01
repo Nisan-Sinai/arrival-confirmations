@@ -239,7 +239,7 @@ export function ProSeatingStudio({
         <form action={tableAction} className="mt-6 space-y-4 print:hidden">
           <input type="hidden" name="eventId" value={eventId} />
           <div className="border-border overflow-x-auto rounded-xl border">
-            <table className="w-full min-w-[900px] text-sm">
+            <table className="stack-table w-full min-w-[900px] text-sm">
               <thead className="bg-secondary/35 text-muted-foreground">
                 <tr>
                   <th className="px-3 py-3 text-start">שם שולחן</th>
@@ -252,7 +252,7 @@ export function ProSeatingStudio({
               <tbody>
                 {[...tables, null].map((table, index) => (
                   <tr key={table?.id ?? 'new-table'} className="border-border border-t">
-                    <td className="px-3 py-2">
+                    <td data-label="שם שולחן" className="px-3 py-2">
                       <input type="hidden" name="tableId" value={table?.id ?? ''} />
                       <Input
                         name="tableName"
@@ -262,7 +262,7 @@ export function ProSeatingStudio({
                         maxLength={80}
                       />
                     </td>
-                    <td className="px-3 py-2">
+                    <td data-label="צורה" className="px-3 py-2">
                       <Select
                         name="tableShape"
                         defaultValue={table?.shape ?? 'round'}
@@ -275,7 +275,7 @@ export function ProSeatingStudio({
                         ))}
                       </Select>
                     </td>
-                    <td className="px-3 py-2">
+                    <td data-label="קיבולת" className="px-3 py-2">
                       <Input
                         name="tableCapacity"
                         type="number"
@@ -285,7 +285,7 @@ export function ProSeatingStudio({
                         aria-label={`קיבולת שולחן ${index + 1}`}
                       />
                     </td>
-                    <td className="px-3 py-2">
+                    <td data-label="אזור" className="px-3 py-2">
                       <Input
                         name="tableZone"
                         defaultValue={table?.zone ?? ''}
@@ -294,7 +294,7 @@ export function ProSeatingStudio({
                         maxLength={80}
                       />
                     </td>
-                    <td className="px-3 py-2">
+                    <td data-label="הערה" className="px-3 py-2">
                       <Input
                         name="tableNotes"
                         defaultValue={table?.notes ?? ''}
@@ -358,7 +358,7 @@ export function ProSeatingStudio({
           <form action={guestAction} className="mt-6 space-y-4">
             <input type="hidden" name="eventId" value={eventId} />
             <div className="border-border overflow-x-auto rounded-xl border">
-              <table className="w-full min-w-[1500px] text-sm">
+              <table className="stack-table w-full min-w-[1500px] text-sm">
                 <thead className="bg-secondary/35 text-muted-foreground">
                   <tr>
                     <th className="px-3 py-3 text-start">מוזמן</th>
@@ -388,8 +388,10 @@ export function ProSeatingStudio({
                               : ` · ${assignedTable.zone ?? 'ללא אזור'}`}
                           </p>
                         </td>
-                        <td className="px-3 py-3 tabular-nums">{guest.partySize}</td>
-                        <td className="px-3 py-2">
+                        <td data-label="כמות" data-inline="" className="px-3 py-3 tabular-nums">
+                          {guest.partySize}
+                        </td>
+                        <td data-label="שולחן" className="px-3 py-2">
                           <Select
                             name="guestTableId"
                             defaultValue={guest.tableId ?? ''}
@@ -403,7 +405,7 @@ export function ProSeatingStudio({
                             ))}
                           </Select>
                         </td>
-                        <td className="px-3 py-2">
+                        <td data-label="מושב" className="px-3 py-2">
                           <Input
                             name="guestSeatNumber"
                             defaultValue={guest.seatNumber ?? ''}
@@ -411,7 +413,7 @@ export function ProSeatingStudio({
                             maxLength={40}
                           />
                         </td>
-                        <td className="px-3 py-2">
+                        <td data-label="קבוצה" className="px-3 py-2">
                           <Input
                             name="guestGroup"
                             defaultValue={guest.seatingGroup ?? ''}
@@ -420,7 +422,7 @@ export function ProSeatingStudio({
                             maxLength={120}
                           />
                         </td>
-                        <td className="px-3 py-2">
+                        <td data-label="אוכל" className="px-3 py-2">
                           <Input
                             name="guestMeal"
                             defaultValue={guest.mealPreference ?? ''}
@@ -429,7 +431,7 @@ export function ProSeatingStudio({
                             maxLength={120}
                           />
                         </td>
-                        <td className="px-3 py-2">
+                        <td data-label="נגישות" className="px-3 py-2">
                           <Input
                             name="guestAccessibility"
                             defaultValue={guest.accessibilityNeeds ?? ''}
@@ -438,7 +440,7 @@ export function ProSeatingStudio({
                             maxLength={500}
                           />
                         </td>
-                        <td className="px-3 py-2">
+                        <td data-label="עדיפות" className="px-3 py-2">
                           <Select
                             name="guestPriority"
                             defaultValue={String(guest.priority)}
@@ -451,7 +453,7 @@ export function ProSeatingStudio({
                             ))}
                           </Select>
                         </td>
-                        <td className="px-3 py-2">
+                        <td data-label="נעילה" className="px-3 py-2">
                           <Select
                             name="guestLocked"
                             defaultValue={guest.seatLocked ? 'true' : 'false'}

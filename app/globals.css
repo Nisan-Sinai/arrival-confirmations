@@ -1054,6 +1054,60 @@
   }
 
   /**
+   * A wide editing table that becomes one card per row on a phone.
+   *
+   * The seating editors are 5–9 columns of inputs; at 360px a min-width table meant
+   * scrolling sideways inside the card to reach every field of a row. Below `sm` each
+   * row is a stacked card and every cell carries its column name from `data-label`.
+   * The header stays in the accessibility tree (visually hidden) and print keeps the
+   * real table.
+   */
+  @media screen and (max-width: 639.98px) {
+    .stack-table {
+      min-width: 0 !important;
+    }
+
+    .stack-table,
+    .stack-table tbody,
+    .stack-table tr,
+    .stack-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .stack-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .stack-table tr {
+      padding: 0.75rem 0.5rem;
+    }
+
+    .stack-table td {
+      padding-block: 0.3rem !important;
+    }
+
+    .stack-table td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 0.25rem;
+      color: var(--color-muted-foreground);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .stack-table td[data-label][data-inline]::before {
+      display: inline;
+      margin-inline-end: 0.4rem;
+    }
+  }
+
+  /**
    * A tooltip drawn from `data-tooltip`.
    *
    * CSS only, so it works before hydration and never needs a portal or a positioning
