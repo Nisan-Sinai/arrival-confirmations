@@ -114,8 +114,9 @@ export async function adminTestWhatsAppSenderAction(formData: FormData): Promise
   redirect(
     settingsUrl({
       tested: '1',
-      phone: tested.displayPhoneNumber,
+      phone: parsed.data.senderPhone,
       phoneNumberId: parsed.data.phoneNumberId,
+      verifiedPhone: tested.displayPhoneNumber,
       name: tested.verifiedName ?? '',
     }),
   );
