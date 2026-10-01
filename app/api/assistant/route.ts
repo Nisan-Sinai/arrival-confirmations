@@ -65,11 +65,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const localAnswer = await getHostEventAnswer({
-      question: messages.at(-1)!.content,
-      eventId,
-      locale,
-    });
+    // An invitation guest is never the host: a data question there gets the guide's
+    // invitation answer, not "open your event in the dashboard".
+    const localAnswer =
+      context === 'invitation'
+        ? null
+        : await getHostEventAnswer({
+            question: messages.at(-1)!.content,
+            eventId,
+            locale,
+          });
     if (localAnswer) {
       return Response.json(
         { ...localAnswer, source: 'event' },

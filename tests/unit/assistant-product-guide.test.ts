@@ -182,4 +182,60 @@ describe('assistant product grounding', () => {
       ).toBeUndefined();
     }
   });
+
+  describe('everyday questions reach the right answer', () => {
+    const ask = (
+      question: string,
+      context: Parameters<typeof answerProductQuestion>[0]['context'] = 'site',
+    ) => answerProductQuestion({ locale: 'he', context, questions: [question] });
+
+    it.each([
+      ['איך מוסיפים מוזמן ידנית?', 'guests', 'מוזמנים וכלים'],
+      ['האם המידע שלי מאובטח?', 'site', 'אינם נשלחים לספק AI'],
+      ['שכחתי סיסמה', 'site', 'שכחתי סיסמה'],
+      ['איך עורכים את האירוע?', 'event', '״עריכה״'],
+      ['אפשר לבחור עיצוב להזמנה?', 'site', 'לוגו'],
+      ['איפה האירוע?', 'invitation', 'הכתובת'],
+      ['טעיתי במספר האנשים', 'invitation', 'פתחו אותו שוב'],
+      ['האם אפשר לשלם בביט?', 'site', 'ב־Bit'],
+      ['כמה מוזמנים אפשר להכניס?', 'site', 'עד 2,500 מוזמנים'],
+      ['איך אני מוחק אירוע?', 'site', 'פרסום ההזמנה'],
+    ] as const)('%s', (question, context, expected) => {
+      expect(ask(question, context).answer).toContain(expected);
+    });
+
+    it('lists every paid plan with its guest limit when asked about price in general', () => {
+      const { answer } = ask('כמה זה עולה?');
+      expect(answer).toContain('Basic ₪99 (עד 300 מוזמנים)');
+      expect(answer).toContain('Premium ₪199 (עד 1,000 מוזמנים)');
+      expect(answer).toContain('Pro ₪349 (עד 2,500 מוזמנים)');
+    });
+
+    it('never sends an invitation guest to a dashboard they do not have', () => {
+      for (const question of ['יש חניה?', 'אפשר להביא ילדים?', 'מתי האירוע?']) {
+        const guide = ask(question, 'invitation');
+        expect(guide.answer).toContain('בעלי האירוע');
+        expect(guide.answer).not.toContain('דשבורד');
+        expect(guide.links).toEqual([]);
+      }
+    });
+
+    it('gives a reachable support address instead of a dead-end "contact support"', () => {
+      expect(ask('תכתוב לי שיר').answer).toMatch(/[\w.]+@[\w.]+/);
+    });
+
+    it('keeps support and password answers exact instead of rephrasing them', () => {
+      expect(ask('איך יוצרים קשר עם התמיכה?').generation).toBeUndefined();
+      expect(ask('שכחתי סיסמה').generation).toBeUndefined();
+    });
+
+    it('lower-cases English plan features joined mid-sentence', () => {
+      const { answer } = answerProductQuestion({
+        locale: 'en',
+        context: 'site',
+        questions: ['How much is Pro?'],
+      });
+      expect(answer).toContain('Includes an advanced seating studio');
+    });
+  });
 });

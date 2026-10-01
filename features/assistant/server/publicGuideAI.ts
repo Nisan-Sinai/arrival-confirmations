@@ -4,13 +4,19 @@ import { z } from 'zod';
 
 import type { PublicGuideGeneration } from '@/features/assistant/productGuide';
 
-// Keep the strongest model first, but fail over quickly when the free-tier
-// service is temporarily unavailable. Each model gets the thinking level it supports.
+// Flash-Lite first: the job is rephrasing a few verified sentences, which it does well,
+// and in production it was the only tier answering — 3.8 Flash returned 503 and 3.5 Flash
+// hit its 5s deadline on every request, so each answer waited ~8s before Lite replied.
+// The stronger tiers stay as fallbacks. Each model gets the thinking level it supports.
 const MODELS = [
+  { name: 'gemini-3.5-flash-lite', timeoutMs: 4000, thinkingLevel: 'MINIMAL' },
+  { name: 'gemini-3.5-flash', timeoutMs: 3000, thinkingLevel: 'MINIMAL' },
   { name: 'gemini-3.8-flash', timeoutMs: 2500, thinkingLevel: 'LOW' },
-  { name: 'gemini-3.5-flash', timeoutMs: 5000, thinkingLevel: 'MINIMAL' },
-  { name: 'gemini-3.5-flash-lite', timeoutMs: 5000, thinkingLevel: 'MINIMAL' },
 ] as const;
+// Rephrasing is optional — the curated guide answer is already correct — so the whole
+// chain gets one budget. Past it the visitor gets the guide answer instead of a spinner.
+const TOTAL_BUDGET_MS = 6000;
+const MIN_ATTEMPT_MS = 1000;
 const generateContentResponseSchema = z.object({
   candidates: z.array(
     z.object({
@@ -68,7 +74,13 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
     // Give every tier its own deadline so a slow primary cannot consume the
     // whole client budget. No tools, search, paid models or cross-provider fallback.
     const facts = `Verified public facts:\n${input.facts}`;
+    const startedAt = Date.now();
     for (const { name: model, timeoutMs, thinkingLevel } of MODELS) {
+      const remaining = TOTAL_BUDGET_MS - (Date.now() - startedAt);
+      if (remaining < MIN_ATTEMPT_MS) {
+        console.warn('ASSISTANT_PUBLIC_AI_FALLBACK', 'budget_exhausted', model);
+        break;
+      }
       const body = JSON.stringify({
         systemInstruction: { parts: [{ text: instructions }] },
         contents: [{ role: 'user', parts: [{ text: facts }] }],
@@ -86,7 +98,7 @@ export async function phrasePublicGuide(input: PublicGuideGeneration): Promise<s
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
             body,
             cache: 'no-store',
-            signal: AbortSignal.timeout(timeoutMs),
+            signal: AbortSignal.timeout(Math.min(timeoutMs, remaining)),
           },
         );
         if (!response.ok) {

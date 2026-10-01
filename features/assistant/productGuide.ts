@@ -1,4 +1,5 @@
 import { getPlanCatalog } from '@/app/_lib/plans';
+import { appConfig } from '@/config/event.config';
 import { localePath, type Locale } from '@/lib/i18n';
 
 export type AssistantContext = 'site' | 'event' | 'guests' | 'invitation' | 'pricing';
@@ -49,6 +50,51 @@ const articles: readonly Article[] = [
     link: { path: '/dashboard/events/new', he: 'יצירת אירוע', en: 'Create an event' },
   },
   {
+    id: 'edit',
+    terms: [
+      'לערוך את האירוע',
+      'עורכים את האירוע',
+      'לשנות את האירוע',
+      'לשנות את התאריך',
+      'לשנות את השעה',
+      'לשנות את המקום',
+      'פרטי האירוע',
+      'עריכה',
+      'edit the event',
+      'event details',
+      'change the date',
+    ],
+    contexts: ['event'],
+    answer: {
+      he: 'בדשבורד, בכרטיס האירוע, לחצו על ״עריכה״. עדכנו את הפרטים — תאריך, שעה, מקום, כתובת או הערה לאורחים — ושמרו. שם אפשר גם לבטל את פרסום ההזמנה.',
+      en: 'In the dashboard, choose Edit on the event card. Update the details — date, time, venue, address or a note for guests — and save. You can also unpublish the invitation there.',
+    },
+    link: { path: '/dashboard', he: 'האירועים שלי', en: 'My events' },
+  },
+  {
+    id: 'branding',
+    terms: [
+      'עיצוב',
+      'לעצב',
+      'מיתוג',
+      'לוגו',
+      'צבע',
+      'סגנון',
+      'design',
+      'branding',
+      'logo',
+      'colour',
+      'color',
+      'style',
+    ],
+    contexts: ['event', 'guests'],
+    answer: {
+      he: 'ב־Premium וב־Pro יש מיתוג מתקדם להזמנה עם לוגו, צבעים וסגנונות. הכלים נמצאים ב״מוזמנים וכלים״ של האירוע.',
+      en: 'Premium and Pro include advanced invitation branding with a logo, colours and styles. Find it under Guests and tools for your event.',
+    },
+    link: { path: '/pricing', he: 'השוואת מסלולים', en: 'Compare plans' },
+  },
+  {
     id: 'sharing',
     terms: [
       'קישור',
@@ -89,7 +135,12 @@ const articles: readonly Article[] = [
       'שינוי תשובה',
       'עדכון תשובה',
       'לשנות אישור',
+      'טעיתי',
+      'לתקן',
+      'מספר האנשים',
       'change my answer',
+      'made a mistake',
+      'wrong number',
       'changed my mind',
       'edit my rsvp',
       'change answer',
@@ -129,6 +180,7 @@ const articles: readonly Article[] = [
     id: 'guests',
     terms: [
       'מוזמנ',
+      'מוזמן',
       'אנשי קשר',
       'ייבוא',
       'יבוא',
@@ -154,8 +206,43 @@ const articles: readonly Article[] = [
     link: { path: '/dashboard', he: 'ניהול אירועים', en: 'Manage events' },
   },
   {
+    id: 'venue',
+    terms: [
+      'כתובת',
+      'מיקום',
+      'איפה',
+      'ניווט',
+      'להגיע',
+      'וייז',
+      'ווייז',
+      'waze',
+      'גוגל מפות',
+      'google maps',
+      'אולם',
+      'address',
+      'location',
+      'where is',
+      'directions',
+    ],
+    contexts: ['invitation', 'event'],
+    answer: {
+      he: 'שם המקום והכתובת מופיעים בהזמנה. אם בעלי האירוע הוסיפו קישורי ניווט, מופיעים שם גם כפתורים ל־Waze ול־Google Maps. את כל אלה מגדירים בעריכת האירוע.',
+      en: 'The venue name and address appear on the invitation. If the hosts added navigation links, there are also Waze and Google Maps buttons. All of this is set when editing the event.',
+    },
+  },
+  {
     id: 'seating',
-    terms: ['הושב', 'שולחנ', 'מושב', 'מפה', 'seating', 'table', 'seat', 'floor plan'],
+    terms: [
+      'הושב',
+      'שולחנ',
+      'מושב',
+      'מפת שולחנות',
+      'מפת הושבה',
+      'seating',
+      'table',
+      'seat',
+      'floor plan',
+    ],
     contexts: ['guests'],
     answer: {
       he: 'ב־Premium יש מפת שולחנות ומושבים בסיסית. ב־Pro יש סטודיו הושבה מתקדם עם אזורים וקיבולת, סידור חכם, נעילת מושבים, זיהוי התנגשויות וייצוא. הכלים נמצאים ב״מוזמנים וכלים״ של האירוע.',
@@ -183,6 +270,15 @@ const articles: readonly Article[] = [
       'בייסיק',
       'פרו',
       'ניסיון',
+      'ביט',
+      'לשלם',
+      'משלמים',
+      'אמצעי תשלום',
+      'מגבל',
+      'הגבל',
+      'מקסימום',
+      'כמה מוזמנים אפשר',
+      'כמה אורחים',
       'pro',
       'premium',
       'basic',
@@ -194,6 +290,12 @@ const articles: readonly Article[] = [
       'compare',
       'difference',
       'trial',
+      'bit',
+      'pay',
+      'payment',
+      'limit',
+      'maximum',
+      'how many guests',
     ],
     contexts: ['pricing'],
     answer: { he: '', en: '' },
@@ -204,6 +306,8 @@ const articles: readonly Article[] = [
     terms: [
       'פרטיות',
       'אבטח',
+      'מאובטח',
+      'מי רואה',
       'נתונים',
       'חוקי',
       'מותר',
@@ -211,12 +315,47 @@ const articles: readonly Article[] = [
       'security',
       'personal data',
       'legal',
+      'who can see',
     ],
     answer: {
       he: 'טקסט השיחה ופרטי המוזמנים אינם נשלחים לספק AI חיצוני. לניסוח עזרה כללית, המודל מקבל רק מידע ציבורי מאומת על האתר והנחיית ניסוח קבועה. רק בעל אירוע מחובר יכול לקבל מידע על המוזמנים והתשובות באירוע שלו, והשרת בודק את ההרשאות. השיחה אינה נשמרת במסד הנתונים. לפרטים קראו את מדיניות הפרטיות.',
       en: 'Conversation text and guest details are never sent to an external AI provider. To phrase general help, the model receives only verified public site information and a fixed writing instruction. Only a signed-in event host can access their own guests and replies, subject to server permission checks. The conversation is not saved in the database. See the privacy policy for details.',
     },
     link: { path: '/privacy', he: 'מדיניות פרטיות', en: 'Privacy policy' },
+  },
+  {
+    id: 'password',
+    terms: ['סיסמ', 'להתחבר', 'לא מצליח להיכנס', 'password', 'log in', 'sign in'],
+    answer: {
+      he: 'בדף הכניסה לחצו על ״שכחתי סיסמה״ והזינו את כתובת האימייל של החשבון. יישלח אליכם קישור לבחירת סיסמה חדשה.',
+      en: 'On the sign-in page choose “Forgot your password?” and enter your account email. You will receive a link to set a new password.',
+    },
+    link: { path: '/forgot-password', he: 'איפוס סיסמה', en: 'Reset password' },
+  },
+  {
+    id: 'support',
+    terms: [
+      'תמיכה',
+      'יצירת קשר',
+      'ליצור קשר',
+      'צור קשר',
+      'לפנות',
+      'מחיקת אירוע',
+      'למחוק אירוע',
+      'למחוק את האירוע',
+      'מוחק אירוע',
+      'ביטול אירוע',
+      'החזר',
+      'support',
+      'contact us',
+      'delete event',
+      'delete my event',
+      'refund',
+    ],
+    answer: {
+      he: `לשאלות שהעוזר לא עונה עליהן, למחיקת אירוע או לעניין תשלום כתבו אל ${appConfig.supportEmail}. כדי לסגור את ההזמנה לאורחים בלי למחוק, בטלו את הסימון ״פרסום ההזמנה״ בעריכת האירוע.`,
+      en: `For anything this assistant cannot answer, deleting an event or a payment matter, email ${appConfig.supportEmail}. To close the invitation to guests without deleting it, untick “Publish the invitation” when editing the event.`,
+    },
   },
 ];
 
@@ -266,15 +405,27 @@ function pricingAnswer(locale: Locale, question: string): string {
         : `The free trial includes up to ${format(chosen.attendeeLimit)} test RSVP replies. Paid plans have a one-time price per event.`;
     }
     const price = `₪${format(chosen.priceAgorot / 100)}`;
-    const features = chosen.features.slice(2, 5).join(', ');
+    const features = chosen.features
+      .slice(2, 5)
+      .map((feature) =>
+        locale === 'en' ? feature.charAt(0).toLowerCase() + feature.slice(1) : feature,
+      )
+      .join(', ');
     return locale === 'he'
       ? `מסלול ${chosen.name} עולה ${price} בתשלום חד־פעמי לאירוע, עד ${format(chosen.attendeeLimit)} מוזמנים. כולל ${features}.`
       : `${chosen.name} costs ${price} once per event, for up to ${format(chosen.attendeeLimit)} guests. Includes ${features}.`;
   }
   const paid = plans.filter((plan) => plan.priceAgorot > 0);
+  const trial = plans.find((plan) => plan.code === 'trial');
+  const trialLimit = format(trial?.attendeeLimit ?? 10);
+  const payment = /ביט|לשלם|משלמים|אמצעי תשלום|\bbit\b|\bpay(?:ment)?\b/.test(text)
+    ? locale === 'he'
+      ? ' משלמים בטלפון, ב־Bit או בהעברה.'
+      : ' You can pay by phone, Bit or bank transfer.'
+    : '';
   return locale === 'he'
-    ? `יש בדיקה חינמית עם עד 10 אישורי הגעה לניסיון. מחיר חד־פעמי לאירוע: ${paid.map((plan) => `${plan.name} ₪${format(plan.priceAgorot / 100)}`).join(' · ')}. את המסלול מפעילים מול מפעיל האתר לאחר התשלום.`
-    : `There is a free trial for up to 10 test replies. One-time prices per event: ${paid.map((plan) => `${plan.name} ₪${format(plan.priceAgorot / 100)}`).join(' · ')}. Contact the operator to activate a paid plan after payment.`;
+    ? `יש בדיקה חינמית עם עד ${trialLimit} אישורי הגעה לניסיון. מחיר חד־פעמי לאירוע: ${paid.map((plan) => `${plan.name} ₪${format(plan.priceAgorot / 100)} (עד ${format(plan.attendeeLimit)} מוזמנים)`).join(' · ')}.${payment} את המסלול מפעילים מול מפעיל האתר לאחר התשלום.`
+    : `There is a free trial for up to ${trialLimit} test replies. One-time prices per event: ${paid.map((plan) => `${plan.name} ₪${format(plan.priceAgorot / 100)} (up to ${format(plan.attendeeLimit)} guests)`).join(' · ')}.${payment} Contact the operator to activate a paid plan after payment.`;
 }
 
 export function answerProductQuestion({
@@ -341,11 +492,21 @@ export function answerProductQuestion({
   }
 
   if (scored.length === 0) {
+    // A guest on an invitation has no dashboard; point them at the invitation and the host.
+    if (context === 'invitation') {
+      return {
+        answer:
+          locale === 'he'
+            ? 'מועד האירוע, המקום וההערות של בעלי האירוע — למשל חניה או קוד לבוש — מופיעים בהזמנה עצמה, ולעיתים גם טלפון לבירורים בתחתיתה. לשאלות אחרות על האירוע פנו לבעלי האירוע. אני יכול לעזור באישור הגעה ובשינוי תשובה.'
+            : 'The date, venue and any notes from the hosts — such as parking or dress code — are on the invitation itself, sometimes with a phone number for questions at the bottom. For anything else about the event, ask the hosts. I can help with replying and changing your answer.',
+        links: [],
+      };
+    }
     return {
       answer:
         locale === 'he'
-          ? 'אפשר לשאול אותי על יצירת אירוע, הזמנות, אישורי הגעה, מוזמנים, הושבה ומחירים. לשאלה על המוזמנים שלכם פתחו את האירוע בדשבורד. אם השאלה אינה על האתר, פנו לתמיכה.'
-          : 'I can help with creating events, invitations, RSVPs, guests, seating and prices. For your own guest list, open the event in your dashboard. For other questions, contact support.',
+          ? `אפשר לשאול אותי על יצירת אירוע, הזמנות, אישורי הגעה, מוזמנים, הושבה ומחירים. לשאלה על המוזמנים שלכם פתחו את האירוע בדשבורד. לשאלות אחרות כתבו אל ${appConfig.supportEmail}.`
+          : `I can help with creating events, invitations, RSVPs, guests, seating and prices. For your own guest list, open the event in your dashboard. For anything else, email ${appConfig.supportEmail}.`,
       links: [{ href: '/dashboard', label: locale === 'he' ? 'האירועים שלי' : 'My events' }],
     };
   }
@@ -378,7 +539,7 @@ export function answerProductQuestion({
     answer,
     links,
     // Keep prices and privacy exact. Only curated public help may be rephrased.
-    ...(scored.some(({ id }) => id === 'pricing' || id === 'privacy')
+    ...(scored.some(({ id }) => ['pricing', 'privacy', 'support', 'password'].includes(id))
       ? {}
       : {
           generation: {
