@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { buildWhatsAppTemplatePayload, readWhatsAppCloudConfig } from '@/app/_lib/whatsappCloud';
+import {
+  buildWhatsAppTemplatePayload,
+  readWhatsAppCloudConfig,
+  sendWhatsAppTemplate,
+  testWhatsAppSenderConnection,
+} from '@/app/_lib/whatsappCloud';
 
 const base = {
   WHATSAPP_ACCESS_TOKEN: 'secret-token',
@@ -10,6 +15,33 @@ const base = {
   WHATSAPP_TEMPLATE_UPDATE: 'event_update_he',
   WHATSAPP_TEMPLATE_THANKS: 'event_thanks_he',
 };
+
+function config() {
+  const result = readWhatsAppCloudConfig(base);
+  if (result.config === null) throw new Error('expected WhatsApp config');
+  return result.config;
+}
+
+function stubJson(body: unknown, status = 200) {
+  const fetchMock = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    }),
+  );
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+function stubInvalidJson(status = 200) {
+  const fetchMock = vi.fn().mockResolvedValue(new Response('not-json', { status }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('WhatsApp Cloud configuration', () => {
   it('requires the sender, token and all four approved templates', () => {
@@ -40,6 +72,34 @@ describe('WhatsApp Cloud configuration', () => {
       },
     });
     expect(result.missing).toEqual([]);
+  });
+
+  it('accepts custom language and Graph API version', () => {
+    const result = readWhatsAppCloudConfig({
+      ...base,
+      WHATSAPP_LANGUAGE_CODE: 'en_US',
+      WHATSAPP_GRAPH_VERSION: 'v25.0',
+    });
+    expect(result.config).toMatchObject({
+      graphVersion: 'v25.0',
+      languageCode: 'en_US',
+    });
+  });
+
+  it('treats whitespace-only credentials as missing independently', () => {
+    expect(
+      readWhatsAppCloudConfig({
+        ...base,
+        WHATSAPP_ACCESS_TOKEN: '   ',
+      }).missing,
+    ).toEqual(['WHATSAPP_ACCESS_TOKEN']);
+
+    expect(
+      readWhatsAppCloudConfig({
+        ...base,
+        WHATSAPP_PHONE_NUMBER_ID: '   ',
+      }).missing,
+    ).toEqual(['WHATSAPP_PHONE_NUMBER_ID']);
   });
 });
 
@@ -83,6 +143,21 @@ describe('WhatsApp Cloud template payloads', () => {
     ]);
   });
 
+  it('uses the default update note when the note is blank', () => {
+    const payload = buildWhatsAppTemplatePayload({
+      kind: 'update',
+      recipientPhone: '+972501234567',
+      guestName: 'דוד',
+      eventTitle: 'האירוע',
+      invitationUrl: 'https://example.test/invite/token',
+      note: '   ',
+      templateName: 'event_update_he',
+      languageCode: 'he',
+    });
+
+    expect(payload.template.components[0]!.parameters[2]!.text).toBe('פרטי האירוע עודכנו.');
+  });
+
   it('sends thank-you without an invitation URL', () => {
     const payload = buildWhatsAppTemplatePayload({
       kind: 'thanks',
@@ -112,5 +187,146 @@ describe('WhatsApp Cloud template payloads', () => {
         languageCode: 'he',
       }),
     ).toThrow('personal_invitation_url_required');
+  });
+});
+
+describe('WhatsApp sender connection test', () => {
+  it('returns the verified sender details and uses bearer authorization', async () => {
+    const fetchMock = stubJson({
+      display_phone_number: '+972501234567',
+      verified_name: 'Arrival Confirmations',
+    });
+
+    await expect(
+      testWhatsAppSenderConnection({
+        accessToken: 'token',
+        phoneNumberId: '998877',
+        graphVersion: 'v25.0',
+      }),
+    ).resolves.toEqual({
+      displayPhoneNumber: '+972501234567',
+      verifiedName: 'Arrival Confirmations',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://graph.facebook.com/v25.0/998877?fields=display_phone_number,verified_name',
+      expect.objectContaining({
+        headers: { authorization: 'Bearer token' },
+        cache: 'no-store',
+      }),
+    );
+  });
+
+  it('keeps an absent verified name nullable', async () => {
+    stubJson({ display_phone_number: '+972501234567', verified_name: 123 });
+    await expect(
+      testWhatsAppSenderConnection({
+        accessToken: 'token',
+        phoneNumberId: '998877',
+        graphVersion: 'v25.0',
+      }),
+    ).resolves.toEqual({
+      displayPhoneNumber: '+972501234567',
+      verifiedName: null,
+    });
+  });
+
+  it('rejects a malformed successful sender response', async () => {
+    stubJson({ verified_name: 'Arrival Confirmations' });
+    await expect(
+      testWhatsAppSenderConnection({
+        accessToken: 'token',
+        phoneNumberId: '998877',
+        graphVersion: 'v25.0',
+      }),
+    ).rejects.toThrow('whatsapp_invalid_sender_response');
+  });
+
+  it('sanitizes a Meta error with its provider code', async () => {
+    stubJson({ error: { code: 100 } }, 400);
+    await expect(
+      testWhatsAppSenderConnection({
+        accessToken: 'token',
+        phoneNumberId: '998877',
+        graphVersion: 'v25.0',
+      }),
+    ).rejects.toThrow('whatsapp_http_400_code_100');
+  });
+
+  it('sanitizes an error even when Meta returns invalid JSON', async () => {
+    stubInvalidJson(503);
+    await expect(
+      testWhatsAppSenderConnection({
+        accessToken: 'token',
+        phoneNumberId: '998877',
+        graphVersion: 'v25.0',
+      }),
+    ).rejects.toThrow('whatsapp_http_503');
+  });
+});
+
+describe('WhatsApp template delivery', () => {
+  const input = {
+    kind: 'invitation' as const,
+    recipientPhone: '+972501234567',
+    guestName: 'דוד',
+    eventTitle: 'האירוע',
+    invitationUrl: 'https://example.test/invite/token',
+  };
+
+  it('posts the configured template and returns the provider message id', async () => {
+    const fetchMock = stubJson({ messages: [{ id: 'wamid.123' }] });
+
+    await expect(sendWhatsAppTemplate(config(), input)).resolves.toEqual({
+      providerMessageId: 'wamid.123',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://graph.facebook.com/v23.0/123456789/messages',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer secret-token',
+          'content-type': 'application/json',
+        },
+        cache: 'no-store',
+      }),
+    );
+
+    const request = fetchMock.mock.calls[0]![1] as RequestInit;
+    expect(JSON.parse(String(request.body))).toMatchObject({
+      messaging_product: 'whatsapp',
+      to: '972501234567',
+      template: {
+        name: 'event_invitation_he',
+        language: { code: 'he' },
+      },
+    });
+  });
+
+  it('returns null when Meta accepts a message without an id', async () => {
+    stubJson({ messages: [{}] });
+    await expect(sendWhatsAppTemplate(config(), input)).resolves.toEqual({
+      providerMessageId: null,
+    });
+  });
+
+  it('returns null when a successful response body is not JSON', async () => {
+    stubInvalidJson(200);
+    await expect(sendWhatsAppTemplate(config(), input)).resolves.toEqual({
+      providerMessageId: null,
+    });
+  });
+
+  it('sanitizes a send error with the provider code', async () => {
+    stubJson({ error: { code: 131047 } }, 400);
+    await expect(sendWhatsAppTemplate(config(), input)).rejects.toThrow(
+      'whatsapp_http_400_code_131047',
+    );
+  });
+
+  it('sanitizes a send error when the response body is not JSON', async () => {
+    stubInvalidJson(503);
+    await expect(sendWhatsAppTemplate(config(), input)).rejects.toThrow('whatsapp_http_503');
   });
 });
