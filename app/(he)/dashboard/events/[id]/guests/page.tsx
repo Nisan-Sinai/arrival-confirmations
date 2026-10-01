@@ -15,6 +15,7 @@ import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { GuestQuickNav } from '@/features/admin/GuestQuickNav';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
 import { AutomaticWhatsAppSendPanel } from '@/features/admin/AutomaticWhatsAppSendPanel';
+import { WhatsAppSendCenter } from '@/features/admin/WhatsAppSendCenter';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
 import type { ProSeatingTable, TableShape } from '@/lib/proSeating';
 import { createUserClient } from '@/lib/server/supabase';
@@ -283,12 +284,21 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             count={count}
             skipped={skipped}
           />
-          <AutomaticWhatsAppSendPanel
-            eventId={event.id}
-            eventTitle={event.title}
-            guests={sendCenterGuests}
-            enabled={toolsEnabled}
-          />
+          {toolsEnabled ? (
+            <AutomaticWhatsAppSendPanel
+              eventId={event.id}
+              eventTitle={event.title}
+              guests={sendCenterGuests}
+              enabled
+            />
+          ) : (
+            <WhatsAppSendCenter
+              eventId={event.id}
+              eventTitle={event.title}
+              guests={sendCenterGuests}
+              premium={false}
+            />
+          )}
           <PremiumToolsPanel
             eventId={event.id}
             guests={premiumGuests}
