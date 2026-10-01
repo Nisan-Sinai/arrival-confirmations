@@ -72,7 +72,7 @@ const articles: readonly Article[] = [
     contexts: ['event', 'guests'],
     answer: {
       he: 'בעמוד האירוע אפשר להעתיק או לשתף את הקישור הציבורי. להזמנה אישית פתחו ״מוזמנים וכלים״ והכינו הודעה וקישור נפרדים לכל מוזמן. גם במרכז ״שלח לכולם״ אתם פותחים WhatsApp ולוחצים שליחה בעצמכם לכל הודעה; האתר לא שולח הודעות אוטומטית.',
-      en: 'Copy or share the public link from the event page. For personal invitations, open Guests and tools to prepare a separate link and message for each guest. Even in Send all, you open WhatsApp and send each message yourself; the site does not deliver messages automatically.',
+      en: 'Copy or share the public link from the event page. For personal invitations, open Guests and tools to prepare a separate link and message for each guest. Even in Send all, you open WhatsApp and send automatically from the platform WhatsApp Business number; the site does not deliver messages automatically.',
     },
     link: { path: '/dashboard', he: 'האירועים שלי', en: 'My events' },
   },

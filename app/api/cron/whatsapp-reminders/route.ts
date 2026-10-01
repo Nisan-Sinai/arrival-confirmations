@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { buildWhatsAppCloudPayload } from '@/lib/premiumEventTools';
+import { loadPlatformWhatsAppSettings } from '@/app/_lib/platformWhatsAppSettings';
+import { readWhatsAppCloudConfig } from '@/app/_lib/whatsappCloud';
+import { deliverAutomaticWhatsApp } from '@/app/_lib/whatsappServer';
+import { parsePremiumMessageKind } from '@/lib/premiumWhatsApp';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 
 export const runtime = 'nodejs';
@@ -9,11 +12,14 @@ export const dynamic = 'force-dynamic';
 
 interface DueMessageRow {
   readonly id: string;
+  readonly event_id: string;
+  readonly guest_id: string | null;
   readonly recipient_phone: string;
-  readonly template_name: string;
-  readonly language_code: string;
-  readonly events: { readonly title: string; readonly public_id: string } | null;
-  readonly guests: { readonly full_name: string } | null;
+  readonly message_kind: string;
+  readonly message_note: string | null;
+  readonly attempt_count: number;
+  readonly events: { readonly id: string; readonly title: string } | null;
+  readonly guests: { readonly id: string; readonly full_name: string } | null;
 }
 
 function authorized(request: Request): boolean {
@@ -21,24 +27,41 @@ function authorized(request: Request): boolean {
   return secret !== undefined && request.headers.get('authorization') === `Bearer ${secret}`;
 }
 
+function safeErrorCode(error: unknown): string {
+  if (!(error instanceof Error)) return 'send_failed';
+  return /^[a-z0-9_]+$/i.test(error.message) ? error.message.slice(0, 200) : 'send_failed';
+}
+
 export async function GET(request: Request) {
   if (!authorized(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL;
-  if (accessToken === undefined || phoneNumberId === undefined || siteOrigin === undefined) {
-    return NextResponse.json({ error: 'whatsapp_not_configured' }, { status: 503 });
+  const db = createPrivilegedClient() as unknown as SupabaseClient;
+  const senderSettings = await loadPlatformWhatsAppSettings(db);
+  const whatsapp = readWhatsAppCloudConfig({
+    ...process.env,
+    ...(senderSettings === null ? {} : { WHATSAPP_PHONE_NUMBER_ID: senderSettings.phoneNumberId }),
+  });
+  const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (whatsapp.config === null || siteOrigin === undefined || siteOrigin === '') {
+    return NextResponse.json(
+      {
+        error: 'whatsapp_not_configured',
+        missing: [
+          ...whatsapp.missing,
+          ...(siteOrigin === undefined || siteOrigin === '' ? ['NEXT_PUBLIC_SITE_URL'] : []),
+        ],
+      },
+      { status: 503 },
+    );
   }
 
-  const db = createPrivilegedClient() as unknown as SupabaseClient;
   const now = new Date().toISOString();
   const { data, error } = await db
     .from('event_messages')
     .select(
-      'id, recipient_phone, template_name, language_code, events(title, public_id), guests(full_name)',
+      'id, event_id, guest_id, recipient_phone, message_kind, message_note, attempt_count, events(id, title), guests(id, full_name)',
     )
     .eq('status', 'pending')
     .lte('scheduled_for', now)
@@ -49,16 +72,22 @@ export async function GET(request: Request) {
 
   let sent = 0;
   let failed = 0;
-  const graphVersion = process.env.WHATSAPP_GRAPH_VERSION ?? 'v23.0';
 
   for (const raw of data ?? []) {
     const message = raw as unknown as DueMessageRow;
-    if (message.events === null || message.guests === null) {
+    const kind = parsePremiumMessageKind(message.message_kind);
+
+    if (
+      kind === null ||
+      message.guest_id === null ||
+      message.events === null ||
+      message.guests === null
+    ) {
       await db
         .from('event_messages')
         .update({
           status: 'failed',
-          error_message: 'missing_event_or_guest',
+          error_message: 'invalid_queue_row',
           updated_at: new Date().toISOString(),
         })
         .eq('id', message.id)
@@ -67,47 +96,41 @@ export async function GET(request: Request) {
       continue;
     }
 
+    const claimTime = new Date().toISOString();
     const { data: claimed } = await db
       .from('event_messages')
-      .update({ status: 'processing', updated_at: new Date().toISOString() })
+      .update({
+        status: 'processing',
+        attempt_count: message.attempt_count + 1,
+        last_attempt_at: claimTime,
+        updated_at: claimTime,
+      })
       .eq('id', message.id)
       .eq('status', 'pending')
       .select('id');
+
     if (claimed === null || claimed.length === 0) continue;
 
     try {
-      const response = await fetch(
-        `https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify(
-            buildWhatsAppCloudPayload({
-              templateName: message.template_name,
-              languageCode: message.language_code,
-              recipientPhone: message.recipient_phone,
-              guestName: message.guests.full_name,
-              eventTitle: message.events.title,
-              invitationUrl: `${siteOrigin.replace(/\/$/, '')}/e/${message.events.public_id}`,
-            }),
-          ),
+      const delivery = await deliverAutomaticWhatsApp({
+        db,
+        config: whatsapp.config,
+        event: { id: message.events.id, title: message.events.title },
+        guest: {
+          id: message.guests.id,
+          fullName: message.guests.full_name,
+          phone: message.recipient_phone,
         },
-      );
-
-      const payload = (await response.json()) as {
-        readonly messages?: readonly { readonly id?: string }[];
-        readonly error?: { readonly message?: string };
-      };
-      if (!response.ok) throw new Error(payload.error?.message ?? `http_${response.status}`);
+        kind,
+        note: message.message_note ?? undefined,
+        siteOrigin,
+      });
 
       await db
         .from('event_messages')
         .update({
           status: 'sent',
-          provider_message_id: payload.messages?.[0]?.id ?? null,
+          provider_message_id: delivery.providerMessageId,
           error_message: null,
           sent_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -119,8 +142,7 @@ export async function GET(request: Request) {
         .from('event_messages')
         .update({
           status: 'failed',
-          error_message:
-            sendError instanceof Error ? sendError.message.slice(0, 500) : 'send_failed',
+          error_message: safeErrorCode(sendError),
           updated_at: new Date().toISOString(),
         })
         .eq('id', message.id);

@@ -63,7 +63,18 @@ export default async function AdminEventsPage({
           eyebrow="ניהול מערכת"
           title="לקוחות ואירועים"
           lede="לחיצה על שם האירוע או על אימייל הלקוח פותחת את האירוע במצב מנהל־על, כולל עריכה, מוזמנים, ייבוא מהטלפון ואישורי הגעה."
-          actions={<Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>}
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/admin/settings/whatsapp"
+                className={buttonClass({ variant: 'outline', size: 'sm' })}
+              >
+                <Icon name="whatsapp" />
+                הגדרות WhatsApp
+              </Link>
+              <Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>
+            </div>
+          }
         />
 
         <CreateCustomerPanel

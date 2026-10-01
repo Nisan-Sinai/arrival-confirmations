@@ -14,7 +14,7 @@ import { UI_MESSAGES } from '@/config/messages';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { GuestQuickNav } from '@/features/admin/GuestQuickNav';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
-import { WhatsAppSendCenter } from '@/features/admin/WhatsAppSendCenter';
+import { AutomaticWhatsAppSendPanel } from '@/features/admin/AutomaticWhatsAppSendPanel';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
 import type { ProSeatingTable, TableShape } from '@/lib/proSeating';
 import { createUserClient } from '@/lib/server/supabase';
@@ -226,7 +226,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
           className="mt-4"
           eyebrow="מוזמנים וכלים מתקדמים"
           title={event.title}
-          lede="הוספה ועריכה ידנית, ייבוא אנשי קשר, שליחת קישורים אישיים ומעקב — ומתחת, כל הכלים המתקדמים: ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג והושבה."
+          lede="הוספה ועריכה ידנית, ייבוא אנשי קשר, שליחת קישורים אישיים ומעקב — ומתחת, כל הכלים המתקדמים: ייבוא מ-Excel, שליחה אוטומטית דרך WhatsApp Business, מיתוג והושבה."
           actions={
             <Link
               href={`/e/${event.public_id}`}
@@ -283,11 +283,11 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             count={count}
             skipped={skipped}
           />
-          <WhatsAppSendCenter
+          <AutomaticWhatsAppSendPanel
             eventId={event.id}
             eventTitle={event.title}
             guests={sendCenterGuests}
-            premium={toolsEnabled}
+            enabled={toolsEnabled}
           />
           <PremiumToolsPanel
             eventId={event.id}
