@@ -107,7 +107,7 @@ export default async function WhatsAppSettingsPage({
             >
               <Icon name="whatsapp" />
             </span>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-primary text-xl font-bold">המספר המרכזי</h2>
               <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
                 שינוי כאן אינו דורש שינוי קוד. לאחר שמספר חדש מחובר ומאומת ב-Meta, מעדכנים את שני
@@ -157,12 +157,16 @@ export default async function WhatsAppSettingsPage({
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button formAction={adminTestWhatsAppSenderAction} variant="outline">
-                <Icon name="check-circle" />
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap">
+              <Button
+                formAction={adminTestWhatsAppSenderAction}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <Icon name="send" />
                 בדיקת חיבור ל-Meta
               </Button>
-              <Button formAction={adminSaveWhatsAppSenderAction}>
+              <Button formAction={adminSaveWhatsAppSenderAction} className="w-full sm:w-auto">
                 <Icon name="check-circle" />
                 שמירת המספר הפעיל
               </Button>

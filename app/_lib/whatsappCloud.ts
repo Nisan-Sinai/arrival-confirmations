@@ -4,6 +4,25 @@ import type { PremiumMessageKind } from '@/lib/premiumWhatsApp';
 
 export const WHATSAPP_BATCH_SIZE = 20;
 
+/** A `processing` row older than this is treated as abandoned (crashed request) and may be retried. */
+export const WHATSAPP_PROCESSING_STALE_MS = 10 * 60 * 1000;
+
+/**
+ * Whether a bulk-send request may claim an existing message row.
+ * `sent` is final; a fresh `processing` row belongs to another in-flight request.
+ */
+export function canClaimWhatsAppMessage(
+  status: string,
+  lastAttemptAt: string | null,
+  nowMs: number,
+): boolean {
+  if (status === 'pending' || status === 'failed') return true;
+  if (status !== 'processing') return false;
+  if (lastAttemptAt === null) return true;
+  const attemptedAt = Date.parse(lastAttemptAt);
+  return Number.isNaN(attemptedAt) || nowMs - attemptedAt >= WHATSAPP_PROCESSING_STALE_MS;
+}
+
 const TEMPLATE_ENV_BY_KIND: Record<PremiumMessageKind, string> = {
   invitation: 'WHATSAPP_TEMPLATE_INVITATION',
   reminder: 'WHATSAPP_TEMPLATE_REMINDER',

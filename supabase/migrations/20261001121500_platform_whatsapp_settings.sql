@@ -9,7 +9,7 @@ create table if not exists public.platform_whatsapp_settings (
   updated_at timestamptz not null default now(),
   constraint platform_whatsapp_settings_singleton check (id = 'default'),
   constraint platform_whatsapp_settings_sender_phone_shape
-    check (sender_phone ~ '^\\+?[0-9]{8,15}$'),
+    check (sender_phone ~ '^\+?[0-9]{8,15}$'),
   constraint platform_whatsapp_settings_phone_number_id_shape
     check (phone_number_id ~ '^[0-9]{5,32}$')
 );
@@ -39,7 +39,7 @@ select
 from public.audit_logs
 where entity_type = 'platform_whatsapp_settings'
   and action = 'platform_whatsapp_settings_updated'
-  and (metadata ->> 'senderPhone') ~ '^\\+?[0-9]{8,15}$'
+  and (metadata ->> 'senderPhone') ~ '^\+?[0-9]{8,15}$'
   and (metadata ->> 'phoneNumberId') ~ '^[0-9]{5,32}$'
 order by created_at desc
 limit 1

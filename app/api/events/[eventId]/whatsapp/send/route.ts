@@ -5,7 +5,12 @@ import { z } from 'zod';
 import { getEventLicense } from '@/app/_lib/eventLicenses';
 import { loadPlatformWhatsAppSettings } from '@/app/_lib/platformWhatsAppSettings';
 import { isMonetizedEvent } from '@/app/_lib/plans';
-import { readWhatsAppCloudConfig, WHATSAPP_BATCH_SIZE } from '@/app/_lib/whatsappCloud';
+import {
+  canClaimWhatsAppMessage,
+  readWhatsAppCloudConfig,
+  WHATSAPP_BATCH_SIZE,
+  WHATSAPP_PROCESSING_STALE_MS,
+} from '@/app/_lib/whatsappCloud';
 import { deliverAutomaticWhatsApp } from '@/app/_lib/whatsappServer';
 import {
   PERSONAL_INVITE_NOTE_MAX,
@@ -35,7 +40,10 @@ interface ExistingMessageRow {
   readonly id: string;
   readonly status: string;
   readonly attempt_count: number;
+  readonly last_attempt_at: string | null;
 }
+
+type BatchResultStatus = 'sent' | 'failed' | 'already_sent' | 'in_progress' | 'invalid';
 
 function toolsEnabled(license: Awaited<ReturnType<typeof getEventLicense>>): boolean {
   return (
@@ -131,12 +139,13 @@ export async function POST(
   );
   const results: {
     guestId: string;
-    status: 'sent' | 'failed' | 'already_sent' | 'invalid';
+    status: BatchResultStatus;
   }[] = [];
 
   let sent = 0;
   let failed = 0;
   let alreadySent = 0;
+  let inProgress = 0;
   let invalid = 0;
 
   for (const guestId of parsed.data.guestIds) {
@@ -149,7 +158,7 @@ export async function POST(
 
     const { data: existing } = await db
       .from('event_messages')
-      .select('id, status, attempt_count')
+      .select('id, status, attempt_count, last_attempt_at')
       .eq('campaign_id', parsed.data.campaignId)
       .eq('guest_id', guest.id)
       .eq('message_kind', parsed.data.kind)
@@ -162,7 +171,18 @@ export async function POST(
       continue;
     }
 
-    const now = new Date().toISOString();
+    const nowMs = Date.now();
+    if (
+      existingMessage !== null &&
+      !canClaimWhatsAppMessage(existingMessage.status, existingMessage.last_attempt_at, nowMs)
+    ) {
+      // Another request is sending this exact message right now (double click, second tab).
+      inProgress += 1;
+      results.push({ guestId, status: 'in_progress' });
+      continue;
+    }
+
+    const now = new Date(nowMs).toISOString();
     let messageId = existingMessage?.id ?? null;
 
     if (messageId === null) {
@@ -185,6 +205,12 @@ export async function POST(
         .select('id')
         .single();
 
+      if (insertError?.code === '23505') {
+        // A concurrent request inserted the same campaign/guest/kind row first.
+        inProgress += 1;
+        results.push({ guestId, status: 'in_progress' });
+        continue;
+      }
       if (insertError || inserted === null) {
         failed += 1;
         results.push({ guestId, status: 'failed' });
@@ -192,7 +218,10 @@ export async function POST(
       }
       messageId = (inserted as { id: string }).id;
     } else {
-      const { error: claimError } = await db
+      const staleBefore = new Date(nowMs - WHATSAPP_PROCESSING_STALE_MS).toISOString();
+      // Conditional claim: only one request can move the row into `processing`, so a
+      // concurrent retry never sends the same message twice.
+      const { data: claimed, error: claimError } = await db
         .from('event_messages')
         .update({
           status: 'processing',
@@ -201,11 +230,20 @@ export async function POST(
           last_attempt_at: now,
           attempt_count: (existingMessage?.attempt_count ?? 0) + 1,
         })
-        .eq('id', messageId);
+        .eq('id', messageId)
+        .or(
+          `status.in.(pending,failed),and(status.eq.processing,or(last_attempt_at.is.null,last_attempt_at.lt."${staleBefore}"))`,
+        )
+        .select('id');
 
       if (claimError) {
         failed += 1;
         results.push({ guestId, status: 'failed' });
+        continue;
+      }
+      if (claimed === null || claimed.length === 0) {
+        inProgress += 1;
+        results.push({ guestId, status: 'in_progress' });
         continue;
       }
     }
@@ -261,6 +299,7 @@ export async function POST(
       sent,
       failed,
       alreadySent,
+      inProgress,
       invalid,
       userId: user.id,
     },
@@ -272,6 +311,7 @@ export async function POST(
     sent,
     failed,
     alreadySent,
+    inProgress,
     invalid,
     results,
   });

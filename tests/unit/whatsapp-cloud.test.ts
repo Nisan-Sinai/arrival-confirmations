@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildWhatsAppTemplatePayload,
+  canClaimWhatsAppMessage,
   readWhatsAppCloudConfig,
   sendWhatsAppTemplate,
   testWhatsAppSenderConnection,
@@ -328,5 +329,31 @@ describe('WhatsApp template delivery', () => {
   it('sanitizes a send error when the response body is not JSON', async () => {
     stubInvalidJson(503);
     await expect(sendWhatsAppTemplate(config(), input)).rejects.toThrow('whatsapp_http_503');
+  });
+});
+
+describe('WhatsApp message claiming', () => {
+  const now = Date.parse('2026-10-01T12:00:00.000Z');
+
+  it('claims pending and failed rows', () => {
+    expect(canClaimWhatsAppMessage('pending', null, now)).toBe(true);
+    expect(canClaimWhatsAppMessage('failed', '2026-10-01T11:59:00.000Z', now)).toBe(true);
+  });
+
+  it('never re-claims a sent row', () => {
+    expect(canClaimWhatsAppMessage('sent', null, now)).toBe(false);
+  });
+
+  it('leaves a fresh processing row to the request that owns it', () => {
+    expect(canClaimWhatsAppMessage('processing', '2026-10-01T11:55:00.000Z', now)).toBe(false);
+  });
+
+  it('recovers an abandoned processing row', () => {
+    expect(canClaimWhatsAppMessage('processing', '2026-10-01T11:50:00.000Z', now)).toBe(true);
+    expect(canClaimWhatsAppMessage('processing', null, now)).toBe(true);
+  });
+
+  it('rejects unknown statuses', () => {
+    expect(canClaimWhatsAppMessage('cancelled', null, now)).toBe(false);
   });
 });

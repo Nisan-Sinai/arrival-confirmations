@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,14 +28,25 @@ interface BatchResponse {
   readonly sent: number;
   readonly failed: number;
   readonly alreadySent: number;
+  readonly inProgress?: number;
   readonly invalid: number;
   readonly results: readonly {
     readonly guestId: string;
-    readonly status: 'sent' | 'failed' | 'already_sent' | 'invalid';
+    readonly status: 'sent' | 'failed' | 'already_sent' | 'in_progress' | 'invalid';
   }[];
 }
 
+interface SendTotals {
+  sent: number;
+  failed: number;
+  alreadySent: number;
+  inProgress: number;
+  invalid: number;
+}
+
 const BATCH_SIZE = 20;
+/** Guests rendered before "show more" — keeps the page scrollable on phones with large lists. */
+const GUEST_LIST_PAGE = 24;
 
 function chunks<T>(items: readonly T[], size: number): readonly T[][] {
   const output: T[][] = [];
@@ -64,12 +75,8 @@ export function AutomaticWhatsAppSendPanel({
   const [confirming, setConfirming] = useState(false);
   const [sending, setSending] = useState(false);
   const [processed, setProcessed] = useState(0);
-  const [summary, setSummary] = useState<{
-    sent: number;
-    failed: number;
-    alreadySent: number;
-    invalid: number;
-  } | null>(null);
+  const [summary, setSummary] = useState<SendTotals | null>(null);
+  const [visibleCount, setVisibleCount] = useState(GUEST_LIST_PAGE);
   const [error, setError] = useState<string | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
 
@@ -82,10 +89,22 @@ export function AutomaticWhatsAppSendPanel({
     [shownGuests],
   );
   const invalidCount = shownGuests.length - reachableGuests.length;
+  const visibleGuests = shownGuests.slice(0, visibleCount);
+
+  // Leaving mid-send stops the remaining batches; warn before the tab closes or reloads.
+  useEffect(() => {
+    if (!sending) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [sending]);
 
   const selectKind = (next: PremiumMessageKind) => {
     setKind(next);
     setScope(next === 'update' || next === 'thanks' ? 'attending' : 'unanswered');
+    setVisibleCount(GUEST_LIST_PAGE);
     setConfirming(false);
     setSummary(null);
     setError(null);
@@ -104,7 +123,13 @@ export function AutomaticWhatsAppSendPanel({
     const activeCampaignId = campaignId ?? crypto.randomUUID();
     setCampaignId(activeCampaignId);
     const guestBatches = chunks(reachableGuests, BATCH_SIZE);
-    const totals = { sent: 0, failed: 0, alreadySent: 0, invalid: invalidCount };
+    const totals: SendTotals = {
+      sent: 0,
+      failed: 0,
+      alreadySent: 0,
+      inProgress: 0,
+      invalid: invalidCount,
+    };
     const delivered = new Set(sentGuestIds);
 
     try {
@@ -135,6 +160,7 @@ export function AutomaticWhatsAppSendPanel({
         totals.sent += payload.sent;
         totals.failed += payload.failed;
         totals.alreadySent += payload.alreadySent;
+        totals.inProgress += payload.inProgress ?? 0;
         totals.invalid += payload.invalid;
 
         for (const result of payload.results) {
@@ -151,14 +177,18 @@ export function AutomaticWhatsAppSendPanel({
       setCampaignId(null);
     } catch (sendError) {
       const code = sendError instanceof Error ? sendError.message : 'batch_failed';
+      // Keep what already went out visible, so the host knows a retry resumes, not restarts.
+      if (totals.sent + totals.alreadySent + totals.failed + totals.inProgress > 0) {
+        setSummary(totals);
+      }
       setError(
         code === 'whatsapp_not_configured'
-          ? 'WhatsApp Business עדיין לא הוגדר. יש להגדיר מספר שולח בממשק האדמין ולוודא שה-Access Token והתבניות מוגדרים ב-Vercel.'
+          ? 'השליחה האוטומטית עדיין לא הופעלה במערכת. אפשר בינתיים לשלוח דרך מרכז השליחה הידני, או לפנות לתמיכה.'
           : code === 'premium_required'
             ? 'שליחה אוטומטית זמינה רק באירוע עם חבילת Premium או Pro פעילה.'
             : code === 'rate_limited'
               ? 'בוצעו הרבה שליחות בזמן קצר. נסו שוב בעוד שעה.'
-              : 'השליחה נעצרה באמצע. ההודעות שכבר נשלחו לא יישלחו שוב באותו ניסיון.',
+              : 'השליחה נעצרה באמצע. לחיצה נוספת על "שליחה" תמשיך מאותה נקודה — מי שכבר קיבל הודעה לא יקבל אותה שוב.',
       );
     } finally {
       setSending(false);
@@ -167,16 +197,16 @@ export function AutomaticWhatsAppSendPanel({
 
   return (
     <Card id="whatsapp-send-center" padding="lg" className="scroll-mt-32">
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
         <span
           aria-hidden="true"
-          className="bg-accent-soft/70 text-accent-strong flex size-11 shrink-0 items-center justify-center rounded-xl"
+          className="bg-accent-soft/70 text-accent-strong flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-11"
         >
           <Icon name="whatsapp" className="size-5" />
         </span>
         <div className="min-w-0">
           <p className="text-eyebrow text-accent-strong font-semibold">WhatsApp Business</p>
-          <h2 className="text-primary mt-1 text-xl font-bold sm:text-2xl">
+          <h2 className="text-primary mt-1 text-lg font-bold text-balance sm:text-2xl">
             שליחה אוטומטית מהמספר המרכזי
           </h2>
           <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
@@ -197,7 +227,7 @@ export function AutomaticWhatsAppSendPanel({
             הודעות WhatsApp מהעסק.
           </Alert>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
             <StatCard label="מוזמנים" value={guests.length} icon={<Icon name="users" />} />
             <StatCard label="מוצגים" value={shownGuests.length} icon={<Icon name="filter" />} />
             <StatCard
@@ -227,6 +257,7 @@ export function AutomaticWhatsAppSendPanel({
                 value={scope}
                 onChange={(event) => {
                   setScope(event.target.value as PremiumCampaignScope);
+                  setVisibleCount(GUEST_LIST_PAGE);
                   setConfirming(false);
                   setCampaignId(null);
                 }}
@@ -241,9 +272,12 @@ export function AutomaticWhatsAppSendPanel({
 
             <Field label="חיפוש">
               <Input
+                type="search"
+                enterKeyHint="search"
                 value={query}
                 onChange={(event) => {
                   setQuery(event.target.value);
+                  setVisibleCount(GUEST_LIST_PAGE);
                   setConfirming(false);
                   setCampaignId(null);
                 }}
@@ -272,12 +306,12 @@ export function AutomaticWhatsAppSendPanel({
           )}
 
           <div className="border-accent/30 bg-accent-soft/25 mt-5 rounded-xl border p-4">
-            <p className="text-primary font-semibold">
+            <p className="text-primary font-semibold break-words">
               שליחה אוטומטית ל-{reachableGuests.length} מוזמנים · {eventTitle}
             </p>
             <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-              השליחה מתבצעת בקבוצות קטנות כדי לשמור על יציבות. אפשר להחליף בעתיד את מספר השולח דרך
-              הגדרות Vercel בלי שינוי קוד.
+              השליחה מתבצעת בקבוצות קטנות כדי לשמור על יציבות. השאירו את הדף פתוח עד שהשליחה
+              מסתיימת.
             </p>
 
             {invalidCount > 0 && (
@@ -295,7 +329,7 @@ export function AutomaticWhatsAppSendPanel({
                   </span>
                 </div>
                 <progress
-                  className="mt-2 h-2 w-full"
+                  className="accent-accent-strong mt-2 h-2 w-full overflow-hidden rounded-full"
                   value={processed}
                   max={Math.max(reachableGuests.length, 1)}
                 />
@@ -305,7 +339,7 @@ export function AutomaticWhatsAppSendPanel({
             {!sending && !confirming && (
               <Button
                 type="button"
-                className="mt-4"
+                className="mt-4 w-full sm:w-auto"
                 disabled={reachableGuests.length === 0}
                 onClick={() => {
                   setSummary(null);
@@ -324,11 +358,16 @@ export function AutomaticWhatsAppSendPanel({
                 <p className="text-muted-foreground mt-1 text-sm">
                   יישלחו עכשיו {reachableGuests.length} הודעות WhatsApp מהמספר העסקי המרכזי.
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button type="button" onClick={() => void sendAll()}>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <Button type="button" className="w-full sm:w-auto" onClick={() => void sendAll()}>
                     אישור ושליחה עכשיו
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => setConfirming(false)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full sm:w-auto"
+                    onClick={() => setConfirming(false)}
+                  >
                     ביטול
                   </Button>
                 </div>
@@ -340,6 +379,7 @@ export function AutomaticWhatsAppSendPanel({
             <Alert tone={summary.failed > 0 ? 'warning' : 'success'} className="mt-4">
               נשלחו {summary.sent} הודעות
               {summary.alreadySent > 0 ? ` · ${summary.alreadySent} כבר היו מסומנות כנשלחו` : ''}
+              {summary.inProgress > 0 ? ` · ${summary.inProgress} כבר בתהליך שליחה` : ''}
               {summary.failed > 0 ? ` · ${summary.failed} נכשלו` : ''}
               {summary.invalid > 0 ? ` · ${summary.invalid} מספרים לא תקינים` : ''}.
             </Alert>
@@ -352,8 +392,8 @@ export function AutomaticWhatsAppSendPanel({
           )}
 
           {shownGuests.length > 0 && (
-            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-              {shownGuests.map((guest) => {
+            <ul className="mt-6 grid gap-2 sm:grid-cols-2 sm:gap-3">
+              {visibleGuests.map((guest) => {
                 const valid = normalizeWhatsAppPhone(guest.phone) !== null;
                 const sent = sentGuestIds.has(guest.id);
                 return (
@@ -368,16 +408,33 @@ export function AutomaticWhatsAppSendPanel({
                       </p>
                     </div>
                     {sent ? (
-                      <Badge tone="success">נשלח</Badge>
+                      <Badge tone="success" className="shrink-0">
+                        נשלח
+                      </Badge>
                     ) : valid ? (
-                      <Badge tone="outline">מוכן</Badge>
+                      <Badge tone="outline" className="shrink-0">
+                        מוכן
+                      </Badge>
                     ) : (
-                      <Badge tone="danger">מספר לא תקין</Badge>
+                      <Badge tone="danger" className="shrink-0">
+                        מספר לא תקין
+                      </Badge>
                     )}
                   </li>
                 );
               })}
             </ul>
+          )}
+
+          {shownGuests.length > visibleCount && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3 w-full sm:w-auto"
+              onClick={() => setVisibleCount((count) => count + GUEST_LIST_PAGE)}
+            >
+              הצגת עוד מוזמנים ({shownGuests.length - visibleCount} נוספים)
+            </Button>
           )}
         </>
       )}
