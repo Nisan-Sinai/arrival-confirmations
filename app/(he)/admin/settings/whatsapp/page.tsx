@@ -27,12 +27,11 @@ function errorMessage(code: string): string | null {
   if (code === '') return null;
   if (code === 'invalid-settings') return 'בדקו שמספר הטלפון וה-Phone Number ID תקינים.';
   if (code === 'meta-not-configured') {
-    return 'חסר WHATSAPP_ACCESS_TOKEN או שחסרות תבניות WhatsApp ב-Vercel.';
+    return 'חסר WHATSAPP_ACCESS_TOKEN ב-Vercel.';
   }
   if (code === 'meta-unreachable') return 'לא הצלחנו להגיע ל-Meta. נסו שוב.';
-  if (code === 'meta-test-failed') return 'Meta דחתה את בדיקת החיבור.';
-  if (code.startsWith('meta-')) {
-    return `Meta החזירה שגיאה ${code.slice(5)}. בדקו את ה-Phone Number ID וההרשאות של ה-token.`;
+  if (code.startsWith('whatsapp_http_')) {
+    return 'Meta דחתה את בדיקת החיבור. בדקו את ה-Phone Number ID וההרשאות של ה-token.';
   }
   return 'לא הצלחנו לעדכן את הגדרות WhatsApp.';
 }
@@ -45,6 +44,7 @@ export default async function WhatsAppSettingsPage({
     tested?: string;
     error?: string;
     phone?: string;
+    phoneNumberId?: string;
     name?: string;
   }>;
 }) {
@@ -54,8 +54,8 @@ export default async function WhatsAppSettingsPage({
   const settings = await loadPlatformWhatsAppSettings(db);
   const message = errorMessage(params.error ?? '');
 
-  const senderPhone = settings?.senderPhone ?? '';
-  const phoneNumberId = settings?.phoneNumberId ?? '';
+  const senderPhone = params.phone ?? settings?.senderPhone ?? '';
+  const phoneNumberId = params.phoneNumberId ?? settings?.phoneNumberId ?? '';
 
   return (
     <main id="main" className="flex-1 py-8 sm:py-12">
