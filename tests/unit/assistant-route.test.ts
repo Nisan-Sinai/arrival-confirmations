@@ -128,4 +128,85 @@ describe('private, on-site assistant', () => {
     expect(getHostEventAnswer).not.toHaveBeenCalled();
     expect(JSON.stringify(await response.json())).not.toContain('פתחו את האירוע שלכם');
   });
+
+  describe('limits and privacy-safe counting', () => {
+    const allowed = { data: [{ allowed: true }], error: null };
+    const statsCalls = () =>
+      rpc.mock.calls.filter(([name]) => name === 'record_assistant_question');
+
+    it('allows 60 questions an hour before blocking anyone', async () => {
+      await POST(request());
+      expect(rpc).toHaveBeenCalledWith('consume_rate_limit', {
+        p_bucket_key: 'assistant:test-hash',
+        p_limit: 60,
+        p_window_seconds: 3600,
+      });
+    });
+
+    it('answers from the guide instead of blocking when only the AI quota is spent', async () => {
+      rpc.mockImplementation(async (name: string, args: { p_bucket_key?: string }) =>
+        name === 'consume_rate_limit' && args.p_bucket_key?.startsWith('assistant-ai:')
+          ? { data: [{ allowed: false }], error: null }
+          : allowed,
+      );
+      const response = await POST(request());
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ source: 'guide' });
+      expect(phrasePublicGuide).not.toHaveBeenCalled();
+      expect(rpc).toHaveBeenCalledWith('consume_rate_limit', {
+        p_bucket_key: 'assistant-ai:test-hash',
+        p_limit: 12,
+        p_window_seconds: 3600,
+      });
+    });
+
+    it('does not spend AI quota on answers that are never rephrased', async () => {
+      await POST(request([{ role: 'user', content: 'כמה זה עולה?' }]));
+      expect(
+        rpc.mock.calls.some(
+          ([name, args]) =>
+            name === 'consume_rate_limit' &&
+            String((args as { p_bucket_key: string }).p_bucket_key).startsWith('assistant-ai:'),
+        ),
+      ).toBe(false);
+    });
+
+    it('counts the outcome and topic, never the question text', async () => {
+      phrasePublicGuide.mockResolvedValueOnce('1. פתחו את הדשבורד וצרו אירוע חדש.');
+      await POST(request([{ role: 'user', content: 'איך יוצרים אירוע? דנה 0501234567' }]));
+      expect(statsCalls()).toEqual([
+        ['record_assistant_question', { p_context: 'site', p_outcome: 'ai', p_topic: 'setup' }],
+      ]);
+      expect(JSON.stringify(statsCalls())).not.toMatch(/דנה|0501234567/);
+    });
+
+    it('counts a question nothing matched as unmatched', async () => {
+      await POST(request([{ role: 'user', content: 'מה מזג האוויר?' }]));
+      expect(statsCalls()).toEqual([
+        ['record_assistant_question', { p_context: 'site', p_outcome: 'unmatched', p_topic: null }],
+      ]);
+    });
+
+    it('counts a private event answer without any event or guest detail', async () => {
+      const eventId = '00000000-0000-4000-8000-000000000001';
+      getHostEventAnswer.mockResolvedValueOnce({ answer: 'באירוע יש 3 תשובות.', links: [] });
+      await POST(request([{ role: 'user', content: 'כמה תשובות יש?' }], eventId));
+      expect(statsCalls()).toEqual([
+        [
+          'record_assistant_question',
+          { p_context: 'event', p_outcome: 'event', p_topic: 'event_data' },
+        ],
+      ]);
+    });
+
+    it('still answers when the counter cannot be written', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      rpc.mockImplementation(async (name: string) =>
+        name === 'record_assistant_question' ? Promise.reject(new Error('db down')) : allowed,
+      );
+      const response = await POST(request());
+      expect(response.status).toBe(200);
+      expect(console.warn).toHaveBeenCalledWith('ASSISTANT_STATS_UNAVAILABLE');
+    });
+  });
 });

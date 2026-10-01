@@ -72,6 +72,13 @@ export default async function AdminEventsPage({
                 <Icon name="whatsapp" />
                 הגדרות WhatsApp
               </Link>
+              <Link
+                href="/admin/assistant"
+                className={buttonClass({ variant: 'outline', size: 'sm' })}
+              >
+                <Icon name="sparkles" />
+                העוזר באתר
+              </Link>
               <Badge tone="outline">{events?.length ?? 0} אירועים במערכת</Badge>
             </div>
           }

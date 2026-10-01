@@ -436,7 +436,13 @@ export function answerProductQuestion({
   locale: Locale;
   context: AssistantContext;
   questions: readonly string[];
-}): { answer: string; links: AssistantLink[]; generation?: PublicGuideGeneration } {
+}): {
+  answer: string;
+  links: AssistantLink[];
+  /** The matched article id, `greeting`, or null when nothing matched. Never question text. */
+  topic: string | null;
+  generation?: PublicGuideGeneration;
+} {
   const latest = normalized(questions.at(-1) ?? '');
   const recentQuestions = questions.slice(0, -1).map(normalized).reverse();
   const previous =
@@ -450,6 +456,7 @@ export function answerProductQuestion({
           ? 'בשמחה. במה לעזור — יצירת אירוע, הזמנות, אישורי הגעה או מחירים?'
           : 'Happy to help. What do you need: event setup, invitations, RSVPs or pricing?',
       links: [],
+      topic: 'greeting',
     };
   }
   const followUp =
@@ -500,6 +507,7 @@ export function answerProductQuestion({
             ? 'מועד האירוע, המקום וההערות של בעלי האירוע — למשל חניה או קוד לבוש — מופיעים בהזמנה עצמה, ולעיתים גם טלפון לבירורים בתחתיתה. לשאלות אחרות על האירוע פנו לבעלי האירוע. אני יכול לעזור באישור הגעה ובשינוי תשובה.'
             : 'The date, venue and any notes from the hosts — such as parking or dress code — are on the invitation itself, sometimes with a phone number for questions at the bottom. For anything else about the event, ask the hosts. I can help with replying and changing your answer.',
         links: [],
+        topic: null,
       };
     }
     return {
@@ -508,6 +516,7 @@ export function answerProductQuestion({
           ? `אפשר לשאול אותי על יצירת אירוע, הזמנות, אישורי הגעה, מוזמנים, הושבה ומחירים. לשאלה על המוזמנים שלכם פתחו את האירוע בדשבורד. לשאלות אחרות כתבו אל ${appConfig.supportEmail}.`
           : `I can help with creating events, invitations, RSVPs, guests, seating and prices. For your own guest list, open the event in your dashboard. For anything else, email ${appConfig.supportEmail}.`,
       links: [{ href: '/dashboard', label: locale === 'he' ? 'האירועים שלי' : 'My events' }],
+      topic: null,
     };
   }
 
@@ -538,6 +547,7 @@ export function answerProductQuestion({
   return {
     answer,
     links,
+    topic: scored[0]?.id ?? null,
     // Keep prices and privacy exact. Only curated public help may be rephrased.
     ...(scored.some(({ id }) => ['pricing', 'privacy', 'support', 'password'].includes(id))
       ? {}

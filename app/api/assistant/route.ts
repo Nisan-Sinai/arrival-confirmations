@@ -10,6 +10,34 @@ const messageSchema = z.discriminatedUnion('role', [
   z.object({ role: z.literal('user'), content: z.string().trim().min(1).max(1200) }),
   z.object({ role: z.literal('assistant'), content: z.string().trim().min(1).max(4000) }),
 ]);
+// Every question counts against a generous limit that protects the private event
+// lookup from automated traffic. Only Gemini calls count against the tighter quota, and
+// running out of it never blocks a visitor: they get the exact guide answer instead.
+const ASSISTANT_LIMIT_PER_HOUR = 60;
+const AI_PHRASING_LIMIT_PER_HOUR = 12;
+
+type Outcome = 'event' | 'ai' | 'guide' | 'unmatched' | 'greeting';
+type PrivilegedClient = ReturnType<typeof createPrivilegedClient>;
+
+/** Adds one to today's aggregate counter. Never blocks or fails the answer. */
+async function recordQuestion(
+  db: PrivilegedClient,
+  context: string,
+  outcome: Outcome,
+  topic: string | null,
+): Promise<void> {
+  try {
+    const { error } = await db.rpc('record_assistant_question', {
+      p_context: context,
+      p_outcome: outcome,
+      p_topic: topic,
+    });
+    if (error) console.warn('ASSISTANT_STATS_UNAVAILABLE', error.code);
+  } catch {
+    console.warn('ASSISTANT_STATS_UNAVAILABLE');
+  }
+}
+
 const requestSchema = z.object({
   locale: z.enum(['he', 'en']),
   context: z.enum(['site', 'event', 'guests', 'invitation', 'pricing']),
@@ -40,14 +68,12 @@ export async function POST(request: Request) {
     // A shared database limit remains effective across serverless instances and
     // protects the private event lookup from anonymous automated traffic.
     const { hash } = resolveClientIpHash(request.headers);
-    const { data: limit, error: limitError } = await createPrivilegedClient().rpc(
-      'consume_rate_limit',
-      {
-        p_bucket_key: `assistant:${hash}`,
-        p_limit: 12,
-        p_window_seconds: 3600,
-      },
-    );
+    const db = createPrivilegedClient();
+    const { data: limit, error: limitError } = await db.rpc('consume_rate_limit', {
+      p_bucket_key: `assistant:${hash}`,
+      p_limit: ASSISTANT_LIMIT_PER_HOUR,
+      p_window_seconds: 3600,
+    });
     if (limitError || !limit?.[0]) {
       console.error('AI_RATE_LIMIT_UNAVAILABLE', limitError?.code ?? 'empty_result');
       return fail(
@@ -76,6 +102,7 @@ export async function POST(request: Request) {
             locale,
           });
     if (localAnswer) {
+      await recordQuestion(db, context, 'event', 'event_data');
       return Response.json(
         { ...localAnswer, source: 'event' },
         { headers: { 'Cache-Control': 'no-store' } },
@@ -87,7 +114,25 @@ export async function POST(request: Request) {
       context,
       questions: messages.filter(({ role }) => role === 'user').map(({ content }) => content),
     });
-    const generated = guide.generation ? await phrasePublicGuide(guide.generation) : null;
+    let generated: string | null = null;
+    if (guide.generation) {
+      const { data: aiLimit, error: aiLimitError } = await db.rpc('consume_rate_limit', {
+        p_bucket_key: `assistant-ai:${hash}`,
+        p_limit: AI_PHRASING_LIMIT_PER_HOUR,
+        p_window_seconds: 3600,
+      });
+      if (!aiLimitError && aiLimit?.[0]?.allowed) {
+        generated = await phrasePublicGuide(guide.generation);
+      }
+    }
+    const outcome: Outcome = generated
+      ? 'ai'
+      : guide.topic === null
+        ? 'unmatched'
+        : guide.topic === 'greeting'
+          ? 'greeting'
+          : 'guide';
+    await recordQuestion(db, context, outcome, guide.topic);
     return Response.json(
       { answer: generated ?? guide.answer, links: guide.links, source: generated ? 'ai' : 'guide' },
       { headers: { 'Cache-Control': 'no-store' } },

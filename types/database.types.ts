@@ -52,6 +52,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      assistant_question_stats: {
+        Row: {
+          context: string;
+          day: string;
+          outcome: string;
+          question_count: number;
+          topic: string;
+        };
+        Insert: {
+          context: string;
+          day: string;
+          outcome: string;
+          question_count?: number;
+          topic?: string;
+        };
+        Update: {
+          context?: string;
+          day?: string;
+          outcome?: string;
+          question_count?: number;
+          topic?: string;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -438,6 +462,10 @@ export type Database = {
       consume_rate_limit: {
         Args: { p_bucket_key: string; p_limit: number; p_window_seconds: number };
         Returns: { allowed: boolean; remaining: number; reset_at: string }[];
+      };
+      record_assistant_question: {
+        Args: { p_context: string; p_outcome: string; p_topic: string | null };
+        Returns: undefined;
       };
       submit_rsvp: {
         Args: {
