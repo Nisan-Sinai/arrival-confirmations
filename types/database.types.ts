@@ -82,6 +82,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_whatsapp_settings: {
+        Row: {
+          id: string;
+          phone_number_id: string;
+          sender_phone: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          phone_number_id: string;
+          sender_phone: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          phone_number_id?: string;
+          sender_phone?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       events: {
         Row: {
           owner_user_id: string | null;
