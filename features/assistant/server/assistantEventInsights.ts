@@ -31,8 +31,17 @@ function detectIntent(question: string): Intent | null {
     .replace(/[\u0591-\u05c7\u200b-\u200f]/g, '');
   // An invitation guest asking how to decline needs instructions, not a host lookup.
   if (/איך|כיצד|לשנות|לעדכן|how (?:do|can|to)|change|update/.test(text)) return null;
+  // "How many guests can I add?" / "Can I bring kids?" ask what the product or event
+  // allows, not what the data says. Answering them with "open your event" sent visitors
+  // and invitation guests to a dashboard they do not have.
   if (
-    !/מי|כמה|רשימ|תראה|הצג|מצב|סיכום|סטטיסט|מה עם|who|how many|list|show|stats|count|summary/.test(
+    /(?:אפשר|מותר|ניתן|can (?:i|we|you)|allowed|able to).*(?:להכניס|להזמין|לרשום|להביא|להוסיף|לצרף|invite|add|bring|register)|מגבל|הגבל|מקסימום|עד כמה|\blimit|maximum/.test(
+      text,
+    )
+  )
+    return null;
+  if (
+    !/מי|כמה|רשימ|תראה|הצג|מצב|סיכום|סטטיסט|סטטוס|מה עם|who|how many|list|show|stats|status|count|summary/.test(
       text,
     )
   )
@@ -60,7 +69,7 @@ function detectIntent(question: string): Intent | null {
   if (/רשימת מוזמנ|מי המוזמנ|כל המוזמנ|כמה מוזמנ|guest list|all guests|how many guests/.test(text))
     return 'guests';
   if (
-    /כמה תשוב|כמה אישורי הגעה|סיכום|מצב האירוע|סטטיסטיק|rsvp count|event stats|how many repl|summary/.test(
+    /כמה תשוב|כמה אישורי הגעה|סיכום|מצב (?:ה)?אירוע|המצב באירוע|סטטוס|סטטיסטיק|rsvp count|event stats|status|how many repl|summary/.test(
       text,
     )
   )

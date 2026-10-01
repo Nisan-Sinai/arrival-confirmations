@@ -114,4 +114,18 @@ describe('private host answers', () => {
     expect(guestRead).not.toHaveBeenCalled();
     expect(replyRead).not.toHaveBeenCalled();
   });
+
+  it.each([
+    'כמה מוזמנים אפשר להכניס?',
+    'כמה אורחים אפשר להזמין בבייסיק?',
+    'כמה ילדים מותר להביא?',
+    'how many guests can I invite?',
+  ])('treats a capability question as product help, not a data lookup: %s', async (question) => {
+    expect(await ask(question)).toBeNull();
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it('answers a status question with the event summary', async () => {
+    expect((await ask('מה הסטטוס?'))?.answer).toContain('תשובות');
+  });
 });

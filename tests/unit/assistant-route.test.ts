@@ -111,4 +111,21 @@ describe('private, on-site assistant', () => {
     expect(await response.json()).toMatchObject({ code: 'AI_EVENT_NOT_FOUND' });
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it('never runs a host data lookup for an invitation guest', async () => {
+    const response = await POST(
+      new Request('https://preview.example/api/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://preview.example' },
+        body: JSON.stringify({
+          locale: 'he',
+          context: 'invitation',
+          messages: [{ role: 'user', content: 'כמה אנשים מגיעים?' }],
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(getHostEventAnswer).not.toHaveBeenCalled();
+    expect(JSON.stringify(await response.json())).not.toContain('פתחו את האירוע שלכם');
+  });
 });
