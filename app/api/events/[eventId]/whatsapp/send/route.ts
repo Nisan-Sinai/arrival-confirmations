@@ -13,6 +13,7 @@ import {
   type PremiumMessageKind,
 } from '@/lib/premiumWhatsApp';
 import { createPrivilegedClient, createUserClient } from '@/lib/server/supabase';
+import { hashIdentity, TOKEN_PURPOSES } from '@/lib/server/tokens';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -84,6 +85,20 @@ export async function POST(
   }
 
   const db = createPrivilegedClient() as unknown as SupabaseClient;
+  const rateKey = hashIdentity(`${user.id}:${event.id}`, TOKEN_PURPOSES.rateLimit);
+  const { data: rateData, error: rateError } = await db.rpc('consume_rate_limit', {
+    p_bucket_key: `whatsapp-send:${rateKey}`,
+    p_limit: 150,
+    p_window_seconds: 3600,
+  });
+  const rateRows = (rateData ?? []) as unknown as readonly { readonly allowed: boolean }[];
+  if (rateError || rateRows.length === 0) {
+    return NextResponse.json({ error: 'rate_limit_unavailable' }, { status: 503 });
+  }
+  if (!rateRows[0]!.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  }
+
   const senderSettings = await loadPlatformWhatsAppSettings(db);
   const whatsapp = readWhatsAppCloudConfig({
     ...process.env,
@@ -96,7 +111,8 @@ export async function POST(
     );
   }
 
-  const siteOrigin = new URL(request.url).origin;
+  const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const siteOrigin = configuredOrigin && configuredOrigin !== '' ? configuredOrigin : new URL(request.url).origin;
 
   const { data: guestData, error: guestError } = await db
     .from('guests')
