@@ -122,7 +122,7 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
   }
 
   return (
-    <div className="fixed right-4 bottom-4 z-[var(--z-overlay)] flex flex-col items-end sm:right-6 sm:bottom-6 rtl:items-start">
+    <div className="fixed right-4 bottom-[max(0.25rem,env(safe-area-inset-bottom))] z-[var(--z-overlay)] flex flex-col items-end rtl:items-start">
       {open && (
         <section
           role="dialog"

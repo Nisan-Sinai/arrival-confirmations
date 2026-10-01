@@ -26,14 +26,14 @@ describe('assistant product grounding', () => {
     expect(guide.links).not.toContainEqual({ href: '/dashboard', label: 'View RSVPs' });
   });
 
-  it('correctly describes manual WhatsApp delivery in Hebrew', () => {
+  it('correctly describes automatic WhatsApp delivery in Hebrew', () => {
     const guide = answerProductQuestion({
       locale: 'he',
       context: 'guests',
       questions: ['איך שולחים הזמנה אישית בוואטסאפ? זה אוטומטי לכולם?'],
     });
-    expect(guide.answer).toContain('לוחצים שליחה בעצמכם');
-    expect(guide.answer).toContain('לא שולח הודעות אוטומטית');
+    expect(guide.answer).toContain('לשלוח אוטומטית');
+    expect(guide.answer).toContain('בלי לפתוח את WhatsApp');
   });
 
   it('explains how to change an answer through a personal invitation', () => {
@@ -88,7 +88,7 @@ describe('assistant product grounding', () => {
     ['I changed my mind', 'new response'],
     ['Compare the plans', '₪199'],
     ['Can I import Excel?', 'TSV'],
-    ['How do I send a reminder?', 'send each message yourself'],
+    ['How do I send a reminder?', 'automatically send'],
   ])('understands English wording: %s', (question, expected) => {
     const guide = answerProductQuestion({ locale: 'en', context: 'site', questions: [question] });
     expect(guide.answer).toContain(expected);

@@ -129,7 +129,11 @@ export function EventManagementActions({
         </Tile>
       </div>
 
-      <p className="text-muted-foreground mt-3 truncate text-xs" dir="ltr" title={inviteUrl}>
+      <p
+        className="text-muted-foreground mt-3 w-0 min-w-full truncate text-xs"
+        dir="ltr"
+        title={inviteUrl}
+      >
         {inviteUrl}
       </p>
 

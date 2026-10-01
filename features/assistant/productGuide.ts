@@ -71,8 +71,8 @@ const articles: readonly Article[] = [
     ],
     contexts: ['event', 'guests'],
     answer: {
-      he: 'בעמוד האירוע אפשר להעתיק או לשתף את הקישור הציבורי. להזמנה אישית פתחו ״מוזמנים וכלים״ והכינו הודעה וקישור נפרדים לכל מוזמן. גם במרכז ״שלח לכולם״ אתם פותחים WhatsApp ולוחצים שליחה בעצמכם לכל הודעה; האתר לא שולח הודעות אוטומטית.',
-      en: 'Copy or share the public link from the event page. For personal invitations, open Guests and tools to prepare a separate link and message for each guest. Even in Send all, you open WhatsApp and send each message yourself; the site does not deliver messages automatically.',
+      he: 'בעמוד האירוע אפשר להעתיק או לשתף את הקישור הציבורי. באירוע Premium או Pro, ב״מוזמנים וכלים״ יש מרכז שליחה עם קישור אישי לכל מוזמן. כשהשליחה דרך WhatsApp Business מופעלת במערכת, אפשר לשלוח אוטומטית הזמנות, תזכורות ועדכונים מהמספר המרכזי, בלי לפתוח את WhatsApp במכשיר; עד אז פותחים WhatsApp ושולחים כל הודעה בעצמכם.',
+      en: 'Copy or share the public link from the event page. On a Premium or Pro event, Guests and tools has a send centre with a personal RSVP link for every guest. Once WhatsApp Business sending is enabled on the platform, you can automatically send invitations, reminders and updates from the central number without opening WhatsApp on your device; until then you open WhatsApp and send each message yourself.',
     },
     link: { path: '/dashboard', he: 'האירועים שלי', en: 'My events' },
   },

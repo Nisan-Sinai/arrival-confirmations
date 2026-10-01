@@ -267,7 +267,9 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
             {/* Steppers rather than bare number inputs: two 44px buttons need neither a
                 keyboard nor the tiny native spinner, which matters on a phone held by a
                 guest who may be seventy. The input inside is unchanged. */}
-            <div className="mt-2 grid grid-cols-3 gap-3">
+            {/* One per row on phones: three side by side left the number itself ~10px wide
+                at 360px, so a guest could not see the count they were submitting. */}
+            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
               {COUNT_FIELDS.map((field) => (
                 <Field key={field.name} label={field.label} error={error(field.name)}>
                   <NumberStepper

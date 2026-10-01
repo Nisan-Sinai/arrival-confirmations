@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@date-fns/tz": "1.5.0",
-    "@hebcal/core": "6.9.3",
+    "@hebcal/core": "6.11.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.2",
     "class-variance-authority": "0.7.1",

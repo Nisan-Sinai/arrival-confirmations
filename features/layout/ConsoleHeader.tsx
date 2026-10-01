@@ -163,6 +163,7 @@ export function ConsoleHeader({
               size="sm"
               aria-label="התנתקות"
               data-tooltip="התנתקות"
+              data-tooltip-placement="bottom"
               className="tooltip-host text-muted-foreground hover:text-primary h-9 w-9 px-0 sm:w-auto sm:px-3"
             >
               <Icon name="logout" />

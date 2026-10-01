@@ -5,6 +5,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { getEventLicense } from '@/app/_lib/eventLicenses';
 import { getPlanDefinition, isMonetizedEvent } from '@/app/_lib/plans';
+import { loadPlatformWhatsAppSettings } from '@/app/_lib/platformWhatsAppSettings';
+import { readWhatsAppCloudConfig } from '@/app/_lib/whatsappCloud';
 import { buttonClass } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
@@ -14,10 +16,11 @@ import { UI_MESSAGES } from '@/config/messages';
 import { GuestManagementPanel } from '@/features/admin/GuestManagementPanel';
 import { GuestQuickNav } from '@/features/admin/GuestQuickNav';
 import { PremiumToolsPanel } from '@/features/admin/PremiumToolsPanel';
+import { AutomaticWhatsAppSendPanel } from '@/features/admin/AutomaticWhatsAppSendPanel';
 import { WhatsAppSendCenter } from '@/features/admin/WhatsAppSendCenter';
 import type { PremiumAttendanceStatus } from '@/lib/premiumWhatsApp';
 import type { ProSeatingTable, TableShape } from '@/lib/proSeating';
-import { createUserClient } from '@/lib/server/supabase';
+import { createPrivilegedClient, createUserClient } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
   title: 'ניהול מוזמנים',
@@ -79,6 +82,27 @@ interface SeatingTableRow {
   readonly sort_order: number;
 }
 
+/**
+ * Automatic sending replaces the manual send centre only once the platform can actually
+ * send: token, sender and all four approved templates present. Until then a premium host
+ * keeps the manual centre that works today instead of a panel whose every click fails.
+ */
+async function automaticWhatsAppReady(): Promise<boolean> {
+  try {
+    const settings = await loadPlatformWhatsAppSettings(
+      createPrivilegedClient() as unknown as SupabaseClient,
+    );
+    return (
+      readWhatsAppCloudConfig({
+        ...process.env,
+        ...(settings === null ? {} : { WHATSAPP_PHONE_NUMBER_ID: settings.phoneNumberId }),
+      }).config !== null
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default async function GuestPage({ params, searchParams }: GuestPageProps) {
   const { id } = await params;
   const { saved = '', error = '', count = '', skipped = '' } = await searchParams;
@@ -108,6 +132,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
   const paidTools = license.plan === 'premium' || license.plan === 'pro';
   const toolsEnabled = license.plan === 'legacy' || (paidTools && license.status === 'active');
   const isPro = license.plan === 'pro' && license.status === 'active';
+  const automaticSending = toolsEnabled && (await automaticWhatsAppReady());
   // The live limit for a plan that is on; premium's number for the locked preview, so the
   // greyed card shows what the host would get rather than their trial's ten.
   const attendeeLimit = toolsEnabled
@@ -226,7 +251,7 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
           className="mt-4"
           eyebrow="מוזמנים וכלים מתקדמים"
           title={event.title}
-          lede="הוספה ועריכה ידנית, ייבוא אנשי קשר, שליחת קישורים אישיים ומעקב — ומתחת, כל הכלים המתקדמים: ייבוא מ-Excel, מרכז שליחה חכם ב-WhatsApp, מיתוג והושבה."
+          lede="הוספה ועריכה ידנית, ייבוא אנשי קשר, שליחת קישורים אישיים ומעקב — ומתחת, כל הכלים המתקדמים: ייבוא מ-Excel, שליחה אוטומטית דרך WhatsApp Business, מיתוג והושבה."
           actions={
             <Link
               href={`/e/${event.public_id}`}
@@ -283,12 +308,21 @@ export default async function GuestPage({ params, searchParams }: GuestPageProps
             count={count}
             skipped={skipped}
           />
-          <WhatsAppSendCenter
-            eventId={event.id}
-            eventTitle={event.title}
-            guests={sendCenterGuests}
-            premium={toolsEnabled}
-          />
+          {automaticSending ? (
+            <AutomaticWhatsAppSendPanel
+              eventId={event.id}
+              eventTitle={event.title}
+              guests={sendCenterGuests}
+              enabled
+            />
+          ) : (
+            <WhatsAppSendCenter
+              eventId={event.id}
+              eventTitle={event.title}
+              guests={sendCenterGuests}
+              premium={toolsEnabled}
+            />
+          )}
           <PremiumToolsPanel
             eventId={event.id}
             guests={premiumGuests}
