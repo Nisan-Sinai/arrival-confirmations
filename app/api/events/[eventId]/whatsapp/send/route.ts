@@ -33,6 +33,7 @@ interface GuestRow {
 interface ExistingMessageRow {
   readonly id: string;
   readonly status: string;
+  readonly attempt_count: number;
 }
 
 function toolsEnabled(license: Awaited<ReturnType<typeof getEventLicense>>): boolean {
@@ -131,7 +132,7 @@ export async function POST(
 
     const { data: existing } = await db
       .from('event_messages')
-      .select('id, status')
+      .select('id, status, attempt_count')
       .eq('campaign_id', parsed.data.campaignId)
       .eq('guest_id', guest.id)
       .eq('message_kind', parsed.data.kind)
@@ -163,6 +164,7 @@ export async function POST(
           status: 'processing',
           attempt_count: 1,
           last_attempt_at: now,
+          attempt_count: existingMessage.attempt_count + 1,
         })
         .select('id')
         .single();
