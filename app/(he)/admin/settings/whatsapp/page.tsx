@@ -45,6 +45,7 @@ export default async function WhatsAppSettingsPage({
     error?: string;
     phone?: string;
     phoneNumberId?: string;
+    verifiedPhone?: string;
     name?: string;
   }>;
 }) {
@@ -87,7 +88,7 @@ export default async function WhatsAppSettingsPage({
         {params.tested === '1' && (
           <Alert tone="success" className="mt-6">
             החיבור ל-Meta תקין
-            {params.phone ? ` · ${params.phone}` : ''}
+            {params.verifiedPhone ? ` · ${params.verifiedPhone}` : ''}
             {params.name ? ` · ${params.name}` : ''}.
           </Alert>
         )}
