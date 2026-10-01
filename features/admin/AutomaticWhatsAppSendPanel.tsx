@@ -148,7 +148,7 @@ export function AutomaticWhatsAppSendPanel({
       const code = sendError instanceof Error ? sendError.message : 'batch_failed';
       setError(
         code === 'whatsapp_not_configured'
-          ? 'WhatsApp Business עדיין לא הוגדר בשרת. יש להוסיף את פרטי Meta ב-Vercel.'
+          ? 'WhatsApp Business עדיין לא הוגדר. יש להגדיר מספר שולח בממשק האדמין ולוודא שה-Access Token והתבניות מוגדרים ב-Vercel.'
           : code === 'premium_required'
             ? 'שליחה אוטומטית זמינה רק באירוע עם חבילת Premium או Pro פעילה.'
             : 'השליחה נעצרה באמצע. ההודעות שכבר נשלחו לא יישלחו שוב באותו ניסיון.',
