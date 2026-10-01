@@ -16,7 +16,9 @@ export interface PlatformWhatsAppSettings {
   readonly updatedBy: string | null;
 }
 
-export function parsePlatformWhatsAppSettings(row: SettingsRow | null): PlatformWhatsAppSettings | null {
+export function parsePlatformWhatsAppSettings(
+  row: SettingsRow | null,
+): PlatformWhatsAppSettings | null {
   if (row === null) return null;
 
   const senderPhone = row.sender_phone.trim();

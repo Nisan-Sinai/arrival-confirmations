@@ -68,12 +68,7 @@ describe('AutomaticWhatsAppSendPanel', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     render(
-      <AutomaticWhatsAppSendPanel
-        eventId="e1"
-        eventTitle="החתונה"
-        guests={manyGuests}
-        enabled
-      />,
+      <AutomaticWhatsAppSendPanel eventId="e1" eventTitle="החתונה" guests={manyGuests} enabled />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'שליחה אוטומטית לכולם (21)' }));

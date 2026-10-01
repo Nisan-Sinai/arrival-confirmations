@@ -112,7 +112,8 @@ export async function POST(
   }
 
   const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const siteOrigin = configuredOrigin && configuredOrigin !== '' ? configuredOrigin : new URL(request.url).origin;
+  const siteOrigin =
+    configuredOrigin && configuredOrigin !== '' ? configuredOrigin : new URL(request.url).origin;
 
   const { data: guestData, error: guestError } = await db
     .from('guests')

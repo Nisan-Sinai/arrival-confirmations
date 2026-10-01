@@ -40,8 +40,9 @@ for (const width of [320, 390]) {
   }
 }
 
-
-test('assistant launcher stays clear of page actions at the desktop viewport edge', async ({ page }) => {
+test('assistant launcher stays clear of page actions at the desktop viewport edge', async ({
+  page,
+}) => {
   const width = 1440;
   const height = 900;
   await page.setViewportSize({ width, height });
