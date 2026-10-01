@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { assertPlatformOwner } from '@/app/_lib/platformAdmin';
-import { readWhatsAppCloudConfig } from '@/app/_lib/whatsappCloud';
+import { testWhatsAppSenderConnection } from '@/app/_lib/whatsappCloud';
 import { createPrivilegedClient } from '@/lib/server/supabase';
 
 const senderSchema = z.object({
@@ -27,13 +27,6 @@ function value(formData: FormData, name: string): string {
 function settingsUrl(params: Record<string, string>): string {
   const search = new URLSearchParams(params);
   return `/admin/settings/whatsapp?${search.toString()}`;
-}
-
-function cloudConfigWithPhoneNumberId(phoneNumberId: string) {
-  return readWhatsAppCloudConfig({
-    ...process.env,
-    WHATSAPP_PHONE_NUMBER_ID: phoneNumberId,
-  });
 }
 
 export async function adminSaveWhatsAppSenderAction(formData: FormData): Promise<void> {
@@ -86,45 +79,43 @@ export async function adminTestWhatsAppSenderAction(formData: FormData): Promise
     redirect(settingsUrl({ error: 'invalid-settings' }));
   }
 
-  const whatsapp = cloudConfigWithPhoneNumberId(parsed.data.phoneNumberId);
-  if (whatsapp.config === null) {
-    redirect(settingsUrl({ error: 'meta-not-configured' }));
-  }
-
-  let response: Response;
-  try {
-    response = await fetch(
-      `https://graph.facebook.com/${whatsapp.config.graphVersion}/${parsed.data.phoneNumberId}?fields=display_phone_number,verified_name`,
-      {
-        headers: { authorization: `Bearer ${whatsapp.config.accessToken}` },
-        cache: 'no-store',
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
-  } catch {
-    redirect(settingsUrl({ error: 'meta-unreachable' }));
-  }
-
-  const payload = (await response.json().catch(() => null)) as {
-    readonly display_phone_number?: string;
-    readonly verified_name?: string;
-    readonly error?: { readonly code?: number };
-  } | null;
-
-  if (!response.ok) {
-    const code = payload?.error?.code;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  if (!accessToken) {
     redirect(
       settingsUrl({
-        error: code === undefined ? 'meta-test-failed' : `meta-${code}`,
+        error: 'meta-not-configured',
+        phone: parsed.data.senderPhone,
+        phoneNumberId: parsed.data.phoneNumberId,
       }),
     );
   }
 
-  redirect(
-    settingsUrl({
-      tested: '1',
-      phone: payload?.display_phone_number ?? parsed.data.senderPhone,
-      name: payload?.verified_name ?? '',
-    }),
-  );
+  try {
+    const result = await testWhatsAppSenderConnection({
+      accessToken,
+      phoneNumberId: parsed.data.phoneNumberId,
+      graphVersion: process.env.WHATSAPP_GRAPH_VERSION?.trim() || 'v23.0',
+    });
+
+    redirect(
+      settingsUrl({
+        tested: '1',
+        phone: result.displayPhoneNumber,
+        phoneNumberId: parsed.data.phoneNumberId,
+        name: result.verifiedName ?? '',
+      }),
+    );
+  } catch (error) {
+    const code =
+      error instanceof Error && /^whatsapp_http_[a-z0-9_]+$/i.test(error.message)
+        ? error.message
+        : 'meta-unreachable';
+    redirect(
+      settingsUrl({
+        error: code,
+        phone: parsed.data.senderPhone,
+        phoneNumberId: parsed.data.phoneNumberId,
+      }),
+    );
+  }
 }
