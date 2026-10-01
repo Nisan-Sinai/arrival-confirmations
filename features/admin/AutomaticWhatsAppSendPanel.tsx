@@ -128,6 +128,7 @@ export function AutomaticWhatsAppSendPanel({
             throw new Error('whatsapp_not_configured');
           }
           if (payload?.error === 'premium_required') throw new Error('premium_required');
+          if (payload?.error === 'rate_limited') throw new Error('rate_limited');
           throw new Error('batch_failed');
         }
 
@@ -155,7 +156,9 @@ export function AutomaticWhatsAppSendPanel({
           ? 'WhatsApp Business עדיין לא הוגדר. יש להגדיר מספר שולח בממשק האדמין ולוודא שה-Access Token והתבניות מוגדרים ב-Vercel.'
           : code === 'premium_required'
             ? 'שליחה אוטומטית זמינה רק באירוע עם חבילת Premium או Pro פעילה.'
-            : 'השליחה נעצרה באמצע. ההודעות שכבר נשלחו לא יישלחו שוב באותו ניסיון.',
+            : code === 'rate_limited'
+              ? 'בוצעו הרבה שליחות בזמן קצר. נסו שוב בעוד שעה.'
+              : 'השליחה נעצרה באמצע. ההודעות שכבר נשלחו לא יישלחו שוב באותו ניסיון.',
       );
     } finally {
       setSending(false);
