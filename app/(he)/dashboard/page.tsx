@@ -136,7 +136,7 @@ export default async function DashboardPage() {
             }
           />
         ) : (
-          <ul className="mt-8 grid gap-4 lg:grid-cols-2">
+          <ul className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {rows.map((event) => {
               const license = licenses.get(event.id);
               const plan = license?.plan ?? 'legacy';
@@ -146,8 +146,8 @@ export default async function DashboardPage() {
               const past = days !== null && days < 0;
 
               return (
-                <li key={event.id}>
-                  <Card interactive padding="md" className="flex h-full flex-col">
+                <li key={event.id} className="min-w-0">
+                  <Card interactive padding="md" className="flex h-full min-w-0 flex-col">
                     <div className="flex items-start gap-4">
                       <DateTile isoDate={event.event_date} />
                       <div className="min-w-0 flex-1">
