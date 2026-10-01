@@ -1087,6 +1087,12 @@
       translate var(--duration-fast) var(--ease-out);
   }
 
+  .tooltip-host[data-tooltip-placement='bottom']::after {
+    top: calc(100% + 0.4rem);
+    bottom: auto;
+    translate: -50% -4px;
+  }
+
   @media (hover: hover) {
     .tooltip-host:hover::after {
       opacity: 1;
