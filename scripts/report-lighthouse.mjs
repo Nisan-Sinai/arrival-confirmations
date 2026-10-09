@@ -16,7 +16,7 @@ for (const file of files) {
     .filter(([name, threshold]) => (report.categories[name]?.score ?? 0) < threshold)
     .map(([name, threshold]) => `${name} below ${Math.round(threshold * 100)}`);
 
-  console.log(
+  console.warn(
     `${file}: ${JSON.stringify(scores)}${failures.length ? ` FAILED: ${failures.join(', ')}` : ' PASS'}`,
   );
   if (failures.length) passed = false;
