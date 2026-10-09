@@ -2,19 +2,30 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - source-map-js@1.2.2
+  - sharp@0.35.5
 onlyBuiltDependencies:
   - esbuild
   - sharp
   - unrs-resolver
+
+# GHSA-vfj7-8cjw-p6xm affects braces only through ESLint's development-time
+# globbing chain. The advisory names braces 3.0.4 as patched, but npm has not
+# published that version yet. Keep the exception scoped to this GHSA and remove
+# it as soon as the patched release is available.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
 
 # Security overrides for transitive dependencies that direct dependencies do not
 # expose yet. Each override stays on the smallest compatible maintenance line.
 # Verify every change with `pnpm audit`, the production build and the complete CI suite.
 overrides:
   postcss: '^8.5.18'
-  # sharp 0.35.3 is affected by the libheif advisories reported by npm audit;
-  # 0.35.4 is the first patched release and remains compatible with Next 16.3.x.
-  'next>sharp': '0.35.4'
+  # sharp versions before 0.35.5 are affected by the current libheif/librsvg
+  # advisories; keep Next 16.3.x on the first patched release.
+  'next>sharp': '0.35.5'
   # GHSA-qhr7-859c-m2p7, GHSA-6j4f-fj2g-mc7p and GHSA-q2hr-2g5m-vwhr
   # require the newer maintenance fixes on both brace-expansion lines.
   'brace-expansion@<1.1.21': '1.1.21'
@@ -32,3 +43,6 @@ overrides:
   'fast-uri@>=3.0.0 <3.1.8': '3.1.8'
   # GHSA-2883-xcg3-v3hh is patched in 4.3.2; keep every ESLint path on the patched release.
   'js-yaml@>=4.0.0 <4.3.2': '4.3.2'
+  # Next's PostCSS chain still resolves source-map-js 1.2.1; force the patched
+  # maintenance release until the upstream range catches up.
+  source-map-js@>=1.0.0 <1.2.2: ^1.2.2
