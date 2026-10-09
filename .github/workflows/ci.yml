@@ -251,7 +251,7 @@ jobs:
             sleep 1
           done
           curl --fail --silent http://127.0.0.1:3000/ >/dev/null
-          export CHROME_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          export CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")"
           pnpm dlx lighthouse@12 http://127.0.0.1:3000/ --quiet --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path=lighthouse-home.json
           pnpm dlx lighthouse@12 http://127.0.0.1:3000/pricing --quiet --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path=lighthouse-pricing.json
           pnpm dlx lighthouse@12 http://127.0.0.1:3000/accessibility --quiet --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path=lighthouse-accessibility.json
