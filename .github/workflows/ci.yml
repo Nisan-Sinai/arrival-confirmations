@@ -240,3 +240,27 @@ jobs:
 
       - name: Run end-to-end and accessibility tests
         run: pnpm test:e2e
+
+      - name: Lighthouse performance budgets
+        run: |
+          pnpm start &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for attempt in {1..60}; do
+            curl --fail --silent http://127.0.0.1:3000/ >/dev/null && break
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3000/ >/dev/null
+          export CHROME_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          pnpm dlx lighthouse@12 http://127.0.0.1:3000/ --quiet --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path=lighthouse-home.json
+          pnpm dlx lighthouse@12 http://127.0.0.1:3000/pricing --quiet --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path=lighthouse-pricing.json
+          pnpm dlx lighthouse@12 http://127.0.0.1:3000/accessibility --quiet --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path=lighthouse-accessibility.json
+          node scripts/report-lighthouse.mjs
+
+      - name: Upload Lighthouse measurement artifacts
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.2
+        with:
+          name: lighthouse-audits
+          path: lighthouse-*.json
+          if-no-files-found: ignore
