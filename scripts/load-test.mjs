@@ -173,10 +173,10 @@ export async function main(env = process.env) {
       maxP95Ms,
     });
     results.push(summary);
-    console.log(
+    process.stdout.write(
       `Users=${concurrency} requests=${summary.requests} failures=${summary.failed} ` +
         `p95=${summary.p95Ms}ms p99=${summary.p99Ms}ms rate=${summary.requestsPerSecond}/s ` +
-        `${summary.passed ? 'PASS' : 'FAIL'}`,
+        `${summary.passed ? 'PASS' : 'FAIL'}\n`,
     );
   }
   const report = {
