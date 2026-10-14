@@ -1,0 +1,109 @@
+name: Isolated HTTP load QA
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/load-test.yml'
+      - 'scripts/load-test.mjs'
+      - 'tests/load/**'
+      - 'docs/LOAD-TEST.md'
+  workflow_dispatch:
+  schedule:
+    - cron: '23 4 * * 0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-load-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness:
+    name: Load QA / safety contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Safety, metrics and failure-path tests
+        run: node --test tests/load/load-test.test.mjs
+
+  load:
+    name: Load QA / 100 + 200 local users
+    needs: harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Deliberately isolated: no production secrets, live Supabase or Vercel URL.
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholderplaceholderplaceholder
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      SUPABASE_SERVICE_ROLE_KEY: placeholderplaceholderplaceholder
+      TOKEN_PEPPER: temporarytokenpeppertemporarytokenpepper
+      IP_HASH_PEPPER: temporaryippeppertemporaryippepper
+      LOAD_BASE_URL: http://127.0.0.1:3000
+      LOAD_USERS: '100,200'
+      LOAD_ROUNDS: '3'
+      LOAD_TIMEOUT_MS: '30000'
+      LOAD_MAX_ERROR_PERCENT: '1'
+      LOAD_MAX_P95_MS: '15000'
+      LOAD_REPORT_PATH: artifacts/load-test-report.json
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install exact lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Build isolated application
+        run: pnpm build
+      - name: Benchmark local public GET routes only
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm start > "$RUNNER_TEMP/arrival-load-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /dev/null; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo '::error::Isolated application server exited before readiness'
+              cat "$RUNNER_TEMP/arrival-load-server.log"
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/health > /dev/null
+          node scripts/load-test.mjs
+          node - <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('artifacts/load-test-report.json', 'utf8'));
+          console.log('## Local read-only HTTP load QA');
+          console.log('No production traffic, writes, SMS or WhatsApp messages.');
+          console.log('| Virtual users | Requests | Error % | P95 (ms) | P99 (ms) | Req/s | Result |');
+          console.log('|---:|---:|---:|---:|---:|---:|---|');
+          for (const x of report.results) {
+            console.log(`| ${x.concurrency} | ${x.requests} | ${x.errorPercent} | ${x.p95Ms} | ${x.p99Ms} | ${x.requestsPerSecond} | ${x.passed ? 'PASS' : 'FAIL'} |`);
+          }
+          NODE
+      - name: Upload results and server logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: local-load-qa-${{ github.run_id }}
+          path: |
+            artifacts/load-test-report.json
+            ${{ runner.temp }}/arrival-load-server.log
+          if-no-files-found: warn
+          retention-days: 14
