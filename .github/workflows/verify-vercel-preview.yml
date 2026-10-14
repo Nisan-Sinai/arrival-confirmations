@@ -1,0 +1,93 @@
+name: Verify Vercel Preview in GitHub Deployments
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  preview-deployment:
+    name: Verify active Preview deployment
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      statuses: read
+      deployments: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Wait for the actual Vercel deployment status
+        id: preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          verified_url=''
+          for attempt in $(seq 1 48); do
+            statuses="$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/statuses")"
+            state="$(jq -r '[.[] | select(.context == "Vercel")][0].state // "pending"' <<< "${statuses}")"
+            url="$(jq -r '[.[] | select(.context == "Vercel")][0].target_url // ""' <<< "${statuses}")"
+            if [[ "${state}" == "success" && "${url}" == https://vercel.com/nisan-sinai-projects/arrival-confirmations/* ]]; then
+              verified_url="${url}"
+              break
+            fi
+            if [[ "${state}" == "failure" || "${state}" == "error" ]]; then
+              echo "::error::Vercel Preview deployment has failed."
+              exit 1
+            fi
+            sleep 15
+          done
+          if [[ -z "${verified_url}" ]]; then
+            echo "::error::No successful Vercel Preview status for PR head ${HEAD_SHA}."
+            exit 1
+          fi
+          echo "dashboard=${verified_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Record verified Preview deployment for this PR head SHA
+        shell: bash
+        env:
+          DEPLOYMENT_DASHBOARD: ${{ steps.preview.outputs.dashboard }}
+        run: |
+          set -euo pipefail
+          body="$(jq -nc --arg sha "${HEAD_SHA}" '{
+            ref: $sha,
+            environment: "Preview",
+            auto_merge: false,
+            required_contexts: ["Vercel"],
+            transient_environment: true,
+            production_environment: false,
+            description: "Vercel Git integration verified for this commit"
+          }')"
+          response="$(curl --fail --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            -d "${body}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments")"
+          deployment_id="$(jq -er '.id' <<< "${response}")"
+          status_body="$(jq -nc --arg url "${DEPLOYMENT_DASHBOARD}" '{
+            state: "success",
+            environment: "Preview",
+            environment_url: $url,
+            description: "Verified successful Vercel Preview build",
+            auto_inactive: true
+          }')"
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            -d "${status_body}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses" > /dev/null
+          echo "Preview deployment ${deployment_id} verified and recorded for ${HEAD_SHA}"
