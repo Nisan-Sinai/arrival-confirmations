@@ -1,0 +1,31 @@
+name: Temporary cleanup of discarded QA branch
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cleanup-discarded-load-branch.yml'
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    if: >-
+      github.repository == 'Nisan-Sinai/arrival-confirmations' &&
+      github.event.pull_request.number == 167 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'test/load-100-200-clean-qa-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Delete only closed and known discarded assistant-created branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo='Nisan-Sinai/arrival-confirmations'
+          old='test/isolated-load-100-200-20261014'
+          state="$(gh api "repos/$repo/pulls/166" --jq '.state')"
+          [[ "$state" == 'closed' ]] || { echo 'Refusing: PR #166 not closed'; exit 1; }
+          expected='5f37d57b9c4b41564ad14f64080613c40f2093b6'
+          head="$(gh api "repos/$repo/git/ref/heads/$old" --jq '.object.sha')"
+          [[ "$head" == "$expected" ]] || { echo 'Refusing: discarded branch changed'; exit 1; }
+          gh api -X DELETE "repos/$repo/git/refs/heads/$old"
+          echo 'Deleted exact discarded load-test branch, leaving main and all other refs untouched'
