@@ -1,0 +1,30 @@
+name: Temporary load QA formatting export
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/format-export-temp.yml'
+permissions:
+  contents: read
+jobs:
+  format-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format changed files and export output
+        run: |
+          pnpm exec prettier --write docs/LOAD-TEST.md scripts/load-test.mjs tests/load/load-test.test.mjs
+          for file in docs/LOAD-TEST.md scripts/load-test.mjs tests/load/load-test.test.mjs; do
+            echo "FORMATTED_FILE_BEGIN:$file"
+            base64 -w 0 "$file"
+            echo
+            echo "FORMATTED_FILE_END:$file"
+          done
