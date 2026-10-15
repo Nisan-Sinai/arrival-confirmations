@@ -15,6 +15,8 @@ import {
 } from '@/lib/i18n';
 import { GOOGLE_SITE_VERIFICATION, SITE_ORIGIN } from '@/lib/seo';
 
+import { AnalyticsConsent } from '@/app/analytics-consent';
+import { analyticsConfig } from '@/lib/analytics-config';
 import '@/app/globals.css';
 
 /**
@@ -170,6 +172,7 @@ export function RootDocument({
         {children}
         <EventAssistant locale={locale} />
         <SiteFooter locale={locale} />
+        <AnalyticsConsent locale={locale} config={analyticsConfig} />
       </body>
     </html>
   );

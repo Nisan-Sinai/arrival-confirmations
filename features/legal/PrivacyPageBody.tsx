@@ -22,7 +22,7 @@ const CONTENT: Record<Locale, LegalContent> = {
     },
     eyebrow: 'מסמך משפטי',
     title: 'מדיניות פרטיות',
-    updated: 'עודכן בספטמבר 2026',
+    updated: 'עודכן ב־15 באוקטובר 2026',
     sections: [
       {
         title: 'מי אחראי למידע',
@@ -156,9 +156,14 @@ const CONTENT: Record<Locale, LegalContent> = {
         title: 'עוגיות',
         blocks: [
           {
+            kind: 'external',
+            href: 'https://policies.google.com/technologies/partner-sites',
+            text: 'כיצד Google משתמשת במידע מאתרים המשתמשים בשירותיה',
+          },
+          {
             kind: 'p',
             runs: [
-              'האתר אינו משתמש בעוגיות פרסום או מעקב. משתמשים שנכנסים לחשבון הניהול מקבלים עוגיות טכניות חיוניות של Supabase, שנועדו לשמור על ההתחברות ולאבטח את החשבון. הן פגות אוטומטית או נמחקות בעת ההתנתקות.',
+              'אין שימוש בעוגיות פרסום. Google Analytics 4 מופעל בדפים הציבוריים רק לאחר הסכמה מפורשת, ועשוי לעבד בידי Google מזהי עוגיות, נתוני דפדפן, מכשיר וביקורים. לא נשלחים פרטי טפסים, פרמטרי כתובת, קישורים אישיים או מידע על אורחים ואירועים. אפשר לסרב או לבטל הסכמה דרך הגדרות הפרטיות ללא פגיעה בשימוש באתר. אין מדידה בכניסה לחשבון, בניהול או בהזמנות. משתמשים שנכנסים לחשבון הניהול מקבלים עוגיות טכניות חיוניות של Supabase, שנועדו לשמור על ההתחברות ולאבטח את החשבון. הן פגות אוטומטית או נמחקות בעת ההתנתקות.',
             ],
           },
           {
@@ -179,7 +184,7 @@ const CONTENT: Record<Locale, LegalContent> = {
     },
     eyebrow: 'Legal document',
     title: 'Privacy policy',
-    updated: 'Last updated September 2026',
+    updated: 'Last updated 15 October 2026',
     sections: [
       {
         title: 'Who is responsible for the data',
@@ -317,9 +322,14 @@ const CONTENT: Record<Locale, LegalContent> = {
         title: 'Cookies',
         blocks: [
           {
+            kind: 'external',
+            href: 'https://policies.google.com/technologies/partner-sites',
+            text: 'How Google uses information from sites that use its services',
+          },
+          {
             kind: 'p',
             runs: [
-              'The site uses no advertising or tracking cookies. Users who sign in to the management account receive essential technical Supabase cookies, which keep the session and secure the account. They expire automatically or are cleared on sign-out.',
+              'We do not use advertising cookies. Google Analytics 4 runs on public pages only after explicit consent and may process cookie identifiers, browser, device and visit data through Google. We do not send form details, URL parameters, personal links, or guest and event information. You can decline or withdraw consent through Privacy settings without affecting your use of the site. Sign-in, management and invitation pages are not measured. Users who sign in to the management account receive essential technical Supabase cookies, which keep the session and secure the account. They expire automatically or are cleared on sign-out.',
             ],
           },
           {

@@ -28,6 +28,16 @@ export default defineConfig({
     : [['html', { open: 'never' }], ['list']],
   use: {
     baseURL,
+    // Product journeys explicitly decline optional analytics; consent has a separate suite.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: new URL(baseURL).origin,
+          localStorage: [{ name: 'public-analytics-consent-v1', value: 'denied' }],
+        },
+      ],
+    },
     locale: 'he-IL',
     timezoneId: 'Asia/Jerusalem',
     trace: 'retain-on-failure',
