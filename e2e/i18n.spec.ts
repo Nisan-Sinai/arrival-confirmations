@@ -64,7 +64,7 @@ test.describe('bilingual public surface', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: 'Paid once, per event' }),
     ).toBeVisible();
-    await expect(page.getByText('Free trial', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Free trial', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Choose Basic' })).toBeVisible();
   });
 
