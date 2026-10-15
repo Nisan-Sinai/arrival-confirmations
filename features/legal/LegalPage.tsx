@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getDictionary } from '@/config/dictionary';
 import { absoluteUrl } from '@/lib/seo';
 
 import { Container, Rule } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { SiteHeader } from '@/features/layout/SiteHeader';
-import { languageAlternates, localePath, type Locale } from '@/lib/i18n';
+import { languageAlternates, localePath, openGraphLocale, type Locale } from '@/lib/i18n';
 
 /**
  * The shared engine behind the two legal pages — the privacy notice and the
@@ -76,6 +77,8 @@ export function buildLegalMetadata(
       description: seo.description,
       url: absoluteUrl(localePath(locale, path)),
       type: 'website',
+      locale: openGraphLocale(locale),
+      siteName: getDictionary(locale).site.name,
     },
     twitter: { card: 'summary_large_image', title: seo.title, description: seo.description },
     alternates: { canonical: localePath(locale, path), languages: languageAlternates(path) },

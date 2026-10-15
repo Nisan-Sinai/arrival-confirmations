@@ -20,6 +20,10 @@ for (const locale of ['he', 'en'] as const) {
         expect(metadata.alternates?.canonical).toBe(`${prefix}${path}`);
         expect(new URL(String(metadata.openGraph?.url)).pathname).toBe(`${prefix}${path}`);
         expect(metadata.openGraph?.description).toBe(metadata.description);
+        expect(metadata.openGraph).toMatchObject({
+          locale: locale === 'he' ? 'he_IL' : 'en_GB',
+          siteName: locale === 'he' ? 'אישורי הגעה' : 'Arrival Confirmations',
+        });
         expect(metadata.twitter?.description).toBe(metadata.description);
       }
     });

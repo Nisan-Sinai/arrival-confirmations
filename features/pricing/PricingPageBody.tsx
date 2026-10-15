@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getDictionary } from '@/config/dictionary';
 
 import { formatPlanPrice, getPlanCatalog } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Container, Section, SectionHeader } from '@/components/ui/layout';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
-import { languageAlternates, localePath, type Locale } from '@/lib/i18n';
+import { languageAlternates, localePath, openGraphLocale, type Locale } from '@/lib/i18n';
 import { absoluteUrl } from '@/lib/seo';
 
 /**
@@ -130,6 +131,8 @@ export function buildPricingMetadata(locale: Locale): Metadata {
       description: meta.description,
       url: absoluteUrl(localePath(locale, '/pricing')),
       type: 'website',
+      locale: openGraphLocale(locale),
+      siteName: getDictionary(locale).site.name,
     },
     twitter: { card: 'summary_large_image', title: meta.title, description: meta.description },
     alternates: {
