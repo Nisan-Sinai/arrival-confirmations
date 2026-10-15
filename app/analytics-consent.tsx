@@ -43,22 +43,22 @@ export function AnalyticsConsent({
   const open = consent === 'unset' || editing;
 
   return (
-    <aside className="analytics-privacy" aria-label={he ? 'העדפות פרטיות' : 'Privacy preferences'}>
+    <aside className="analytics-privacy" aria-label={he ? 'העדפות עוגיות' : 'Cookie preferences'}>
       {open ? (
         <section className="analytics-consent" aria-labelledby="analytics-consent-title">
-          <h2 id="analytics-consent-title">{he ? 'בחירת הפרטיות שלך' : 'Your privacy choice'}</h2>
+          <h2 id="analytics-consent-title">{he ? 'העדפות עוגיות 🍪' : 'Cookie preferences 🍪'}</h2>
           <p>
             {he
-              ? 'אפשר לאשר מדידת שימוש בדפים הציבוריים באמצעות Google Analytics כדי לעזור לנו לשפר את האתר. סירוב לא יפגע בשימוש באתר. אין מדידה של טפסים, הזמנות או ממשקי ניהול.'
-              : 'Allow Google Analytics on public pages to help us improve the website. Declining does not affect your use of the site. Forms, invitations and management pages are not measured.'}
+              ? 'אנחנו משתמשים בעוגיות למדידת השימוש באתר ולשיפורו באמצעות Google Analytics, רק בהסכמתך. אפשר לסרב ולהמשיך להשתמש באתר כרגיל.'
+              : 'We use cookies to measure website usage and improve it with Google Analytics, only with your consent. You can decline and continue using the website as usual.'}
           </p>
           <a href={he ? '/privacy' : '/en/privacy'}>{he ? 'מדיניות פרטיות' : 'Privacy policy'}</a>
           <div className="analytics-consent-actions">
             <button type="button" onClick={() => select('denied')}>
-              {he ? 'ללא מדידה' : 'Decline analytics'}
+              {he ? 'ללא עוגיות מדידה' : 'Decline analytics cookies'}
             </button>
             <button type="button" onClick={() => select('granted')}>
-              {he ? 'אישור מדידה' : 'Allow analytics'}
+              {he ? 'אישור עוגיות מדידה' : 'Accept analytics cookies'}
             </button>
             {editing ? (
               <button type="button" onClick={() => setEditing(false)}>

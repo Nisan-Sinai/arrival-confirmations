@@ -40,19 +40,19 @@ describe('optional analytics consent', () => {
   it('starts with no Google script and persists an equal-choice rejection', async () => {
     const user = userEvent.setup();
     render(<AnalyticsConsent locale="he" config={config} />);
-    expect(screen.getByRole('button', { name: 'אישור מדידה' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'אישור עוגיות מדידה' })).toBeVisible();
     expect(document.querySelector('#public-google-analytics')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'ללא מדידה' }));
+    await user.click(screen.getByRole('button', { name: 'ללא עוגיות מדידה' }));
     expect(localStorage.getItem('public-analytics-consent-v1')).toBe('denied');
     expect(document.querySelector('#public-google-analytics')).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'בחירת הפרטיות שלך' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'העדפות עוגיות 🍪' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'הגדרות פרטיות' }));
-    expect(screen.getByRole('button', { name: 'אישור מדידה' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'אישור עוגיות מדידה' })).toBeVisible();
   });
   it('loads one script only after consent and disables it on a private route', async () => {
     const user = userEvent.setup();
     const view = render(<AnalyticsConsent locale="en" config={config} />);
-    await user.click(screen.getByRole('button', { name: 'Allow analytics' }));
+    await user.click(screen.getByRole('button', { name: 'Accept analytics cookies' }));
     await waitFor(() =>
       expect(document.querySelectorAll('#public-google-analytics')).toHaveLength(1),
     );
