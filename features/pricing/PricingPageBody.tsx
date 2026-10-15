@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { formatPlanPrice, getPlanCatalog } from '@/app/_lib/plans';
 import { buttonClass } from '@/components/ui/button';
 import { Container, Section, SectionHeader } from '@/components/ui/layout';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
@@ -27,6 +28,13 @@ type PricingContent = {
   readonly steps: readonly { readonly title: string; readonly body: string }[];
   readonly startCta: string;
   readonly homeCta: string;
+  readonly comparisonTitle: string;
+  readonly comparisonLead: string;
+  readonly columns: readonly [string, string, string, string];
+  readonly suitability: readonly string[];
+  readonly preparationTitle: string;
+  readonly preparation: readonly string[];
+  readonly accessLink: string;
 };
 
 const CONTENT: Record<Locale, PricingContent> = {
@@ -49,6 +57,24 @@ const CONTENT: Record<Locale, PricingContent> = {
     ],
     startCta: 'התחלת בדיקה חינמית',
     homeCta: 'חזרה לדף הבית',
+    comparisonTitle: 'איזה מסלול מתאים לאירוע שלכם?',
+    comparisonLead:
+      'ההחלטה מתחילה בכמות המוזמנים ובאופן העבודה. אירוע עם הזנה ידנית של הרשימה שונה מאירוע שמצריך ייבוא קובץ, מיתוג וסידור שולחנות. ההשוואה כאן עוזרת לבחור לפי הכלים שתשתמשו בהם בפועל.',
+    columns: ['מסלול', 'מחיר לאירוע', 'מגבלת מוזמנים', 'מתי לבחור בו'],
+    suitability: [
+      'לבדיקת עיצוב ההזמנה ותהליך אישור ההגעה לפני בחירת מסלול בתשלום.',
+      'לניהול רשימה שמוסיפים ידנית, עם שיתוף קישורים ואישורי הגעה בדשבורד.',
+      'כאשר הרשימה מגיעה מקובץ Excel או CSV, ונדרשים מיתוג וכלים לניהול ההזמנות ומפת שולחנות בסיסית.',
+      'כאשר סידור הישיבה הוא חלק מרכזי מההפקה: אזורים, קיבולת, קבוצות, נעילת מקומות ושמירת נקודות שחזור.',
+    ],
+    preparationTitle: 'מה כדאי לבדוק לפני הפעלת האירוע?',
+    preparation: [
+      'ספרו את המוזמנים ובחרו מסלול שהמגבלה שלו מתאימה לרשימה. מגבלת הבדיקה החינמית מיועדת לניסוי ולא לאירוע מלא.',
+      'בדקו איך תזינו את הרשימה: הוספה ידנית או ייבוא. אם נדרש ייבוא עם שולחן, מושב או מנה, השוו את יכולות Premium ו־Pro.',
+      'פתחו את ההזמנה בטלפון, בדקו את פרטי המקום ואת הקישורים, ונסו אישור הגעה לפני הפצה לכל הרשימה.',
+      'החליטו אם מספיקה מפת שולחנות בסיסית או שנדרשים כלי ההושבה המתקדמים של Pro. המחיר הוא להפעלת אירוע, ואינו מנוי חודשי.',
+    ],
+    accessLink: 'מדריך כלי הנגישות והתאמות השימוש במערכת',
   },
   en: {
     meta: {
@@ -73,6 +99,24 @@ const CONTENT: Record<Locale, PricingContent> = {
     ],
     startCta: 'Start a free trial',
     homeCta: 'Back to home',
+    comparisonTitle: 'Which plan fits your event?',
+    comparisonLead:
+      'Start with your guest count and the way you will manage the event. A manually entered list needs different tools from a spreadsheet import with branding and seating arrangements. Compare the workflow you will actually use, as well as the capacity.',
+    columns: ['Plan', 'Price per event', 'Guest limit', 'When to choose it'],
+    suitability: [
+      'Try the invitation design and reply flow before choosing a paid plan.',
+      'Manage a manually entered list, share links and follow replies in the dashboard.',
+      'Import an Excel or CSV guest list, customise the branding and use a basic seating map.',
+      'Make seating part of the production workflow with zones, capacity, groups, locked seats and restore points.',
+    ],
+    preparationTitle: 'What should you check before activation?',
+    preparation: [
+      'Count your guests and choose a plan with enough capacity. The free reply allowance is for testing, rather than running a complete event.',
+      'Decide whether to enter guests manually or import them. For files with tables, seats or meal choices, compare the Premium and Pro tools.',
+      'Open the invitation on a phone, check the venue details and links, and try a reply before sharing it with the whole list.',
+      'Decide whether a basic seating map is enough or you need the advanced Pro seating tools. Activation is for an event, rather than a monthly subscription.',
+    ],
+    accessLink: 'Guide to the accessibility tools and supported ways to use the platform',
   },
 };
 
@@ -81,6 +125,13 @@ export function buildPricingMetadata(locale: Locale): Metadata {
   return {
     title: meta.title,
     description: meta.description,
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      url: absoluteUrl(localePath(locale, '/pricing')),
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image', title: meta.title, description: meta.description },
     alternates: {
       canonical: localePath(locale, '/pricing'),
       languages: languageAlternates('/pricing'),
@@ -90,6 +141,7 @@ export function buildPricingMetadata(locale: Locale): Metadata {
 
 export function PricingPageBody({ locale }: { locale: Locale }) {
   const content = CONTENT[locale];
+  const catalog = getPlanCatalog(locale);
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -120,12 +172,70 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
               <p className="text-lead text-muted-foreground mt-5 leading-relaxed">{content.lead}</p>
             </div>
 
+            <section className="mt-12" aria-labelledby="plan-comparison-title">
+              <h2 id="plan-comparison-title" className="text-h3 text-primary font-semibold">
+                {content.comparisonTitle}
+              </h2>
+              <p className="text-foreground mt-4 max-w-3xl leading-relaxed">
+                {content.comparisonLead}
+              </p>
+              <div className="border-border mt-6 overflow-x-auto rounded-xl border">
+                <table className="w-full text-start text-sm">
+                  <caption className="sr-only">{content.comparisonTitle}</caption>
+                  <thead className="bg-secondary/25">
+                    <tr>
+                      {content.columns.map((column) => (
+                        <th key={column} scope="col" className="p-4 text-start">
+                          {column}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {catalog.map((plan, index) => (
+                      <tr key={plan.code} className="border-border border-t">
+                        <th scope="row" className="p-4 text-start">
+                          {plan.name}
+                        </th>
+                        <td className="p-4 whitespace-nowrap">
+                          {formatPlanPrice(plan.priceAgorot)}
+                        </td>
+                        <td className="p-4">
+                          {plan.attendeeLimit.toLocaleString(locale === 'he' ? 'he-IL' : 'en-GB')}
+                        </td>
+                        <td className="min-w-48 p-4 leading-relaxed">
+                          {content.suitability[index]}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
             {/* No `.reveal` here: the grid inside staggers its own cards, and a reveal
                 on the wrapper would fade the whole block in first and then fade each
                 card in again inside it. */}
             <div className="mt-12">
               <PricingCards locale={locale} headingLevel="h2" />
             </div>
+
+            <section className="mt-12" aria-labelledby="plan-preparation-title">
+              <h2 id="plan-preparation-title" className="text-h3 text-primary font-semibold">
+                {content.preparationTitle}
+              </h2>
+              <ul className="mt-5 list-disc space-y-3 ps-5 leading-relaxed">
+                {content.preparation.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <Link
+                href={localePath(locale, '/accessibility')}
+                className="text-primary mt-5 inline-flex py-2 underline underline-offset-4"
+              >
+                {content.accessLink}
+              </Link>
+            </section>
 
             <section className="reveal border-border bg-card/70 shadow-paper mt-14 rounded-3xl border p-7 text-center sm:p-10">
               <SectionHeader title={content.howTitle} />

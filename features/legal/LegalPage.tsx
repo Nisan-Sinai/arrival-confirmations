@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { absoluteUrl } from '@/lib/seo';
 
 import { Container, Rule } from '@/components/ui/layout';
 import { appConfig } from '@/config/event.config';
@@ -69,6 +71,13 @@ export function buildLegalMetadata(
   return {
     title: { absolute: seo.title },
     description: seo.description,
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      url: absoluteUrl(localePath(locale, path)),
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image', title: seo.title, description: seo.description },
     alternates: { canonical: localePath(locale, path), languages: languageAlternates(path) },
   };
 }
@@ -148,6 +157,16 @@ export function LegalPageBody({
       <SiteHeader locale={locale} showLanguageSwitch />
       <main id="main" className="flex-1 py-12 sm:py-16">
         <Container width="prose">
+          <nav aria-label={locale === 'he' ? 'נתיב ניווט' : 'Breadcrumb'} className="mb-6 text-sm">
+            <Link
+              href={localePath(locale, '/')}
+              className="text-primary underline underline-offset-4"
+            >
+              {locale === 'he' ? 'אישורי הגעה — דף הבית' : 'Arrival Confirmations — home'}
+            </Link>
+            <span aria-hidden="true"> / </span>
+            <span aria-current="page">{page.title}</span>
+          </nav>
           <p className="text-eyebrow text-accent-strong font-semibold">{page.eyebrow}</p>
           <h1 className="text-h1 text-primary mt-3 font-bold">
             <WrittenHeading text={page.title} />
