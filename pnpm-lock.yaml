@@ -23,8 +23,8 @@ importers:
         specifier: 1.5.0
         version: 1.5.0
       '@hebcal/core':
-        specifier: 6.14.1
-        version: 6.14.1
+        specifier: 6.14.2
+        version: 6.14.2
       '@supabase/ssr':
         specifier: 0.12.7
         version: 0.12.7(@supabase/supabase-js@2.117.3)
@@ -53,8 +53,8 @@ importers:
         specifier: 3.7.0
         version: 3.7.0
       zod:
-        specifier: 4.6.5
-        version: 4.6.5
+        specifier: 4.6.6
+        version: 4.6.6
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.13.0
@@ -724,15 +724,15 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@hebcal/core@6.14.1':
-    resolution: {integrity: sha512-mOv7CqOhttcKvsQruZS4iUJU5lhRMTe70tujDkzB392YQTG2mj7vA6XJmLbU6VSKjezSAssqfDNhXcmPHO+Wcg==}
+  '@hebcal/core@6.14.2':
+    resolution: {integrity: sha512-tjaKqbmOaEju7Jdtw019AgW9k0XidmjVzrvrUKbO5TvvsztOaYxerfl3DLIOEnNBektjIpb2+iueUugCQcTGyA==}
     engines: {node: '>= 18'}
 
   '@hebcal/hdate@0.23.1':
     resolution: {integrity: sha512-lpvYpDc1Oe23XPClptNH6XEe2NA8Tb8iaUJ9/5Er1k04H9iHYB5YQnWsAg83R8l5SPOEUQnybeYizvSRSbBKCg==}
 
-  '@hebcal/noaa@0.12.3':
-    resolution: {integrity: sha512-CQId2yEpUPGl0EWVxditqkG2MvEd9uKibiQtrcEQux9UnTILTPM6mwyKMTygZmNBwJl1kXqvuPQCJm0NxqLykA==}
+  '@hebcal/noaa@0.12.4':
+    resolution: {integrity: sha512-M7bkeWUP54+h34OMlkyuu0ZuUV9URnEbG9dxakeA1totMhvIvHrVEVzKznmpykMbKkystC4C3BDg1fG7Qfl2pA==}
     engines: {node: '>=18'}
 
   '@humanfs/core@0.19.2':
@@ -4064,8 +4064,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.6.5:
-    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
@@ -4650,16 +4650,16 @@ snapshots:
 
   '@exodus/bytes@1.16.0': {}
 
-  '@hebcal/core@6.14.1':
+  '@hebcal/core@6.14.2':
     dependencies:
       '@hebcal/hdate': 0.23.1
-      '@hebcal/noaa': 0.12.3
+      '@hebcal/noaa': 0.12.4
       quick-lru: 7.3.0
       temporal-polyfill: 1.0.5
 
   '@hebcal/hdate@0.23.1': {}
 
-  '@hebcal/noaa@0.12.3':
+  '@hebcal/noaa@0.12.4':
     dependencies:
       temporal-polyfill: 1.0.5
 
@@ -6247,8 +6247,8 @@ snapshots:
       '@babel/parser': 7.29.9
       eslint: 9.39.5(jiti@2.7.0)
       hermes-parser: 0.25.1
-      zod: 4.6.5
-      zod-validation-error: 4.0.2(zod@4.6.5)
+      zod: 4.6.6
+      zod-validation-error: 4.0.2(zod@4.6.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -6809,7 +6809,7 @@ snapshots:
       tinyglobby: 0.2.17
       unbash: 5.0.0
       yaml: 2.9.1
-      zod: 4.6.5
+      zod: 4.6.6
 
   language-subtag-registry@0.3.23: {}
 
@@ -6987,7 +6987,7 @@ snapshots:
 
   mutation-server-protocol@0.4.1:
     dependencies:
-      zod: 4.6.5
+      zod: 4.6.6
 
   mutation-testing-elements@3.8.4: {}
 
@@ -7919,8 +7919,8 @@ snapshots:
 
   yoctocolors@2.1.2: {}
 
-  zod-validation-error@4.0.2(zod@4.6.5):
+  zod-validation-error@4.0.2(zod@4.6.6):
     dependencies:
-      zod: 4.6.5
+      zod: 4.6.6
 
-  zod@4.6.5: {}
+  zod@4.6.6: {}
