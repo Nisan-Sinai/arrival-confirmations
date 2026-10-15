@@ -17,11 +17,12 @@ const CONTENT: Record<Locale, LegalContent> = {
   he: {
     meta: {
       title: 'הצהרת נגישות',
-      description: 'רמת הנגישות של האתר, ההתאמות שבוצעו, מגבלות ידועות ודרכי פנייה.',
+      description:
+        'נגישות מערכת אישורי ההגעה: שימוש במקלדת, הגדלת טקסט, ניגודיות, עצירת אנימציות, מגבלות ידועות ופנייה לעזרה.',
     },
     eyebrow: 'מסמך משפטי',
     title: 'הצהרת נגישות',
-    updated: 'עודכן ביולי 2026',
+    updated: 'עודכן ב־15 באוקטובר 2026',
     sections: [
       {
         title: 'המחויבות שלנו',
@@ -69,6 +70,29 @@ const CONTENT: Record<Locale, LegalContent> = {
               ['כיבוד העדפת המשתמש להפחתת אנימציות'],
               ['תצוגה תקינה בזום 200% ובמסכי טלפון צרים'],
               ['טבלת הניהול הופכת לכרטיסים בנייד במקום לחייב גלילה לרוחב'],
+            ],
+          },
+        ],
+      },
+      {
+        title: 'שימוש בכלי הנגישות במערכת אישורי ההגעה',
+        blocks: [
+          {
+            kind: 'p',
+            runs: [
+              'בכל דף אפשר לפתוח את הכפתור ״פתיחת תפריט נגישות״. בתפריט ניתן להגדיל או להקטין טקסט, להפעיל ניגודיות גבוהה או גווני אפור, להדגיש קישורים ולעצור אנימציות. ״איפוס הגדרות״ מחזיר את האפשרויות לברירת המחדל.',
+            ],
+          },
+          {
+            kind: 'p',
+            runs: [
+              'לניווט ללא עכבר, השתמשו במקש Tab למעבר בין קישורים וכפתורים וב־Shift+Tab לחזרה. קישור הדילוג בתחילת הדף מעביר לתוכן הראשי. אפשר לסגור את תפריט הנגישות באמצעות Escape ולחזור לכפתור שפתח אותו.',
+            ],
+          },
+          {
+            kind: 'p',
+            runs: [
+              'ההעדפות נשמרות בדפדפן שבו בחרתם אותן; דפדפן אחר אינו מקבל אותן אוטומטית. אם שמירת ההעדפות חסומה, ניתן עדיין להשתמש בהתאמות במהלך השימוש הנוכחי. במקרה של קושי במילוי הזמנה, ציינו בפנייה באיזה מסך ובאיזה דפדפן נתקלתם בו, ללא צירוף קישור הזמנה אישי.',
             ],
           },
         ],
@@ -125,11 +149,11 @@ const CONTENT: Record<Locale, LegalContent> = {
     meta: {
       title: 'Accessibility statement',
       description:
-        'The accessibility level of the site, the adjustments made, known limitations and how to get in touch.',
+        'Accessibility in Arrival Confirmations: keyboard navigation, text size, contrast, motion controls, known limitations and how to request help.',
     },
     eyebrow: 'Legal document',
     title: 'Accessibility statement',
-    updated: 'Last updated July 2026',
+    updated: 'Last updated 15 October 2026',
     sections: [
       {
         title: 'Our commitment',
@@ -177,6 +201,29 @@ const CONTENT: Record<Locale, LegalContent> = {
               ["Respect for the user's reduced-motion preference"],
               ['Correct display at 200% zoom and on narrow phone screens'],
               ['The management table becomes cards on mobile instead of forcing horizontal scroll'],
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Using the accessibility tools in Arrival Confirmations',
+        blocks: [
+          {
+            kind: 'p',
+            runs: [
+              'Use the “Open accessibility menu” button on any page. The menu can increase or decrease text size, enable high contrast or grayscale, underline links and reduce motion. “Reset settings” returns these options to their defaults.',
+            ],
+          },
+          {
+            kind: 'p',
+            runs: [
+              'To navigate without a mouse, use Tab to move between links and buttons and Shift+Tab to move back. The skip link at the beginning of the page takes you to the main content. Escape closes the accessibility menu and returns focus to its trigger.',
+            ],
+          },
+          {
+            kind: 'p',
+            runs: [
+              'Preferences are saved in the browser where you choose them; they do not automatically transfer to another browser. If storage is blocked, the controls still work for the current session. When reporting a difficulty with an invitation, describe the screen and browser without including a personal invitation link.',
             ],
           },
         ],

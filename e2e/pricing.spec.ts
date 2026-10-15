@@ -5,13 +5,13 @@ test.describe('pricing', () => {
     await page.goto('/pricing');
 
     await expect(page.getByRole('heading', { name: 'תשלום חד-פעמי לכל אירוע' })).toBeVisible();
-    await expect(page.getByText('בדיקה חינמית', { exact: true })).toBeVisible();
-    await expect(page.getByText('Basic', { exact: true })).toBeVisible();
-    await expect(page.getByText('Premium', { exact: true })).toBeVisible();
-    await expect(page.getByText('Pro', { exact: true })).toBeVisible();
-    await expect(page.getByText('‏99 ‏₪', { exact: true })).toBeVisible();
-    await expect(page.getByText('‏199 ‏₪', { exact: true })).toBeVisible();
-    await expect(page.getByText('‏349 ‏₪', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'בדיקה חינמית', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Basic', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Premium', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pro', exact: true })).toBeVisible();
+    await expect(page.getByRole('table').getByText('‏99 ‏₪', { exact: true })).toBeVisible();
+    await expect(page.getByRole('table').getByText('‏199 ‏₪', { exact: true })).toBeVisible();
+    await expect(page.getByRole('table').getByText('‏349 ‏₪', { exact: true })).toBeVisible();
     await expect(page.getByText('עד 2,500 מוזמנים', { exact: true })).toBeVisible();
     await expect(page.getByText('תשלום חד-פעמי לאירוע').first()).toBeVisible();
   });
