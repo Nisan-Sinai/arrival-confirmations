@@ -108,7 +108,30 @@ const nextConfig: NextConfig = {
     '/e/[publicId]/opengraph-image': ['./assets/fonts/*.ttf'],
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    const publicPolicy = contentSecurityPolicy
+      .replace("script-src 'self'", "script-src 'self' https://www.googletagmanager.com")
+      .replace(
+        "connect-src 'self'",
+        "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com",
+      )
+      .replace("img-src 'self'", "img-src 'self' https://www.google-analytics.com");
+    const publicPaths = [
+      '/',
+      '/en',
+      '/pricing',
+      '/en/pricing',
+      '/privacy',
+      '/en/privacy',
+      '/accessibility',
+      '/en/accessibility',
+    ];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      ...publicPaths.map((source) => ({
+        source,
+        headers: [{ key: 'Content-Security-Policy', value: publicPolicy }],
+      })),
+    ];
   },
 };
 

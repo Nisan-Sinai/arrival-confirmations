@@ -28,6 +28,7 @@ export type Inline = string | { readonly b: string };
 /** One block inside a clause. */
 export type Block =
   | { readonly kind: 'p'; readonly runs: readonly Inline[] }
+  | { readonly kind: 'external'; readonly href: string; readonly text: string }
   /** A quieter, smaller paragraph — a footnote to the clause above it. */
   | { readonly kind: 'note'; readonly runs: readonly Inline[] }
   | { readonly kind: 'ul'; readonly items: readonly (readonly Inline[])[] }
@@ -179,6 +180,14 @@ export function LegalPageBody({
                       </p>
                     );
                   }
+                  if (block.kind === 'external')
+                    return (
+                      <p key={index}>
+                        <a className="underline" href={block.href} rel="noreferrer">
+                          {block.text}
+                        </a>
+                      </p>
+                    );
                   if (block.kind === 'note') {
                     return (
                       <p key={index} className="text-muted-foreground text-sm">
