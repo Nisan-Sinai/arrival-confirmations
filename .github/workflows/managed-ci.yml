@@ -1,0 +1,114 @@
+name: Centrally managed CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  statuses: read
+
+concurrency:
+  group: managed-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    uses: Nisan-Sinai/github-workflows/.github/workflows/node-ci.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    with:
+      node-version: '24'
+      package-manager: pnpm
+      install-command: pnpm install --frozen-lockfile
+      lint-command: pnpm lint
+      typecheck-command: pnpm typecheck
+      test-command: pnpm test
+      build-command: >-
+        NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.supabase.co
+        NEXT_PUBLIC_SUPABASE_ANON_KEY="$GITHUB_SHA"
+        NEXT_PUBLIC_SITE_URL=http://localhost:3000
+        SUPABASE_SERVICE_ROLE_KEY="$GITHUB_SHA"
+        TOKEN_PEPPER="$GITHUB_SHA"
+        IP_HASH_PEPPER="$GITHUB_SHA"
+        pnpm build
+
+  advanced:
+    uses: Nisan-Sinai/github-workflows/.github/workflows/advanced-node-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    with:
+      node-version: '24'
+      package-manager: pnpm
+      install-command: pnpm install --frozen-lockfile
+      format-command: pnpm format:check
+      coverage-command: pnpm test:coverage
+      bundle-security-command: pnpm test:security
+      deadcode-command: pnpm deadcode
+      source-secret-scan-command: pnpm scan:secrets
+      build-command: >-
+        NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.supabase.co
+        NEXT_PUBLIC_SUPABASE_ANON_KEY="$GITHUB_SHA"
+        NEXT_PUBLIC_SITE_URL=http://localhost:3000
+        SUPABASE_SERVICE_ROLE_KEY="$GITHUB_SHA"
+        TOKEN_PEPPER="$GITHUB_SHA"
+        IP_HASH_PEPPER="$GITHUB_SHA"
+        pnpm build
+
+  security:
+    uses: Nisan-Sinai/github-workflows/.github/workflows/security-ci.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    with:
+      ecosystem: node
+      package-manager: pnpm
+      audit-command: pnpm audit --prod --ignore-registry-errors
+
+  database:
+    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    with:
+      node-version: '24'
+      package-manager: pnpm
+      supabase-cli-version: '2.101.0'
+      install-command: pnpm install --frozen-lockfile
+      schema-drift-command: pnpm check:schema-drift
+      integration-command: pnpm test:integration
+      rls-command: pnpm test:rls
+
+  browser:
+    uses: Nisan-Sinai/github-workflows/.github/workflows/browser-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    with:
+      node-version: '24'
+      package-manager: pnpm
+      install-command: pnpm install --frozen-lockfile
+      browser-install-command: pnpm exec playwright install --with-deps chromium
+      build-command: >-
+        NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.supabase.co
+        NEXT_PUBLIC_SUPABASE_ANON_KEY="$GITHUB_SHA"
+        NEXT_PUBLIC_SITE_URL=http://localhost:3000
+        SUPABASE_SERVICE_ROLE_KEY="$GITHUB_SHA"
+        TOKEN_PEPPER="$GITHUB_SHA"
+        IP_HASH_PEPPER="$GITHUB_SHA"
+        pnpm build
+      e2e-command: >-
+        NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.supabase.co
+        NEXT_PUBLIC_SUPABASE_ANON_KEY="$GITHUB_SHA"
+        NEXT_PUBLIC_SITE_URL=http://localhost:3000
+        SUPABASE_SERVICE_ROLE_KEY="$GITHUB_SHA"
+        TOKEN_PEPPER="$GITHUB_SHA"
+        IP_HASH_PEPPER="$GITHUB_SHA"
+        pnpm test:e2e
+
+  supabase-cloud:
+    if: github.actor != 'dependabot[bot]'
+    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-cloud-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    with:
+      project-ref: qjzyjetkwqtasqzhvoat
+      node-version: '24'
+      package-manager: pnpm
+      install-command: pnpm install --frozen-lockfile
+      verify-command: pnpm check:auth-urls https://arrival-confirmations.vercel.app
+    secrets:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+  vercel:
+    if: github.event_name == 'pull_request'
+    uses: Nisan-Sinai/github-workflows/.github/workflows/vercel-gate.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    with:
+      contexts-json: '["Vercel"]'
