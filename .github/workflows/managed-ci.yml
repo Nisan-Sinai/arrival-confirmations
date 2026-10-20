@@ -112,3 +112,66 @@ jobs:
     uses: Nisan-Sinai/github-workflows/.github/workflows/vercel-gate.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
     with:
       contexts-json: '["Vercel"]'
+
+  # Keep the existing protected-branch contexts while the central jobs above are
+  # authoritative. Each adapter fails closed if its central dependency fails.
+  legacy-history-secrets:
+    name: Full Git history secret scan
+    needs: [security]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify the central security gate
+        env:
+          CENTRAL_RESULT: ${{ needs.security.result }}
+        run: test "$CENTRAL_RESULT" = success
+
+  legacy-dependency-audit:
+    name: Production and full dependency audits
+    needs: [security]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify the central security gate
+        env:
+          CENTRAL_RESULT: ${{ needs.security.result }}
+        run: test "$CENTRAL_RESULT" = success
+
+  legacy-quality:
+    name: Format, lint, types, unit tests
+    needs: [core, advanced]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify the central core and advanced gates
+        env:
+          CORE_RESULT: ${{ needs.core.result }}
+          ADVANCED_RESULT: ${{ needs.advanced.result }}
+        run: test "$CORE_RESULT" = success && test "$ADVANCED_RESULT" = success
+
+  legacy-database:
+    name: Database, integration, RLS and 50-event matrix
+    needs: [database]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify the central database gate
+        env:
+          CENTRAL_RESULT: ${{ needs.database.result }}
+        run: test "$CENTRAL_RESULT" = success
+
+  legacy-browser:
+    name: End-to-end and accessibility
+    needs: [browser]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify the central browser gate
+        env:
+          CENTRAL_RESULT: ${{ needs.browser.result }}
+        run: test "$CENTRAL_RESULT" = success
