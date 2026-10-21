@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   load:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/isolated-load-qa.yml@2f3a7462d8ee740c5838210626d94c4fd294e1a2 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/isolated-load-qa.yml@c1c2dd6f344e7bb9626d4a57885bfd0d277cd0eb # main
     with:
       node-version: '24'
       safety-command: node --test tests/load/load-test.test.mjs
