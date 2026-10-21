@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   core:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/node-ci.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/node-ci.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -33,7 +33,7 @@ jobs:
         pnpm build
 
   advanced:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/advanced-node-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/advanced-node-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -53,14 +53,14 @@ jobs:
         pnpm build
 
   security:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/security-ci.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/security-ci.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       ecosystem: node
       package-manager: pnpm
       audit-command: pnpm audit --prod && pnpm audit
 
   database:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -71,7 +71,7 @@ jobs:
       rls-command: pnpm test:rls
 
   browser:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/browser-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/browser-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -97,7 +97,7 @@ jobs:
 
   supabase-cloud:
     if: github.actor != 'dependabot[bot]'
-    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-cloud-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-cloud-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       project-ref: qjzyjetkwqtasqzhvoat
       node-version: '24'
@@ -110,6 +110,6 @@ jobs:
 
   vercel:
     if: github.event_name == 'pull_request'
-    uses: Nisan-Sinai/github-workflows/.github/workflows/vercel-gate.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/vercel-gate.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       contexts-json: '["Vercel"]'
