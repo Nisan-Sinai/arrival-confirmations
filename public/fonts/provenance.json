@@ -1,0 +1,26 @@
+{
+  "upstream": "https://github.com/google/fonts",
+  "upstreamCommit": "45e3d5269e4a17d823f6d84470bc084dc5ae46f6",
+  "conversion": {
+    "fontTools": "4.55.3",
+    "Brotli": "1.2.0",
+    "arguments": ["--no-glyf-transform"],
+    "format": "WOFF2"
+  },
+  "fonts": [
+    {
+      "family": "Assistant",
+      "upstreamPath": "ofl/assistant/Assistant[wght].ttf",
+      "sourceSha256": "1c3b393884f8fb133a1b17f41d26178adae1050a4f86d7a429d1b5658c314fa3",
+      "file": "assistant-variable.woff2",
+      "sha256": "c4c5b4f5378bd6e4a9ba62ef5761c20410eab928ce89e3edc87a76ac7f5194c0"
+    },
+    {
+      "family": "Frank Ruhl Libre",
+      "upstreamPath": "ofl/frankruhllibre/FrankRuhlLibre[wght].ttf",
+      "sourceSha256": "f9bf26966681037aae894b031bd0dcf2c1bfdfa128dd0640cf276fe62a338a43",
+      "file": "frank-ruhl-libre-variable.woff2",
+      "sha256": "126c09811e2fc4fa0178088446815e11d7cdbc6cbe7db0be71ae326473dd0842"
+    }
+  ]
+}
