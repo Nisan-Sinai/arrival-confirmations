@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Assistant, Frank_Ruhl_Libre } from 'next/font/google';
+import localFont from 'next/font/local';
 
 import { getDictionary } from '@/config/dictionary';
 import { assertNoPlaceholders } from '@/config/event.config';
@@ -35,22 +35,24 @@ assertNoPlaceholders();
  * Body face. Assistant is a Hebrew-first sans with a large x-height, which is what
  * keeps the form legible for the older guests §5 calls out.
  *
- * Both faces keep their Latin subset, which is what lets the same stylesheet serve the
- * English side without a second font load.
+ * Both local variable faces contain Hebrew and Latin. Keeping the font files in
+ * the repository also avoids Google's intermittent extensionless-font response
+ * breaking otherwise identical production builds (Next.js issue #99114).
  */
-const assistant = Assistant({
+const assistant = localFont({
+  src: '../../public/fonts/assistant-variable.woff2',
   variable: '--font-assistant',
-  subsets: ['hebrew', 'latin'],
   display: 'swap',
-  weight: ['400', '600', '700'],
+  weight: '400 700',
 });
 
 /** Display face for the invitation headline — a Hebrew serif with real ceremony. */
-const frankRuhl = Frank_Ruhl_Libre({
+const frankRuhl = localFont({
+  src: '../../public/fonts/frank-ruhl-libre-variable.woff2',
   variable: '--font-frank-ruhl',
-  subsets: ['hebrew', 'latin'],
   display: 'swap',
-  weight: ['400', '500', '700'],
+  weight: '400 700',
+  adjustFontFallback: 'Times New Roman',
 });
 
 /**

@@ -10,14 +10,6 @@ onlyBuiltDependencies:
   - sharp
   - unrs-resolver
 
-# GHSA-vfj7-8cjw-p6xm affects braces only through ESLint's development-time
-# globbing chain. The advisory names braces 3.0.4 as patched, but npm has not
-# published that version yet. Keep the exception scoped to this GHSA and remove
-# it as soon as the patched release is available.
-auditConfig:
-  ignoreGhsas:
-    - GHSA-vfj7-8cjw-p6xm
-
 # Security overrides for transitive dependencies that direct dependencies do not
 # expose yet. Each override stays on the smallest compatible maintenance line.
 # Verify every change with `pnpm audit`, the production build and the complete CI suite.

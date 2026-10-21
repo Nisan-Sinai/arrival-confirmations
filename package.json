@@ -32,13 +32,16 @@
     "data:retention:cleanup": "tsx scripts/data-retention-cleanup.ts",
     "check:auth-urls": "tsx scripts/check-auth-urls.ts",
     "check:schema-drift": "tsx scripts/check-schema-drift.ts",
+    "check:dependency-audit": "node scripts/check-dependency-audit.mjs",
+    "test:dependency-audit": "node --test tests/security/dependency-audit.test.mjs",
+    "test:local-fonts": "node --test tests/security/local-fonts.test.mjs",
     "scan:secrets": "tsx scripts/scan-secrets.ts",
     "deadcode": "knip",
     "supabase:start": "tsx scripts/supabase-local-notice.ts",
     "supabase:stop": "tsx scripts/supabase-local-notice.ts",
     "supabase:types": "tsx scripts/gen-types.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck",
-    "ci": "pnpm check && pnpm test:coverage && pnpm build && pnpm scan:secrets && pnpm test:e2e"
+    "ci": "pnpm check && pnpm test:dependency-audit && pnpm test:local-fonts && pnpm check:dependency-audit && pnpm test:coverage && pnpm build && pnpm scan:secrets && pnpm test:e2e"
   },
   "dependencies": {
     "@date-fns/tz": "1.5.0",
