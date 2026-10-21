@@ -1,0 +1,22 @@
+name: Central dependency security watch
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-watch
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    uses: Nisan-Sinai/github-workflows/.github/workflows/dependency-watch.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
+    with:
+      node-version: '24'
+      package-manager: pnpm
+      install-command: pnpm install --frozen-lockfile
+      audit-command: pnpm audit --prod && pnpm audit

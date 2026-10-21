@@ -22,6 +22,9 @@ auditConfig:
 # expose yet. Each override stays on the smallest compatible maintenance line.
 # Verify every change with `pnpm audit`, the production build and the complete CI suite.
 overrides:
+  # First patched Vite release for the Windows editor-command advisories;
+  # retain the current maintenance line instead of refreshing every tool.
+  'vite@>=8.0.0 <=8.1.5': '8.1.6'
   postcss: '^8.5.18'
   # sharp versions before 0.35.5 are affected by the current libheif/librsvg
   # advisories; keep Next 16.3.x on the first patched release.

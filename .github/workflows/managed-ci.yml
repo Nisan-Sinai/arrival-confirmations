@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   core:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/node-ci.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    uses: Nisan-Sinai/github-workflows/.github/workflows/node-ci.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -33,7 +33,7 @@ jobs:
         pnpm build
 
   advanced:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/advanced-node-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    uses: Nisan-Sinai/github-workflows/.github/workflows/advanced-node-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -53,14 +53,14 @@ jobs:
         pnpm build
 
   security:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/security-ci.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    uses: Nisan-Sinai/github-workflows/.github/workflows/security-ci.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       ecosystem: node
       package-manager: pnpm
-      audit-command: pnpm audit --prod --ignore-registry-errors
+      audit-command: pnpm audit --prod && pnpm audit
 
   database:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -71,7 +71,7 @@ jobs:
       rls-command: pnpm test:rls
 
   browser:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/browser-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    uses: Nisan-Sinai/github-workflows/.github/workflows/browser-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       node-version: '24'
       package-manager: pnpm
@@ -93,10 +93,11 @@ jobs:
         TOKEN_PEPPER="$GITHUB_SHA"
         IP_HASH_PEPPER="$GITHUB_SHA"
         pnpm test:e2e
+      lighthouse-command: bash scripts/check-lighthouse.sh
 
   supabase-cloud:
     if: github.actor != 'dependabot[bot]'
-    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-cloud-qa.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    uses: Nisan-Sinai/github-workflows/.github/workflows/supabase-cloud-qa.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       project-ref: qjzyjetkwqtasqzhvoat
       node-version: '24'
@@ -109,69 +110,6 @@ jobs:
 
   vercel:
     if: github.event_name == 'pull_request'
-    uses: Nisan-Sinai/github-workflows/.github/workflows/vercel-gate.yml@f37a3af29cf6a97bc12d7d17e8781db2a9968729
+    uses: Nisan-Sinai/github-workflows/.github/workflows/vercel-gate.yml@d51a5eff9e53db9ad1cf6dfc06e9d8e24e09bb03 # main
     with:
       contexts-json: '["Vercel"]'
-
-  # Keep the existing protected-branch contexts while the central jobs above are
-  # authoritative. Each adapter fails closed if its central dependency fails.
-  legacy-history-secrets:
-    name: Full Git history secret scan
-    needs: [security]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Verify the central security gate
-        env:
-          CENTRAL_RESULT: ${{ needs.security.result }}
-        run: test "$CENTRAL_RESULT" = success
-
-  legacy-dependency-audit:
-    name: Production and full dependency audits
-    needs: [security]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Verify the central security gate
-        env:
-          CENTRAL_RESULT: ${{ needs.security.result }}
-        run: test "$CENTRAL_RESULT" = success
-
-  legacy-quality:
-    name: Format, lint, types, unit tests
-    needs: [core, advanced]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Verify the central core and advanced gates
-        env:
-          CORE_RESULT: ${{ needs.core.result }}
-          ADVANCED_RESULT: ${{ needs.advanced.result }}
-        run: test "$CORE_RESULT" = success && test "$ADVANCED_RESULT" = success
-
-  legacy-database:
-    name: Database, integration, RLS and 50-event matrix
-    needs: [database]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Verify the central database gate
-        env:
-          CENTRAL_RESULT: ${{ needs.database.result }}
-        run: test "$CENTRAL_RESULT" = success
-
-  legacy-browser:
-    name: End-to-end and accessibility
-    needs: [browser]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Verify the central browser gate
-        env:
-          CENTRAL_RESULT: ${{ needs.browser.result }}
-        run: test "$CENTRAL_RESULT" = success
