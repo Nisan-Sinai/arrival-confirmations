@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   audit:
-    uses: Nisan-Sinai/github-workflows/.github/workflows/dependency-watch.yml@4785c2f8c13f9b81fc3507069e94aa2f9c22d752 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/dependency-watch.yml@c1c2dd6f344e7bb9626d4a57885bfd0d277cd0eb # main
     with:
       node-version: '24'
       package-manager: pnpm
