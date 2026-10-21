@@ -40,7 +40,7 @@ jobs:
     name: Public domain serves the merged release
     needs: production-pending
     if: ${{ !cancelled() && (github.event_name != 'push' || needs.production-pending.result == 'success') }}
-    uses: Nisan-Sinai/github-workflows/.github/workflows/production-qa.yml@4785c2f8c13f9b81fc3507069e94aa2f9c22d752 # main
+    uses: Nisan-Sinai/github-workflows/.github/workflows/production-qa.yml@c1c2dd6f344e7bb9626d4a57885bfd0d277cd0eb # main
     with:
       node-version: '24'
       production-url: https://arrival-confirmations.vercel.app
