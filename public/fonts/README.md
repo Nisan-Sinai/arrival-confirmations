@@ -17,6 +17,19 @@ the combined font payload is 122,260 bytes. Conversion changes the container
 format, not the typefaces; the obsolete Assistant DSIG signature metadata is
 not retained by the standard FontTools conversion.
 
+Reproduce the reviewed conversion from the checksum-verified upstream TTFs
+with FontTools 4.55.3 and Brotli 1.2.0:
+
+```sh
+python -m fontTools.ttLib.woff2 compress --no-glyf-transform assistant-variable.ttf -o assistant-variable.woff2
+python -m fontTools.ttLib.woff2 compress --no-glyf-transform frank-ruhl-libre-variable.ttf -o frank-ruhl-libre-variable.woff2
+```
+
+The explicit `--no-glyf-transform` preserves the original glyph-table bytes
+instead of applying the default WOFF2 glyph preprocessing. The reviewed
+decompressed layout, variation, metrics and character-map tables match upstream;
+only the unused Assistant DSIG placeholder metadata is removed.
+
 To update a font, review its source and license, reproduce the conversion,
 update the provenance, and run `pnpm test:local-fonts`, production builds,
 browser/accessibility tests and the existing Lighthouse budgets. Do not restore

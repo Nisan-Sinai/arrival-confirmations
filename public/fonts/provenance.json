@@ -4,6 +4,7 @@
   "conversion": {
     "fontTools": "4.55.3",
     "Brotli": "1.2.0",
+    "arguments": ["--no-glyf-transform"],
     "format": "WOFF2"
   },
   "fonts": [
