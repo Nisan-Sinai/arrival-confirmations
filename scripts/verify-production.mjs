@@ -165,9 +165,37 @@ async function verify() {
     'Bing ownership file is missing or incorrect',
   );
 
-  // The share card lives in the `(he)` route group, so Next serves it at a hashed path
-  // and names that path in the `og:image` tag. Follow the URL the page advertises
-  // rather than assuming a fixed one — that is what a crawler actually fetches.
+  // Every public page must publish its own social preview in both languages.
+  for (const prefix of ['', '/en']) {
+    for (const path of ['', '/pricing', '/guide', '/privacy', '/accessibility']) {
+      const route = `${prefix}${path}` || '/';
+      const page = await text(route);
+      for (const tag of ['property="og:image"', 'name="twitter:image"']) {
+        const image = page.body.match(new RegExp(`<meta ${tag} content="([^"]+)"`))?.[1];
+        assert(image, `${route} is missing ${tag}`);
+        const url = new URL(image.replace(/&amp;/g, '&'));
+        assert(url.origin === baseUrl, `${route} social image must use the production origin`);
+        if (prefix) assert(url.pathname === '/social-image/en', `${route} image must be English`);
+      }
+    }
+  }
+  for (const locale of ['he', 'en']) {
+    const response = await request(`/social-image/${locale}`);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    assert(response.status === 200, `${locale} social image is unavailable`);
+    assert(response.headers.get('content-type')?.includes('image/png'), 'Social image is not PNG');
+    assert(
+      bytes.byteLength > 10_000 && bytes.subarray(0, 8).toString('hex') === '89504e470d0a1a0a',
+      'Social image is empty or invalid',
+    );
+    assert(
+      bytes.readUInt32BE(16) === 1200 && bytes.readUInt32BE(20) === 630,
+      'Social image has the wrong size',
+    );
+  }
+
+  // The Hebrew home retains its file-based hashed image. Fetch the advertised URL
+  // rather than assuming a special-file filename; this is what crawlers fetch.
   const ogImage = home.body
     .match(/property="og:image" content="([^"]+)"/)?.[1]
     ?.replace(/&amp;/g, '&');

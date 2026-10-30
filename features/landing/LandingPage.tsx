@@ -1,3 +1,4 @@
+import { socialImage } from '@/lib/social-image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -42,6 +43,7 @@ export function buildLandingMetadata(locale: Locale): Metadata {
       languages: languageAlternates('/'),
     },
     openGraph: {
+      images: [socialImage(locale)],
       type: 'website',
       locale: openGraphLocale(locale),
       siteName: site.name,
@@ -50,6 +52,7 @@ export function buildLandingMetadata(locale: Locale): Metadata {
       url: path,
     },
     twitter: {
+      images: [socialImage(locale)],
       card: 'summary_large_image',
       title: landing.meta.ogTitle,
       description: landing.meta.ogDescription,

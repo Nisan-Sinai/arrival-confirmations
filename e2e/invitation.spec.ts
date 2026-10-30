@@ -237,7 +237,7 @@ test.describe('the crawlable surface', () => {
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /^https?:\/\//);
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
       'content',
-      /\/opengraph-image/,
+      /\/social-image\/he$/,
     );
     await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
       'content',
@@ -294,9 +294,8 @@ test.describe('the crawlable surface', () => {
   });
 
   test('renders the product share card as a real PNG', async ({ request }) => {
-    // The route lives in the `(he)` group, so Next serves it at a hashed path and
-    // names that path in the `og:image` tag. Reading the URL from the page rather than
-    // hardcoding it is what keeps this test honest about what a crawler actually fetches.
+    // Fetch the image advertised by the page, as a preview crawler would; the
+    // shared product card now has a stable localized endpoint.
     const html = await (await request.get('/')).text();
     const content = html.match(/property="og:image" content="([^"]+)"/)?.[1];
     expect(content).toBeTruthy();

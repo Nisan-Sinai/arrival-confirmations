@@ -1,54 +1,12 @@
-import { ImageResponse } from 'next/og';
+import { renderProductShareImage } from '@/features/og/ProductShareImage';
+import { OG_IMAGE_CONTENT_TYPE, OG_IMAGE_SIZE } from '@/lib/server/ogImage';
+import { socialImage } from '@/lib/social-image';
 
-import { appConfig } from '@/config/event.config';
-import { OG_PALETTE, OgFlourish, OgFrame } from '@/features/og/OgFrame';
-import { OgText } from '@/features/og/OgText';
-import { OG_IMAGE_CONTENT_TYPE, OG_IMAGE_SIZE, loadOgFonts } from '@/lib/server/ogImage';
-
-/**
- * The share card for the product itself — `/`, `/privacy` and `/accessibility`, which
- * inherit this file because they declare no image of their own (§12).
- *
- * The free claim is on the card because it is the only claim the product has that is
- * both true and unusual, and a preview is read in about a second. Everything else the
- * landing page says can wait until someone taps.
- */
-
-export const alt = `${appConfig.siteName} — ${appConfig.siteDescription}`;
+/** Keep the file-based Hebrew home image while sharing accurate localized product copy. */
+export const alt = socialImage('he').alt;
 export const size = OG_IMAGE_SIZE;
 export const contentType = OG_IMAGE_CONTENT_TYPE;
 
-export default async function OpengraphImage() {
-  return new ImageResponse(
-    <OgFrame>
-      <OgText fontSize={26} style={{ letterSpacing: 8, color: OG_PALETTE.gold }}>
-        הזמנה דיגיטלית
-      </OgText>
-
-      <OgText
-        fontSize={104}
-        style={{
-          marginTop: 18,
-          fontFamily: 'Frank Ruhl Libre',
-          fontWeight: 700,
-          color: OG_PALETTE.ivory,
-        }}
-      >
-        {appConfig.siteName}
-      </OgText>
-
-      <div style={{ display: 'flex', marginTop: 26 }}>
-        <OgFlourish />
-      </div>
-
-      <OgText fontSize={34} style={{ marginTop: 26, color: OG_PALETTE.goldSoft }}>
-        {appConfig.siteDescription}
-      </OgText>
-
-      <OgText fontSize={30} style={{ marginTop: 14, fontWeight: 700, color: OG_PALETTE.gold }}>
-        חינם, בלי מנוי ובלי תשלום לפי אורח
-      </OgText>
-    </OgFrame>,
-    { ...size, fonts: await loadOgFonts() },
-  );
+export default function OpengraphImage() {
+  return renderProductShareImage('he');
 }

@@ -1,3 +1,4 @@
+import { socialImage } from '@/lib/social-image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getDictionary } from '@/config/dictionary';
@@ -127,6 +128,7 @@ export function buildPricingMetadata(locale: Locale): Metadata {
     title: meta.title,
     description: meta.description,
     openGraph: {
+      images: [socialImage(locale)],
       title: meta.title,
       description: meta.description,
       url: absoluteUrl(localePath(locale, '/pricing')),
@@ -134,7 +136,12 @@ export function buildPricingMetadata(locale: Locale): Metadata {
       locale: openGraphLocale(locale),
       siteName: getDictionary(locale).site.name,
     },
-    twitter: { card: 'summary_large_image', title: meta.title, description: meta.description },
+    twitter: {
+      images: [socialImage(locale)],
+      card: 'summary_large_image',
+      title: meta.title,
+      description: meta.description,
+    },
     alternates: {
       canonical: localePath(locale, '/pricing'),
       languages: languageAlternates('/pricing'),

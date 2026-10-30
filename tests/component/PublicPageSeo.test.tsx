@@ -1,3 +1,7 @@
+import { buildLandingMetadata } from '@/features/landing/LandingPage';
+import { buildPrivacyMetadata } from '@/features/legal/PrivacyPageBody';
+import { buildGuideMetadata } from '@/features/guide/GuidePage';
+import { socialImage } from '@/lib/social-image';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -15,6 +19,8 @@ for (const locale of ['he', 'en'] as const) {
     it('keeps page and social canonicals on the same public route', () => {
       for (const [path, metadata] of [
         ['/pricing', buildPricingMetadata(locale)],
+        ['/privacy', buildPrivacyMetadata(locale)],
+        ['/guide', buildGuideMetadata(locale)],
         ['/accessibility', buildAccessibilityMetadata(locale)],
       ] as const) {
         expect(metadata.alternates?.canonical).toBe(`${prefix}${path}`);
@@ -25,7 +31,15 @@ for (const locale of ['he', 'en'] as const) {
           siteName: locale === 'he' ? 'אישורי הגעה' : 'Arrival Confirmations',
         });
         expect(metadata.twitter?.description).toBe(metadata.description);
+        expect(metadata.openGraph?.images).toEqual([socialImage(locale)]);
+        expect(metadata.twitter?.images).toEqual([socialImage(locale)]);
       }
+    });
+
+    it('sets localized images on the landing page too', () => {
+      const metadata = buildLandingMetadata(locale);
+      expect(metadata.openGraph?.images).toEqual([socialImage(locale)]);
+      expect(metadata.twitter?.images).toEqual([socialImage(locale)]);
     });
 
     it('renders a useful comparison and a contextual link to accessibility', () => {

@@ -91,8 +91,9 @@ export function buildMetadata(locale: Locale): Metadata {
     /**
      * Defaults, not the last word: `openGraph` is replaced wholesale by any route that
      * declares its own, which is why the invitation page restates `type` and `locale`.
-     * The image is the exception — `app/opengraph-image.tsx` is picked up by file
-     * convention and does not need naming here.
+     * Public routes explicitly name their localized image as part of both nested
+     * social objects; file-based image inheritance alone is insufficient when a
+     * child replaces openGraph. The Hebrew home also retains its file-based image.
      */
     openGraph: {
       type: 'website',

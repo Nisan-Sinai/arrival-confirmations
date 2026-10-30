@@ -70,6 +70,8 @@ test('ignores private application and database changes and selects public conten
   for (const file of [
     'features/layout/SiteFooter.tsx',
     'features/guide/content.ts',
+    'features/og/ProductShareImage.tsx',
+    'lib/social-image.ts',
     'config/dictionary/en.ts',
     'config/indexnow.json',
     'app/(he)/guide/page.tsx',
