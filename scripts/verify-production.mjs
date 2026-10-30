@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 const baseUrl = (process.env.PRODUCTION_URL ?? 'https://arrival-confirmations.vercel.app').replace(
   /\/+$/,
   '',
@@ -149,6 +151,19 @@ async function verify() {
       `${path} exposes a private URL`,
     );
   }
+
+  const indexNow = JSON.parse(readFileSync(new URL('../config/indexnow.json', import.meta.url)));
+  const keyFile = await text(indexNow.ownershipFile);
+  assert(
+    keyFile.body.trim() === indexNow.ownershipFile.slice(1, -4),
+    'IndexNow ownership file is missing or incorrect',
+  );
+  const bingFile = await text('/BingSiteAuth.xml');
+  const bingExpected = readFileSync(new URL('../public/BingSiteAuth.xml', import.meta.url), 'utf8');
+  assert(
+    bingFile.body.trim() === bingExpected.trim(),
+    'Bing ownership file is missing or incorrect',
+  );
 
   // The share card lives in the `(he)` route group, so Next serves it at a hashed path
   // and names that path in the `og:image` tag. Follow the URL the page advertises

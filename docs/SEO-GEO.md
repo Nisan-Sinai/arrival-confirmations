@@ -42,3 +42,13 @@ No paid service is required or added. A separate custom domain is optional and o
 - [OpenAI crawler controls](https://developers.openai.com/api/docs/bots)
 
 Search accessibility, useful visible content and accurate structured data are the foundation. `llms.txt` is an optional reference for systems that use it; Google does not require it. None of these changes guarantees crawling, indexing, ranking or an AI recommendation.
+
+## Bing and IndexNow connection
+
+`public/BingSiteAuth.xml` is the ownership file downloaded from the connected Bing Webmaster Tools account. `config/indexnow.json` and the matching root text file hold the public IndexNow ownership proof. This proof is intentionally public; no private Bing API token, Google credential or paid connector is needed.
+
+The sitemap and IndexNow share `config/public-pages.json`. `scripts/submit-indexnow.mjs` restricts notifications to the exact production host and public Hebrew/English routes, rejects private paths, queries and off-site URLs, verifies the live release SHA and ownership file, then posts once to the official `https://api.indexnow.org/indexnow` endpoint. It does not read Supabase, invitations or guest records.
+
+The `Notify public search updates` workflow runs after a successful push-triggered Production integrity run on main. It uses read-only permissions, checks out that exact release without persisted credentials and runs the notification safeguards. Private-only changes do not send notifications. A manual dispatch on main can notify the complete current public allowlist. HTTP 200 means the key was validated; HTTP 202 means key validation remains pending. Neither confirms indexing. Rejections and rate limits fail visibly and are not automatically retried.
+
+`pnpm test:indexnow` runs protocol and privacy safeguards as part of the required core test command. Production smoke checks both ownership files before the notification workflow can run. Google Search Console remains a separate submission path; IndexNow does not replace it.

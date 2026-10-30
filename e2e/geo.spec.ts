@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import indexNow from '../config/indexnow.json';
 
 const publicPaths = ['/', '/pricing', '/guide', '/privacy', '/accessibility'];
 
@@ -61,6 +62,12 @@ for (const prefix of ['', '/en']) {
 test('GEO references are UTF-8 public text and never enumerate private routes', async ({
   request,
 }) => {
+  const key = await request.get(indexNow.ownershipFile);
+  expect(key.status()).toBe(200);
+  expect((await key.text()).trim()).toBe(indexNow.ownershipFile.slice(1, -4));
+  const bing = await request.get('/BingSiteAuth.xml');
+  expect(bing.status()).toBe(200);
+  expect(await bing.text()).toMatch(/<users>[\s\S]*<user>[A-F0-9]{32}<\/user>[\s\S]*<\/users>/);
   for (const path of ['/llms.txt', '/llms-full.txt']) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);
