@@ -16,7 +16,8 @@
     "format:homepage": "prettier --write app/page.tsx",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --project unit --project component",
+    "test": "pnpm test:indexnow && vitest run --project unit --project component",
+    "test:indexnow": "node --test tests/security/indexnow.test.mjs",
     "test:watch": "vitest --project unit --project component",
     "test:unit": "vitest run --project unit",
     "test:component": "vitest run --project component",
@@ -41,7 +42,7 @@
     "supabase:stop": "tsx scripts/supabase-local-notice.ts",
     "supabase:types": "tsx scripts/gen-types.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck",
-    "ci": "pnpm check && pnpm test:dependency-audit && pnpm test:local-fonts && pnpm check:dependency-audit && pnpm test:coverage && pnpm build && pnpm scan:secrets && pnpm test:e2e"
+    "ci": "pnpm check && pnpm test:indexnow && pnpm test:dependency-audit && pnpm test:local-fonts && pnpm check:dependency-audit && pnpm test:coverage && pnpm build && pnpm scan:secrets && pnpm test:e2e"
   },
   "dependencies": {
     "@date-fns/tz": "1.5.0",

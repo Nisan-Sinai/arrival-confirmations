@@ -1,11 +1,12 @@
 import { clientEnv } from '@/lib/env.client';
 import { localePath, locales } from '@/lib/i18n';
+import publicPages from '@/config/public-pages.json';
 
 /** Origin without a trailing slash, so joined paths never double up. */
 export const SITE_ORIGIN = clientEnv.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
 
 /** Public pages that carry no personal data and are useful in search results. */
-export const INDEXABLE_PATHS = ['/', '/pricing', '/guide', '/privacy', '/accessibility'] as const;
+export const INDEXABLE_PATHS: readonly string[] = publicPages;
 
 /** Private, authenticated or invitation paths that crawlers must never index. */
 export const DISALLOWED_PATHS = [

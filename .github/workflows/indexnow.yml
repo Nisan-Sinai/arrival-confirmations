@@ -1,0 +1,43 @@
+name: Notify public search updates
+
+on:
+  workflow_run:
+    workflows: ['Production integrity']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow-public-pages
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    name: IndexNow after verified production
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Verify public-only notification safeguards
+        run: node --test tests/security/indexnow.test.mjs
+      - name: Notify IndexNow once for changed public content
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          INDEXNOW_ALL_PUBLIC: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+        run: node scripts/submit-indexnow.mjs
