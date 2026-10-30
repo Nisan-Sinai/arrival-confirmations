@@ -10,19 +10,20 @@ for (const prefix of ['', '/en']) {
       const response = await page.goto(route);
       expect(response?.status()).toBe(200);
       const origin = new URL(page.url()).origin;
-      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
-        'href',
-        `${origin}${route}`,
-      );
-      await expect(page.locator('link[hreflang="he"]')).toHaveAttribute('href', `${origin}${path}`);
-      await expect(page.locator('link[hreflang="en"]')).toHaveAttribute(
-        'href',
-        `${origin}${path === '/' ? '/en' : `/en${path}`}`,
-      );
-      await expect(page.locator('link[hreflang="x-default"]')).toHaveAttribute(
-        'href',
-        `${origin}${path}`,
-      );
+      // Next emits the origin without a trailing slash for root metadata. Compare
+      // normalized URLs while still checking the exact origin, path and query.
+      for (const [selector, target] of [
+        ['link[rel="canonical"]', route],
+        ['link[hreflang="he"]', path],
+        ['link[hreflang="en"]', path === '/' ? '/en' : `/en${path}`],
+        ['link[hreflang="x-default"]', path],
+      ]) {
+        const link = page.locator(selector!);
+        await expect(link).toHaveCount(1);
+        const href = await link.getAttribute('href');
+        expect(href).not.toBeNull();
+        expect(new URL(href!).href).toBe(new URL(target!, origin).href);
+      }
       await expect(page.locator('html')).toHaveAttribute('dir', prefix ? 'ltr' : 'rtl');
       await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /\S.{30,}/);
       expect(
