@@ -5,10 +5,13 @@ import { localePath, locales } from '@/lib/i18n';
 export const SITE_ORIGIN = clientEnv.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
 
 /** Public pages that carry no personal data and are useful in search results. */
-export const INDEXABLE_PATHS = ['/', '/pricing', '/privacy', '/accessibility'] as const;
+export const INDEXABLE_PATHS = ['/', '/pricing', '/guide', '/privacy', '/accessibility'] as const;
 
 /** Private, authenticated or invitation paths that crawlers must never index. */
 export const DISALLOWED_PATHS = [
+  '/api/',
+  '/invite',
+  '/share/',
   '/e/',
   '/dashboard/',
   '/admin/',

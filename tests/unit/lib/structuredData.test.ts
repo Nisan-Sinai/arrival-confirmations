@@ -50,6 +50,13 @@ describe('the graph as a whole', () => {
 });
 
 describe('Organization', () => {
+  it.each(locales)(
+    'uses the publisher identity shared with the business website (%s)',
+    (locale) => {
+      expect(node(locale, 'Organization')['@id']).toBe(`${PUBLISHER_URL}/#business`);
+      expect(node(locale, 'Organization').url).toBe(PUBLISHER_URL);
+    },
+  );
   it.each(locales)('names the studio, not the product (%s)', (locale) => {
     expect(node(locale, 'Organization').name).toBe(getDictionary(locale).footer.builderName);
   });
@@ -107,6 +114,15 @@ describe('WebSite', () => {
 });
 
 describe('WebApplication', () => {
+  it.each(locales)(
+    'identifies the product separately and links its localized landing page (%s)',
+    (locale) => {
+      expect(node(locale, 'WebApplication')['@id']).toBe(`${SITE_ORIGIN}/#application`);
+      expect(node(locale, 'WebApplication').url).toBe(
+        `${SITE_ORIGIN}${locale === 'he' ? '/' : '/en'}`,
+      );
+    },
+  );
   it.each(locales)('does not claim to be free while listing paid plans (%s)', (locale) => {
     // The contradiction this replaced: isAccessibleForFree true beside three paid plans.
     const app = node(locale, 'WebApplication');

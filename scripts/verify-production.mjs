@@ -109,16 +109,45 @@ async function verify() {
   assert(notFound.body.includes('לא נמצא'), 'The public 404 page is not localized to Hebrew');
 
   const robots = await text('/robots.txt');
-  for (const path of ['/e/', '/dashboard/', '/admin/']) {
+  for (const path of ['/api/', '/invite', '/share/', '/e/', '/dashboard/', '/admin/']) {
     assert(robots.body.includes(`Disallow: ${path}`), `robots.txt does not disallow ${path}`);
   }
 
   const sitemap = await text('/sitemap.xml');
-  for (const path of ['/', '/pricing', '/privacy', '/accessibility']) {
+  for (const path of [
+    '/',
+    '/en',
+    '/pricing',
+    '/en/pricing',
+    '/guide',
+    '/en/guide',
+    '/privacy',
+    '/en/privacy',
+    '/accessibility',
+    '/en/accessibility',
+  ]) {
     assert(sitemap.body.includes(`${baseUrl}${path}`), `sitemap.xml is missing ${path}`);
   }
-  for (const path of ['/signup', '/login', '/dashboard', '/e/']) {
+  for (const path of ['/signup', '/login', '/dashboard', '/e/', '/invite', '/share/', '/api/']) {
     assert(!sitemap.body.includes(`${baseUrl}${path}`), `sitemap.xml exposes private path ${path}`);
+  }
+
+  for (const path of ['/guide', '/en/guide']) {
+    const guide = await text(path);
+    assert(guide.body.includes('application/ld+json'), `${path} is missing structured data`);
+    assert(guide.body.includes(`${baseUrl}${path}`), `${path} is missing its canonical URL`);
+  }
+  for (const path of ['/llms.txt', '/llms-full.txt']) {
+    const reference = await text(path);
+    assert(
+      reference.response.headers.get('content-type')?.includes('text/plain'),
+      `${path} must be plain text`,
+    );
+    assert(reference.body.includes('Nisan Sinai Technologies'), `${path} is missing the publisher`);
+    assert(
+      !/https?:\/\/[^\s)]+\/(?:e|invite|share|dashboard|admin|api)\//.test(reference.body),
+      `${path} exposes a private URL`,
+    );
   }
 
   // The share card lives in the `(he)` route group, so Next serves it at a hashed path

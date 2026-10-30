@@ -5,6 +5,7 @@ import { getDictionary } from '@/config/dictionary';
 import { AccessibilityWidget } from '@/features/accessibility/AccessibilityWidget';
 import { BrandMark } from '@/features/layout/BrandMark';
 import { localePath, type Locale } from '@/lib/i18n';
+import { PUBLISHER_URL } from '@/lib/seo';
 
 /**
  * Site footer.
@@ -53,6 +54,11 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               </p>
               <ul className="mt-3 flex flex-col gap-1">
                 <li>
+                  <Link className={linkClass} href={localePath(locale, '/guide')}>
+                    {locale === 'he' ? 'מדריך אישורי הגעה' : 'RSVP guide'}
+                  </Link>
+                </li>
+                <li>
                   <Link className={linkClass} href={localePath(locale, '/pricing')}>
                     {footer.pricing}
                   </Link>
@@ -90,7 +96,12 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <div className="border-border/70 flex flex-col items-center gap-4 border-t py-6 pb-24 text-center sm:flex-row sm:justify-between sm:pb-6 sm:pl-20 sm:text-start">
             <p className="text-muted-foreground text-sm">
               {footer.builtBy}{' '}
-              <span className="text-foreground font-semibold">{footer.builderName}</span>
+              <a
+                className="text-foreground font-semibold underline underline-offset-4"
+                href={PUBLISHER_URL}
+              >
+                {footer.builderName}
+              </a>
             </p>
 
             {/*

@@ -120,6 +120,8 @@ const nextConfig: NextConfig = {
       '/en',
       '/pricing',
       '/en/pricing',
+      '/guide',
+      '/en/guide',
       '/privacy',
       '/en/privacy',
       '/accessibility',
@@ -127,6 +129,12 @@ const nextConfig: NextConfig = {
     ];
     return [
       { source: '/:path*', headers: securityHeaders },
+      ...['api', 'invite', 'share', 'e', 'dashboard', 'admin'].flatMap((segment) =>
+        ['', '/en'].map((prefix) => ({
+          source: `${prefix}/${segment}/:path*`,
+          headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+        })),
+      ),
       ...publicPaths.map((source) => ({
         source,
         headers: [{ key: 'Content-Security-Policy', value: publicPolicy }],

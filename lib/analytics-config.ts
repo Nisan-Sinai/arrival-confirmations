@@ -8,6 +8,8 @@ export const analyticsConfig: AnalyticsConfig = {
     '/en',
     '/pricing',
     '/en/pricing',
+    '/guide',
+    '/en/guide',
     '/privacy',
     '/en/privacy',
     '/accessibility',

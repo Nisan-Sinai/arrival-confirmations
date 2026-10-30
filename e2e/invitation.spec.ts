@@ -222,6 +222,8 @@ test.describe('the crawlable surface', () => {
       '/en',
       '/pricing',
       '/en/pricing',
+      '/guide',
+      '/en/guide',
       '/privacy',
       '/en/privacy',
       '/accessibility',
