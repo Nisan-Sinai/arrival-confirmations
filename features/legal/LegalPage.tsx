@@ -1,3 +1,4 @@
+import { socialImage } from '@/lib/social-image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getDictionary } from '@/config/dictionary';
@@ -73,6 +74,7 @@ export function buildLegalMetadata(
     title: { absolute: seo.title },
     description: seo.description,
     openGraph: {
+      images: [socialImage(locale)],
       title: seo.title,
       description: seo.description,
       url: absoluteUrl(localePath(locale, path)),
@@ -80,7 +82,12 @@ export function buildLegalMetadata(
       locale: openGraphLocale(locale),
       siteName: getDictionary(locale).site.name,
     },
-    twitter: { card: 'summary_large_image', title: seo.title, description: seo.description },
+    twitter: {
+      images: [socialImage(locale)],
+      card: 'summary_large_image',
+      title: seo.title,
+      description: seo.description,
+    },
     alternates: { canonical: localePath(locale, path), languages: languageAlternates(path) },
   };
 }

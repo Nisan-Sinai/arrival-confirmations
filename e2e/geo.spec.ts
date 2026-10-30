@@ -27,6 +27,14 @@ for (const prefix of ['', '/en']) {
       }
       await expect(page.locator('html')).toHaveAttribute('dir', prefix ? 'ltr' : 'rtl');
       await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /\S.{30,}/);
+      for (const selector of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
+        const image = page.locator(selector);
+        await expect(image).toHaveCount(1);
+        const url = new URL((await image.getAttribute('content'))!);
+        expect(url.origin).toBe(origin);
+        if (prefix) expect(url.pathname).toBe('/social-image/en');
+      }
+      await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute('content', /\S/);
       expect(
         await page
           .locator('meta[name="robots"]')
@@ -58,6 +66,25 @@ for (const prefix of ['', '/en']) {
     expect(results.violations).toEqual([]);
   });
 }
+
+test('localized social images are real 1200 by 630 PNGs and reject unknown locales', async ({
+  request,
+}) => {
+  const images = [];
+  for (const locale of ['he', 'en']) {
+    const response = await request.get(`/social-image/${locale}`);
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain('image/png');
+    const bytes = await response.body();
+    expect(bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(bytes.readUInt32BE(16)).toBe(1200);
+    expect(bytes.readUInt32BE(20)).toBe(630);
+    expect(bytes.byteLength).toBeGreaterThan(10_000);
+    images.push(bytes);
+  }
+  expect(images[0]!.equals(images[1]!)).toBe(false);
+  expect((await request.get('/social-image/fr')).status()).toBe(404);
+});
 
 test('GEO references are UTF-8 public text and never enumerate private routes', async ({
   request,

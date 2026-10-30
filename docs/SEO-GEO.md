@@ -52,3 +52,24 @@ The sitemap and IndexNow share `config/public-pages.json`. `scripts/submit-index
 The `Notify public search updates` workflow runs after a successful push-triggered Production integrity run on main. It uses read-only permissions, checks out that exact release without persisted credentials and runs the notification safeguards. Private-only changes do not send notifications. A manual dispatch on main can notify the complete current public allowlist. HTTP 200 means the key was validated; HTTP 202 means key validation remains pending. Neither confirms indexing. Rejections and rate limits fail visibly and are not automatically retried.
 
 `pnpm test:indexnow` runs protocol and privacy safeguards as part of the required core test command. Production smoke checks both ownership files before the notification workflow can run. Google Search Console remains a separate submission path; IndexNow does not replace it.
+
+## Public social-image regression repair — 2026-10-30
+
+A fresh public crawl found that nine of the ten public pages lacked an og:image
+when nested page metadata replaced the root defaults. The Hebrew home had an
+image, but its legacy text described the full service as free after paid plans
+had been introduced. These were preview metadata/content issues; live RSVP and
+authentication behavior were unchanged.
+
+Each public page now explicitly carries Open Graph and Twitter images with
+localized alternate text. Stable, build-time `/social-image/he` and
+`/social-image/en` endpoints use the existing product frame and vendored fonts.
+The Hebrew home retains its file-based image. The card accurately offers a free
+trial and no monthly subscription; it no longer promises a free live event.
+English card text keeps LTR word order; the existing Hebrew bidi renderer and
+private event invitation images are preserved.
+
+Component, unit and browser regressions cover all ten public pages, both PNG
+responses, real 1200×630 dimensions, different locale images and invalid-locale
+404s. The exact-release production check repeats the public metadata and image
+checks. IndexNow's public-change filter includes product social-image updates.

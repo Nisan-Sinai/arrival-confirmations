@@ -1,3 +1,4 @@
+import { socialImage } from '@/lib/social-image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -24,6 +25,7 @@ export function buildGuideMetadata(locale: Locale): Metadata {
       languages: languageAlternates('/guide'),
     },
     openGraph: {
+      images: [socialImage(locale)],
       type: 'website',
       title: content.title,
       description: content.description,
@@ -32,6 +34,7 @@ export function buildGuideMetadata(locale: Locale): Metadata {
       url: absoluteUrl(localePath(locale, '/guide')),
     },
     twitter: {
+      images: [socialImage(locale)],
       card: 'summary_large_image',
       title: content.title,
       description: content.description,
