@@ -29,7 +29,7 @@ export function structuredData(locale: Locale) {
   const { landing, site, footer } = getDictionary(locale);
   const tag = languageTag(locale);
   const catalog = getPlanCatalog(locale);
-  const organizationId = `${SITE_ORIGIN}/#organization`;
+  const organizationId = `${PUBLISHER_URL}/#business`;
   const websiteId = `${SITE_ORIGIN}/#website`;
 
   return {
@@ -39,7 +39,7 @@ export function structuredData(locale: Locale) {
         '@type': 'Organization',
         '@id': organizationId,
         name: footer.builderName,
-        url: SITE_ORIGIN,
+        url: PUBLISHER_URL,
         logo: absoluteUrl('/favicon.ico'),
         description: site.publisherDescription,
         areaServed: 'IL',
@@ -65,9 +65,10 @@ export function structuredData(locale: Locale) {
       },
       {
         '@type': 'WebApplication',
+        '@id': `${SITE_ORIGIN}/#application`,
         name: site.name,
         description: site.description,
-        url: SITE_ORIGIN,
+        url: absoluteUrl(localePath(locale, '/')),
         applicationCategory: 'LifestyleApplication',
         operatingSystem: 'Web',
         inLanguage: tag,
@@ -94,6 +95,8 @@ export function structuredData(locale: Locale) {
       },
       {
         '@type': 'FAQPage',
+        '@id': `${absoluteUrl(localePath(locale, '/'))}#faq`,
+        url: absoluteUrl(localePath(locale, '/')),
         inLanguage: tag,
         mainEntity: landing.faq.items.map((item) => ({
           '@type': 'Question',

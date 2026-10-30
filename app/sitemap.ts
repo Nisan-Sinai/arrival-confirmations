@@ -5,7 +5,7 @@ import { indexableEntries } from '@/lib/seo';
 /**
  * `/sitemap.xml` (§12).
  *
- * Eight URLs — four routes in two languages. The English half used to be missing while
+ * Public routes in both languages. The English half used to be missing while
  * every Hebrew page carried an `hreflang` pointing at it, which is the worst of both:
  * Google was told the translations exist and was never given a list of them to fetch.
  *

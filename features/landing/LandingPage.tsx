@@ -49,6 +49,11 @@ export function buildLandingMetadata(locale: Locale): Metadata {
       description: landing.meta.ogDescription,
       url: path,
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: landing.meta.ogTitle,
+      description: landing.meta.ogDescription,
+    },
   };
 }
 
@@ -314,6 +319,14 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   </details>
                 ))}
               </div>
+              <Link
+                href={localePath(locale, '/guide')}
+                className="text-primary mt-6 inline-flex min-h-11 items-center underline underline-offset-4"
+              >
+                {locale === 'he'
+                  ? 'מדריך להכנת האירוע ולניהול אישורי הגעה'
+                  : 'Guide to preparing your event and managing RSVPs'}
+              </Link>
             </div>
           </Container>
         </section>
