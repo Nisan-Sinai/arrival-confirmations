@@ -16,7 +16,7 @@ onlyBuiltDependencies:
 overrides:
   # First patched Vite release for the Windows editor-command advisories;
   # retain the current maintenance line instead of refreshing every tool.
-  'vite@>=8.0.0 <=8.1.5': '8.3.4'
+  'vite@>=8.0.0 <=8.1.5': '8.3.5'
   postcss: '^8.5.18'
   # sharp versions before 0.35.5 are affected by the current libheif/librsvg
   # advisories; keep Next 16.3.x on the first patched release.
@@ -35,7 +35,7 @@ overrides:
   # This is only reached through dev tooling.
   'fast-uri@>=3.0.0 <3.1.9': '3.1.9'
   # jsdom's development-only HTTP client: patched EventSource, TLS and redirect handling.
-  'undici@>=8.0.0 <8.12.2': '8.12.2'
+  'undici@>=8.0.0 <8.12.2': '8.12.3'
   # GHSA-2883-xcg3-v3hh is patched in 4.3.2; keep every ESLint path on the patched release.
   'js-yaml@>=4.0.0 <4.3.2': '4.3.2'
   # Next's PostCSS chain still resolves source-map-js 1.2.1; force the patched
