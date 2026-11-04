@@ -1,27 +1,23 @@
 import { socialImage } from '@/lib/social-image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 
 import { buttonClass } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icons';
-import { Container, Rule } from '@/components/ui/layout';
+import { Icon } from '@/components/ui/icons';
+import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
-import { Candlelight } from '@/features/landing/Candlelight';
+import { EventEditorial } from '@/features/landing/EventEditorial';
 import { InteractiveRsvpDemo } from '@/features/landing/InteractiveRsvpDemo';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { writingDuration } from '@/features/landing/writingPace';
-import { TiltCard } from '@/features/landing/TiltCard';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
 import { languageAlternates, localePath, openGraphLocale, type Locale } from '@/lib/i18n';
 import { structuredData } from '@/lib/structuredData';
 import { supportWhatsAppUrl } from '@/lib/supportContact';
-
-/** One glyph per benefit, in the order the dictionary lists them. */
-const BENEFIT_ICONS: readonly IconName[] = ['calendar', 'dashboard', 'globe'];
 
 /**
  * The marketing home page, shared by both locales (§12).
@@ -63,14 +59,8 @@ export function buildLandingMetadata(locale: Locale): Metadata {
 
 export function LandingPage({ locale }: { locale: Locale }) {
   const { landing } = getDictionary(locale);
-  const { hero, invitationPreview: preview, benefits, plans, faq, occasions, closing } = landing;
+  const { hero, invitationPreview: preview, plans, faq, occasions, closing } = landing;
   const dictionary = getDictionary(locale);
-  const countdown: readonly [string, string][] = [
-    ['42', preview.countdownDays],
-    ['06', preview.countdownHours],
-    ['18', preview.countdownMinutes],
-  ];
-
   return (
     <>
       <script
@@ -79,143 +69,109 @@ export function LandingPage({ locale }: { locale: Locale }) {
           __html: JSON.stringify(structuredData(locale)).replace(/</g, '\\u003c'),
         }}
       />
-      <SiteHeader locale={locale} showLanguageSwitch />
+      <SiteHeader locale={locale} showLanguageSwitch showLandingLinks />
       <main id="main" className="flex flex-1 flex-col">
         <div className="px-5 pt-5 empty:hidden">
           <AuthFragmentNotice locale={locale} />
         </div>
 
-        <section className="relative isolate overflow-hidden bg-[#301b26] py-16 text-white sm:py-24 lg:py-28">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_75%_40%,rgba(151,85,94,0.28),transparent_55%),radial-gradient(ellipse_at_0%_100%,rgba(218,174,113,0.11),transparent_45%)]"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d9aa71]/60 to-transparent"
-          />
-          <Candlelight />
+        <section className="relative isolate overflow-hidden bg-[#fbf7f1] py-14 sm:py-20 lg:py-24">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-52 -start-52 size-[36rem] rounded-full bg-[#e3d1c3]/40 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute bottom-0 end-0 h-px w-full bg-gradient-to-l from-transparent via-[#c8ab85] to-transparent" />
           <Container width="wide">
-            <div className="relative grid min-w-0 items-center gap-14 lg:grid-cols-[1.06fr_0.94fr] lg:gap-16">
-              <div className="min-w-0 text-center lg:text-start">
-                <p className="enter enter-1 inline-flex items-center gap-2.5 rounded-full border border-[#dfbc88]/40 bg-white/[0.06] px-4 py-2 text-xs font-semibold tracking-wide text-[#f1d29e] sm:text-sm">
-                  <Icon name="sparkles" className="size-4" /> {hero.eyebrow}
-                </p>
-                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.6rem,5vw,5rem)] leading-[1.16] font-bold tracking-tight">
+            <div className="relative grid min-w-0 items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+              <div className="relative z-10 min-w-0 text-center lg:text-start">
+                <div className="enter enter-1 inline-flex items-center gap-3 text-xs font-bold tracking-[0.12em] text-[#865f43] sm:text-sm">
+                  <span aria-hidden="true" className="h-px w-9 bg-[#a57a55]" />
+                  {hero.eyebrow}
+                </div>
+                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.85rem,5.5vw,5.75rem)] leading-[1.11] font-bold tracking-tight text-[#432633]">
                   <WrittenHeading text={hero.titleLead} as="span" />
                   <WrittenHeading
                     text={hero.titleAccent}
                     as="div"
                     delay={writingDuration(hero.titleLead)}
-                    className="text-[#f1cf96]"
+                    className="text-[#966946]"
                   />
                 </h1>
-                <p className="enter enter-3 mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">
+                <p className="enter enter-3 mx-auto mt-7 max-w-[35rem] text-base leading-8 text-[#6b5c5e] sm:text-lg lg:mx-0">
                   {hero.lead}
                 </p>
-                <div className="enter enter-4 mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
+                <div className="enter enter-4 mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
                   <Link
                     href={localePath(locale, '/signup')}
                     className={buttonClass({
-                      variant: 'gold',
                       size: 'lg',
-                      className:
-                        'border-[#e6c390] bg-[#e9c892] text-[#381c26] shadow-[0_12px_35px_-13px_rgba(240,202,148,0.45)] hover:bg-[#f2d9ad]',
+                      className: 'min-h-14 px-8 shadow-[0_14px_32px_-15px_rgba(68,38,51,0.42)]',
                     })}
                   >
-                    {hero.ctaPrimary} <Icon name="arrow-forward" className="size-4" />
+                    {hero.ctaPrimary}
+                    <Icon name="arrow-forward" className="size-4" />
                   </Link>
                   <Link
                     href="#demo"
-                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/[0.06] px-7 font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e9c892]"
+                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-[#bda99d] bg-white/75 px-7 text-sm font-semibold text-[#4c3039] shadow-sm transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5b42] sm:text-base"
                   >
-                    <Icon name="eye" className="size-5" />{' '}
-                    {locale === 'he' ? 'צפו בהדגמה חיה' : 'Try the live demo'}
+                    <Icon name="eye" className="size-5" />
+                    {locale === 'he' ? 'התנסו בהדגמה' : 'Explore the live demo'}
                   </Link>
                 </div>
-                <ul className="enter enter-5 mt-9 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-white/75 lg:justify-start">
+                <ul className="enter enter-5 mt-9 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-[#665b57] lg:justify-start">
                   {hero.facts.map((fact) => (
                     <li key={fact} className="flex items-center gap-2">
-                      <Icon name="check-circle" className="size-4 text-[#e9c892]" />
+                      <Icon name="check-circle" className="size-4 text-[#8e6847]" />
                       {fact}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-8 text-sm text-white/55">
-                  {locale === 'he'
-                    ? 'ממוקדים במה שחשוב באמת: ליהנות מהאירוע שלכם.'
-                    : 'More time celebrating. Less time chasing replies.'}
-                </p>
-              </div>
-              <div className="enter enter-3 relative mx-auto w-full max-w-[425px] min-w-0 pt-7 pb-7 sm:px-4 lg:max-w-none">
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-10 rounded-full bg-[#e7b579]/20 blur-[85px]"
-                />
-                <div
-                  aria-hidden="true"
-                  className="absolute start-0 -top-4 size-32 rounded-full border border-[#d8af77]/30 sm:size-44"
-                />
-                <TiltCard degrees={3}>
-                  <div className="relative mx-auto w-full max-w-sm rounded-[2rem] border border-[#e9cc9d]/50 bg-[#fffaf4] p-3 shadow-[0_28px_80px_-26px_rgba(0,0,0,0.55)] sm:p-4">
-                    <div className="rounded-[1.35rem] border border-[#d8c5a9] bg-[radial-gradient(ellipse_at_50%_0%,#fffdf9,#f6efe4)] px-5 py-9 text-center text-[#633d46] sm:px-8 sm:py-10">
-                      <p className="text-sm font-bold tracking-[0.13em] text-[#986f39]">
-                        {preview.blessing}
-                      </p>
-                      <div
-                        className="mx-auto mt-5 flex items-center justify-center gap-3 text-[#bb9761]"
-                        aria-hidden="true"
-                      >
-                        <span className="h-px w-10 bg-current/70" />
-                        <span>✦</span>
-                        <span className="h-px w-10 bg-current/70" />
-                      </div>
-                      <p className="mt-5 text-sm leading-7">
-                        {preview.introFirstLine}
-                        <span className="block">{preview.introSecondLine}</span>
-                      </p>
-                      <p className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-[#602a3c] sm:text-5xl">
-                        {preview.occasion}
-                      </p>
-                      <Rule draw="load" className="my-7" />
-                      <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-[#602a3c]">
-                        {[
-                          { k: preview.dateLabel, v: preview.dateValue },
-                          { k: preview.timeLabel, v: preview.timeValue },
-                          { k: preview.placeLabel, v: preview.placeValue },
-                        ].map((cell) => (
-                          <div key={cell.k}>
-                            <span className="mb-1 block font-normal text-[#876e75]">{cell.k}</span>
-                            <span>{cell.v}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <Rule draw="load" className="my-7" />
-                      <div className="flex justify-center gap-2" dir="ltr">
-                        {countdown.map(([n, l]) => (
-                          <div
-                            key={l}
-                            className="min-w-14 rounded-lg border border-[#e5d2b9] bg-white/80 px-2 py-2"
-                          >
-                            <span className="block text-xl leading-none font-bold text-[#602a3c] tabular-nums">
-                              {n}
-                            </span>
-                            <span className="mt-1 block text-[10px] text-[#856b71]">{l}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                <div className="mt-11 hidden items-center gap-3 border-t border-[#e0d4c8] pt-6 text-start lg:flex">
+                  <div aria-hidden="true" className="flex size-11 items-center justify-center rounded-full bg-[#efe2d0] text-[#654052]">
+                    <Icon name="heart" className="size-5" />
                   </div>
-                </TiltCard>
-                <div className="absolute end-0 bottom-0 rounded-2xl border border-[#e7d3b2] bg-white px-4 py-3 text-[#492431] shadow-xl sm:end-2">
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                      <Icon name="check-circle" className="size-5" />
-                    </span>
-                    <div>
-                      <span className="block text-xs text-[#7b6068]">{preview.captionLead}</span>
-                      <span className="block text-sm font-bold">{preview.captionAccent}</span>
+                  <p className="max-w-sm text-sm leading-6 text-[#705f5c]">
+                    {locale === 'he'
+                      ? 'שולחים הזמנה מרגשת, מקבלים תשובות ברורות ונשארים פנויים לשמחה עצמה.'
+                      : 'Send a beautiful invitation, get clear answers and enjoy the celebration.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative mx-auto w-full max-w-[510px] min-w-0 pb-8 sm:px-7 lg:max-w-none">
+                <div aria-hidden="true" className="absolute -inset-x-1 inset-y-5 rounded-t-[12rem] rounded-b-[2rem] border border-[#c9ab83]/70 sm:inset-x-4" />
+                <div className="relative aspect-[5/6] overflow-hidden rounded-t-[12rem] rounded-b-[1.7rem] bg-[#dfd2c1] shadow-[0_30px_75px_-30px_rgba(55,33,38,0.4)] sm:aspect-[5/5.9]">
+                  <Image
+                    src="/media/wedding-reception.webp"
+                    alt={locale === 'he' ? 'צילום להמחשה של שולחן חגיגי מעוצב עם פרחים באולם אירועים' : 'Illustrative photograph of an elegant floral reception table'}
+                    fill
+                    priority
+                    sizes="(max-width: 1023px) 100vw, 45vw"
+                    className="object-cover object-center"
+                  />
+                  <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#1d1b1a]/55 via-transparent to-[#1b1b1b]/10" />
+                  <div className="absolute inset-x-0 bottom-14 text-center text-white sm:bottom-16">
+                    <span aria-hidden="true" className="mx-auto mb-3 block h-px w-12 bg-[#edd6ae]" />
+                    <p className="font-[family-name:var(--font-display)] text-2xl font-bold drop-shadow-md sm:text-3xl">
+                      {locale === 'he' ? 'השמחה היא הסיפור שלכם' : 'Your celebration is the story'}
+                    </p>
+                    <p className="mt-2 text-xs text-white/85">
+                      {locale === 'he' ? 'צילום אווירה להמחשה' : 'Illustrative event photograph'}
+                    </p>
+                  </div>
+                </div>
+                <div className="absolute -bottom-2 start-0 w-[min(83%,17rem)] rounded-2xl border border-[#e0cbb3] bg-[#fffdf9] p-4 text-[#522d3a] shadow-[0_18px_50px_-22px_rgba(62,33,44,0.45)] sm:-start-1 sm:p-5">
+                  <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-wide text-[#956d4d]">
+                    <Icon name="sparkles" className="size-4" />
+                    {locale === 'he' ? 'הזמנה דיגיטלית לדוגמה' : 'Sample digital invitation'}
+                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-[family-name:var(--font-display)] text-xl font-bold">{preview.occasion}</p>
+                      <p className="mt-1 text-xs text-[#766468]">{preview.dateValue} · {preview.timeValue}</p>
+                      <p className="mt-1 text-xs text-[#766468]">{preview.placeValue}</p>
                     </div>
+                    <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#f1e5d5] text-[#623444]">
+                      <Icon name="check-circle" className="size-6" />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -223,154 +179,30 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
-        {/* Event types remain immediately visible below the main call to action. */}
-        <section aria-label={occasions.lead} className="border-border/60 border-y py-6 sm:py-7">
-          <Container width="wide" className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
-            <p className="text-eyebrow text-accent-strong shrink-0 font-semibold">
-              {occasions.lead}
-            </p>
-            <div className="marquee-mask w-full min-w-0 flex-1 overflow-hidden" aria-hidden="true">
-              <div className="marquee-track flex w-max gap-3">
-                {[0, 1].map((copy) =>
-                  occasions.items.map((item) => (
-                    <span
-                      key={`${copy}-${item}`}
-                      className="border-border bg-card text-primary shadow-paper inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold whitespace-nowrap"
-                    >
-                      <span aria-hidden="true" className="bg-accent-strong size-1.5 rounded-full" />
-                      {item}
-                    </span>
-                  )),
-                )}
-              </div>
+        <section aria-label={occasions.lead} className="border-y border-[#e6dace] bg-white py-6 sm:py-8">
+          <Container width="wide">
+            <div className="flex flex-col items-center gap-5 lg:flex-row lg:gap-9">
+              <p className="shrink-0 text-sm font-bold text-[#785440]">{occasions.lead}</p>
+              <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-sm text-[#695b5a] lg:justify-start">
+                {occasions.items.map((item, index) => (
+                  <li key={item} className="flex items-center gap-2">
+                    <span aria-hidden="true" className="size-1.5 rounded-full bg-[#ba976d]" />
+                    <span>{item}</span>
+                    {index < occasions.items.length - 1 && <span className="sr-only">,</span>}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="sr-only">
-              {occasions.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
           </Container>
         </section>
-
-        <InteractiveRsvpDemo locale={locale} />
 
         <RsvpFlowSteps locale={locale} />
 
-        {/*
-          The `reveal` moved off the <section> and onto the content below each heading.
+        <InteractiveRsvpDemo locale={locale} />
 
-          It cannot stay on an ancestor of a scroll-driven heading: `view()` measures the
-          word's own position in the viewport, and a parent that is translating the word
-          upward is changing the very quantity the word's progress is computed from. The
-          heading now carries its own arrival and the content below carries the reveal, so
-          the two never feed into each other.
-        */}
-        <section className="py-16 sm:py-20">
-          <Container width="wide">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="text-eyebrow text-accent-strong font-semibold">{benefits.eyebrow}</p>
-              <h2 className="text-h1 text-primary mt-3 font-bold">
-                <WrittenHeading text={benefits.title} trigger="scroll" />
-              </h2>
-            </div>
-            <div className="reveal-stagger mt-10 grid gap-5 md:grid-cols-3">
-              {benefits.items.map((benefit, index) => (
-                // Five degrees, not the hero's nine: the same angle on a short wide box
-                // reads as the grid being crooked rather than as a card being tipped.
-                <TiltCard key={benefit.title} degrees={5} className="reveal h-full">
-                  <Card padding="lg" interactive className="h-full">
-                    <span
-                      aria-hidden="true"
-                      className="border-accent-strong/30 bg-accent-soft/50 text-accent-strong flex size-12 items-center justify-center rounded-2xl border"
-                    >
-                      <Icon name={BENEFIT_ICONS[index] ?? 'check'} className="size-6" />
-                    </span>
-                    <h3 className="text-h3 text-primary mt-5 font-semibold">{benefit.title}</h3>
-                    <p className="text-muted-foreground mt-3 leading-relaxed">{benefit.body}</p>
-                  </Card>
-                </TiltCard>
-              ))}
-            </div>
-          </Container>
-        </section>
+        <EventEditorial locale={locale} />
 
-        <section className="relative overflow-hidden bg-white py-16 sm:py-24">
-          <Container width="wide">
-            <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-              <div>
-                <p className="text-accent-strong mb-3 text-sm font-bold tracking-widest">
-                  {locale === 'he' ? 'פשוט. ברור. בשליטתכם.' : 'Simple. Clear. In your hands.'}
-                </p>
-                <h2 className="text-primary font-[family-name:var(--font-display)] text-3xl leading-tight font-bold sm:text-4xl">
-                  {locale === 'he'
-                    ? 'הראש שלכם באירוע. אנחנו נעזור לעשות סדר ברשימה.'
-                    : 'Focus on your celebration. Keep the guest list under control.'}
-                </h2>
-                <p className="text-muted-foreground mt-5 text-base leading-8">
-                  {locale === 'he'
-                    ? 'במקום לעבור בין הודעות, גיליונות ושיחות — שולחים הזמנה אחת ורואים את המידע החשוב במקום מסודר. המערכת מתאימה גם למי שלא אוהב להתעסק בטכנולוגיה.'
-                    : 'Skip the spreadsheets, calls and endless message threads. Share one invitation and keep the information you need together in a clear overview.'}
-                </p>
-                <Link
-                  href={localePath(locale, '/signup')}
-                  className={buttonClass({ variant: 'outline', size: 'lg', className: 'mt-7' })}
-                >
-                  {hero.ctaPrimary}
-                  <Icon name="arrow-forward" className="size-4" />
-                </Link>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  {
-                    icon: 'send' as const,
-                    title: locale === 'he' ? 'שיתוף נוח בוואטסאפ' : 'Share via WhatsApp',
-                    body:
-                      locale === 'he'
-                        ? 'האורחים מקבלים קישור פשוט ויכולים להשיב מהטלפון.'
-                        : 'Guests receive a simple link and reply from their phones.',
-                  },
-                  {
-                    icon: 'dashboard' as const,
-                    title: locale === 'he' ? 'כל התשובות מול העיניים' : 'Replies in one place',
-                    body:
-                      locale === 'he'
-                        ? 'מי מגיע, מי מתלבט וכמה אנשים צפויים להגיע.'
-                        : 'See who is attending, undecided and how many guests to expect.',
-                  },
-                  {
-                    icon: 'shield' as const,
-                    title: locale === 'he' ? 'בלי הרשמה לאורחים' : 'No guest accounts',
-                    body:
-                      locale === 'he'
-                        ? 'הקישור נפתח בדפדפן, בלי אפליקציה או סיסמה.'
-                        : 'Guests can respond in a browser, with no app or password.',
-                  },
-                  {
-                    icon: 'credit-card' as const,
-                    title: locale === 'he' ? 'מחיר ידוע מראש' : 'Clear, upfront pricing',
-                    body:
-                      locale === 'he'
-                        ? 'בודקים בחינם, ולאחר מכן בוחרים מסלול בתשלום חד-פעמי.'
-                        : 'Try it free, then choose a one-time payment plan.',
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-[1.5rem] border border-[#ede2dc] bg-[#fcf9f5] p-6 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
-                  >
-                    <span className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-[#f1dfc6] text-[#673545]">
-                      <Icon name={item.icon} className="size-6" />
-                    </span>
-                    <h3 className="text-primary text-lg font-bold">{item.title}</h3>
-                    <p className="text-muted-foreground mt-3 text-sm leading-7">{item.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        <section className="bg-secondary/25 py-16 sm:py-20">
+        <section id="pricing" className="scroll-mt-24 bg-[#eee7de] py-16 sm:py-24">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{plans.eyebrow}</p>
@@ -430,16 +262,16 @@ export function LandingPage({ locale }: { locale: Locale }) {
         {/* The last thing on the page is the first thing it asked for. */}
         <section className="pb-16 sm:pb-24">
           <Container width="wide">
-            <div className="reveal border-accent-strong/30 from-accent-soft/60 via-card to-card shadow-raised relative overflow-hidden rounded-3xl border bg-gradient-to-br px-6 py-12 text-center sm:px-12 sm:py-16">
-              <div aria-hidden="true" className="hero-glow opacity-40" />
+            <div className="reveal relative overflow-hidden rounded-[2rem] border border-[#ad8a66]/35 bg-[#412735] px-6 py-14 text-center shadow-[0_24px_75px_-32px_rgba(54,33,42,0.4)] sm:px-12 sm:py-20">
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,rgba(177,122,81,0.24),transparent_65%)]" />
               <div className="relative mx-auto max-w-2xl">
-                <p className="text-eyebrow text-accent-strong font-semibold">{closing.eyebrow}</p>
-                <h2 className="text-h2 text-primary mt-3 font-bold">{closing.title}</h2>
-                <p className="text-lead text-muted-foreground mt-4">{closing.body}</p>
+                <p className="text-eyebrow font-semibold text-[#e6bf86]">{closing.eyebrow}</p>
+                <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold text-white sm:text-5xl">{closing.title}</h2>
+                <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-white/80 sm:text-lg">{closing.body}</p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
                   <Link
                     href={localePath(locale, '/signup')}
-                    className={buttonClass({ size: 'lg' })}
+                    className={buttonClass({ variant: 'gold', size: 'lg', className: 'border-[#efd19a] bg-[#e6c68d] text-[#412735] hover:bg-[#f5dcae]' })}
                   >
                     {closing.cta}
                   </Link>
@@ -449,7 +281,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={buttonClass({ variant: 'outline', size: 'lg' })}
+                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-7 font-semibold text-white transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     <Icon name="whatsapp" />
                     {closing.secondary}
