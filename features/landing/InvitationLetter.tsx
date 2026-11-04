@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useId, useState, type PointerEvent } from 'react';
 
 import { Icon } from '@/components/ui/icons';
-import { getDictionary } from '@/config/dictionary';
+import type { Dictionary } from '@/config/dictionary';
 import type { Locale } from '@/lib/i18n';
 
 import styles from './InvitationLetter.module.css';
@@ -15,8 +15,13 @@ import styles from './InvitationLetter.module.css';
  * with the seal button, and fine-pointer devices get a restrained parallax tilt.
  * Every animation is optional under prefers-reduced-motion.
  */
-export function InvitationLetter({ locale }: { locale: Locale }) {
-  const preview = getDictionary(locale).landing.invitationPreview;
+export function InvitationLetter({
+  locale,
+  preview,
+}: {
+  locale: Locale;
+  preview: Dictionary['landing']['invitationPreview'];
+}) {
   const [opened, setOpened] = useState(true);
   const detailsId = useId();
   const isHebrew = locale === 'he';
