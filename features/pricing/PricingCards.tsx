@@ -111,7 +111,9 @@ export function PricingCards({
                 href={localePath(locale, '/pricing')}
                 className="text-primary mt-4 inline-flex min-h-10 items-center text-sm font-semibold underline underline-offset-4"
               >
-                {locale === 'he' ? 'כל היתרונות וההשוואה המלאה' : 'All benefits and full plan comparison'}
+                {locale === 'he'
+                  ? 'כל היתרונות וההשוואה המלאה'
+                  : 'All benefits and full plan comparison'}
               </Link>
             )}
 

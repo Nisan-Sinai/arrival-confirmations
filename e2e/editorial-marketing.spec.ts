@@ -75,7 +75,9 @@ test.describe('editorial event marketing redesign', () => {
       '#demo',
     );
   });
-  test('landing pricing is transparent: three paid plans and full details on /pricing', async ({ page }) => {
+  test('landing pricing is transparent: three paid plans and full details on /pricing', async ({
+    page,
+  }) => {
     await page.goto('/');
     const plans = page.locator('#pricing');
     await expect(plans.getByRole('heading', { name: 'Basic' })).toBeVisible();
