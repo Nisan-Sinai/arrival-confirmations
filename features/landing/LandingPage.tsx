@@ -244,7 +244,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
               <p className="text-muted-foreground mt-4 leading-relaxed">{plans.lead}</p>
             </div>
             <div className="mt-11">
-              <PricingCards locale={locale} />
+              <PricingCards locale={locale} showTrial={false} compact />
             </div>
           </Container>
         </section>
