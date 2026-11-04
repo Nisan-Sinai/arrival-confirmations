@@ -139,12 +139,12 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 </div>
               </div>
 
-              <div className="relative mx-auto w-full max-w-[510px] min-w-0 pb-8 sm:px-7 lg:max-w-none">
+              <div className="relative mx-auto w-full max-w-[510px] min-w-0 sm:px-7 lg:max-w-none lg:pb-8">
                 <div
                   aria-hidden="true"
-                  className="absolute -inset-x-1 inset-y-5 rounded-t-[12rem] rounded-b-[2rem] border border-[#c9ab83]/70 sm:inset-x-4"
+                  className="absolute -inset-x-1 inset-y-5 hidden rounded-t-[12rem] rounded-b-[2rem] border border-[#c9ab83]/70 sm:inset-x-4 lg:block"
                 />
-                <div className="relative aspect-[5/6] overflow-hidden rounded-t-[12rem] rounded-b-[1.7rem] bg-[#dfd2c1] shadow-[0_30px_75px_-30px_rgba(55,33,38,0.4)] sm:aspect-[5/5.9]">
+                <div data-testid="editorial-hero-photo" className="relative aspect-[5/6] overflow-hidden rounded-t-[12rem] rounded-b-[1.7rem] bg-[#dfd2c1] shadow-[0_30px_75px_-30px_rgba(55,33,38,0.4)] sm:aspect-[5/5.9]">
                   <Image
                     src="/media/wedding-reception.webp"
                     alt={
@@ -161,7 +161,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     aria-hidden="true"
                     className="absolute inset-0 bg-gradient-to-t from-[#1d1b1a]/55 via-transparent to-[#1b1b1b]/10"
                   />
-                  <div className="absolute inset-x-0 bottom-14 text-center text-white sm:bottom-16">
+                  <div data-testid="hero-photo-caption" className="absolute inset-x-0 bottom-7 px-4 text-center text-white sm:bottom-10 lg:bottom-44">
                     <span
                       aria-hidden="true"
                       className="mx-auto mb-3 block h-px w-12 bg-[#edd6ae]"
@@ -174,7 +174,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     </p>
                   </div>
                 </div>
-                <div className="absolute start-0 -bottom-2 w-[min(83%,17rem)] rounded-2xl border border-[#e0cbb3] bg-[#fffdf9] p-4 text-[#522d3a] shadow-[0_18px_50px_-22px_rgba(62,33,44,0.45)] sm:-start-1 sm:p-5">
+                <div data-testid="sample-invite-card" className="relative z-10 mx-auto mt-4 w-full max-w-[23rem] rounded-2xl border border-[#e0cbb3] bg-[#fffdf9] p-4 text-[#522d3a] shadow-[0_18px_50px_-22px_rgba(62,33,44,0.35)] sm:p-5 lg:absolute lg:-bottom-2 lg:start-0 lg:mx-0 lg:mt-0 lg:w-[min(83%,17rem)] lg:max-w-none">
                   <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-wide text-[#956d4d]">
                     <Icon name="sparkles" className="size-4" />
                     {locale === 'he' ? 'הזמנה דיגיטלית לדוגמה' : 'Sample digital invitation'}
