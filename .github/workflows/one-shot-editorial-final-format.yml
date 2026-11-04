@@ -1,0 +1,29 @@
+name: Format final editorial release candidate once
+on:
+  push:
+    branches: [feature/editorial-wedding-brand-20261104]
+    paths: [.github/workflows/one-shot-editorial-final-format.yml]
+permissions:
+  contents: write
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.28.5
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write features/landing/LandingPage.tsx features/landing/EventEditorial.tsx features/landing/InteractiveRsvpDemo.tsx features/landing/RsvpFlowSteps.tsx features/layout/SiteHeader.tsx features/pricing/PricingCards.tsx features/assistant/EventAssistant.tsx config/dictionary/he.ts config/dictionary/en.ts e2e/editorial-marketing.spec.ts
+      - name: Commit final formatting
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add features/landing/LandingPage.tsx features/landing/EventEditorial.tsx features/landing/InteractiveRsvpDemo.tsx features/landing/RsvpFlowSteps.tsx features/layout/SiteHeader.tsx features/pricing/PricingCards.tsx features/assistant/EventAssistant.tsx config/dictionary/he.ts config/dictionary/en.ts e2e/editorial-marketing.spec.ts
+          git commit -m "style: format final marketing and pricing QA changes"
+          git push origin HEAD:refs/heads/feature/editorial-wedding-brand-20261104
