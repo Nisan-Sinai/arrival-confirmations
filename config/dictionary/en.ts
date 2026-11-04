@@ -239,10 +239,10 @@ export const en: Dictionary = {
         'Build an invitation, try it for free, and pay once when you activate the event.',
     },
     hero: {
-      eyebrow: 'RSVPs for your event',
+      eyebrow: 'Beautiful invitations. Effortless RSVPs.',
       titleLead: 'Manage your guest list',
       titleAccent: 'without chasing replies',
-      lead: 'Build a digital invitation, share it on WhatsApp, and see every reply in one place. Start with a free trial run and only pay when you activate the event.',
+      lead: 'A beautiful invitation deserves a simple guest experience. Share a personal WhatsApp link, see replies as they arrive and know how many guests to expect — without spreadsheets or guesswork.',
       ctaPrimary: 'Create a trial event',
       ctaSecondary: 'See the plans',
       facts: ['10 free replies', 'Paid once', 'No monthly billing'],
@@ -333,8 +333,8 @@ export const en: Dictionary = {
     },
     closing: {
       eyebrow: 'Get started',
-      title: 'Your next invitation is a few minutes away',
-      body: 'Create an event, design the invitation and test it with up to 10 replies — free, with no credit card. Pay only when you activate.',
+      title: 'Start your celebration with peace of mind',
+      body: 'Give guests a beautiful invitation and keep every reply in one place. Try it free with up to 10 replies and no credit card required.',
       cta: 'Create a trial event',
       secondary: 'Talk to us on WhatsApp',
     },
