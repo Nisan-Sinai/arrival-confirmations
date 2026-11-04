@@ -11,7 +11,6 @@ import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { EventEditorial } from '@/features/landing/EventEditorial';
 import { InteractiveRsvpDemo } from '@/features/landing/InteractiveRsvpDemo';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
-import { writingDuration } from '@/features/landing/writingPace';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
@@ -91,14 +90,9 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   <span aria-hidden="true" className="h-px w-9 bg-[#a57a55]" />
                   {hero.eyebrow}
                 </div>
-                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.85rem,5.5vw,5.75rem)] leading-[1.11] font-bold tracking-tight text-[#432633]">
-                  <WrittenHeading text={hero.titleLead} as="span" />
-                  <WrittenHeading
-                    text={hero.titleAccent}
-                    as="div"
-                    delay={writingDuration(hero.titleLead)}
-                    className="text-[#966946]"
-                  />
+                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.55rem,5.2vw,5.25rem)] leading-[1.1] font-bold tracking-tight text-[#432633]">
+                  <span className="block">{hero.titleLead}</span>
+                  <span className="mt-2 block text-[#805738]">{hero.titleAccent}</span>
                 </h1>
                 <p className="enter enter-3 mx-auto mt-7 max-w-[35rem] text-base leading-8 text-[#6b5c5e] sm:text-lg lg:mx-0">
                   {hero.lead}
