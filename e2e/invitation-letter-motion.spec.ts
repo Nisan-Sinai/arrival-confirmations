@@ -47,6 +47,7 @@ test.describe('the living sample invitation', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
     const letter = page.getByTestId('sample-invite-card');
+    await letter.scrollIntoViewIfNeeded();
     const box = await letter.boundingBox();
     expect(box).not.toBeNull();
 
