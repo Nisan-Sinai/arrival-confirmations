@@ -52,7 +52,9 @@ export function InvitationLetter({ locale }: { locale: Locale }) {
             <Icon name="sparkles" className={styles.sampleIcon} />
             {isHebrew ? 'הזמנה דיגיטלית לדוגמה' : 'Sample digital invitation'}
           </span>
-          <span className={styles.littleStar} aria-hidden="true">✧</span>
+          <span className={styles.littleStar} aria-hidden="true">
+            ✧
+          </span>
         </div>
 
         <div className={styles.divider} aria-hidden="true">
@@ -107,8 +109,12 @@ export function InvitationLetter({ locale }: { locale: Locale }) {
           aria-controls={detailsId}
           aria-label={
             isHebrew
-              ? opened ? 'סגירת המכתב לדוגמה' : 'פתיחת המכתב לדוגמה'
-              : opened ? 'Fold the sample invitation' : 'Open the sample invitation'
+              ? opened
+                ? 'סגירת המכתב לדוגמה'
+                : 'פתיחת המכתב לדוגמה'
+              : opened
+                ? 'Fold the sample invitation'
+                : 'Open the sample invitation'
           }
           onClick={() => setOpened((value) => !value)}
         >
@@ -117,13 +123,19 @@ export function InvitationLetter({ locale }: { locale: Locale }) {
           </span>
           <span className={styles.sealLabel}>
             {isHebrew
-              ? opened ? 'קפלו את המכתב' : 'פתחו את המכתב'
-              : opened ? 'Fold the letter' : 'Open the letter'}
+              ? opened
+                ? 'קפלו את המכתב'
+                : 'פתחו את המכתב'
+              : opened
+                ? 'Fold the letter'
+                : 'Open the letter'}
           </span>
           <Icon name={opened ? 'chevron-up' : 'chevron-down'} className={styles.chevron} />
         </button>
       </div>
-      <div className={styles.orbit} aria-hidden="true">✧</div>
+      <div className={styles.orbit} aria-hidden="true">
+        ✧
+      </div>
       <p className={styles.footnote}>
         {isHebrew
           ? 'להמחשה בלבד · אפשר לפתוח ולסגור את המכתב'
