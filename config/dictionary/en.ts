@@ -105,7 +105,7 @@ export const en: Dictionary = {
     trialNote: 'No credit card',
     oneTimeNote: 'Paid once, per event',
     trialCta: 'Create a trial event',
-    choosePlan: 'Choose {plan}',
+    choosePlan: 'Ask about {plan} on WhatsApp',
     whatsappIntro:
       'Hi Nisan, I would like to activate the {plan} plan for my event on Arrival Confirmations.',
   },
