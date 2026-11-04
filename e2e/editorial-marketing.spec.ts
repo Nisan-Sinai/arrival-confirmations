@@ -75,4 +75,62 @@ test.describe('editorial event marketing redesign', () => {
       '#demo',
     );
   });
+  test('landing pricing is transparent: three paid plans and full details on /pricing', async ({ page }) => {
+    await page.goto('/');
+    const plans = page.locator('#pricing');
+    await expect(plans.getByRole('heading', { name: 'Basic' })).toBeVisible();
+    await expect(plans.getByRole('heading', { name: 'Premium' })).toBeVisible();
+    await expect(plans.getByRole('heading', { name: 'Pro' })).toBeVisible();
+    await expect(plans.getByRole('heading', { name: 'בדיקה חינמית' })).toHaveCount(0);
+    await expect(
+      plans.getByRole('link', { name: /פרטים והפעלת Premium בוואטסאפ/ }),
+    ).toHaveAttribute('href', /^https:\/\/wa\.me\//);
+    await expect(
+      plans.getByRole('link', { name: 'כל היתרונות וההשוואה המלאה' }).first(),
+    ).toHaveAttribute('href', '/pricing');
+
+    await page.goto('/pricing');
+    await expect(page.getByRole('heading', { name: 'בדיקה חינמית' })).toBeVisible();
+  });
+
+  test('captures real desktop and mobile layout for QA', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.screenshot({
+      path: testInfo.outputPath('desktop-hero.jpg'),
+      type: 'jpeg',
+      quality: 60,
+      animations: 'disabled',
+    });
+
+    await page.locator('#benefits').scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: testInfo.outputPath('desktop-benefits.jpg'),
+      type: 'jpeg',
+      quality: 60,
+      animations: 'disabled',
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.screenshot({
+      path: testInfo.outputPath('mobile-hero.jpg'),
+      type: 'jpeg',
+      quality: 60,
+      animations: 'disabled',
+    });
+    await page.locator('#benefits').scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: testInfo.outputPath('mobile-benefits.jpg'),
+      type: 'jpeg',
+      quality: 60,
+      animations: 'disabled',
+    });
+
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      ),
+    ).toBe(false);
+  });
 });
