@@ -59,7 +59,7 @@ export function buildLandingMetadata(locale: Locale): Metadata {
 
 export function LandingPage({ locale }: { locale: Locale }) {
   const { landing } = getDictionary(locale);
-  const { hero, plans, faq, occasions, closing } = landing;
+  const { hero, invitationPreview: preview, plans, faq, occasions, closing } = landing;
   const dictionary = getDictionary(locale);
   return (
     <>
@@ -181,7 +181,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     </p>
                   </div>
                 </div>
-                <InvitationLetter locale={locale} />
+                <InvitationLetter locale={locale} preview={preview} />
               </div>
             </div>
           </Container>
