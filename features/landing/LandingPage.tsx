@@ -10,6 +10,7 @@ import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { EventEditorial } from '@/features/landing/EventEditorial';
 import { InteractiveRsvpDemo } from '@/features/landing/InteractiveRsvpDemo';
+import { InvitationLetter } from '@/features/landing/InvitationLetter';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
@@ -58,7 +59,7 @@ export function buildLandingMetadata(locale: Locale): Metadata {
 
 export function LandingPage({ locale }: { locale: Locale }) {
   const { landing } = getDictionary(locale);
-  const { hero, invitationPreview: preview, plans, faq, occasions, closing } = landing;
+  const { hero, plans, faq, occasions, closing } = landing;
   const dictionary = getDictionary(locale);
   return (
     <>
@@ -146,7 +147,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 />
                 <div
                   data-testid="editorial-hero-photo"
-                  className="relative aspect-[5/6] overflow-hidden rounded-t-[12rem] rounded-b-[1.7rem] bg-[#dfd2c1] shadow-[0_30px_75px_-30px_rgba(55,33,38,0.4)] sm:aspect-[5/5.9]"
+                  className="group relative aspect-[5/6] overflow-hidden rounded-t-[12rem] rounded-b-[1.7rem] bg-[#dfd2c1] shadow-[0_30px_75px_-30px_rgba(55,33,38,0.4)] sm:aspect-[5/5.9]"
                 >
                   <Image
                     src="/media/wedding-reception.webp"
@@ -158,7 +159,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     fill
                     priority
                     sizes="(max-width: 1023px) 100vw, 45vw"
-                    className="object-cover object-center"
+                    className="object-cover object-center motion-safe:transition-transform motion-safe:duration-[1600ms] motion-safe:ease-out group-hover:scale-[1.035]"
                   />
                   <div
                     aria-hidden="true"
@@ -180,32 +181,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     </p>
                   </div>
                 </div>
-                <div
-                  data-testid="sample-invite-card"
-                  className="relative z-10 mx-auto mt-4 w-full max-w-[23rem] rounded-2xl border border-[#e0cbb3] bg-[#fffdf9] p-4 text-[#522d3a] shadow-[0_18px_50px_-22px_rgba(62,33,44,0.35)] sm:p-5 lg:absolute lg:start-0 lg:-bottom-2 lg:mx-0 lg:mt-0 lg:w-[min(83%,17rem)] lg:max-w-none"
-                >
-                  <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-wide text-[#956d4d]">
-                    <Icon name="sparkles" className="size-4" />
-                    {locale === 'he' ? 'הזמנה דיגיטלית לדוגמה' : 'Sample digital invitation'}
-                  </p>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-[family-name:var(--font-display)] text-xl font-bold">
-                        {preview.occasion}
-                      </p>
-                      <p className="mt-1 text-xs text-[#766468]">
-                        {preview.dateValue} · {preview.timeValue}
-                      </p>
-                      <p className="mt-1 text-xs text-[#766468]">{preview.placeValue}</p>
-                    </div>
-                    <span
-                      aria-hidden="true"
-                      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#f1e5d5] text-[#623444]"
-                    >
-                      <Icon name="check-circle" className="size-6" />
-                    </span>
-                  </div>
-                </div>
+                <InvitationLetter locale={locale} />
               </div>
             </div>
           </Container>
