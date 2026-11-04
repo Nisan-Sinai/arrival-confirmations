@@ -122,10 +122,13 @@ export function EventEditorial({ locale }: { locale: Locale }) {
 
               <ul className="mt-9 divide-y divide-[#dfd4ca] border-y border-[#dfd4ca]">
                 {copy.features.map((feature) => (
-                  <li key={feature.title} className="group flex items-start gap-4 rounded-xl py-5 transition-colors duration-300 hover:bg-white/55">
+                  <li
+                    key={feature.title}
+                    className="group flex items-start gap-4 rounded-xl py-5 transition-colors duration-300 hover:bg-white/55"
+                  >
                     <span
                       aria-hidden="true"
-                      className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#633848] shadow-sm ring-1 ring-[#eaded3] transition-transform duration-300 motion-safe:group-hover:rotate-[-6deg] motion-safe:group-hover:scale-[1.08]"
+                      className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#633848] shadow-sm ring-1 ring-[#eaded3] transition-transform duration-300 motion-safe:group-hover:scale-[1.08] motion-safe:group-hover:rotate-[-6deg]"
                     >
                       <Icon name={feature.icon} className="size-5" />
                     </span>
