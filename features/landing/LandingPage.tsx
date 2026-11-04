@@ -90,11 +90,11 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   <span aria-hidden="true" className="h-px w-9 bg-[#a57a55]" />
                   {hero.eyebrow}
                 </div>
-                <h1 className="mt-5 font-[family-name:var(--font-display)] sm:mt-7 text-[clamp(2.55rem,5.2vw,5.25rem)] leading-[1.1] font-bold tracking-tight text-[#432633]">
+                <h1 className="mt-5 font-[family-name:var(--font-display)] text-[clamp(2.55rem,5.2vw,5.25rem)] leading-[1.1] font-bold tracking-tight text-[#432633] sm:mt-7">
                   <span className="block">{hero.titleLead}</span>
                   <span className="mt-2 block text-[#805738]">{hero.titleAccent}</span>
                 </h1>
-                <p className="enter enter-3 mx-auto mt-5 max-w-[35rem] sm:mt-7 text-base leading-8 text-[#6b5c5e] sm:text-lg lg:mx-0">
+                <p className="enter enter-3 mx-auto mt-5 max-w-[35rem] text-base leading-8 text-[#6b5c5e] sm:mt-7 sm:text-lg lg:mx-0">
                   {hero.lead}
                 </p>
                 <div className="enter enter-4 mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-9 lg:justify-start">
@@ -116,7 +116,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     {locale === 'he' ? 'התנסו בהדגמה' : 'Explore the live demo'}
                   </Link>
                 </div>
-                <ul className="enter enter-5 mt-6 flex flex-wrap justify-center gap-x-6 gap-y-3 sm:mt-9 text-sm text-[#665b57] lg:justify-start">
+                <ul className="enter enter-5 mt-6 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-[#665b57] sm:mt-9 lg:justify-start">
                   {hero.facts.map((fact) => (
                     <li key={fact} className="flex items-center gap-2">
                       <Icon name="check-circle" className="size-4 text-[#8e6847]" />
