@@ -1,0 +1,38 @@
+name: Refresh preview lockfile once
+on:
+  push:
+    branches: [feature/premium-rsvp-experience-20261104]
+    paths:
+      - .github/workflows/refresh-preview-lockfile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.28.5
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+      - name: Update lockfile using pinned pnpm
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+      - name: Verify clean dependency audit
+        run: pnpm check:dependency-audit
+      - name: Commit the updated lockfile
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo 'Lockfile already up to date'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore(lockfile): resolve transitive minimatch vulnerabilities"
+          git push origin HEAD:refs/heads/feature/premium-rsvp-experience-20261104
