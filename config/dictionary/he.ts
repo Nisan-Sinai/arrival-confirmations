@@ -96,7 +96,7 @@ export const he: Dictionary = {
     trialNote: 'ללא כרטיס אשראי',
     oneTimeNote: 'תשלום חד-פעמי לאירוע',
     trialCta: 'יצירת אירוע לבדיקה',
-    choosePlan: 'בחירת {plan}',
+    choosePlan: 'פרטים והפעלת {plan} בוואטסאפ',
     whatsappIntro: 'שלום ניסן, אני מעוניין להפעיל את מסלול {plan} לאירוע במערכת אישורי הגעה.',
   },
   authNotice: {
