@@ -5,7 +5,6 @@ import { buttonClass } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { getDictionary } from '@/config/dictionary';
-import { TiltCard } from '@/features/landing/TiltCard';
 import { defaultLocale, localePath, type Locale } from '@/lib/i18n';
 import { supportWhatsAppUrl } from '@/lib/supportContact';
 import { cn } from '@/lib/utils';
@@ -39,6 +38,7 @@ export function PricingCards({
   return (
     <div
       /*
+       * A calm, aligned grid makes pricing easier to compare on mobile and desktop.
        * Four plans belong in one row once there is room for one.
        *
        * They were laid out two-by-two at every width above `md`, which on a desktop put
@@ -55,18 +55,8 @@ export function PricingCards({
         plans.length === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-4',
       )}
     >
-      {/*
-        `interactive` was already in the card system and unused here — a variant that
-        lifts on hover and on focus-within, which is what a card holding a price and a
-        button should do. Choosing a plan is the one decision on this page, and the cards
-        gave no sign they were things you could act on.
-      */}
       {plans.map((plan) => (
-        // The tilt goes on the outside so the "recommended" badge, which is positioned
-        // against the card's own top edge, turns with the edge it is pinned to. Five
-        // degrees rather than the hero's nine: these sit in a row, and a row of cards each
-        // tipped nine degrees reads as a broken grid rather than as depth.
-        <TiltCard key={plan.code} degrees={5} className="reveal h-full">
+        <div key={plan.code} className="reveal h-full">
           <Card
             padding="lg"
             variant={plan.highlighted ? 'accent' : 'paper'}
@@ -146,7 +136,7 @@ export function PricingCards({
               )}
             </div>
           </Card>
-        </TiltCard>
+        </div>
       ))}
     </div>
   );
