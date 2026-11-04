@@ -1,0 +1,62 @@
+name: Capture visual QA of preview once
+on:
+  push:
+    branches: [feature/editorial-wedding-brand-20261104]
+    paths: [.github/workflows/one-shot-visual-qa.yml]
+permissions:
+  contents: write
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        with:
+          version: 11.28.5
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Capture actual deployed UI for visual review
+        env:
+          PREVIEW_URL: https://arrival-confirmations-8q3q6jqsb-nisan-sinai-projects.vercel.app/
+        run: |
+          mkdir -p qa-visual
+          node <<'JS'
+          const { chromium }=require('@playwright/test');
+          (async()=>{
+            const browser=await chromium.launch();
+            const cases=[
+              {name:'desktop-hero',viewport:{width:1440,height:1000}},
+              {name:'mobile-hero',viewport:{width:390,height:900}},
+              {name:'small-mobile-hero',viewport:{width:320,height:850}},
+              {name:'english-hero',viewport:{width:390,height:900},path:'en'},
+            ];
+            for(const c of cases){
+              const page=await browser.newPage({viewport:c.viewport,deviceScaleFactor:1});
+              await page.goto(process.env.PREVIEW_URL+(c.path||''),{waitUntil:'networkidle'});
+              await page.screenshot({path:'qa-visual/'+c.name+'.jpg',type:'jpeg',quality:64,animations:'disabled'});
+              if(c.name==='desktop-hero'||c.name==='mobile-hero') {
+                for(const selector of ['#how-it-works','#demo','#benefits','#pricing']){
+                  await page.locator(selector).scrollIntoViewIfNeeded();
+                  await page.screenshot({path:'qa-visual/'+c.name+'-'+selector.slice(1)+'.jpg',type:'jpeg',quality:64,animations:'disabled'});
+                }
+              }
+              const summary=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:innerWidth,images:[...document.querySelectorAll('main img')].map(i=>({alt:i.alt,natural:i.naturalWidth}))}));
+              console.log(JSON.stringify({case:c.name,summary}));
+              await page.close();
+            }
+            await browser.close();
+          })().catch(err=>{console.error(err);process.exit(1)});
+          JS
+      - name: Commit temporary QA screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add qa-visual
+          git commit -m "test(visual): capture current event landing previews"
+          git push origin HEAD:refs/heads/feature/editorial-wedding-brand-20261104
