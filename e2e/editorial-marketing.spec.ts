@@ -69,7 +69,10 @@ test.describe('editorial event marketing redesign', () => {
     await expect(hero.getByText('With God’s help')).toBeVisible();
     await expect(hero.getByText('Wedding', { exact: true })).toBeVisible();
     await expect(hero.getByText('Hadar Hall')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Try the live demo' })).toHaveAttribute('href', '#demo');
+    await expect(page.getByRole('link', { name: 'Try the live demo' })).toHaveAttribute(
+      'href',
+      '#demo',
+    );
   });
 
   test('landing pricing is transparent: three paid plans and full details on /pricing', async ({
@@ -129,11 +132,15 @@ test.describe('editorial event marketing redesign', () => {
     expect(box).not.toBeNull();
     await page.mouse.move(box!.x + box!.width * 0.8, box!.y + box!.height * 0.4);
     await expect
-      .poll(() => card.locator('.tilt-target').evaluate((el) => el.style.getPropertyValue('--tilt-y')))
+      .poll(() =>
+        card.locator('.tilt-target').evaluate((el) => el.style.getPropertyValue('--tilt-y')),
+      )
       .not.toBe('');
     await page.mouse.move(4, 4);
     await expect
-      .poll(() => card.locator('.tilt-target').evaluate((el) => el.style.getPropertyValue('--tilt-y')))
+      .poll(() =>
+        card.locator('.tilt-target').evaluate((el) => el.style.getPropertyValue('--tilt-y')),
+      )
       .toBe('');
   });
 
