@@ -52,7 +52,7 @@ test.describe('editorial event marketing redesign', () => {
     await page.goto('/');
 
     await page.getByRole('button', { name: 'פתיחת התפריט' }).click();
-    await page.getByRole('link', { name: 'הדגמה חיה' }).click();
+    await page.locator('header .nav-sheet').getByRole('link', { name: 'הדגמה חיה' }).click();
     await expect(page).toHaveURL(/#demo$/);
     await expect(page.getByRole('button', { name: 'פתיחת התפריט' })).toBeVisible();
 
