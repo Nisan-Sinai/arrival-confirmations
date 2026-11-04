@@ -1,16 +1,18 @@
 import { socialImage } from '@/lib/social-image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import { buttonClass } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
+import { Rule } from '@/components/ui/layout';
 import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { EventEditorial } from '@/features/landing/EventEditorial';
+import { Candlelight } from '@/features/landing/Candlelight';
+import { TiltCard } from '@/features/landing/TiltCard';
+import { writingDuration } from '@/features/landing/writingPace';
 import { InteractiveRsvpDemo } from '@/features/landing/InteractiveRsvpDemo';
-import { InvitationLetter } from '@/features/landing/InvitationLetter';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
@@ -60,6 +62,11 @@ export function buildLandingMetadata(locale: Locale): Metadata {
 export function LandingPage({ locale }: { locale: Locale }) {
   const { landing } = getDictionary(locale);
   const { hero, invitationPreview: preview, plans, faq, occasions, closing } = landing;
+  const countdown: readonly [string, string][] = [
+    ['42', preview.countdownDays],
+    ['06', preview.countdownHours],
+    ['18', preview.countdownMinutes],
+  ];
   const dictionary = getDictionary(locale);
   return (
     <>
@@ -75,135 +82,170 @@ export function LandingPage({ locale }: { locale: Locale }) {
           <AuthFragmentNotice locale={locale} />
         </div>
 
-        <section className="relative isolate overflow-hidden bg-[#fbf7f1] py-9 sm:py-20 lg:py-24">
+        <section className="relative isolate overflow-hidden bg-[#301b26] py-16 text-white sm:py-24 lg:py-28">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -start-52 -top-52 size-[36rem] rounded-full bg-[#e3d1c3]/40 blur-3xl"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_75%_40%,rgba(151,85,94,0.28),transparent_55%),radial-gradient(ellipse_at_0%_100%,rgba(218,174,113,0.11),transparent_45%)]"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute end-0 bottom-0 h-px w-full bg-gradient-to-l from-transparent via-[#c8ab85] to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d9aa71]/60 to-transparent"
           />
+          <Candlelight />
           <Container width="wide">
-            <div className="relative grid min-w-0 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-              <div className="relative z-10 min-w-0 text-center lg:text-start">
-                <div className="enter enter-1 inline-flex items-center gap-3 text-xs font-bold tracking-[0.12em] text-[#865f43] sm:text-sm">
-                  <span aria-hidden="true" className="h-px w-9 bg-[#a57a55]" />
-                  {hero.eyebrow}
-                </div>
-                <h1 className="mt-5 font-[family-name:var(--font-display)] text-[clamp(2.55rem,5.2vw,5.25rem)] leading-[1.1] font-bold tracking-tight text-[#432633] sm:mt-7">
-                  <span className="block">{hero.titleLead}</span>
-                  <span className="mt-2 block text-[#805738]">{hero.titleAccent}</span>
+            <div className="relative grid min-w-0 items-center gap-14 lg:grid-cols-[1.06fr_0.94fr] lg:gap-16">
+              <div className="min-w-0 text-center lg:text-start">
+                <p className="enter enter-1 inline-flex items-center gap-2.5 rounded-full border border-[#dfbc88]/40 bg-white/[0.06] px-4 py-2 text-xs font-semibold tracking-wide text-[#f1d29e] sm:text-sm">
+                  <Icon name="sparkles" className="size-4" /> {hero.eyebrow}
+                </p>
+                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.6rem,5vw,5rem)] leading-[1.16] font-bold tracking-tight">
+                  <WrittenHeading text={hero.titleLead} as="span" />
+                  <WrittenHeading
+                    text={hero.titleAccent}
+                    as="div"
+                    delay={writingDuration(hero.titleLead)}
+                    className="text-[#f1cf96]"
+                  />
                 </h1>
-                <p className="enter enter-3 mx-auto mt-5 max-w-[35rem] text-base leading-8 text-[#6b5c5e] sm:mt-7 sm:text-lg lg:mx-0">
+                <p className="enter enter-3 mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">
                   {hero.lead}
                 </p>
-                <div className="enter enter-4 mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-9 lg:justify-start">
+                <div className="enter enter-4 mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
                   <Link
                     href={localePath(locale, '/signup')}
                     className={buttonClass({
+                      variant: 'gold',
                       size: 'lg',
-                      className: 'min-h-14 px-8 shadow-[0_14px_32px_-15px_rgba(68,38,51,0.42)]',
+                      className:
+                        'border-[#e6c390] bg-[#e9c892] text-[#381c26] shadow-[0_12px_35px_-13px_rgba(240,202,148,0.45)] hover:bg-[#f2d9ad]',
                     })}
                   >
-                    {hero.ctaPrimary}
-                    <Icon name="arrow-forward" className="size-4" />
+                    {hero.ctaPrimary} <Icon name="arrow-forward" className="size-4" />
                   </Link>
                   <Link
                     href="#demo"
-                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-[#bda99d] bg-white/75 px-7 text-sm font-semibold text-[#4c3039] shadow-sm transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5b42] sm:text-base"
+                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/[0.06] px-7 font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e9c892]"
                   >
-                    <Icon name="eye" className="size-5" />
-                    {locale === 'he' ? 'התנסו בהדגמה' : 'Explore the live demo'}
+                    <Icon name="eye" className="size-5" />{' '}
+                    {locale === 'he' ? 'צפו בהדגמה חיה' : 'Try the live demo'}
                   </Link>
                 </div>
-                <ul className="enter enter-5 mt-6 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-[#665b57] sm:mt-9 lg:justify-start">
+                <ul className="enter enter-5 mt-9 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-white/75 lg:justify-start">
                   {hero.facts.map((fact) => (
                     <li key={fact} className="flex items-center gap-2">
-                      <Icon name="check-circle" className="size-4 text-[#8e6847]" />
+                      <Icon name="check-circle" className="size-4 text-[#e9c892]" />
                       {fact}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-11 hidden items-center gap-3 border-t border-[#e0d4c8] pt-6 text-start lg:flex">
-                  <div
-                    aria-hidden="true"
-                    className="flex size-11 items-center justify-center rounded-full bg-[#efe2d0] text-[#654052]"
-                  >
-                    <Icon name="heart" className="size-5" />
-                  </div>
-                  <p className="max-w-sm text-sm leading-6 text-[#705f5c]">
-                    {locale === 'he'
-                      ? 'שולחים הזמנה מרגשת, מקבלים תשובות ברורות ונשארים פנויים לשמחה עצמה.'
-                      : 'Send a beautiful invitation, get clear answers and enjoy the celebration.'}
-                  </p>
-                </div>
+                <p className="mt-8 text-sm text-white/55">
+                  {locale === 'he'
+                    ? 'ממוקדים במה שחשוב באמת: ליהנות מהאירוע שלכם.'
+                    : 'More time celebrating. Less time chasing replies.'}
+                </p>
               </div>
-
-              <div className="relative mx-auto w-full max-w-[510px] min-w-0 sm:px-7 lg:max-w-none lg:pb-8">
+              <div className="enter enter-3 relative mx-auto w-full max-w-[425px] min-w-0 pt-7 pb-7 sm:px-4 lg:max-w-none">
                 <div
                   aria-hidden="true"
-                  className="absolute -inset-x-1 inset-y-5 hidden rounded-t-[12rem] rounded-b-[2rem] border border-[#c9ab83]/70 sm:inset-x-4 lg:block"
+                  className="absolute inset-10 rounded-full bg-[#e7b579]/20 blur-[85px]"
                 />
                 <div
-                  data-testid="editorial-hero-photo"
-                  className="group relative aspect-[5/6] overflow-hidden rounded-t-[12rem] rounded-b-[1.7rem] bg-[#dfd2c1] shadow-[0_30px_75px_-30px_rgba(55,33,38,0.4)] sm:aspect-[5/5.9]"
-                >
-                  <Image
-                    src="/media/wedding-reception.webp"
-                    alt={
-                      locale === 'he'
-                        ? 'צילום להמחשה של שולחן חגיגי מעוצב עם פרחים באולם אירועים'
-                        : 'Illustrative photograph of an elegant floral reception table'
-                    }
-                    fill
-                    priority
-                    sizes="(max-width: 1023px) 100vw, 45vw"
-                    className="object-cover object-center group-hover:scale-[1.035] motion-safe:transition-transform motion-safe:duration-[1600ms] motion-safe:ease-out"
-                  />
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-t from-[#1d1b1a]/55 via-transparent to-[#1b1b1b]/10"
-                  />
-                  <div
-                    data-testid="hero-photo-caption"
-                    className="absolute inset-x-0 bottom-7 px-4 text-center text-white sm:bottom-10 lg:bottom-44"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="mx-auto mb-3 block h-px w-12 bg-[#edd6ae]"
-                    />
-                    <p className="font-[family-name:var(--font-display)] text-2xl font-bold drop-shadow-md sm:text-3xl">
-                      {locale === 'he' ? 'השמחה היא הסיפור שלכם' : 'Your celebration is the story'}
-                    </p>
-                    <p className="mt-2 text-xs text-white/85">
-                      {locale === 'he' ? 'צילום אווירה להמחשה' : 'Illustrative event photograph'}
-                    </p>
+                  aria-hidden="true"
+                  className="absolute start-0 -top-4 size-32 rounded-full border border-[#d8af77]/30 sm:size-44"
+                />
+                <TiltCard degrees={3}>
+                  <div className="relative mx-auto w-full max-w-sm rounded-[2rem] border border-[#e9cc9d]/50 bg-[#fffaf4] p-3 shadow-[0_28px_80px_-26px_rgba(0,0,0,0.55)] sm:p-4">
+                    <div className="rounded-[1.35rem] border border-[#d8c5a9] bg-[radial-gradient(ellipse_at_50%_0%,#fffdf9,#f6efe4)] px-5 py-9 text-center text-[#633d46] sm:px-8 sm:py-10">
+                      <p className="text-sm font-bold tracking-[0.13em] text-[#986f39]">
+                        {preview.blessing}
+                      </p>
+                      <div
+                        className="mx-auto mt-5 flex items-center justify-center gap-3 text-[#bb9761]"
+                        aria-hidden="true"
+                      >
+                        <span className="h-px w-10 bg-current/70" />
+                        <span>✦</span>
+                        <span className="h-px w-10 bg-current/70" />
+                      </div>
+                      <p className="mt-5 text-sm leading-7">
+                        {preview.introFirstLine}
+                        <span className="block">{preview.introSecondLine}</span>
+                      </p>
+                      <p className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-[#602a3c] sm:text-5xl">
+                        {preview.occasion}
+                      </p>
+                      <Rule draw="load" className="my-7" />
+                      <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-[#602a3c]">
+                        {[
+                          { k: preview.dateLabel, v: preview.dateValue },
+                          { k: preview.timeLabel, v: preview.timeValue },
+                          { k: preview.placeLabel, v: preview.placeValue },
+                        ].map((cell) => (
+                          <div key={cell.k}>
+                            <span className="mb-1 block font-normal text-[#876e75]">{cell.k}</span>
+                            <span>{cell.v}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <Rule draw="load" className="my-7" />
+                      <div className="flex justify-center gap-2" dir="ltr">
+                        {countdown.map(([n, l]) => (
+                          <div
+                            key={l}
+                            className="min-w-14 rounded-lg border border-[#e5d2b9] bg-white/80 px-2 py-2"
+                          >
+                            <span className="block text-xl leading-none font-bold text-[#602a3c] tabular-nums">
+                              {n}
+                            </span>
+                            <span className="mt-1 block text-[10px] text-[#856b71]">{l}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </TiltCard>
+                <div className="relative mx-auto mt-4 w-fit max-w-full rounded-2xl border border-[#e7d3b2] bg-white px-4 py-3 text-[#492431] shadow-xl sm:absolute sm:end-2 sm:bottom-0 sm:mt-0">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                      <Icon name="check-circle" className="size-5" />
+                    </span>
+                    <div>
+                      <span className="block text-xs text-[#7b6068]">{preview.captionLead}</span>
+                      <span className="block text-sm font-bold">{preview.captionAccent}</span>
+                    </div>
                   </div>
                 </div>
-                <InvitationLetter locale={locale} preview={preview} />
               </div>
             </div>
           </Container>
         </section>
 
-        <section
-          aria-label={occasions.lead}
-          className="border-y border-[#e6dace] bg-white py-6 sm:py-8"
-        >
-          <Container width="wide">
-            <div className="flex flex-col items-center gap-5 lg:flex-row lg:gap-9">
-              <p className="shrink-0 text-sm font-bold text-[#785440]">{occasions.lead}</p>
-              <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-sm text-[#695b5a] lg:justify-start">
-                {occasions.items.map((item, index) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <span aria-hidden="true" className="size-1.5 rounded-full bg-[#ba976d]" />
-                    <span>{item}</span>
-                    {index < occasions.items.length - 1 && <span className="sr-only">,</span>}
-                  </li>
-                ))}
-              </ul>
+        {/* Event types remain immediately visible below the main call to action. */}
+        <section aria-label={occasions.lead} className="border-border/60 border-y py-6 sm:py-7">
+          <Container width="wide" className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
+            <p className="text-eyebrow text-accent-strong shrink-0 font-semibold">
+              {occasions.lead}
+            </p>
+            <div className="marquee-mask w-full min-w-0 flex-1 overflow-hidden" aria-hidden="true">
+              <div className="marquee-track flex w-max gap-3">
+                {[0, 1].map((copy) =>
+                  occasions.items.map((item) => (
+                    <span
+                      key={`${copy}-${item}`}
+                      className="border-border bg-card text-primary shadow-paper inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold whitespace-nowrap"
+                    >
+                      <span aria-hidden="true" className="bg-accent-strong size-1.5 rounded-full" />
+                      {item}
+                    </span>
+                  )),
+                )}
+              </div>
             </div>
+            <ul className="sr-only">
+              {occasions.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </Container>
         </section>
 
