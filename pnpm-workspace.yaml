@@ -41,3 +41,6 @@ overrides:
   # Next's PostCSS chain still resolves source-map-js 1.2.1; force the patched
   # maintenance release until the upstream range catches up.
   source-map-js@>=1.0.0 <1.2.2: ^1.2.2
+  # GHSA-g3hv-75wg-m249: override transitive minimatch in dev-only tooling.
+  # The fix first shipped in 11.0.1; validated on 11.0.3 with lint, typecheck, unit tests and audit.
+  'minimatch@<11.0.1': '11.0.3'

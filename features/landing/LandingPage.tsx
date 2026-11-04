@@ -9,6 +9,7 @@ import { Container, Rule } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { Candlelight } from '@/features/landing/Candlelight';
+import { InteractiveRsvpDemo } from '@/features/landing/InteractiveRsvpDemo';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { writingDuration } from '@/features/landing/writingPace';
 import { TiltCard } from '@/features/landing/TiltCard';
@@ -84,131 +85,145 @@ export function LandingPage({ locale }: { locale: Locale }) {
           <AuthFragmentNotice locale={locale} />
         </div>
 
-        <section className="from-secondary/45 relative overflow-hidden bg-gradient-to-b to-transparent py-16 sm:py-24">
-          {/* Behind everything in the hero, and behind nothing else — the drift is a
-              welcome, not a background the whole site sits on. */}
-          <div aria-hidden="true" className="hero-glow" />
+        <section className="relative isolate overflow-hidden bg-[#301b26] py-16 text-white sm:py-24 lg:py-28">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_75%_40%,rgba(151,85,94,0.28),transparent_55%),radial-gradient(ellipse_at_0%_100%,rgba(218,174,113,0.11),transparent_45%)]"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d9aa71]/60 to-transparent"
+          />
           <Candlelight />
           <Container width="wide">
-            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="text-center lg:text-start">
-                <p className="enter enter-1 text-eyebrow text-accent-strong font-semibold">
-                  {hero.eyebrow}
+            <div className="relative grid min-w-0 items-center gap-14 lg:grid-cols-[1.06fr_0.94fr] lg:gap-16">
+              <div className="min-w-0 text-center lg:text-start">
+                <p className="enter enter-1 inline-flex items-center gap-2.5 rounded-full border border-[#dfbc88]/40 bg-white/[0.06] px-4 py-2 text-xs font-semibold tracking-wide text-[#f1d29e] sm:text-sm">
+                  <Icon name="sparkles" className="size-4" /> {hero.eyebrow}
                 </p>
-                {/*
-                  No `enter` on the heading: its words carry their own arrival, and
-                  running both would move each word twice — once with the block and once
-                  on its own.
-
-                  The second line starts exactly as the first finishes, so the caret runs
-                  off the end of one line and picks up at the start of the next instead of
-                  restarting. `writingDuration` rather than a hand-tuned number, because a
-                  literal here would drift the moment the copy changed by a word.
-                */}
-                <h1 className="text-display text-primary mt-5 font-bold">
+                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.6rem,5vw,5rem)] leading-[1.16] font-bold tracking-tight">
                   <WrittenHeading text={hero.titleLead} as="span" />
                   <WrittenHeading
                     text={hero.titleAccent}
                     as="div"
                     delay={writingDuration(hero.titleLead)}
-                    className="text-accent-strong"
+                    className="text-[#f1cf96]"
                   />
                 </h1>
-                <p className="enter enter-3 text-lead text-muted-foreground mt-6 max-w-2xl leading-relaxed lg:mx-0">
+                <p className="enter enter-3 mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">
                   {hero.lead}
                 </p>
                 <div className="enter enter-4 mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
                   <Link
                     href={localePath(locale, '/signup')}
-                    className={buttonClass({ size: 'lg' })}
+                    className={buttonClass({
+                      variant: 'gold',
+                      size: 'lg',
+                      className:
+                        'border-[#e6c390] bg-[#e9c892] text-[#381c26] shadow-[0_12px_35px_-13px_rgba(240,202,148,0.45)] hover:bg-[#f2d9ad]',
+                    })}
                   >
-                    {hero.ctaPrimary}
+                    {hero.ctaPrimary} <Icon name="arrow-forward" className="size-4" />
                   </Link>
                   <Link
-                    href={localePath(locale, '/pricing')}
-                    className={buttonClass({ variant: 'outline', size: 'lg' })}
+                    href="#demo"
+                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/[0.06] px-7 font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e9c892]"
                   >
-                    {hero.ctaSecondary}
+                    <Icon name="eye" className="size-5" />{' '}
+                    {locale === 'he' ? 'צפו בהדגמה חיה' : 'Try the live demo'}
                   </Link>
                 </div>
-                <ul className="enter enter-5 text-muted-foreground mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm lg:justify-start">
+                <ul className="enter enter-5 mt-9 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-white/75 lg:justify-start">
                   {hero.facts.map((fact) => (
                     <li key={fact} className="flex items-center gap-2">
-                      <span aria-hidden="true" className="bg-accent-strong size-1.5 rounded-full" />
+                      <Icon name="check-circle" className="size-4 text-[#e9c892]" />
                       {fact}
                     </li>
                   ))}
                 </ul>
+                <p className="mt-8 text-sm text-white/55">
+                  {locale === 'he'
+                    ? 'ממוקדים במה שחשוב באמת: ליהנות מהאירוע שלכם.'
+                    : 'More time celebrating. Less time chasing replies.'}
+                </p>
               </div>
-
-              <div
-                aria-hidden="true"
-                className="enter enter-3 parallax-slow relative mx-auto w-full max-w-sm"
-              >
-                <TiltCard>
-                  <div className="card-lift border-accent/60 bg-card rounded-2xl border-2 p-2.5">
-                    <div className="border-accent/35 from-secondary/25 rounded-xl border bg-gradient-to-b via-white/90 to-white/90 px-6 py-9 text-center">
-                      <p className="text-muted-foreground text-xs">{preview.blessing}</p>
-                      <p className="text-foreground mt-5 text-sm leading-relaxed">
-                        {preview.introFirstLine}
-                        <br />
-                        {preview.introSecondLine}
+              <div className="enter enter-3 relative mx-auto w-full max-w-[425px] min-w-0 pt-7 pb-7 sm:px-4 lg:max-w-none">
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-10 rounded-full bg-[#e7b579]/20 blur-[85px]"
+                />
+                <div
+                  aria-hidden="true"
+                  className="absolute start-0 -top-4 size-32 rounded-full border border-[#d8af77]/30 sm:size-44"
+                />
+                <TiltCard degrees={3}>
+                  <div className="relative mx-auto w-full max-w-sm rounded-[2rem] border border-[#e9cc9d]/50 bg-[#fffaf4] p-3 shadow-[0_28px_80px_-26px_rgba(0,0,0,0.55)] sm:p-4">
+                    <div className="rounded-[1.35rem] border border-[#d8c5a9] bg-[radial-gradient(ellipse_at_50%_0%,#fffdf9,#f6efe4)] px-5 py-9 text-center text-[#633d46] sm:px-8 sm:py-10">
+                      <p className="text-sm font-bold tracking-[0.13em] text-[#986f39]">
+                        {preview.blessing}
                       </p>
-                      <p className="text-primary mt-4 font-[family-name:var(--font-display)] text-3xl font-bold">
+                      <div
+                        className="mx-auto mt-5 flex items-center justify-center gap-3 text-[#bb9761]"
+                        aria-hidden="true"
+                      >
+                        <span className="h-px w-10 bg-current/70" />
+                        <span>✦</span>
+                        <span className="h-px w-10 bg-current/70" />
+                      </div>
+                      <p className="mt-5 text-sm leading-7">
+                        {preview.introFirstLine}
+                        <span className="block">{preview.introSecondLine}</span>
+                      </p>
+                      <p className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-[#602a3c] sm:text-5xl">
                         {preview.occasion}
                       </p>
-                      <Rule draw="load" className="my-6" />
-                      <div className="text-primary flex justify-center gap-5 text-xs font-semibold">
+                      <Rule draw="load" className="my-7" />
+                      <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-[#602a3c]">
                         {[
                           { k: preview.dateLabel, v: preview.dateValue },
                           { k: preview.timeLabel, v: preview.timeValue },
                           { k: preview.placeLabel, v: preview.placeValue },
                         ].map((cell) => (
                           <div key={cell.k}>
-                            <span className="text-muted-foreground block font-normal">
-                              {cell.k}
-                            </span>
-                            {cell.v}
+                            <span className="mb-1 block font-normal text-[#876e75]">{cell.k}</span>
+                            <span>{cell.v}</span>
                           </div>
                         ))}
                       </div>
-                      <Rule draw="load" className="my-6" />
+                      <Rule draw="load" className="my-7" />
                       <div className="flex justify-center gap-2" dir="ltr">
                         {countdown.map(([n, l]) => (
                           <div
                             key={l}
-                            className="border-accent/40 from-secondary/40 min-w-12 rounded-lg border bg-gradient-to-b to-white/60 py-1.5"
+                            className="min-w-14 rounded-lg border border-[#e5d2b9] bg-white/80 px-2 py-2"
                           >
-                            <span className="text-primary block font-[family-name:var(--font-display)] text-lg leading-none font-bold">
+                            <span className="block text-xl leading-none font-bold text-[#602a3c] tabular-nums">
                               {n}
                             </span>
-                            <span className="text-muted-foreground text-[10px]">{l}</span>
+                            <span className="mt-1 block text-[10px] text-[#856b71]">{l}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
                 </TiltCard>
-                {/* Outside the tilt on purpose: the badge is pinned to the card's corner
-                    in page space, and rotating it with the card would swing it out of
-                    alignment with the edge it is supposed to be sitting on. */}
-                <div className="border-border bg-card/85 shadow-raised absolute start-0 -bottom-5 rounded-xl border px-4 py-2.5 backdrop-blur-sm">
-                  <p className="text-muted-foreground text-[11px]">{preview.captionLead}</p>
-                  <p className="text-primary text-sm font-semibold">{preview.captionAccent}</p>
+                <div className="absolute end-0 bottom-0 rounded-2xl border border-[#e7d3b2] bg-white px-4 py-3 text-[#492431] shadow-xl sm:end-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                      <Icon name="check-circle" className="size-5" />
+                    </span>
+                    <div>
+                      <span className="block text-xs text-[#7b6068]">{preview.captionLead}</span>
+                      <span className="block text-sm font-bold">{preview.captionAccent}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </Container>
         </section>
 
-        {/*
-          Every kind of simcha the product serves, in one line under the hero.
-
-          The list is what a visitor scans for their own occasion — "does this do a
-          henna?" — and answering it before the first scroll is worth a strip. The band
-          drifts slowly and pauses under the pointer; it is `aria-hidden` and duplicated
-          for the seamless loop, so the real list is the one that follows it.
-        */}
+        {/* Event types remain immediately visible below the main call to action. */}
         <section aria-label={occasions.lead} className="border-border/60 border-y py-6 sm:py-7">
           <Container width="wide" className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
             <p className="text-eyebrow text-accent-strong shrink-0 font-semibold">
@@ -236,6 +251,8 @@ export function LandingPage({ locale }: { locale: Locale }) {
             </ul>
           </Container>
         </section>
+
+        <InteractiveRsvpDemo locale={locale} />
 
         <RsvpFlowSteps locale={locale} />
 
@@ -273,6 +290,82 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   </Card>
                 </TiltCard>
               ))}
+            </div>
+          </Container>
+        </section>
+
+        <section className="relative overflow-hidden bg-white py-16 sm:py-24">
+          <Container width="wide">
+            <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+              <div>
+                <p className="text-accent-strong mb-3 text-sm font-bold tracking-widest">
+                  {locale === 'he' ? 'פשוט. ברור. בשליטתכם.' : 'Simple. Clear. In your hands.'}
+                </p>
+                <h2 className="text-primary font-[family-name:var(--font-display)] text-3xl leading-tight font-bold sm:text-4xl">
+                  {locale === 'he'
+                    ? 'הראש שלכם באירוע. אנחנו נעזור לעשות סדר ברשימה.'
+                    : 'Focus on your celebration. Keep the guest list under control.'}
+                </h2>
+                <p className="text-muted-foreground mt-5 text-base leading-8">
+                  {locale === 'he'
+                    ? 'במקום לעבור בין הודעות, גיליונות ושיחות — שולחים הזמנה אחת ורואים את המידע החשוב במקום מסודר. המערכת מתאימה גם למי שלא אוהב להתעסק בטכנולוגיה.'
+                    : 'Skip the spreadsheets, calls and endless message threads. Share one invitation and keep the information you need together in a clear overview.'}
+                </p>
+                <Link
+                  href={localePath(locale, '/signup')}
+                  className={buttonClass({ variant: 'outline', size: 'lg', className: 'mt-7' })}
+                >
+                  {hero.ctaPrimary}
+                  <Icon name="arrow-forward" className="size-4" />
+                </Link>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  {
+                    icon: 'send' as const,
+                    title: locale === 'he' ? 'שיתוף נוח בוואטסאפ' : 'Share via WhatsApp',
+                    body:
+                      locale === 'he'
+                        ? 'האורחים מקבלים קישור פשוט ויכולים להשיב מהטלפון.'
+                        : 'Guests receive a simple link and reply from their phones.',
+                  },
+                  {
+                    icon: 'dashboard' as const,
+                    title: locale === 'he' ? 'כל התשובות מול העיניים' : 'Replies in one place',
+                    body:
+                      locale === 'he'
+                        ? 'מי מגיע, מי מתלבט וכמה אנשים צפויים להגיע.'
+                        : 'See who is attending, undecided and how many guests to expect.',
+                  },
+                  {
+                    icon: 'shield' as const,
+                    title: locale === 'he' ? 'בלי הרשמה לאורחים' : 'No guest accounts',
+                    body:
+                      locale === 'he'
+                        ? 'הקישור נפתח בדפדפן, בלי אפליקציה או סיסמה.'
+                        : 'Guests can respond in a browser, with no app or password.',
+                  },
+                  {
+                    icon: 'credit-card' as const,
+                    title: locale === 'he' ? 'מחיר ידוע מראש' : 'Clear, upfront pricing',
+                    body:
+                      locale === 'he'
+                        ? 'בודקים בחינם, ולאחר מכן בוחרים מסלול בתשלום חד-פעמי.'
+                        : 'Try it free, then choose a one-time payment plan.',
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-[1.5rem] border border-[#ede2dc] bg-[#fcf9f5] p-6 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
+                  >
+                    <span className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-[#f1dfc6] text-[#673545]">
+                      <Icon name={item.icon} className="size-6" />
+                    </span>
+                    <h3 className="text-primary text-lg font-bold">{item.title}</h3>
+                    <p className="text-muted-foreground mt-3 text-sm leading-7">{item.body}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </Container>
         </section>
