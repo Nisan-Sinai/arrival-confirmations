@@ -27,16 +27,24 @@ export function SiteHeader({
   minimal = false,
   locale = defaultLocale,
   showLanguageSwitch = false,
+  showLandingLinks = false,
 }: {
   className?: string;
   minimal?: boolean;
   locale?: Locale;
   showLanguageSwitch?: boolean;
+  showLandingLinks?: boolean;
 }) {
   const dictionary = getDictionary(locale);
   const target = alternateLocale(locale);
 
   const mobileItems: MobileNavItem[] = [
+    ...(showLandingLinks
+      ? [
+          { href: '#how-it-works', label: locale === 'he' ? 'איך זה עובד' : 'How it works' },
+          { href: '#demo', label: locale === 'he' ? 'הדגמה חיה' : 'Live demo' },
+        ]
+      : []),
     { href: localePath(locale, '/pricing'), label: dictionary.header.pricing },
     { href: localePath(locale, '/login'), label: dictionary.header.login },
     ...(showLanguageSwitch
@@ -75,6 +83,30 @@ export function SiteHeader({
               className="hidden shrink-0 items-center gap-1 sm:flex sm:gap-2"
             >
               {showLanguageSwitch && <LanguageSwitch locale={locale} />}
+              {showLandingLinks && (
+                <>
+                  <Link
+                    href="#how-it-works"
+                    className={buttonClass({
+                      variant: 'ghost',
+                      size: 'sm',
+                      className: 'hidden lg:inline-flex',
+                    })}
+                  >
+                    {locale === 'he' ? 'איך זה עובד' : 'How it works'}
+                  </Link>
+                  <Link
+                    href="#demo"
+                    className={buttonClass({
+                      variant: 'ghost',
+                      size: 'sm',
+                      className: 'hidden lg:inline-flex',
+                    })}
+                  >
+                    {locale === 'he' ? 'הדגמה' : 'Live demo'}
+                  </Link>
+                </>
+              )}
               <Link
                 href={localePath(locale, '/pricing')}
                 className={buttonClass({ variant: 'ghost', size: 'sm' })}

@@ -110,7 +110,7 @@ export function InteractiveRsvpDemo({ locale }: { locale: Locale }) {
     <section
       id="demo"
       aria-labelledby="demo-heading"
-      className="relative overflow-hidden bg-[#f5f0eb] py-20 sm:py-28"
+      className="relative scroll-mt-24 overflow-hidden bg-[#f5f0eb] py-20 sm:py-28"
     >
       <div
         className="pointer-events-none absolute -top-52 -left-28 size-[28rem] rounded-full bg-[#eac49d]/25 blur-3xl"

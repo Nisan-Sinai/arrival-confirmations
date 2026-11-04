@@ -3,25 +3,23 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icons';
-import { Container, Rule } from '@/components/ui/layout';
+import { Icon } from '@/components/ui/icons';
+import { Rule } from '@/components/ui/layout';
+import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
+import { EventEditorial } from '@/features/landing/EventEditorial';
 import { Candlelight } from '@/features/landing/Candlelight';
+import { TiltCard } from '@/features/landing/TiltCard';
+import { writingDuration } from '@/features/landing/writingPace';
 import { InteractiveRsvpDemo } from '@/features/landing/InteractiveRsvpDemo';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
-import { writingDuration } from '@/features/landing/writingPace';
-import { TiltCard } from '@/features/landing/TiltCard';
 import { RsvpFlowSteps } from '@/features/landing/RsvpFlowSteps';
 import { SiteHeader } from '@/features/layout/SiteHeader';
 import { PricingCards } from '@/features/pricing/PricingCards';
 import { languageAlternates, localePath, openGraphLocale, type Locale } from '@/lib/i18n';
 import { structuredData } from '@/lib/structuredData';
 import { supportWhatsAppUrl } from '@/lib/supportContact';
-
-/** One glyph per benefit, in the order the dictionary lists them. */
-const BENEFIT_ICONS: readonly IconName[] = ['calendar', 'dashboard', 'globe'];
 
 /**
  * The marketing home page, shared by both locales (§12).
@@ -63,14 +61,13 @@ export function buildLandingMetadata(locale: Locale): Metadata {
 
 export function LandingPage({ locale }: { locale: Locale }) {
   const { landing } = getDictionary(locale);
-  const { hero, invitationPreview: preview, benefits, plans, faq, occasions, closing } = landing;
-  const dictionary = getDictionary(locale);
+  const { hero, invitationPreview: preview, plans, faq, occasions, closing } = landing;
   const countdown: readonly [string, string][] = [
     ['42', preview.countdownDays],
     ['06', preview.countdownHours],
     ['18', preview.countdownMinutes],
   ];
-
+  const dictionary = getDictionary(locale);
   return (
     <>
       <script
@@ -79,7 +76,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
           __html: JSON.stringify(structuredData(locale)).replace(/</g, '\\u003c'),
         }}
       />
-      <SiteHeader locale={locale} showLanguageSwitch />
+      <SiteHeader locale={locale} showLanguageSwitch showLandingLinks />
       <main id="main" className="flex flex-1 flex-col">
         <div className="px-5 pt-5 empty:hidden">
           <AuthFragmentNotice locale={locale} />
@@ -207,7 +204,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     </div>
                   </div>
                 </TiltCard>
-                <div className="absolute end-0 bottom-0 rounded-2xl border border-[#e7d3b2] bg-white px-4 py-3 text-[#492431] shadow-xl sm:end-2">
+                <div className="relative mx-auto mt-4 w-fit max-w-full rounded-2xl border border-[#e7d3b2] bg-white px-4 py-3 text-[#492431] shadow-xl sm:absolute sm:end-2 sm:bottom-0 sm:mt-0">
                   <div className="flex items-center gap-3">
                     <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                       <Icon name="check-circle" className="size-5" />
@@ -252,125 +249,13 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
-        <InteractiveRsvpDemo locale={locale} />
-
         <RsvpFlowSteps locale={locale} />
 
-        {/*
-          The `reveal` moved off the <section> and onto the content below each heading.
+        <InteractiveRsvpDemo locale={locale} />
 
-          It cannot stay on an ancestor of a scroll-driven heading: `view()` measures the
-          word's own position in the viewport, and a parent that is translating the word
-          upward is changing the very quantity the word's progress is computed from. The
-          heading now carries its own arrival and the content below carries the reveal, so
-          the two never feed into each other.
-        */}
-        <section className="py-16 sm:py-20">
-          <Container width="wide">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="text-eyebrow text-accent-strong font-semibold">{benefits.eyebrow}</p>
-              <h2 className="text-h1 text-primary mt-3 font-bold">
-                <WrittenHeading text={benefits.title} trigger="scroll" />
-              </h2>
-            </div>
-            <div className="reveal-stagger mt-10 grid gap-5 md:grid-cols-3">
-              {benefits.items.map((benefit, index) => (
-                // Five degrees, not the hero's nine: the same angle on a short wide box
-                // reads as the grid being crooked rather than as a card being tipped.
-                <TiltCard key={benefit.title} degrees={5} className="reveal h-full">
-                  <Card padding="lg" interactive className="h-full">
-                    <span
-                      aria-hidden="true"
-                      className="border-accent-strong/30 bg-accent-soft/50 text-accent-strong flex size-12 items-center justify-center rounded-2xl border"
-                    >
-                      <Icon name={BENEFIT_ICONS[index] ?? 'check'} className="size-6" />
-                    </span>
-                    <h3 className="text-h3 text-primary mt-5 font-semibold">{benefit.title}</h3>
-                    <p className="text-muted-foreground mt-3 leading-relaxed">{benefit.body}</p>
-                  </Card>
-                </TiltCard>
-              ))}
-            </div>
-          </Container>
-        </section>
+        <EventEditorial locale={locale} />
 
-        <section className="relative overflow-hidden bg-white py-16 sm:py-24">
-          <Container width="wide">
-            <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-              <div>
-                <p className="text-accent-strong mb-3 text-sm font-bold tracking-widest">
-                  {locale === 'he' ? 'פשוט. ברור. בשליטתכם.' : 'Simple. Clear. In your hands.'}
-                </p>
-                <h2 className="text-primary font-[family-name:var(--font-display)] text-3xl leading-tight font-bold sm:text-4xl">
-                  {locale === 'he'
-                    ? 'הראש שלכם באירוע. אנחנו נעזור לעשות סדר ברשימה.'
-                    : 'Focus on your celebration. Keep the guest list under control.'}
-                </h2>
-                <p className="text-muted-foreground mt-5 text-base leading-8">
-                  {locale === 'he'
-                    ? 'במקום לעבור בין הודעות, גיליונות ושיחות — שולחים הזמנה אחת ורואים את המידע החשוב במקום מסודר. המערכת מתאימה גם למי שלא אוהב להתעסק בטכנולוגיה.'
-                    : 'Skip the spreadsheets, calls and endless message threads. Share one invitation and keep the information you need together in a clear overview.'}
-                </p>
-                <Link
-                  href={localePath(locale, '/signup')}
-                  className={buttonClass({ variant: 'outline', size: 'lg', className: 'mt-7' })}
-                >
-                  {hero.ctaPrimary}
-                  <Icon name="arrow-forward" className="size-4" />
-                </Link>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  {
-                    icon: 'send' as const,
-                    title: locale === 'he' ? 'שיתוף נוח בוואטסאפ' : 'Share via WhatsApp',
-                    body:
-                      locale === 'he'
-                        ? 'האורחים מקבלים קישור פשוט ויכולים להשיב מהטלפון.'
-                        : 'Guests receive a simple link and reply from their phones.',
-                  },
-                  {
-                    icon: 'dashboard' as const,
-                    title: locale === 'he' ? 'כל התשובות מול העיניים' : 'Replies in one place',
-                    body:
-                      locale === 'he'
-                        ? 'מי מגיע, מי מתלבט וכמה אנשים צפויים להגיע.'
-                        : 'See who is attending, undecided and how many guests to expect.',
-                  },
-                  {
-                    icon: 'shield' as const,
-                    title: locale === 'he' ? 'בלי הרשמה לאורחים' : 'No guest accounts',
-                    body:
-                      locale === 'he'
-                        ? 'הקישור נפתח בדפדפן, בלי אפליקציה או סיסמה.'
-                        : 'Guests can respond in a browser, with no app or password.',
-                  },
-                  {
-                    icon: 'credit-card' as const,
-                    title: locale === 'he' ? 'מחיר ידוע מראש' : 'Clear, upfront pricing',
-                    body:
-                      locale === 'he'
-                        ? 'בודקים בחינם, ולאחר מכן בוחרים מסלול בתשלום חד-פעמי.'
-                        : 'Try it free, then choose a one-time payment plan.',
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-[1.5rem] border border-[#ede2dc] bg-[#fcf9f5] p-6 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
-                  >
-                    <span className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-[#f1dfc6] text-[#673545]">
-                      <Icon name={item.icon} className="size-6" />
-                    </span>
-                    <h3 className="text-primary text-lg font-bold">{item.title}</h3>
-                    <p className="text-muted-foreground mt-3 text-sm leading-7">{item.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        <section className="bg-secondary/25 py-16 sm:py-20">
+        <section id="pricing" className="scroll-mt-24 bg-[#eee7de] py-16 sm:py-24">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{plans.eyebrow}</p>
@@ -380,7 +265,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
               <p className="text-muted-foreground mt-4 leading-relaxed">{plans.lead}</p>
             </div>
             <div className="mt-11">
-              <PricingCards locale={locale} />
+              <PricingCards locale={locale} showTrial={false} compact />
             </div>
           </Container>
         </section>
@@ -430,16 +315,27 @@ export function LandingPage({ locale }: { locale: Locale }) {
         {/* The last thing on the page is the first thing it asked for. */}
         <section className="pb-16 sm:pb-24">
           <Container width="wide">
-            <div className="reveal border-accent-strong/30 from-accent-soft/60 via-card to-card shadow-raised relative overflow-hidden rounded-3xl border bg-gradient-to-br px-6 py-12 text-center sm:px-12 sm:py-16">
-              <div aria-hidden="true" className="hero-glow opacity-40" />
+            <div className="reveal relative overflow-hidden rounded-[2rem] border border-[#ad8a66]/35 bg-[#412735] px-6 py-14 text-center shadow-[0_24px_75px_-32px_rgba(54,33,42,0.4)] sm:px-12 sm:py-20">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,rgba(177,122,81,0.24),transparent_65%)]"
+              />
               <div className="relative mx-auto max-w-2xl">
-                <p className="text-eyebrow text-accent-strong font-semibold">{closing.eyebrow}</p>
-                <h2 className="text-h2 text-primary mt-3 font-bold">{closing.title}</h2>
-                <p className="text-lead text-muted-foreground mt-4">{closing.body}</p>
+                <p className="text-eyebrow font-semibold text-[#e6bf86]">{closing.eyebrow}</p>
+                <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold text-white sm:text-5xl">
+                  {closing.title}
+                </h2>
+                <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-white/80 sm:text-lg">
+                  {closing.body}
+                </p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
                   <Link
                     href={localePath(locale, '/signup')}
-                    className={buttonClass({ size: 'lg' })}
+                    className={buttonClass({
+                      variant: 'gold',
+                      size: 'lg',
+                      className: 'border-[#efd19a] bg-[#e6c68d] text-[#412735] hover:bg-[#f5dcae]',
+                    })}
                   >
                     {closing.cta}
                   </Link>
@@ -449,7 +345,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={buttonClass({ variant: 'outline', size: 'lg' })}
+                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-7 font-semibold text-white transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
                     <Icon name="whatsapp" />
                     {closing.secondary}

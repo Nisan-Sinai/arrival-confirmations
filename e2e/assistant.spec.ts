@@ -20,7 +20,7 @@ for (const width of [320, 390]) {
       expect(aiBox).not.toBeNull();
       expect(accessibilityBox).not.toBeNull();
       expect(aiBox!.width).toBeLessThanOrEqual(80);
-      expect(aiBox!.height).toBe(44);
+      expect(aiBox!.height).toBe(48);
       expect(width - aiBox!.x - aiBox!.width).toBeCloseTo(16, 0);
       expect(aiBox!.x).toBeGreaterThan(accessibilityBox!.x + accessibilityBox!.width + 16);
 
@@ -54,7 +54,7 @@ test('assistant launcher stays clear of page actions at the desktop viewport edg
   expect(box).not.toBeNull();
   expect(box!.height).toBe(48);
   expect(width - box!.x - box!.width).toBeCloseTo(16, 0);
-  expect(height - box!.y - box!.height).toBeCloseTo(4, 0);
+  expect(height - box!.y - box!.height).toBeCloseTo(16, 0);
 });
 
 test('an assistant service error preserves the question for retry', async ({ page }) => {

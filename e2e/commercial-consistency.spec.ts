@@ -54,7 +54,7 @@ test.describe('commercial surface consistency', () => {
 
     for (const plan of PAID_PLANS) {
       const href = await page
-        .getByRole('link', { name: `בחירת ${plan.name}` })
+        .getByRole('link', { name: `פרטים והפעלת ${plan.name} בוואטסאפ` })
         .getAttribute('href');
       expect(href).not.toBeNull();
 
