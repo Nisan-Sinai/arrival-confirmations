@@ -159,7 +159,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     fill
                     priority
                     sizes="(max-width: 1023px) 100vw, 45vw"
-                    className="object-cover object-center motion-safe:transition-transform motion-safe:duration-[1600ms] motion-safe:ease-out group-hover:scale-[1.035]"
+                    className="object-cover object-center group-hover:scale-[1.035] motion-safe:transition-transform motion-safe:duration-[1600ms] motion-safe:ease-out"
                   />
                   <div
                     aria-hidden="true"
