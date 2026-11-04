@@ -229,6 +229,62 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
+        <section className="relative overflow-hidden bg-white py-16 sm:py-24">
+          <Container width="wide">
+            <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+              <div>
+                <p className="text-accent-strong mb-3 text-sm font-bold tracking-widest">
+                  {locale === 'he' ? 'פשוט. ברור. בשליטתכם.' : 'Simple. Clear. In your hands.'}
+                </p>
+                <h2 className="text-primary font-[family-name:var(--font-display)] text-3xl leading-tight font-bold sm:text-4xl">
+                  {locale === 'he' ? 'הראש שלכם באירוע. אנחנו נעזור לעשות סדר ברשימה.' : 'Focus on your celebration. Keep the guest list under control.'}
+                </h2>
+                <p className="text-muted-foreground mt-5 text-base leading-8">
+                  {locale === 'he'
+                    ? 'במקום לעבור בין הודעות, גיליונות ושיחות — שולחים הזמנה אחת ורואים את המידע החשוב במקום מסודר. המערכת מתאימה גם למי שלא אוהב להתעסק בטכנולוגיה.'
+                    : 'Skip the spreadsheets, calls and endless message threads. Share one invitation and keep the information you need together in a clear overview.'}
+                </p>
+                <Link href={localePath(locale, '/signup')} className={buttonClass({ variant: 'outline', size: 'lg', className: 'mt-7' })}>
+                  {hero.ctaPrimary}
+                  <Icon name="arrow-forward" className="size-4" />
+                </Link>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  {
+                    icon: 'send' as const,
+                    title: locale === 'he' ? 'שיתוף נוח בוואטסאפ' : 'Share via WhatsApp',
+                    body: locale === 'he' ? 'האורחים מקבלים קישור פשוט ויכולים להשיב מהטלפון.' : 'Guests receive a simple link and reply from their phones.',
+                  },
+                  {
+                    icon: 'dashboard' as const,
+                    title: locale === 'he' ? 'כל התשובות מול העיניים' : 'Replies in one place',
+                    body: locale === 'he' ? 'מי מגיע, מי מתלבט וכמה אנשים צפויים להגיע.' : 'See who is attending, undecided and how many guests to expect.',
+                  },
+                  {
+                    icon: 'shield' as const,
+                    title: locale === 'he' ? 'בלי הרשמה לאורחים' : 'No guest accounts',
+                    body: locale === 'he' ? 'הקישור נפתח בדפדפן, בלי אפליקציה או סיסמה.' : 'Guests can respond in a browser, with no app or password.',
+                  },
+                  {
+                    icon: 'credit-card' as const,
+                    title: locale === 'he' ? 'מחיר ידוע מראש' : 'Clear, upfront pricing',
+                    body: locale === 'he' ? 'בודקים בחינם, ולאחר מכן בוחרים מסלול בתשלום חד-פעמי.' : 'Try it free, then choose a one-time payment plan.',
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="rounded-[1.5rem] border border-[#ede2dc] bg-[#fcf9f5] p-6 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg">
+                    <span className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-[#f1dfc6] text-[#673545]">
+                      <Icon name={item.icon} className="size-6" />
+                    </span>
+                    <h3 className="text-primary text-lg font-bold">{item.title}</h3>
+                    <p className="text-muted-foreground mt-3 text-sm leading-7">{item.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Container>
+        </section>
+
         <section className="bg-secondary/25 py-16 sm:py-20">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
