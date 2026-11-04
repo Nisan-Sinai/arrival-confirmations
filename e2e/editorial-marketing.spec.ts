@@ -1,25 +1,26 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('editorial event marketing redesign', () => {
-  test('serves licensed local photography and a truthful illustrated sample', async ({ page }) => {
+  test('restores the fully designed invitation and handwritten heading from main', async ({
+    page,
+  }) => {
     await page.goto('/');
+    const hero = page.locator('main > section').first();
     await expect(page.getByRole('heading', { level: 1 })).toContainText('מנהלים את המוזמנים');
-
-    const hero = page.getByRole('img', { name: /צילום להמחשה של שולחן חגיגי/ });
-    await expect(hero).toBeVisible();
-    await expect
-      .poll(() => hero.evaluate((image: HTMLImageElement) => image.naturalWidth))
-      .toBeGreaterThan(0);
-    await expect(page.getByText('הזמנה דיגיטלית לדוגמה')).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: 'אתם מתכננים את השמחה. המוזמנים כבר מסודרים.' }),
-    ).toBeVisible();
+    await expect(hero.locator('.written-word-writing').first()).toBeVisible();
+    await expect(hero.locator('.tilt-scene')).toBeVisible();
+    await expect(hero.getByText('בשבח והודיה לה׳ יתברך')).toBeVisible();
+    await expect(hero.getByText('חתונה', { exact: true })).toBeVisible();
+    await expect(hero.getByText('י״ד באלול')).toBeVisible();
+    await expect(hero.getByText('אולמי הדר')).toBeVisible();
+    await expect(hero.getByText('שנשלחת בוואטסאפ')).toBeVisible();
+    await expect(page.locator('.marquee-track')).toHaveCount(1);
 
     await page.locator('#benefits').scrollIntoViewIfNeeded();
-    const secondary = page.getByRole('img', { name: /צילום להמחשה של מקום אירועים/ });
-    await expect(secondary).toBeVisible();
+    const photo = page.getByRole('img', { name: /צילום להמחשה של מקום אירועים/ });
+    await expect(photo).toBeVisible();
     await expect
-      .poll(() => secondary.evaluate((image: HTMLImageElement) => image.naturalWidth))
+      .poll(() => photo.evaluate((image: HTMLImageElement) => image.naturalWidth))
       .toBeGreaterThan(0);
   });
 
@@ -61,20 +62,16 @@ test.describe('editorial event marketing redesign', () => {
     expect(hasOverflow).toBe(false);
   });
 
-  test('English hero and sample are fully translated', async ({ page }) => {
+  test('English handwritten hero and full invitation are translated', async ({ page }) => {
     await page.goto('/en');
+    const hero = page.locator('main > section').first();
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Manage your guest list');
-    await expect(
-      page.getByRole('img', {
-        name: /Illustrative photograph of an elegant floral reception table/,
-      }),
-    ).toBeVisible();
-    await expect(page.getByText('Sample digital invitation')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Explore the live demo' })).toHaveAttribute(
-      'href',
-      '#demo',
-    );
+    await expect(hero.getByText('With God’s help')).toBeVisible();
+    await expect(hero.getByText('Wedding', { exact: true })).toBeVisible();
+    await expect(hero.getByText('Hadar Hall')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Try the live demo' })).toHaveAttribute('href', '#demo');
   });
+
   test('landing pricing is transparent: three paid plans and full details on /pricing', async ({
     page,
   }) => {
@@ -95,37 +92,26 @@ test.describe('editorial event marketing redesign', () => {
     await expect(page.getByRole('heading', { name: 'בדיקה חינמית' })).toBeVisible();
   });
 
-  test('mobile photo caption stays clear of the invitation sample at all phone widths', async ({
+  test('main invitation remains readable at 320–430px without any overlay collisions', async ({
     page,
   }) => {
     for (const width of [320, 360, 390, 430]) {
       await page.setViewportSize({ width, height: 800 });
       await page.goto('/');
 
-      const photo = page.getByTestId('editorial-hero-photo');
-      const caption = page.getByTestId('hero-photo-caption');
-      const card = page.getByTestId('sample-invite-card');
-      await expect(photo).toBeVisible();
-      await expect(caption).toBeVisible();
-      await expect(card).toBeVisible();
+      const hero = page.locator('main > section').first();
+      const letter = hero.locator('.tilt-scene');
+      const confirmation = hero.getByText('שנשלחת בוואטסאפ');
+      await expect(letter).toBeVisible();
+      await expect(confirmation).toBeVisible();
 
-      const [imageBox, captionBox, cardBox] = await Promise.all([
-        photo.boundingBox(),
-        caption.boundingBox(),
-        card.boundingBox(),
+      const [letterBox, captionBox] = await Promise.all([
+        letter.boundingBox(),
+        confirmation.boundingBox(),
       ]);
-      expect(imageBox).not.toBeNull();
+      expect(letterBox).not.toBeNull();
       expect(captionBox).not.toBeNull();
-      expect(cardBox).not.toBeNull();
-
-      // The sample belongs underneath the photo on phones, never over its caption.
-      expect(cardBox!.y).toBeGreaterThanOrEqual(imageBox!.y + imageBox!.height + 8);
-      expect(captionBox!.y + captionBox!.height).toBeLessThanOrEqual(
-        imageBox!.y + imageBox!.height - 12,
-      );
-      expect(cardBox!.x).toBeGreaterThanOrEqual(0);
-      expect(cardBox!.x + cardBox!.width).toBeLessThanOrEqual(width);
-
+      expect(captionBox!.y).toBeGreaterThanOrEqual(letterBox!.y + letterBox!.height);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -134,21 +120,21 @@ test.describe('editorial event marketing redesign', () => {
     }
   });
 
-  test('desktop editorial caption is not covered by the floating sample invitation', async ({
-    page,
-  }) => {
+  test('original invitation responds to mouse movement and resets on leave', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
-
-    const [caption, card] = await Promise.all([
-      page.getByTestId('hero-photo-caption').boundingBox(),
-      page.getByTestId('sample-invite-card').boundingBox(),
-    ]);
-
-    expect(caption).not.toBeNull();
-    expect(card).not.toBeNull();
-    // The desktop sample may overlap the *photo*, but never its caption.
-    expect(caption!.y + caption!.height + 8).toBeLessThanOrEqual(card!.y);
+    const card = page.locator('main > section').first().locator('.tilt-scene');
+    await card.scrollIntoViewIfNeeded();
+    const box = await card.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.move(box!.x + box!.width * 0.8, box!.y + box!.height * 0.4);
+    await expect
+      .poll(() => card.locator('.tilt-target').evaluate((el) => el.style.getPropertyValue('--tilt-y')))
+      .not.toBe('');
+    await page.mouse.move(4, 4);
+    await expect
+      .poll(() => card.locator('.tilt-target').evaluate((el) => el.style.getPropertyValue('--tilt-y')))
+      .toBe('');
   });
 
   test('captures real desktop and mobile layout for QA', async ({ page }, testInfo) => {
