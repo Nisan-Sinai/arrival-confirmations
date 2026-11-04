@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { buttonClass } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
+import { BrandMark } from '@/features/layout/BrandMark';
 import { localePath, type Locale } from '@/lib/i18n';
 import { supportWhatsAppUrl } from '@/lib/supportContact';
 
@@ -105,7 +106,7 @@ export function EventEditorial({ locale }: { locale: Locale }) {
         <Container width="wide">
           <div className="grid items-center gap-12 lg:grid-cols-[1.03fr_0.97fr] lg:gap-20">
             <div>
-              <p className="mb-4 flex items-center gap-3 text-sm font-bold text-[#966a44]">
+              <p className="mb-4 flex items-center gap-3 text-sm font-bold text-[#785130]">
                 <span aria-hidden="true" className="h-px w-8 bg-[#b99161]" />
                 {copy.eyebrow}
               </p>
@@ -183,10 +184,10 @@ export function EventEditorial({ locale }: { locale: Locale }) {
                 aria-hidden="true"
                 className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[#543040] font-[family-name:var(--font-display)] text-lg font-bold text-[#f0d7a7]"
               >
-                NS
+                <BrandMark className="size-8 !text-[#efd7a9]" />
               </div>
               <div>
-                <p className="text-sm font-bold text-[#9a6b48]">{copy.founderEyebrow}</p>
+                <p className="text-sm font-bold text-[#805635]">{copy.founderEyebrow}</p>
                 <h2
                   id="founder-heading"
                   className="mt-2 font-[family-name:var(--font-display)] text-2xl leading-tight font-bold text-[#452832] sm:text-3xl"
