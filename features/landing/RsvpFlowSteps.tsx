@@ -30,7 +30,7 @@ export function RsvpFlowSteps({ locale = defaultLocale }: { locale?: Locale }) {
    * that is translating it would be feeding into the progress it is measured by.
    */
   return (
-    <section className="pb-16 sm:pb-20">
+    <section id="how-it-works" className="scroll-mt-24 py-16 sm:py-24">
       <Container width="wide">
         {/*
           `clip`, not `hidden`, and the difference is load-bearing.
