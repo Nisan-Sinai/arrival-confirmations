@@ -74,7 +74,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
           <AuthFragmentNotice locale={locale} />
         </div>
 
-        <section className="relative isolate overflow-hidden bg-[#fbf7f1] py-14 sm:py-20 lg:py-24">
+        <section className="relative isolate overflow-hidden bg-[#fbf7f1] py-9 sm:py-20 lg:py-24">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -start-52 -top-52 size-[36rem] rounded-full bg-[#e3d1c3]/40 blur-3xl"
@@ -84,20 +84,20 @@ export function LandingPage({ locale }: { locale: Locale }) {
             className="pointer-events-none absolute end-0 bottom-0 h-px w-full bg-gradient-to-l from-transparent via-[#c8ab85] to-transparent"
           />
           <Container width="wide">
-            <div className="relative grid min-w-0 items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+            <div className="relative grid min-w-0 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
               <div className="relative z-10 min-w-0 text-center lg:text-start">
                 <div className="enter enter-1 inline-flex items-center gap-3 text-xs font-bold tracking-[0.12em] text-[#865f43] sm:text-sm">
                   <span aria-hidden="true" className="h-px w-9 bg-[#a57a55]" />
                   {hero.eyebrow}
                 </div>
-                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.55rem,5.2vw,5.25rem)] leading-[1.1] font-bold tracking-tight text-[#432633]">
+                <h1 className="mt-5 font-[family-name:var(--font-display)] sm:mt-7 text-[clamp(2.55rem,5.2vw,5.25rem)] leading-[1.1] font-bold tracking-tight text-[#432633]">
                   <span className="block">{hero.titleLead}</span>
                   <span className="mt-2 block text-[#805738]">{hero.titleAccent}</span>
                 </h1>
-                <p className="enter enter-3 mx-auto mt-7 max-w-[35rem] text-base leading-8 text-[#6b5c5e] sm:text-lg lg:mx-0">
+                <p className="enter enter-3 mx-auto mt-5 max-w-[35rem] sm:mt-7 text-base leading-8 text-[#6b5c5e] sm:text-lg lg:mx-0">
                   {hero.lead}
                 </p>
-                <div className="enter enter-4 mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                <div className="enter enter-4 mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-9 lg:justify-start">
                   <Link
                     href={localePath(locale, '/signup')}
                     className={buttonClass({
@@ -116,7 +116,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     {locale === 'he' ? 'התנסו בהדגמה' : 'Explore the live demo'}
                   </Link>
                 </div>
-                <ul className="enter enter-5 mt-9 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-[#665b57] lg:justify-start">
+                <ul className="enter enter-5 mt-6 flex flex-wrap justify-center gap-x-6 gap-y-3 sm:mt-9 text-sm text-[#665b57] lg:justify-start">
                   {hero.facts.map((fact) => (
                     <li key={fact} className="flex items-center gap-2">
                       <Icon name="check-circle" className="size-4 text-[#8e6847]" />
