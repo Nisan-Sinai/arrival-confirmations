@@ -76,8 +76,14 @@ export function LandingPage({ locale }: { locale: Locale }) {
         </div>
 
         <section className="relative isolate overflow-hidden bg-[#fbf7f1] py-14 sm:py-20 lg:py-24">
-          <div aria-hidden="true" className="pointer-events-none absolute -top-52 -start-52 size-[36rem] rounded-full bg-[#e3d1c3]/40 blur-3xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute bottom-0 end-0 h-px w-full bg-gradient-to-l from-transparent via-[#c8ab85] to-transparent" />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -start-52 -top-52 size-[36rem] rounded-full bg-[#e3d1c3]/40 blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute end-0 bottom-0 h-px w-full bg-gradient-to-l from-transparent via-[#c8ab85] to-transparent"
+          />
           <Container width="wide">
             <div className="relative grid min-w-0 items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
               <div className="relative z-10 min-w-0 text-center lg:text-start">
@@ -125,7 +131,10 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   ))}
                 </ul>
                 <div className="mt-11 hidden items-center gap-3 border-t border-[#e0d4c8] pt-6 text-start lg:flex">
-                  <div aria-hidden="true" className="flex size-11 items-center justify-center rounded-full bg-[#efe2d0] text-[#654052]">
+                  <div
+                    aria-hidden="true"
+                    className="flex size-11 items-center justify-center rounded-full bg-[#efe2d0] text-[#654052]"
+                  >
                     <Icon name="heart" className="size-5" />
                   </div>
                   <p className="max-w-sm text-sm leading-6 text-[#705f5c]">
@@ -137,19 +146,32 @@ export function LandingPage({ locale }: { locale: Locale }) {
               </div>
 
               <div className="relative mx-auto w-full max-w-[510px] min-w-0 pb-8 sm:px-7 lg:max-w-none">
-                <div aria-hidden="true" className="absolute -inset-x-1 inset-y-5 rounded-t-[12rem] rounded-b-[2rem] border border-[#c9ab83]/70 sm:inset-x-4" />
+                <div
+                  aria-hidden="true"
+                  className="absolute -inset-x-1 inset-y-5 rounded-t-[12rem] rounded-b-[2rem] border border-[#c9ab83]/70 sm:inset-x-4"
+                />
                 <div className="relative aspect-[5/6] overflow-hidden rounded-t-[12rem] rounded-b-[1.7rem] bg-[#dfd2c1] shadow-[0_30px_75px_-30px_rgba(55,33,38,0.4)] sm:aspect-[5/5.9]">
                   <Image
                     src="/media/wedding-reception.webp"
-                    alt={locale === 'he' ? 'צילום להמחשה של שולחן חגיגי מעוצב עם פרחים באולם אירועים' : 'Illustrative photograph of an elegant floral reception table'}
+                    alt={
+                      locale === 'he'
+                        ? 'צילום להמחשה של שולחן חגיגי מעוצב עם פרחים באולם אירועים'
+                        : 'Illustrative photograph of an elegant floral reception table'
+                    }
                     fill
                     priority
                     sizes="(max-width: 1023px) 100vw, 45vw"
                     className="object-cover object-center"
                   />
-                  <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#1d1b1a]/55 via-transparent to-[#1b1b1b]/10" />
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-gradient-to-t from-[#1d1b1a]/55 via-transparent to-[#1b1b1b]/10"
+                  />
                   <div className="absolute inset-x-0 bottom-14 text-center text-white sm:bottom-16">
-                    <span aria-hidden="true" className="mx-auto mb-3 block h-px w-12 bg-[#edd6ae]" />
+                    <span
+                      aria-hidden="true"
+                      className="mx-auto mb-3 block h-px w-12 bg-[#edd6ae]"
+                    />
                     <p className="font-[family-name:var(--font-display)] text-2xl font-bold drop-shadow-md sm:text-3xl">
                       {locale === 'he' ? 'השמחה היא הסיפור שלכם' : 'Your celebration is the story'}
                     </p>
@@ -158,18 +180,25 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     </p>
                   </div>
                 </div>
-                <div className="absolute -bottom-2 start-0 w-[min(83%,17rem)] rounded-2xl border border-[#e0cbb3] bg-[#fffdf9] p-4 text-[#522d3a] shadow-[0_18px_50px_-22px_rgba(62,33,44,0.45)] sm:-start-1 sm:p-5">
+                <div className="absolute start-0 -bottom-2 w-[min(83%,17rem)] rounded-2xl border border-[#e0cbb3] bg-[#fffdf9] p-4 text-[#522d3a] shadow-[0_18px_50px_-22px_rgba(62,33,44,0.45)] sm:-start-1 sm:p-5">
                   <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-wide text-[#956d4d]">
                     <Icon name="sparkles" className="size-4" />
                     {locale === 'he' ? 'הזמנה דיגיטלית לדוגמה' : 'Sample digital invitation'}
                   </p>
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-[family-name:var(--font-display)] text-xl font-bold">{preview.occasion}</p>
-                      <p className="mt-1 text-xs text-[#766468]">{preview.dateValue} · {preview.timeValue}</p>
+                      <p className="font-[family-name:var(--font-display)] text-xl font-bold">
+                        {preview.occasion}
+                      </p>
+                      <p className="mt-1 text-xs text-[#766468]">
+                        {preview.dateValue} · {preview.timeValue}
+                      </p>
                       <p className="mt-1 text-xs text-[#766468]">{preview.placeValue}</p>
                     </div>
-                    <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#f1e5d5] text-[#623444]">
+                    <span
+                      aria-hidden="true"
+                      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#f1e5d5] text-[#623444]"
+                    >
                       <Icon name="check-circle" className="size-6" />
                     </span>
                   </div>
@@ -179,7 +208,10 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
-        <section aria-label={occasions.lead} className="border-y border-[#e6dace] bg-white py-6 sm:py-8">
+        <section
+          aria-label={occasions.lead}
+          className="border-y border-[#e6dace] bg-white py-6 sm:py-8"
+        >
           <Container width="wide">
             <div className="flex flex-col items-center gap-5 lg:flex-row lg:gap-9">
               <p className="shrink-0 text-sm font-bold text-[#785440]">{occasions.lead}</p>
@@ -263,15 +295,26 @@ export function LandingPage({ locale }: { locale: Locale }) {
         <section className="pb-16 sm:pb-24">
           <Container width="wide">
             <div className="reveal relative overflow-hidden rounded-[2rem] border border-[#ad8a66]/35 bg-[#412735] px-6 py-14 text-center shadow-[0_24px_75px_-32px_rgba(54,33,42,0.4)] sm:px-12 sm:py-20">
-              <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,rgba(177,122,81,0.24),transparent_65%)]" />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,rgba(177,122,81,0.24),transparent_65%)]"
+              />
               <div className="relative mx-auto max-w-2xl">
                 <p className="text-eyebrow font-semibold text-[#e6bf86]">{closing.eyebrow}</p>
-                <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold text-white sm:text-5xl">{closing.title}</h2>
-                <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-white/80 sm:text-lg">{closing.body}</p>
+                <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold text-white sm:text-5xl">
+                  {closing.title}
+                </h2>
+                <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-white/80 sm:text-lg">
+                  {closing.body}
+                </p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
                   <Link
                     href={localePath(locale, '/signup')}
-                    className={buttonClass({ variant: 'gold', size: 'lg', className: 'border-[#efd19a] bg-[#e6c68d] text-[#412735] hover:bg-[#f5dcae]' })}
+                    className={buttonClass({
+                      variant: 'gold',
+                      size: 'lg',
+                      className: 'border-[#efd19a] bg-[#e6c68d] text-[#412735] hover:bg-[#f5dcae]',
+                    })}
                   >
                     {closing.cta}
                   </Link>

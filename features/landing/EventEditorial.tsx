@@ -11,8 +11,7 @@ const COPY = {
   he: {
     eyebrow: 'פחות התעסקות. יותר רגעים יפים.',
     title: 'אתם מתכננים את השמחה. המוזמנים כבר מסודרים.',
-    lead:
-      'רשימות, הודעות ותשובות מפוזרות גוזלות זמן דווקא כשיש כל כך הרבה על הראש. כאן כל שלב ברור — מההזמנה הראשונה ועד הסיכום לקראת האירוע.',
+    lead: 'רשימות, הודעות ותשובות מפוזרות גוזלות זמן דווקא כשיש כל כך הרבה על הראש. כאן כל שלב ברור — מההזמנה הראשונה ועד הסיכום לקראת האירוע.',
     features: [
       {
         icon: 'send' as const,
@@ -50,8 +49,7 @@ const COPY = {
   en: {
     eyebrow: 'Less organising. More celebrating.',
     title: 'Focus on the celebration. Your guest list stays organised.',
-    lead:
-      'Guest lists, replies and message threads take time away from the moments that matter. Keep each step clear, from the first invitation to your final guest count.',
+    lead: 'Guest lists, replies and message threads take time away from the moments that matter. Keep each step clear, from the first invitation to your final guest count.',
     features: [
       {
         icon: 'send' as const,
@@ -84,7 +82,8 @@ const COPY = {
       'Arrival Confirmations is made by Nisan Sinai Technologies. Try it free, explore exactly what it offers, or get in touch directly if you have questions.',
     founderCta: 'Send us a message',
     founderNote: 'No form required just to ask a question.',
-    founderMessage: 'Hi Nisan, I saw Arrival Confirmations and have a question before getting started.',
+    founderMessage:
+      'Hi Nisan, I saw Arrival Confirmations and have a question before getting started.',
   },
 } as const;
 
@@ -98,7 +97,11 @@ export function EventEditorial({ locale }: { locale: Locale }) {
 
   return (
     <>
-      <section id="benefits" aria-labelledby="editorial-heading" className="scroll-mt-24 bg-[#f8f5f0] py-20 sm:py-28">
+      <section
+        id="benefits"
+        aria-labelledby="editorial-heading"
+        className="scroll-mt-24 bg-[#f8f5f0] py-20 sm:py-28"
+      >
         <Container width="wide">
           <div className="grid items-center gap-12 lg:grid-cols-[1.03fr_0.97fr] lg:gap-20">
             <div>
@@ -106,15 +109,23 @@ export function EventEditorial({ locale }: { locale: Locale }) {
                 <span aria-hidden="true" className="h-px w-8 bg-[#b99161]" />
                 {copy.eyebrow}
               </p>
-              <h2 id="editorial-heading" className="font-[family-name:var(--font-display)] text-[clamp(2rem,3.5vw,3.8rem)] leading-[1.15] font-bold tracking-tight text-[#452832]">
+              <h2
+                id="editorial-heading"
+                className="font-[family-name:var(--font-display)] text-[clamp(2rem,3.5vw,3.8rem)] leading-[1.15] font-bold tracking-tight text-[#452832]"
+              >
                 {copy.title}
               </h2>
-              <p className="mt-6 max-w-xl text-base leading-8 text-[#695c5b] sm:text-lg">{copy.lead}</p>
+              <p className="mt-6 max-w-xl text-base leading-8 text-[#695c5b] sm:text-lg">
+                {copy.lead}
+              </p>
 
               <ul className="mt-9 divide-y divide-[#dfd4ca] border-y border-[#dfd4ca]">
                 {copy.features.map((feature) => (
                   <li key={feature.title} className="flex items-start gap-4 py-5">
-                    <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#633848] shadow-sm ring-1 ring-[#eaded3]">
+                    <span
+                      aria-hidden="true"
+                      className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#633848] shadow-sm ring-1 ring-[#eaded3]"
+                    >
                       <Icon name={feature.icon} className="size-5" />
                     </span>
                     <div>
@@ -124,14 +135,20 @@ export function EventEditorial({ locale }: { locale: Locale }) {
                   </li>
                 ))}
               </ul>
-              <Link href={localePath(locale, '/signup')} className={buttonClass({ className: 'mt-8', size: 'lg' })}>
+              <Link
+                href={localePath(locale, '/signup')}
+                className={buttonClass({ className: 'mt-8', size: 'lg' })}
+              >
                 {copy.link}
                 <Icon name="arrow-forward" className="size-4" />
               </Link>
             </div>
 
             <div className="relative min-w-0">
-              <div aria-hidden="true" className="absolute -inset-3 rounded-[2rem] border border-[#d4b899] sm:-inset-5" />
+              <div
+                aria-hidden="true"
+                className="absolute -inset-3 rounded-[2rem] border border-[#d4b899] sm:-inset-5"
+              />
               <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-[#d9c8b4] shadow-[0_24px_70px_-25px_rgba(67,38,41,0.35)] sm:aspect-[5/6]">
                 <Image
                   src="/media/event-interior.webp"
@@ -141,10 +158,13 @@ export function EventEditorial({ locale }: { locale: Locale }) {
                   className="object-cover"
                   loading="lazy"
                 />
-                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#251c1b]/80 via-[#251c1b]/10 to-transparent" />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-gradient-to-t from-[#251c1b]/80 via-[#251c1b]/10 to-transparent"
+                />
                 <div className="absolute inset-x-0 bottom-0 p-7 text-white sm:p-10">
                   <span aria-hidden="true" className="mb-5 block h-px w-16 bg-[#e9cf9e]" />
-                  <p className="max-w-sm font-[family-name:var(--font-display)] text-3xl font-bold leading-tight sm:text-4xl">
+                  <p className="max-w-sm font-[family-name:var(--font-display)] text-3xl leading-tight font-bold sm:text-4xl">
                     {copy.imageQuote}
                   </p>
                   <p className="mt-5 text-xs text-white/80">{copy.imageCaption}</p>
@@ -159,15 +179,23 @@ export function EventEditorial({ locale }: { locale: Locale }) {
         <Container width="wide">
           <div className="flex flex-col gap-8 rounded-[1.75rem] border border-[#e4d8c8] bg-[linear-gradient(110deg,#fbf6ed,#ffffff)] p-7 shadow-[0_10px_40px_-24px_rgba(67,38,41,0.24)] sm:p-10 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-2xl items-start gap-5">
-              <div aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[#543040] font-[family-name:var(--font-display)] text-lg font-bold text-[#f0d7a7]">
+              <div
+                aria-hidden="true"
+                className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[#543040] font-[family-name:var(--font-display)] text-lg font-bold text-[#f0d7a7]"
+              >
                 NS
               </div>
               <div>
                 <p className="text-sm font-bold text-[#9a6b48]">{copy.founderEyebrow}</p>
-                <h2 id="founder-heading" className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-[#452832] sm:text-3xl">
+                <h2
+                  id="founder-heading"
+                  className="mt-2 font-[family-name:var(--font-display)] text-2xl leading-tight font-bold text-[#452832] sm:text-3xl"
+                >
                   {copy.founderTitle}
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-[#695c5b] sm:text-base">{copy.founderBody}</p>
+                <p className="mt-3 text-sm leading-7 text-[#695c5b] sm:text-base">
+                  {copy.founderBody}
+                </p>
               </div>
             </div>
             <div className="shrink-0 lg:text-center">

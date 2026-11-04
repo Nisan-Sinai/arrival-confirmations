@@ -87,13 +87,21 @@ export function SiteHeader({
                 <>
                   <Link
                     href="#how-it-works"
-                    className={buttonClass({ variant: 'ghost', size: 'sm', className: 'hidden lg:inline-flex' })}
+                    className={buttonClass({
+                      variant: 'ghost',
+                      size: 'sm',
+                      className: 'hidden lg:inline-flex',
+                    })}
                   >
                     {locale === 'he' ? 'איך זה עובד' : 'How it works'}
                   </Link>
                   <Link
                     href="#demo"
-                    className={buttonClass({ variant: 'ghost', size: 'sm', className: 'hidden lg:inline-flex' })}
+                    className={buttonClass({
+                      variant: 'ghost',
+                      size: 'sm',
+                      className: 'hidden lg:inline-flex',
+                    })}
                   >
                     {locale === 'he' ? 'הדגמה' : 'Live demo'}
                   </Link>
