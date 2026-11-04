@@ -14,6 +14,7 @@ export function PricingCards({
   showTrial = true,
   locale = defaultLocale,
   headingLevel = 'h3',
+  compact = false,
 }: {
   showTrial?: boolean;
   locale?: Locale;
@@ -27,6 +28,8 @@ export function PricingCards({
    * reader navigating by heading actually announces.
    */
   headingLevel?: 'h2' | 'h3';
+  /** Show only the most relevant benefits on the landing; /pricing has the full detail. */
+  compact?: boolean;
 }) {
   const dictionary = getDictionary(locale);
   const copy = dictionary.pricing;
@@ -96,7 +99,7 @@ export function PricingCards({
             </div>
 
             <ul className="text-muted-foreground mt-6 flex-1 space-y-3 text-sm">
-              {plan.features.map((feature) => (
+              {plan.features.slice(0, compact ? 5 : undefined).map((feature) => (
                 <li key={feature} className="flex gap-2.5">
                   <span
                     aria-hidden="true"
@@ -113,6 +116,14 @@ export function PricingCards({
                 </li>
               ))}
             </ul>
+            {compact && plan.features.length > 5 && (
+              <Link
+                href={localePath(locale, '/pricing')}
+                className="text-primary mt-4 inline-flex min-h-10 items-center text-sm font-semibold underline underline-offset-4"
+              >
+                {locale === 'he' ? 'כל היתרונות וההשוואה המלאה' : 'All benefits and full plan comparison'}
+              </Link>
+            )}
 
             <div className="mt-7">
               {plan.code === 'trial' ? (
