@@ -86,8 +86,14 @@ export function LandingPage({ locale }: { locale: Locale }) {
         </div>
 
         <section className="relative isolate overflow-hidden bg-[#301b26] py-16 text-white sm:py-24 lg:py-28">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_75%_40%,rgba(151,85,94,0.28),transparent_55%),radial-gradient(ellipse_at_0%_100%,rgba(218,174,113,0.11),transparent_45%)]" />
-          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d9aa71]/60 to-transparent" />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_75%_40%,rgba(151,85,94,0.28),transparent_55%),radial-gradient(ellipse_at_0%_100%,rgba(218,174,113,0.11),transparent_45%)]"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d9aa71]/60 to-transparent"
+          />
           <Candlelight />
           <Container width="wide">
             <div className="relative grid min-w-0 items-center gap-14 lg:grid-cols-[1.06fr_0.94fr] lg:gap-16">
@@ -97,49 +103,103 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 </p>
                 <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.6rem,5vw,5rem)] leading-[1.16] font-bold tracking-tight">
                   <WrittenHeading text={hero.titleLead} as="span" />
-                  <WrittenHeading text={hero.titleAccent} as="div" delay={writingDuration(hero.titleLead)} className="text-[#f1cf96]" />
+                  <WrittenHeading
+                    text={hero.titleAccent}
+                    as="div"
+                    delay={writingDuration(hero.titleLead)}
+                    className="text-[#f1cf96]"
+                  />
                 </h1>
-                <p className="enter enter-3 mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">{hero.lead}</p>
+                <p className="enter enter-3 mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">
+                  {hero.lead}
+                </p>
                 <div className="enter enter-4 mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
-                  <Link href={localePath(locale, '/signup')} className={buttonClass({ variant: 'gold', size: 'lg', className: 'border-[#e6c390] bg-[#e9c892] text-[#381c26] shadow-[0_12px_35px_-13px_rgba(240,202,148,0.45)] hover:bg-[#f2d9ad]' })}>
+                  <Link
+                    href={localePath(locale, '/signup')}
+                    className={buttonClass({
+                      variant: 'gold',
+                      size: 'lg',
+                      className:
+                        'border-[#e6c390] bg-[#e9c892] text-[#381c26] shadow-[0_12px_35px_-13px_rgba(240,202,148,0.45)] hover:bg-[#f2d9ad]',
+                    })}
+                  >
                     {hero.ctaPrimary} <Icon name="arrow-forward" className="size-4" />
                   </Link>
-                  <Link href="#demo" className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/[0.06] px-7 font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e9c892]">
-                    <Icon name="eye" className="size-5" /> {locale === 'he' ? 'צפו בהדגמה חיה' : 'Try the live demo'}
+                  <Link
+                    href="#demo"
+                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/[0.06] px-7 font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e9c892]"
+                  >
+                    <Icon name="eye" className="size-5" />{' '}
+                    {locale === 'he' ? 'צפו בהדגמה חיה' : 'Try the live demo'}
                   </Link>
                 </div>
                 <ul className="enter enter-5 mt-9 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-white/75 lg:justify-start">
                   {hero.facts.map((fact) => (
                     <li key={fact} className="flex items-center gap-2">
-                      <Icon name="check-circle" className="size-4 text-[#e9c892]" />{fact}
+                      <Icon name="check-circle" className="size-4 text-[#e9c892]" />
+                      {fact}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-8 text-sm text-white/55">{locale === 'he' ? 'ממוקדים במה שחשוב באמת: ליהנות מהאירוע שלכם.' : 'More time celebrating. Less time chasing replies.'}</p>
+                <p className="mt-8 text-sm text-white/55">
+                  {locale === 'he'
+                    ? 'ממוקדים במה שחשוב באמת: ליהנות מהאירוע שלכם.'
+                    : 'More time celebrating. Less time chasing replies.'}
+                </p>
               </div>
               <div className="enter enter-3 relative mx-auto w-full max-w-[425px] min-w-0 pt-7 pb-7 sm:px-4 lg:max-w-none">
-                <div aria-hidden="true" className="absolute inset-10 rounded-full bg-[#e7b579]/20 blur-[85px]" />
-                <div aria-hidden="true" className="absolute -top-4 start-0 size-32 rounded-full border border-[#d8af77]/30 sm:size-44" />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-10 rounded-full bg-[#e7b579]/20 blur-[85px]"
+                />
+                <div
+                  aria-hidden="true"
+                  className="absolute start-0 -top-4 size-32 rounded-full border border-[#d8af77]/30 sm:size-44"
+                />
                 <TiltCard degrees={3}>
                   <div className="relative mx-auto w-full max-w-sm rounded-[2rem] border border-[#e9cc9d]/50 bg-[#fffaf4] p-3 shadow-[0_28px_80px_-26px_rgba(0,0,0,0.55)] sm:p-4">
                     <div className="rounded-[1.35rem] border border-[#d8c5a9] bg-[radial-gradient(ellipse_at_50%_0%,#fffdf9,#f6efe4)] px-5 py-9 text-center text-[#633d46] sm:px-8 sm:py-10">
-                      <p className="text-sm font-bold tracking-[0.13em] text-[#986f39]">{preview.blessing}</p>
-                      <div className="mx-auto mt-5 flex items-center justify-center gap-3 text-[#bb9761]" aria-hidden="true">
-                        <span className="h-px w-10 bg-current/70" /><span>✦</span><span className="h-px w-10 bg-current/70" />
+                      <p className="text-sm font-bold tracking-[0.13em] text-[#986f39]">
+                        {preview.blessing}
+                      </p>
+                      <div
+                        className="mx-auto mt-5 flex items-center justify-center gap-3 text-[#bb9761]"
+                        aria-hidden="true"
+                      >
+                        <span className="h-px w-10 bg-current/70" />
+                        <span>✦</span>
+                        <span className="h-px w-10 bg-current/70" />
                       </div>
-                      <p className="mt-5 text-sm leading-7">{preview.introFirstLine}<span className="block">{preview.introSecondLine}</span></p>
-                      <p className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-[#602a3c] sm:text-5xl">{preview.occasion}</p>
+                      <p className="mt-5 text-sm leading-7">
+                        {preview.introFirstLine}
+                        <span className="block">{preview.introSecondLine}</span>
+                      </p>
+                      <p className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-[#602a3c] sm:text-5xl">
+                        {preview.occasion}
+                      </p>
                       <Rule draw="load" className="my-7" />
                       <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-[#602a3c]">
-                        {[{ k: preview.dateLabel, v: preview.dateValue }, { k: preview.timeLabel, v: preview.timeValue }, { k: preview.placeLabel, v: preview.placeValue }].map((cell) => (
-                          <div key={cell.k}><span className="mb-1 block font-normal text-[#876e75]">{cell.k}</span><span>{cell.v}</span></div>
+                        {[
+                          { k: preview.dateLabel, v: preview.dateValue },
+                          { k: preview.timeLabel, v: preview.timeValue },
+                          { k: preview.placeLabel, v: preview.placeValue },
+                        ].map((cell) => (
+                          <div key={cell.k}>
+                            <span className="mb-1 block font-normal text-[#876e75]">{cell.k}</span>
+                            <span>{cell.v}</span>
+                          </div>
                         ))}
                       </div>
                       <Rule draw="load" className="my-7" />
                       <div className="flex justify-center gap-2" dir="ltr">
                         {countdown.map(([n, l]) => (
-                          <div key={l} className="min-w-14 rounded-lg border border-[#e5d2b9] bg-white/80 px-2 py-2">
-                            <span className="block text-xl leading-none font-bold text-[#602a3c] tabular-nums">{n}</span>
+                          <div
+                            key={l}
+                            className="min-w-14 rounded-lg border border-[#e5d2b9] bg-white/80 px-2 py-2"
+                          >
+                            <span className="block text-xl leading-none font-bold text-[#602a3c] tabular-nums">
+                              {n}
+                            </span>
                             <span className="mt-1 block text-[10px] text-[#856b71]">{l}</span>
                           </div>
                         ))}
@@ -149,8 +209,13 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 </TiltCard>
                 <div className="absolute end-0 bottom-0 rounded-2xl border border-[#e7d3b2] bg-white px-4 py-3 text-[#492431] shadow-xl sm:end-2">
                   <div className="flex items-center gap-3">
-                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><Icon name="check-circle" className="size-5" /></span>
-                    <div><span className="block text-xs text-[#7b6068]">{preview.captionLead}</span><span className="block text-sm font-bold">{preview.captionAccent}</span></div>
+                    <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                      <Icon name="check-circle" className="size-5" />
+                    </span>
+                    <div>
+                      <span className="block text-xs text-[#7b6068]">{preview.captionLead}</span>
+                      <span className="block text-sm font-bold">{preview.captionAccent}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -237,14 +302,19 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   {locale === 'he' ? 'פשוט. ברור. בשליטתכם.' : 'Simple. Clear. In your hands.'}
                 </p>
                 <h2 className="text-primary font-[family-name:var(--font-display)] text-3xl leading-tight font-bold sm:text-4xl">
-                  {locale === 'he' ? 'הראש שלכם באירוע. אנחנו נעזור לעשות סדר ברשימה.' : 'Focus on your celebration. Keep the guest list under control.'}
+                  {locale === 'he'
+                    ? 'הראש שלכם באירוע. אנחנו נעזור לעשות סדר ברשימה.'
+                    : 'Focus on your celebration. Keep the guest list under control.'}
                 </h2>
                 <p className="text-muted-foreground mt-5 text-base leading-8">
                   {locale === 'he'
                     ? 'במקום לעבור בין הודעות, גיליונות ושיחות — שולחים הזמנה אחת ורואים את המידע החשוב במקום מסודר. המערכת מתאימה גם למי שלא אוהב להתעסק בטכנולוגיה.'
                     : 'Skip the spreadsheets, calls and endless message threads. Share one invitation and keep the information you need together in a clear overview.'}
                 </p>
-                <Link href={localePath(locale, '/signup')} className={buttonClass({ variant: 'outline', size: 'lg', className: 'mt-7' })}>
+                <Link
+                  href={localePath(locale, '/signup')}
+                  className={buttonClass({ variant: 'outline', size: 'lg', className: 'mt-7' })}
+                >
                   {hero.ctaPrimary}
                   <Icon name="arrow-forward" className="size-4" />
                 </Link>
@@ -254,25 +324,40 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   {
                     icon: 'send' as const,
                     title: locale === 'he' ? 'שיתוף נוח בוואטסאפ' : 'Share via WhatsApp',
-                    body: locale === 'he' ? 'האורחים מקבלים קישור פשוט ויכולים להשיב מהטלפון.' : 'Guests receive a simple link and reply from their phones.',
+                    body:
+                      locale === 'he'
+                        ? 'האורחים מקבלים קישור פשוט ויכולים להשיב מהטלפון.'
+                        : 'Guests receive a simple link and reply from their phones.',
                   },
                   {
                     icon: 'dashboard' as const,
                     title: locale === 'he' ? 'כל התשובות מול העיניים' : 'Replies in one place',
-                    body: locale === 'he' ? 'מי מגיע, מי מתלבט וכמה אנשים צפויים להגיע.' : 'See who is attending, undecided and how many guests to expect.',
+                    body:
+                      locale === 'he'
+                        ? 'מי מגיע, מי מתלבט וכמה אנשים צפויים להגיע.'
+                        : 'See who is attending, undecided and how many guests to expect.',
                   },
                   {
                     icon: 'shield' as const,
                     title: locale === 'he' ? 'בלי הרשמה לאורחים' : 'No guest accounts',
-                    body: locale === 'he' ? 'הקישור נפתח בדפדפן, בלי אפליקציה או סיסמה.' : 'Guests can respond in a browser, with no app or password.',
+                    body:
+                      locale === 'he'
+                        ? 'הקישור נפתח בדפדפן, בלי אפליקציה או סיסמה.'
+                        : 'Guests can respond in a browser, with no app or password.',
                   },
                   {
                     icon: 'credit-card' as const,
                     title: locale === 'he' ? 'מחיר ידוע מראש' : 'Clear, upfront pricing',
-                    body: locale === 'he' ? 'בודקים בחינם, ולאחר מכן בוחרים מסלול בתשלום חד-פעמי.' : 'Try it free, then choose a one-time payment plan.',
+                    body:
+                      locale === 'he'
+                        ? 'בודקים בחינם, ולאחר מכן בוחרים מסלול בתשלום חד-פעמי.'
+                        : 'Try it free, then choose a one-time payment plan.',
                   },
                 ].map((item) => (
-                  <div key={item.title} className="rounded-[1.5rem] border border-[#ede2dc] bg-[#fcf9f5] p-6 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg">
+                  <div
+                    key={item.title}
+                    className="rounded-[1.5rem] border border-[#ede2dc] bg-[#fcf9f5] p-6 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
+                  >
                     <span className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-[#f1dfc6] text-[#673545]">
                       <Icon name={item.icon} className="size-6" />
                     </span>
