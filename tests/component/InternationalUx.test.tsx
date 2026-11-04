@@ -49,7 +49,7 @@ describe('the English public experience', () => {
     render(<PricingCards locale="en" showTrial={false} />);
 
     expect(
-      screen.getByRole('link', { name: 'Choose Basic (Opens in a new window)' }),
+      screen.getByRole('link', { name: 'Ask about Basic on WhatsApp (Opens in a new window)' }),
     ).toHaveAttribute('target', '_blank');
   });
 });
