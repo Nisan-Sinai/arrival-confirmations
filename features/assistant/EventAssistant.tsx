@@ -122,7 +122,7 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
   }
 
   return (
-    <div className="fixed right-4 bottom-[max(0.25rem,env(safe-area-inset-bottom))] z-[var(--z-overlay)] flex flex-col items-end rtl:items-start">
+    <div className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[var(--z-overlay)] flex flex-col items-end rtl:items-start">
       {open && (
         <section
           role="dialog"
@@ -277,10 +277,10 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
               ? 'Close assistant'
               : 'Open assistant'
         }
-        className="bg-primary text-primary-foreground shadow-raised flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring] sm:h-12 sm:gap-2 sm:px-4"
+        className="bg-primary text-primary-foreground shadow-raised hover:bg-primary-hover flex size-12 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-ring]"
       >
         <Icon name="sparkles" className="size-4 sm:size-5" />
-        <span className="hidden sm:inline">{isHe ? 'שאלו את העוזר' : 'Ask the assistant'}</span>
+        <span className="sr-only">{isHe ? 'שאלו את העוזר' : 'Ask the assistant'}</span>
       </button>
     </div>
   );
