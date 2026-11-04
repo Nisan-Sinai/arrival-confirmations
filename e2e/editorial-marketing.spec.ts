@@ -95,7 +95,9 @@ test.describe('editorial event marketing redesign', () => {
     await expect(page.getByRole('heading', { name: 'בדיקה חינמית' })).toBeVisible();
   });
 
-  test('mobile photo caption stays clear of the invitation sample at all phone widths', async ({ page }) => {
+  test('mobile photo caption stays clear of the invitation sample at all phone widths', async ({
+    page,
+  }) => {
     for (const width of [320, 360, 390, 430]) {
       await page.setViewportSize({ width, height: 800 });
       await page.goto('/');
@@ -132,7 +134,9 @@ test.describe('editorial event marketing redesign', () => {
     }
   });
 
-  test('desktop editorial caption is not covered by the floating sample invitation', async ({ page }) => {
+  test('desktop editorial caption is not covered by the floating sample invitation', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
