@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { guideContent } from '@/features/guide/content';
 import { buildGuideMetadata, GuidePage } from '@/features/guide/GuidePage';
+import { topicPaths, topics } from '@/features/guide/topics';
 import { locales } from '@/lib/i18n';
 import { PUBLISHER_URL } from '@/lib/seo';
 
@@ -24,7 +25,15 @@ describe.each(locales)('public RSVP guide (%s)', (locale) => {
   it('renders useful product answers and schema matching the visible page', () => {
     const { container } = render(<GuidePage locale={locale} />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(guideContent[locale].title);
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(5);
+    for (const section of guideContent[locale].sections) {
+      expect(screen.getByRole('heading', { level: 2, name: section.title })).toBeVisible();
+    }
+    for (const path of topicPaths) {
+      expect(screen.getByRole('link', { name: topics[path][locale].title })).toHaveAttribute(
+        'href',
+        `${prefix}${path}`,
+      );
+    }
     expect(screen.getByRole('link', { name: guideContent[locale].pricingLink })).toHaveAttribute(
       'href',
       `${prefix}/pricing`,

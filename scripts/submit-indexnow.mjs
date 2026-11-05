@@ -7,6 +7,12 @@ const settings = JSON.parse(readFileSync(new URL('../config/indexnow.json', impo
 const pages = JSON.parse(readFileSync(new URL('../config/public-pages.json', import.meta.url)));
 const productionOrigin = 'https://arrival-confirmations.vercel.app';
 const endpoint = 'https://api.indexnow.org/indexnow';
+const publicPageFiles = new Set(
+  pages.flatMap((path) => [
+    `app/(he)${path === '/' ? '' : path}/page.tsx`,
+    `app/(en)/en${path === '/' ? '' : path}/page.tsx`,
+  ]),
+);
 const privatePath =
   /^\/(?:en\/)?(?:api|e|invite|share|dashboard|admin|auth|login|signup|forgot-password|reset-password)(?:\/|$)/;
 
@@ -42,10 +48,7 @@ export function changedIndexNowUrls(files, allPublic = false) {
     (file) =>
       /^(?:features\/(?:landing|pricing|legal|guide)\/|features\/og\/(?:ProductShareImage|OgFrame|OgText)\.tsx$|features\/layout\/(?:RootDocument|SiteFooter|SiteHeader|BrandMark|LanguageSwitch)\.tsx$|config\/(?:dictionary\/|public-pages\.json$|indexnow\.json$)|app\/_lib\/plans\.ts$|app\/globals\.css$|lib\/(?:seo|structuredData|social-image)\.ts$)/.test(
         file,
-      ) ||
-      /^app\/\((?:he|en)\)\/(?:en\/)?(?:(?:pricing|guide|privacy|accessibility)\/)?page\.tsx$/.test(
-        file,
-      ),
+      ) || publicPageFiles.has(file),
   );
   return allPublic || publicChange ? publicIndexNowUrls() : [];
 }
