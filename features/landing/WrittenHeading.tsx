@@ -64,6 +64,7 @@ export function WrittenHeading({
   delay = 0,
   as: Tag = 'span',
   trigger = 'load',
+  decorative = false,
 }: {
   readonly text: string;
   readonly className?: string;
@@ -84,6 +85,7 @@ export function WrittenHeading({
    * indefinitely. An observer now decides *when*, and the clock decides *how fast*.
    */
   readonly trigger?: 'load' | 'scroll';
+  readonly decorative?: boolean;
 }): ReactNode {
   const ref = useRef<HTMLElement>(null);
 
@@ -157,7 +159,7 @@ export function WrittenHeading({
   return (
     // `as never` because `Tag` is a union of two element types and a single ref cannot be
     // typed for both; the effect only ever reads it as an `Element`.
-    <Tag className={className} ref={ref as never}>
+    <Tag className={className} ref={ref as never} aria-hidden={decorative || undefined}>
       {/*
         The sentence, once, for assistive technology.
 
@@ -166,7 +168,7 @@ export function WrittenHeading({
         leaving a heading that announced as a list of disconnected words. A visually
         hidden text node is the boring, correct answer.
       */}
-      <span className="sr-only">{text}</span>
+      {!decorative && <span className="sr-only">{text}</span>}
       {words.map((word, index) => {
         const offset = offsets[index] ?? 0;
 

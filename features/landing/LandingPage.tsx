@@ -1,4 +1,5 @@
 import { socialImage } from '@/lib/social-image';
+import { GuideLinks } from '@/features/guide/GuidePage';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -101,13 +102,16 @@ export function LandingPage({ locale }: { locale: Locale }) {
                 <p className="enter enter-1 inline-flex items-center gap-2.5 rounded-full border border-[#dfbc88]/40 bg-white/[0.06] px-4 py-2 text-xs font-semibold tracking-wide text-[#f1d29e] sm:text-sm">
                   <Icon name="sparkles" className="size-4" /> {hero.eyebrow}
                 </p>
-                <h1 className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.6rem,5vw,5rem)] leading-[1.16] font-bold tracking-tight">
-                  <WrittenHeading text={hero.titleLead} as="span" />
+                <h1
+                  aria-label={`${hero.titleLead} ${hero.titleAccent}`}
+                  className="mt-7 font-[family-name:var(--font-display)] text-[clamp(2.6rem,5vw,5rem)] leading-[1.16] font-bold tracking-tight"
+                >
+                  <WrittenHeading text={hero.titleLead} decorative />{' '}
                   <WrittenHeading
                     text={hero.titleAccent}
-                    as="div"
+                    decorative
                     delay={writingDuration(hero.titleLead)}
-                    className="text-[#f1cf96]"
+                    className="block text-[#f1cf96]"
                   />
                 </h1>
                 <p className="enter enter-3 mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">
@@ -415,14 +419,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                   </details>
                 ))}
               </div>
-              <Link
-                href={localePath(locale, '/guide')}
-                className="text-primary mt-6 inline-flex min-h-11 items-center underline underline-offset-4"
-              >
-                {locale === 'he'
-                  ? 'מדריך להכנת האירוע ולניהול אישורי הגעה'
-                  : 'Guide to preparing your event and managing RSVPs'}
-              </Link>
+              <GuideLinks locale={locale} />
             </div>
           </Container>
         </section>

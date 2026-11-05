@@ -3,6 +3,9 @@ import { fileURLToPath } from 'node:url';
 
 import type { NextConfig } from 'next';
 
+import publicPages from './config/public-pages.json';
+import { localePath, locales } from './lib/i18n';
+
 /**
  * Without this, Turbopack walks up the filesystem looking for a lockfile and can
  * settle on one outside the project — a stray `package-lock.json` in the user's home
@@ -115,18 +118,9 @@ const nextConfig: NextConfig = {
         "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com",
       )
       .replace("img-src 'self'", "img-src 'self' https://www.google-analytics.com");
-    const publicPaths = [
-      '/',
-      '/en',
-      '/pricing',
-      '/en/pricing',
-      '/guide',
-      '/en/guide',
-      '/privacy',
-      '/en/privacy',
-      '/accessibility',
-      '/en/accessibility',
-    ];
+    const publicPaths = publicPages.flatMap((path) =>
+      locales.map((locale) => localePath(locale, path)),
+    );
     return [
       { source: '/:path*', headers: securityHeaders },
       ...['api', 'invite', 'share', 'e', 'dashboard', 'admin'].flatMap((segment) =>

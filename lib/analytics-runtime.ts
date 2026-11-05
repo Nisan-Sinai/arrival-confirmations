@@ -137,3 +137,25 @@ export function trackPublicPage(config: AnalyticsConfig, pathname: string): void
   win.gtag?.('set', page);
   win.gtag?.('event', 'page_view', { ...page, send_to: config.id });
 }
+
+/** Count a public conversion action using only the consented, sanitized page context. */
+export function trackPublicConversion(config: AnalyticsConfig): void {
+  const { origin, pathname } = window.location;
+  const win = browser();
+  if (
+    origin !== config.origin ||
+    !config.paths.includes(pathname) ||
+    readConsent() !== 'granted' ||
+    privacySignal() ||
+    win.publicAnalytics?.id !== config.id ||
+    win.publicAnalytics.lastPath !== pathname
+  )
+    return;
+
+  win.gtag?.('event', 'signup_start', {
+    page_location: `${origin}${pathname}`,
+    page_referrer: '',
+    page_title: `${config.name} ${pathname}`,
+    send_to: config.id,
+  });
+}

@@ -9,6 +9,7 @@ import {
   stopAnalytics,
   subscribeConsent,
   trackPublicPage,
+  trackPublicConversion,
   type AnalyticsConfig,
   type Consent,
 } from '@/lib/analytics-runtime';
@@ -33,6 +34,17 @@ export function AnalyticsConsent({
     if (pathname) trackPublicPage(config, pathname);
     return stopAnalytics;
   }, [config, pathname, consent]);
+
+  useEffect(() => {
+    if (!publicPage || consent !== 'granted') return;
+    const onClick = (event: MouseEvent) => {
+      if (!(event.target instanceof Element)) return;
+      const href = event.target.closest('a')?.getAttribute('href');
+      if (href === '/signup' || href === '/en/signup') trackPublicConversion(config);
+    };
+    document.addEventListener('click', onClick, { capture: true });
+    return () => document.removeEventListener('click', onClick, { capture: true });
+  }, [publicPage, config, consent]);
 
   if (!publicPage || consent === 'loading') return null;
   const select = (choice: 'granted' | 'denied') => {

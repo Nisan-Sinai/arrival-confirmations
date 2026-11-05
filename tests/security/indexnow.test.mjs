@@ -25,14 +25,16 @@ test('publishes exactly the public bilingual sitemap routes and matching ownersh
   const paths = JSON.parse(
     readFileSync(new URL('../../config/public-pages.json', import.meta.url)),
   );
-  assert.equal(urls.length, 10);
-  assert.equal(new Set(urls).size, 10);
+  assert.equal(urls.length, paths.length * 2);
+  assert.equal(new Set(urls).size, paths.length * 2);
   assert.equal(
     readFileSync(new URL(`../../public/${publicProof}.txt`, import.meta.url), 'utf8').trim(),
     publicProof,
   );
-  for (const path of paths) assert(urls.includes(config.origin + path));
-  assert(urls.includes(config.origin + '/en/guide'));
+  for (const path of paths) {
+    assert(urls.includes(config.origin + path));
+    assert(urls.includes(config.origin + (path === '/' ? '/en' : '/en' + path)));
+  }
 });
 test('rejects private routes, encoded paths, queries, foreign origins and invalid keys', () => {
   for (const path of [
@@ -75,6 +77,7 @@ test('ignores private application and database changes and selects public conten
     'config/dictionary/en.ts',
     'config/indexnow.json',
     'app/(he)/guide/page.tsx',
+    'app/(en)/en/wedding-rsvp/page.tsx',
     'app/(en)/en/pricing/page.tsx',
     'lib/structuredData.ts',
   ])
@@ -120,7 +123,7 @@ for (const status of [200, 202]) {
     const s = server(status);
     const result = await submitIndexNow([...urls, urls[0]], sha, s.fetcher);
     assert.deepEqual(result, {
-      count: 10,
+      count: urls.length,
       status,
       outcome: status === 200 ? 'key_validated' : 'pending_key_validation',
     });

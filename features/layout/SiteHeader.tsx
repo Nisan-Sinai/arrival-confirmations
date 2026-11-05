@@ -27,11 +27,13 @@ export function SiteHeader({
   minimal = false,
   locale = defaultLocale,
   showLanguageSwitch = false,
+  languageSwitchPath = '/',
 }: {
   className?: string;
   minimal?: boolean;
   locale?: Locale;
   showLanguageSwitch?: boolean;
+  languageSwitchPath?: string;
 }) {
   const dictionary = getDictionary(locale);
   const target = alternateLocale(locale);
@@ -42,7 +44,7 @@ export function SiteHeader({
     ...(showLanguageSwitch
       ? [
           {
-            href: localePath(target, '/'),
+            href: localePath(target, languageSwitchPath),
             label: dictionary.languageSwitch.label,
             lang: languageTag(target),
           },

@@ -46,7 +46,16 @@ describe('GOOGLE_SITE_VERIFICATION', () => {
 describe('the crawlable surface', () => {
   it('offers the public product, pricing and legal pages', async () => {
     const { INDEXABLE_PATHS } = await loadSeo('https://example.test');
-    expect([...INDEXABLE_PATHS]).toEqual(['/', '/pricing', '/guide', '/privacy', '/accessibility']);
+    expect([...INDEXABLE_PATHS]).toEqual([
+      '/',
+      '/pricing',
+      '/guide',
+      '/wedding-rsvp',
+      '/whatsapp-rsvp',
+      '/bar-bat-mitzvah-rsvp',
+      '/privacy',
+      '/accessibility',
+    ]);
   });
 
   it('closes the invitation namespace to crawlers', async () => {

@@ -4,6 +4,7 @@ import { getPlanCatalog } from '@/app/_lib/plans';
 import { getDictionary } from '@/config/dictionary';
 import { appConfig } from '@/config/event.config';
 import { guideContent } from '@/features/guide/content';
+import { topicPaths, topics } from '@/features/guide/topics';
 import { localePath, locales } from '@/lib/i18n';
 import { absoluteUrl, indexableEntries, PUBLISHER_URL } from '@/lib/seo';
 
@@ -33,6 +34,18 @@ export function renderLlms(full: boolean): string {
         ].join('\n'),
       ),
     );
+    for (const path of topicPaths) {
+      const topic = topics[path][locale];
+      sections.push(
+        `- [${topic.title}](${absoluteUrl(localePath(locale, path))}): ${topic.description}`,
+      );
+      if (full) {
+        sections.push(
+          topic.intro,
+          ...topic.sections.flatMap(({ title, body }) => [`#### ${title}`, body]),
+        );
+      }
+    }
     if (full) {
       sections.push(
         ...guideContent[locale].sections.flatMap((section) => [

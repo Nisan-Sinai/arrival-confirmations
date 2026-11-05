@@ -1,8 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import indexNow from '../config/indexnow.json';
-
-const publicPaths = ['/', '/pricing', '/guide', '/privacy', '/accessibility'];
+import publicPaths from '../config/public-pages.json';
 
 for (const prefix of ['', '/en']) {
   for (const path of publicPaths) {
@@ -49,7 +48,7 @@ for (const prefix of ['', '/en']) {
     await page.setViewportSize({ width: 320, height: 720 });
     await page.goto(`${prefix}/guide`);
     await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('main h2')).toHaveCount(5);
+    await expect(page.locator('main h2')).toHaveCount(6);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
       true,
     );
@@ -105,8 +104,11 @@ test('GEO references are UTF-8 public text and never enumerate private routes', 
     expect(text).not.toMatch(/https?:\/\/[^\s)]+\/(?:e|invite|dashboard|admin|api)\//);
   }
   const sitemap = await (await request.get('/sitemap.xml')).text();
-  expect(sitemap.match(/<loc>/g)).toHaveLength(10);
+  expect(sitemap.match(/<loc>/g)).toHaveLength(publicPaths.length * 2);
   expect(sitemap).toContain('/en/guide');
+  expect(sitemap).toContain('/en/wedding-rsvp');
+  expect(sitemap).toContain('/whatsapp-rsvp');
+  expect(sitemap).toContain('/bar-bat-mitzvah-rsvp');
   expect(sitemap).not.toMatch(/\/(e|invite|dashboard|admin|api|login|signup)(\/|<)/);
   const robots = await (await request.get('/robots.txt')).text();
   expect(robots).toContain('Allow: /');

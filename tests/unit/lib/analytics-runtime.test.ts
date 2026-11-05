@@ -6,6 +6,7 @@ import {
   stopAnalytics,
   subscribeConsent,
   trackPublicPage,
+  trackPublicConversion,
 } from '@/lib/analytics-runtime';
 
 const config = {
@@ -26,6 +27,7 @@ beforeEach(() => {
   win = Object.assign(new EventTarget(), {
     location: {
       origin: config.origin,
+      pathname: '/',
       hostname: 'site.example',
       search: '?email=secret@example.com',
       hash: '#token-secret',
@@ -55,6 +57,31 @@ const commands = () => (win.dataLayer as IArguments[]).map((args) => Array.from(
 const views = () => commands().filter((args) => args[0] === 'event' && args[1] === 'page_view');
 
 describe('public analytics privacy boundary', () => {
+  it('queues the conversion only with consent on the active production page', () => {
+    trackPublicConversion(config);
+    expect(scripts).toHaveLength(0);
+    chooseConsent('granted');
+    trackPublicPage(config, '/');
+    trackPublicConversion(config);
+    const location = win.location as { pathname: string };
+    location.pathname = '/dashboard';
+    trackPublicConversion(config);
+    location.pathname = '/';
+    chooseConsent('denied');
+    trackPublicConversion(config);
+    expect(commands().filter((args) => args[0] === 'event' && args[1] === 'signup_start')).toEqual([
+      [
+        'event',
+        'signup_start',
+        {
+          page_location: 'https://site.example/',
+          page_referrer: '',
+          page_title: 'Public site /',
+          send_to: config.id,
+        },
+      ],
+    ]);
+  });
   it('does not load Google before consent or after declining', () => {
     trackPublicPage(config, '/');
     expect(scripts).toHaveLength(0);
