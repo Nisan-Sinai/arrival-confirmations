@@ -261,10 +261,16 @@ export function TeddyBear({ className = '' }: { className?: string }) {
   );
 }
 
-/** A wrapped gift beside a pair of baby shoes. */
-export function GiftAndShoes({ className = '' }: { className?: string }) {
+/**
+ * The wrapped gift on its own, in the coordinates both scenes below share.
+ *
+ * One drawing, two frames. The nursery scene sets it beside a pair of baby shoes; the
+ * festive scene crops the same box out by itself, so a bat mitzvah or a fortieth birthday
+ * gets a present without a newborn's footwear next to it.
+ */
+function GiftShape() {
   return (
-    <svg viewBox="0 0 150 120" className={className} aria-hidden="true" fill="none">
+    <>
       <rect
         x="12"
         y="40"
@@ -290,6 +296,15 @@ export function GiftAndShoes({ className = '' }: { className?: string }) {
         strokeWidth="1"
       />
       <circle cx="43" cy="40" r="4.5" fill={BLUE_PALE} stroke={GOLD} strokeWidth="1" />
+    </>
+  );
+}
+
+/** A wrapped gift beside a pair of baby shoes. */
+export function GiftAndShoes({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 150 120" className={className} aria-hidden="true" fill="none">
+      <GiftShape />
 
       <g>
         <path
@@ -331,6 +346,118 @@ export function GiftAndShoes({ className = '' }: { className?: string }) {
           strokeWidth="0.8"
         />
       </g>
+    </svg>
+  );
+}
+
+/** The same gift with nothing beside it — the festive scene's present. */
+export function GiftBox({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="6 24 74 72" className={className} aria-hidden="true" fill="none">
+      <GiftShape />
+    </svg>
+  );
+}
+
+/**
+ * Confetti settling in a corner: gold stars, blush dots and two curls of streamer.
+ *
+ * Scattered by hand rather than generated. Random placement would differ between the
+ * server render and the client's and React would report a mismatch — and a corner of
+ * confetti that re-deals itself on every visit is not what a printed card does.
+ */
+export function Confetti({ className = '' }: { className?: string }) {
+  const stars: readonly (readonly [number, number, number])[] = [
+    [96, 26, 1],
+    [58, 58, 0.7],
+    [112, 70, 0.85],
+    [30, 96, 0.6],
+    [84, 100, 0.75],
+  ];
+  const dots: readonly (readonly [number, number, number, string])[] = [
+    [74, 30, 3, BLUE_SOFT],
+    [118, 46, 2.4, GOLD_PALE],
+    [44, 78, 2.6, BLUE_PALE],
+    [100, 88, 3, BLUE_SOFT],
+    [64, 112, 2.4, GOLD_PALE],
+    [16, 114, 2.2, BLUE_SOFT],
+    [122, 104, 2.6, BLUE_PALE],
+  ];
+  return (
+    <svg viewBox="0 0 130 130" className={className} aria-hidden="true" fill="none">
+      <path
+        d="M70 6c10 6 12 14 4 20s-6 14 4 20"
+        stroke={BLUE_SOFT}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M24 52c8 4 10 10 4 16s-4 12 4 16"
+        stroke={GOLD}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        opacity="0.8"
+      />
+      {dots.map(([cx, cy, r, fill]) => (
+        <circle
+          key={`${cx}-${cy}`}
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill={fill}
+          stroke={GOLD}
+          strokeWidth="0.5"
+        />
+      ))}
+      {stars.map(([x, y, scale]) => (
+        <path
+          key={`${x}-${y}`}
+          d="M0-9l2.3 6.7L9 0 2.3 2.3 0 9l-2.3-6.7L-9 0l6.7-2.3z"
+          fill={GOLD}
+          opacity="0.85"
+          transform={`translate(${x} ${y}) scale(${scale})`}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/**
+ * Two interlocked rings, drawn as gold line rather than filled.
+ *
+ * The one motif a wedding or an engagement card can carry that nothing else on the list
+ * of occasions would. Each band is two strokes so it reads as metal with a lit edge, and
+ * the left ring is broken where the right one crosses it — that gap is the whole
+ * difference between two rings that are linked and two circles that overlap.
+ */
+export function Rings({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 84" className={className} aria-hidden="true" fill="none">
+      <circle cx="76" cy="48" r="27" stroke={GOLD} strokeWidth="3.4" />
+      <circle cx="76" cy="48" r="27" stroke={GOLD_PALE} strokeWidth="1" />
+      {/* The left band, lifted over the right one at the top crossing and under it below. */}
+      <path
+        d="M57.6 28.2A27 27 0 1 0 60.6 66.4"
+        stroke={GOLD}
+        strokeWidth="3.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M57.6 28.2A27 27 0 1 0 60.6 66.4"
+        stroke={GOLD_PALE}
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path d="M62.6 63.6A27 27 0 0 0 66.4 34" stroke={GOLD} strokeWidth="3.4" />
+      <path d="M62.6 63.6A27 27 0 0 0 66.4 34" stroke={GOLD_PALE} strokeWidth="1" />
+      {/* A single stone, and the glint off it. */}
+      <path d="M76 12l6 7-6 7-6-7z" fill={CREAM} stroke={GOLD} strokeWidth="1.2" />
+      <path d="M70 19h12" stroke={GOLD} strokeWidth="0.8" opacity="0.7" />
+      <path
+        d="M98 6l1.4 3.8 3.8 1.4-3.8 1.4L98 16.4l-1.4-3.8-3.8-1.4 3.8-1.4z"
+        fill={GOLD}
+        opacity="0.8"
+      />
     </svg>
   );
 }

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   daysUntilEvent,
   describeTimeUntilEvent,
+  eventZoneInstant,
   formatEventDate,
   formatEventWeekday,
   formatHebrewDate,
@@ -115,5 +116,52 @@ describe('describeTimeUntilEvent', () => {
 
   it('is empty without a date', () => {
     expect(describeTimeUntilEvent(null, now)).toBe('');
+  });
+});
+
+/**
+ * The countdown bug.
+ *
+ * `new TZDate('2026-12-15T19:30:00', 'Asia/Jerusalem')` parses its string in the
+ * server's zone and only *displays* in Jerusalem. On a UTC server — which is every
+ * server this runs on, and this test runner — a 19:30 ceremony resolved to 19:30 UTC, so
+ * every invitation counted down to a moment two or three hours after the event began.
+ *
+ * Each expectation below is an absolute instant, so it holds on a machine in any zone:
+ * the numeric constructor does not consult the system clock's offset at all.
+ */
+describe('eventZoneInstant', () => {
+  it('resolves a winter evening against +02:00', () => {
+    expect(eventZoneInstant('2026-12-15', '19:30:00')).toBe(Date.UTC(2026, 11, 15, 17, 30));
+  });
+
+  it('resolves a summer evening against +03:00', () => {
+    expect(eventZoneInstant('2026-08-15', '19:30:00')).toBe(Date.UTC(2026, 7, 15, 16, 30));
+  });
+
+  it('defaults to midnight in the event zone, which is the previous evening in UTC', () => {
+    expect(eventZoneInstant('2026-12-15')).toBe(Date.UTC(2026, 11, 14, 22, 0));
+    expect(eventZoneInstant('2026-08-15')).toBe(Date.UTC(2026, 7, 14, 21, 0));
+  });
+
+  it('accepts a time without seconds and keeps the seconds it is given', () => {
+    expect(eventZoneInstant('2026-12-15', '08:05')).toBe(Date.UTC(2026, 11, 15, 6, 5));
+    expect(eventZoneInstant('2026-12-15', '08:05:30')).toBe(Date.UTC(2026, 11, 15, 6, 5, 30));
+    // Postgres can return fractional seconds; the fraction is dropped, not rounded up.
+    expect(eventZoneInstant('2026-12-15', '08:05:30.9')).toBe(Date.UTC(2026, 11, 15, 6, 5, 30));
+  });
+
+  it('gives the same calendar day back when formatted in the event zone', () => {
+    // The first and last minutes of a day, either side of the clock change.
+    for (const date of ['2026-03-27', '2026-10-25', '2026-01-01', '2026-06-30']) {
+      const format = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Jerusalem',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      expect(format.format(eventZoneInstant(date)), date).toBe(date);
+      expect(format.format(eventZoneInstant(date, '23:59:59')), date).toBe(date);
+    }
   });
 });

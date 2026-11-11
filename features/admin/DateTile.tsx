@@ -1,6 +1,5 @@
-import { TZDate } from '@date-fns/tz';
-
 import { EVENT_TIMEZONE } from '@/config/event.config';
+import { eventZoneInstant } from '@/lib/eventDate';
 import { cn } from '@/lib/utils';
 
 /**
@@ -20,7 +19,7 @@ export function DateTile({
   className?: string;
   size?: 'md' | 'lg';
 }) {
-  const zoned = new TZDate(`${isoDate}T00:00:00`, EVENT_TIMEZONE);
+  const zoned = eventZoneInstant(isoDate);
   const day = new Intl.DateTimeFormat('he-IL', { day: 'numeric', timeZone: EVENT_TIMEZONE }).format(
     zoned,
   );

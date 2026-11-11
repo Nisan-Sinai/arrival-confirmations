@@ -10,12 +10,17 @@ import { Countdown } from '@/features/invite/Countdown';
 import {
   Balloons,
   Bunting,
+  Confetti,
   CornerFiligree,
   FloralSprig,
   GiftAndShoes,
+  GiftBox,
+  Rings,
   TeddyBear,
   WatercolourWash,
 } from '@/features/invite/Ornaments';
+import { ornamentThemeFor, type OrnamentTheme } from '@/features/invite/ornamentTheme';
+import { eventZoneInstant } from '@/lib/eventDate';
 import type { PublicEvent } from '@/repositories/eventRepository';
 
 /**
@@ -39,7 +44,7 @@ const HEBREW_WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'ח
  * A relative reading the invitation from abroad must not be told 04:00.
  */
 function formatGregorian(isoDate: string): { weekday: string; date: string } {
-  const zoned = new TZDate(`${isoDate}T00:00:00`, EVENT_TIMEZONE);
+  const zoned = new TZDate(eventZoneInstant(isoDate), EVENT_TIMEZONE);
   const weekday = HEBREW_WEEKDAYS[zoned.getDay()] ?? '';
   const date = new Intl.DateTimeFormat('he-IL', {
     day: 'numeric',
@@ -88,6 +93,48 @@ function Medallion({ icon, children }: { icon: React.ReactNode; children: React.
   );
 }
 
+/**
+ * The scene around the text, chosen by the kind of event.
+ *
+ * Everything is pinned to a corner and sized so the centred copy never runs under it:
+ * the card's bottom padding was set for the tallest piece here, and none of the newer
+ * ones is taller than the bear it stands in for.
+ */
+function CardOrnaments({ theme }: { theme: OrnamentTheme }) {
+  if (theme === 'nursery') {
+    return (
+      <>
+        <Bunting className="pointer-events-none absolute -top-1 left-1 w-28 opacity-80 sm:w-56 sm:opacity-90" />
+        <Balloons className="pointer-events-none absolute top-4 right-0 w-14 opacity-80 sm:top-6 sm:right-1 sm:w-28 sm:opacity-95" />
+        <TeddyBear className="pointer-events-none absolute right-1 -bottom-2 w-24 opacity-95 sm:w-32" />
+        <GiftAndShoes className="pointer-events-none absolute bottom-0 left-0 w-16 opacity-85 sm:left-1 sm:w-32 sm:opacity-95" />
+        <FloralSprig className="pointer-events-none absolute bottom-14 left-0 hidden w-16 opacity-75 sm:block sm:w-20" />
+      </>
+    );
+  }
+
+  if (theme === 'festive') {
+    return (
+      <>
+        <Bunting className="pointer-events-none absolute -top-1 left-1 w-28 opacity-80 sm:w-56 sm:opacity-90" />
+        <Balloons className="pointer-events-none absolute top-4 right-0 w-14 opacity-80 sm:top-6 sm:right-1 sm:w-28 sm:opacity-95" />
+        <Confetti className="pointer-events-none absolute right-1 bottom-1 w-20 opacity-90 sm:right-2 sm:w-28" />
+        <GiftBox className="pointer-events-none absolute bottom-2 left-2 w-14 opacity-90 sm:left-4 sm:w-20" />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {theme === 'wedding' && (
+        <Rings className="pointer-events-none absolute top-5 right-4 w-12 opacity-80 sm:top-8 sm:right-8 sm:w-20 sm:opacity-90" />
+      )}
+      <FloralSprig className="pointer-events-none absolute bottom-0 left-0 w-16 opacity-80 sm:left-1 sm:w-24 sm:opacity-90" />
+      <FloralSprig className="pointer-events-none absolute right-0 bottom-0 w-16 -scale-x-100 opacity-80 sm:right-1 sm:w-24 sm:opacity-90" />
+    </>
+  );
+}
+
 const iconProps = {
   viewBox: '0 0 24 24',
   fill: 'none',
@@ -106,10 +153,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
   const receptionTime = formatTime(event.reception_time);
   // Resolved here, not in the browser: the countdown must run against Asia/Jerusalem
   // regardless of where the guest's phone thinks it is.
-  const countdownTargetMs = new TZDate(
-    `${event.event_date}T${event.ceremony_time ?? '12:00:00'}`,
-    EVENT_TIMEZONE,
-  ).getTime();
+  const countdownTargetMs = eventZoneInstant(event.event_date!, event.ceremony_time ?? '12:00:00');
 
   return (
     <article className="relative mx-auto w-full max-w-2xl overflow-hidden">
@@ -123,11 +167,7 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
           <CornerFiligree className="absolute right-1 bottom-1 size-14 -scale-y-100 opacity-70 sm:size-16" />
           <CornerFiligree className="absolute bottom-1 left-1 size-14 -scale-100 opacity-70 sm:size-16" />
 
-          <Bunting className="pointer-events-none absolute -top-1 left-1 w-28 opacity-80 sm:w-56 sm:opacity-90" />
-          <Balloons className="pointer-events-none absolute top-4 right-0 w-14 opacity-80 sm:top-6 sm:right-1 sm:w-28 sm:opacity-95" />
-          <TeddyBear className="pointer-events-none absolute right-1 -bottom-2 w-24 opacity-95 sm:w-32" />
-          <GiftAndShoes className="pointer-events-none absolute bottom-0 left-0 w-16 opacity-85 sm:left-1 sm:w-32 sm:opacity-95" />
-          <FloralSprig className="pointer-events-none absolute bottom-14 left-0 hidden w-16 opacity-75 sm:block sm:w-20" />
+          <CardOrnaments theme={ornamentThemeFor(event.event_type)} />
 
           <div className="relative z-10">
             <p className="text-muted-foreground text-center text-sm">ב״ה</p>
