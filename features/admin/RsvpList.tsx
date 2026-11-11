@@ -53,7 +53,7 @@ export function RsvpList({ rows, eventId }: { rows: readonly RsvpRowData[]; even
 
   return (
     <div className="mt-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between print:hidden">
         <FilterChips
           label="סינון לפי סטטוס"
           value={status}
@@ -96,14 +96,14 @@ export function RsvpList({ rows, eventId }: { rows: readonly RsvpRowData[]; even
         <div className="border-border bg-card shadow-paper mt-4 overflow-hidden rounded-2xl border">
           <div
             aria-hidden="true"
-            className="text-muted-foreground bg-secondary/40 hidden grid-cols-[1.4fr_1.1fr_0.8fr_0.9fr_1.5fr_auto] gap-4 border-b px-4 py-2.5 text-xs font-semibold lg:grid"
+            className="text-muted-foreground bg-secondary/40 hidden grid-cols-[1.4fr_1.1fr_0.8fr_0.9fr_1.5fr_auto] gap-4 border-b px-4 py-2.5 text-xs font-semibold lg:grid print:grid print:grid-cols-[1.4fr_1.1fr_0.8fr_0.7fr_1.6fr] print:gap-3 print:px-2"
           >
             <span>שם</span>
             <span>טלפון</span>
             <span>סטטוס</span>
             <span>כמות</span>
             <span>תזונה והערות</span>
-            <span className="w-20 text-end">פעולות</span>
+            <span className="w-20 text-end print:hidden">פעולות</span>
           </div>
           <ul className="divide-border divide-y">
             {shown.map((rsvp) => (

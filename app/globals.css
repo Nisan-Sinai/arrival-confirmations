@@ -1239,6 +1239,39 @@
   }
 
   /**
+   * The reply chip beside the hero's sample invitation, bobbing a few pixels.
+   *
+   * `translate` rather than `transform`, so it composes with the entrance animation on
+   * the column it sits in instead of replacing it. Six pixels over six seconds: the
+   * chip should look like it is resting on air, not like it is trying to be noticed.
+   */
+  .hero-float {
+    animation: hero-float 6s var(--ease-in-out) infinite alternate;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-float,
+    .hero-float .animate-ping {
+      animation: none;
+    }
+  }
+
+  /**
+   * The stage a feature drawing sits on.
+   *
+   * A wash of blush from one corner and gold from the other over the sand surface — the
+   * same two lights the hero uses, at a fraction of the strength. It separates the
+   * drawing from the text below it without a second border, and gives a row of tiles
+   * one shared light source rather than eight flat panels.
+   */
+  .bento-art {
+    background:
+      radial-gradient(60% 90% at 100% 0%, oklch(0.9 0.05 82 / 0.5), transparent 70%),
+      radial-gradient(55% 80% at 0% 100%, oklch(0.94 0.02 22 / 0.9), transparent 70%),
+      var(--color-surface-sand);
+  }
+
+  /**
    * A soft grid behind the console pages, so the app surface reads as a workspace and
    * not as the same cream field the marketing page sits on. Two 1px lines at a very low
    * alpha, fading out downward so the first screen has it and a long list does not.
@@ -1270,6 +1303,15 @@
  */
 body:has([data-invitation-style]) .footer-columns {
   display: none;
+}
+
+@keyframes hero-float {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -6px;
+  }
 }
 
 @keyframes dialog-in {
@@ -1776,5 +1818,55 @@ body:has([data-invitation-style]) .footer-columns {
   to {
     opacity: 1;
     translate: 0 0;
+  }
+}
+
+/**
+ * Paper.
+ *
+ * A host prints the event page to hand a caterer or a venue coordinator the head count
+ * and the list. What should come out is that page's content and nothing of the site
+ * around it: no header, no footer, no floating buttons, no cookie notice, and no film
+ * grain laid over the text. Controls inside the page hide themselves with `print:hidden`
+ * where they are declared; this block removes the chrome every page shares.
+ *
+ * `body > header` and `body > footer` are the site's own bars and nothing else — a
+ * page's title block is a `<header>` too, but it sits inside `<main>`.
+ */
+@media print {
+  @page {
+    margin: 14mm 12mm;
+  }
+
+  body::before,
+  body > header,
+  body > footer,
+  body > a[href='#main'],
+  .analytics-privacy,
+  [aria-controls='accessibility-panel'],
+  #accessibility-panel {
+    display: none !important;
+  }
+
+  body,
+  .console-grid {
+    background: #fff !important;
+  }
+
+  /* A scroll-driven reveal has no scroll position on paper and would print at whatever
+     opacity it happened to hold; a typed heading would print half written. */
+  .reveal,
+  .enter,
+  .animate-rise {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .written-word,
+  .written-word-armed,
+  .written-word-writing {
+    animation: none !important;
+    clip-path: none !important;
   }
 }

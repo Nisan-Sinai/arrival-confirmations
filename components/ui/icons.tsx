@@ -16,8 +16,8 @@ import { cn } from '@/lib/utils';
  * `aria-hidden`; the label always lives in the text or `aria-label` beside it.
  *
  * Direction-aware glyphs (`chevron-back`, `arrow-forward`) are drawn for a right-to-left
- * document and mirrored under `[dir='ltr']` by the `rtl-mirror` utility, so callers never
- * choose a side.
+ * document and mirrored under `[dir='ltr']` by the `dir-flip` class, which `Icon` adds
+ * itself for every name in `DIRECTIONAL` — so callers never choose a side.
  */
 const PATHS = {
   'chevron-down': <path d="m6 9 6 6 6-6" />,
@@ -307,9 +307,59 @@ const PATHS = {
       <path d="M21 12a9 9 0 0 0-9-9" />
     </>
   ),
+  /* Three finder squares and a scatter of modules — a QR code at icon size. */
+  qr: (
+    <>
+      <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1" />
+      <rect x="14" y="3.5" width="6.5" height="6.5" rx="1" />
+      <rect x="3.5" y="14" width="6.5" height="6.5" rx="1" />
+      <path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM18 14h2.5M14 18.5v2" />
+    </>
+  ),
+  printer: (
+    <>
+      <path d="M7 8V3.5h10V8" />
+      <rect x="3" y="8" width="18" height="9" rx="2" />
+      <path d="M7 14h10v6.5H7z" />
+    </>
+  ),
+  /* A rising line. Time runs left to right on a chart in either language, so not mirrored. */
+  trending: (
+    <>
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
+    </>
+  ),
+  link: (
+    <>
+      <path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2" />
+      <path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2" />
+    </>
+  ),
+  book: (
+    <>
+      <path d="M12 6.5c-2-1.4-4.6-2-8-2v13c3.4 0 6 .6 8 2 2-1.4 4.6-2 8-2v-13c-3.4 0-6 .6-8 2z" />
+      <path d="M12 6.5v13" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;
+
+/**
+ * Glyphs whose meaning is a direction of travel, and so depends on the writing direction.
+ *
+ * The note at the top of this file always said these mirror themselves in a left-to-right
+ * document, and the stylesheet always had the rule to do it — but nothing ever put the
+ * class on an icon, so the English site drew "forward" pointing backwards on every call
+ * to action. Applying it here, by name, is what makes the promise true for every caller
+ * at once instead of depending on each one remembering.
+ */
+const DIRECTIONAL: ReadonlySet<IconName> = new Set<IconName>([
+  'chevron-back',
+  'chevron-forward',
+  'arrow-forward',
+]);
 
 export function Icon({
   name,
@@ -329,7 +379,7 @@ export function Icon({
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn('shrink-0', className)}
+      className={cn('shrink-0', DIRECTIONAL.has(name) && 'dir-flip', className)}
       {...props}
     >
       {PATHS[name]}

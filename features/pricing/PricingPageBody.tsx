@@ -182,20 +182,37 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
               <p className="text-lead text-muted-foreground mt-5 leading-relaxed">{content.lead}</p>
             </div>
 
-            <section className="mt-12" aria-labelledby="plan-comparison-title">
-              <h2 id="plan-comparison-title" className="text-h3 text-primary font-semibold">
+            {/* No `.reveal` here: the grid inside staggers its own cards, and a reveal
+                on the wrapper would fade the whole block in first and then fade each
+                card in again inside it. */}
+            <div className="mt-12 sm:mt-14">
+              <PricingCards locale={locale} headingLevel="h2" />
+            </div>
+
+            {/*
+              After the cards, not before them. This table used to open the page, so the
+              first thing a reader met on the way to four prices was three paragraphs
+              about choosing between them. The cards answer "how much"; this answers
+              "which one", which is the second question.
+            */}
+            <section className="mt-16 sm:mt-20" aria-labelledby="plan-comparison-title">
+              <h2 id="plan-comparison-title" className="text-h2 text-primary font-bold">
                 {content.comparisonTitle}
               </h2>
-              <p className="text-foreground mt-4 max-w-3xl leading-relaxed">
+              <p className="text-muted-foreground mt-4 max-w-3xl leading-relaxed">
                 {content.comparisonLead}
               </p>
-              <div className="border-border mt-6 overflow-x-auto rounded-xl border">
-                <table className="w-full text-start text-sm">
+              <div className="border-border bg-card shadow-paper mt-7 overflow-x-auto rounded-2xl border">
+                <table className="w-full text-start text-sm sm:text-base">
                   <caption className="sr-only">{content.comparisonTitle}</caption>
-                  <thead className="bg-secondary/25">
+                  <thead className="bg-secondary/40 text-primary">
                     <tr>
                       {content.columns.map((column) => (
-                        <th key={column} scope="col" className="p-4 text-start">
+                        <th
+                          key={column}
+                          scope="col"
+                          className="px-5 py-4 text-start text-sm font-semibold"
+                        >
                           {column}
                         </th>
                       ))}
@@ -203,17 +220,24 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
                   </thead>
                   <tbody>
                     {catalog.map((plan, index) => (
-                      <tr key={plan.code} className="border-border border-t">
-                        <th scope="row" className="p-4 text-start">
+                      <tr
+                        key={plan.code}
+                        className={
+                          plan.highlighted
+                            ? 'border-border bg-accent-soft/30 border-t'
+                            : 'border-border border-t'
+                        }
+                      >
+                        <th scope="row" className="text-primary px-5 py-4 text-start font-semibold">
                           {plan.name}
                         </th>
-                        <td className="p-4 whitespace-nowrap">
+                        <td className="text-primary px-5 py-4 font-[family-name:var(--font-display)] text-lg font-bold whitespace-nowrap tabular-nums">
                           {formatPlanPrice(plan.priceAgorot)}
                         </td>
-                        <td className="p-4">
+                        <td className="px-5 py-4 tabular-nums">
                           {plan.attendeeLimit.toLocaleString(locale === 'he' ? 'he-IL' : 'en-GB')}
                         </td>
-                        <td className="min-w-48 p-4 leading-relaxed">
+                        <td className="text-muted-foreground min-w-48 px-5 py-4 leading-relaxed">
                           {content.suitability[index]}
                         </td>
                       </tr>
@@ -223,25 +247,29 @@ export function PricingPageBody({ locale }: { locale: Locale }) {
               </div>
             </section>
 
-            {/* No `.reveal` here: the grid inside staggers its own cards, and a reveal
-                on the wrapper would fade the whole block in first and then fade each
-                card in again inside it. */}
-            <div className="mt-12">
-              <PricingCards locale={locale} headingLevel="h2" />
-            </div>
-
-            <section className="mt-12" aria-labelledby="plan-preparation-title">
-              <h2 id="plan-preparation-title" className="text-h3 text-primary font-semibold">
+            <section className="mt-16 sm:mt-20" aria-labelledby="plan-preparation-title">
+              <h2 id="plan-preparation-title" className="text-h2 text-primary font-bold">
                 {content.preparationTitle}
               </h2>
-              <ul className="mt-5 list-disc space-y-3 ps-5 leading-relaxed">
-                {content.preparation.map((item) => (
-                  <li key={item}>{item}</li>
+              <ul className="mt-7 grid gap-4 md:grid-cols-2">
+                {content.preparation.map((item, index) => (
+                  <li
+                    key={item}
+                    className="border-border bg-card shadow-paper flex gap-4 rounded-2xl border p-5 leading-relaxed sm:p-6"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="border-accent-strong/30 bg-accent-soft/50 text-accent-strong flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold tabular-nums"
+                    >
+                      {index + 1}
+                    </span>
+                    <span>{item}</span>
+                  </li>
                 ))}
               </ul>
               <Link
                 href={localePath(locale, '/accessibility')}
-                className="text-primary mt-5 inline-flex py-2 underline underline-offset-4"
+                className="text-primary mt-6 inline-flex min-h-11 items-center gap-2 underline underline-offset-4"
               >
                 {content.accessLink}
               </Link>

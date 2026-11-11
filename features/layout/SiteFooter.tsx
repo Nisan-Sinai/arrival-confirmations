@@ -1,11 +1,18 @@
 import Link from 'next/link';
 
+import { buttonClass } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icons';
 import { Container } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AccessibilityWidget } from '@/features/accessibility/AccessibilityWidget';
+import { guideContent } from '@/features/guide/content';
+import { topicPaths, topics } from '@/features/guide/topics';
 import { BrandMark } from '@/features/layout/BrandMark';
 import { localePath, type Locale } from '@/lib/i18n';
 import { PUBLISHER_URL } from '@/lib/seo';
+
+/** The heading over the guides column — the one footer label the dictionary lacks. */
+const GUIDES_HEADING: Record<Locale, string> = { he: 'מדריכים', en: 'Guides' };
 
 /**
  * Site footer.
@@ -39,13 +46,26 @@ export function SiteFooter({ locale }: { locale: Locale }) {
     <>
       <footer className="border-border/70 bg-surface-sand/60 mt-auto border-t">
         <Container>
-          <div className="footer-columns grid gap-10 py-12 sm:grid-cols-[1.4fr_1fr_1fr] sm:gap-8 sm:py-14">
+          {/*
+            Four columns from `lg`, two from `sm`. The guides have a column of their own:
+            they are the pages a first-time host is most likely to be looking for, and
+            before this the only way to reach three of them was from the foot of the
+            landing page.
+          */}
+          <div className="footer-columns grid gap-10 py-12 sm:grid-cols-2 sm:gap-8 sm:py-14 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr]">
             <div className="max-w-sm">
               <p className="text-primary flex items-center gap-2.5 font-[family-name:var(--font-display)] text-lg font-bold">
                 <BrandMark className="size-8" />
                 {site.name}
               </p>
               <p className="text-muted-foreground mt-3 text-sm leading-relaxed">{footer.tagline}</p>
+              <Link
+                href={localePath(locale, '/signup')}
+                className={buttonClass({ size: 'sm', className: 'mt-5' })}
+              >
+                {footer.signup}
+                <Icon name="arrow-forward" className="size-4" />
+              </Link>
             </div>
 
             <nav aria-label={footer.productHeading}>
@@ -53,11 +73,6 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                 {footer.productHeading}
               </p>
               <ul className="mt-3 flex flex-col gap-1">
-                <li>
-                  <Link className={linkClass} href={localePath(locale, '/guide')}>
-                    {locale === 'he' ? 'מדריך אישורי הגעה' : 'RSVP guide'}
-                  </Link>
-                </li>
                 <li>
                   <Link className={linkClass} href={localePath(locale, '/pricing')}>
                     {footer.pricing}
@@ -68,11 +83,26 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                     {footer.login}
                   </Link>
                 </li>
+              </ul>
+            </nav>
+
+            <nav aria-label={GUIDES_HEADING[locale]}>
+              <p className="text-eyebrow text-accent-strong font-semibold">
+                {GUIDES_HEADING[locale]}
+              </p>
+              <ul className="mt-3 flex flex-col gap-1">
                 <li>
-                  <Link className={linkClass} href={localePath(locale, '/signup')}>
-                    {footer.signup}
+                  <Link className={linkClass} href={localePath(locale, '/guide')}>
+                    {guideContent[locale].title}
                   </Link>
                 </li>
+                {topicPaths.map((path) => (
+                  <li key={path}>
+                    <Link className={linkClass} href={localePath(locale, path)}>
+                      {topics[path][locale].title}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </nav>
 
