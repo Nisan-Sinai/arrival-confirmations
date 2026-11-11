@@ -30,15 +30,19 @@ export function NotFoundContent({ locale = defaultLocale }: { locale?: Locale })
     >
       {/*
         The figure itself, very large and very faint, behind the card. It is the one
-        thing on this page a reader recognises before reading anything, so it is drawn —
-        and hidden from assistive technology, because the eyebrow already says it.
+        thing on this page a reader recognises before reading anything.
+
+        Drawn as generated content rather than as a text node, because that is what it
+        is: WCAG exempts pure decoration from the contrast rule, but an accessibility
+        scanner measures every text node it finds and cannot know this one is a
+        watermark. `content` puts the glyphs in the paint and nowhere in the document, so
+        there is nothing to read, announce, select or audit — the eyebrow below states
+        the number for everyone.
       */}
-      <p
+      <div
         aria-hidden="true"
-        className="text-primary/[0.045] pointer-events-none absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 text-center font-[family-name:var(--font-display)] text-[clamp(9rem,38vw,22rem)] leading-none font-bold select-none"
-      >
-        404
-      </p>
+        className="before:text-primary/[0.045] pointer-events-none absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 text-center font-[family-name:var(--font-display)] text-[clamp(9rem,38vw,22rem)] leading-none font-bold select-none before:content-['404']"
+      />
       <div className="w-full max-w-lg text-center">
         <span
           aria-hidden="true"
