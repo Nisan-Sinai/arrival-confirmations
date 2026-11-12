@@ -61,7 +61,7 @@ export function PageHeader({
         )}
       </div>
       {actions !== undefined && (
-        <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">{actions}</div>
+        <div className="flex shrink-0 flex-wrap gap-2 md:justify-end print:hidden">{actions}</div>
       )}
     </header>
   );

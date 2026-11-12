@@ -74,6 +74,7 @@ export const en: Dictionary = {
     homeAria: 'Home — Arrival Confirmations',
     navAria: 'Main navigation',
     pricing: 'Pricing',
+    guide: 'Guide',
     login: 'Log in',
     signup: 'Create an event',
     menuOpen: 'Open menu',
@@ -312,6 +313,31 @@ export const en: Dictionary = {
           question: 'Do guests need to register?',
           answer:
             'No. Guests open the link, fill in their details and confirm — no account, nothing to install.',
+        },
+        {
+          question: 'Can every guest get a personal link?',
+          answer:
+            'Yes, on Premium and Pro. Each guest gets a personal link that you send from your own WhatsApp with a prepared message. You can see who opened the invitation and who has already replied.',
+        },
+        {
+          question: 'Can I import my guest list from Excel?',
+          answer:
+            'Yes. Premium and Pro import Excel, CSV and TSV files, including table, seat, side and meal. On Basic you add guests by hand.',
+        },
+        {
+          question: 'Can a guest change a reply they already sent?',
+          answer:
+            'Yes. A guest who opens the link again and submits the form with the same phone number updates their earlier reply, and the dashboard follows.',
+        },
+        {
+          question: 'Can I print a QR code on a paper invitation?',
+          answer:
+            'Yes. The event page shows a QR code for the invitation link. Download it as an image and print it on the invitation or on a sign, and guests scan it to reply from their phone.',
+        },
+        {
+          question: 'What happens to guest details after the event?',
+          answer:
+            'Guest details are deleted or anonymised automatically at the end of the retention period set out in the privacy policy. They are not passed to third parties for marketing and are not used for advertising.',
         },
       ],
     },

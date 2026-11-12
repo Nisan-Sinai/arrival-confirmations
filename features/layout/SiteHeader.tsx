@@ -39,6 +39,7 @@ export function SiteHeader({
   const target = alternateLocale(locale);
 
   const mobileItems: MobileNavItem[] = [
+    { href: localePath(locale, '/guide'), label: dictionary.header.guide },
     { href: localePath(locale, '/pricing'), label: dictionary.header.pricing },
     { href: localePath(locale, '/login'), label: dictionary.header.login },
     ...(showLanguageSwitch
@@ -77,6 +78,22 @@ export function SiteHeader({
               className="hidden shrink-0 items-center gap-1 sm:flex sm:gap-2"
             >
               {showLanguageSwitch && <LanguageSwitch locale={locale} />}
+              {/*
+                From `md` up only. Between `sm` and `md` the row already holds the mark,
+                the language switch, two links and the call to action; a fifth item there
+                pushed the button off the edge in English, where the labels run longer.
+                The phone sheet and the footer carry the guide at every width.
+              */}
+              <Link
+                href={localePath(locale, '/guide')}
+                className={buttonClass({
+                  variant: 'ghost',
+                  size: 'sm',
+                  className: 'hidden md:inline-flex',
+                })}
+              >
+                {dictionary.header.guide}
+              </Link>
               <Link
                 href={localePath(locale, '/pricing')}
                 className={buttonClass({ variant: 'ghost', size: 'sm' })}

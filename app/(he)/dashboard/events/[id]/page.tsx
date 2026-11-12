@@ -9,13 +9,15 @@ import { Container } from '@/components/ui/layout';
 import { BackLink, MetaItem, PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat';
 import { getEventTypePreset } from '@/config/eventTypes';
+import { PrintButton } from '@/features/admin/PrintButton';
+import { ReplyTrendCard } from '@/features/admin/ReplyTrendCard';
 import { ResponseRateTile } from '@/features/admin/ResponseRateTile';
 import { RsvpList } from '@/features/admin/RsvpList';
 import { ShareInvitation } from '@/features/admin/ShareInvitation';
 import { describeTimeUntilEvent, formatEventDate, formatEventWeekday } from '@/lib/eventDate';
 import { resolveRequestOrigin } from '@/lib/server/origin';
 import { createUserClient } from '@/lib/server/supabase';
-import { computeResponseRate, computeRsvpStats } from '@/services/rsvpStats';
+import { computeReplyTrend, computeResponseRate, computeRsvpStats } from '@/services/rsvpStats';
 
 /**
  * One event's RSVP list (§8).
@@ -98,11 +100,14 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
   // in this product is always — the tile read "not available" on every event until now.
   const rate = computeResponseRate(guests ?? [], rows, event.expected_guests);
   const preset = getEventTypePreset(event.event_type);
+  const trend = computeReplyTrend(rows);
 
   return (
     <main id="main" className="flex-1 py-8 sm:py-12">
       <Container width="wide">
-        <BackLink href="/dashboard">כל האירועים</BackLink>
+        <div className="print:hidden">
+          <BackLink href="/dashboard">כל האירועים</BackLink>
+        </div>
 
         <PageHeader
           className="mt-4"
@@ -128,6 +133,8 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
           }
           actions={
             <>
+              {/* Printing is only worth offering once there is a list to print. */}
+              {rows.length > 0 && <PrintButton />}
               <Link
                 href={`/dashboard/events/${event.id}/guests`}
                 className={buttonClass({ variant: 'outline' })}
@@ -146,7 +153,7 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
           }
         />
 
-        <div className="mt-8">
+        <div className="mt-8 print:hidden">
           <ShareInvitation
             publicId={event.public_id}
             origin={await resolveRequestOrigin()}
@@ -201,6 +208,8 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
               expectedGuests={event.expected_guests}
             />
           </div>
+          {/* The pace of the replies — pointless, and so absent, before the first one. */}
+          {rows.length > 0 && <ReplyTrendCard trend={trend} />}
         </section>
 
         <section aria-labelledby="replies" className="mt-12">

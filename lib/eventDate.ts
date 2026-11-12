@@ -36,16 +36,50 @@ function toParts(isoDate: string | null): { y: number; m: number; d: number } | 
   return { y, m, d };
 }
 
+/**
+ * The instant a wall-clock date and time denote in the event's zone, as epoch
+ * milliseconds.
+ *
+ * Built from numeric components, never from a string, and the difference is a bug this
+ * product shipped. `new TZDate('2026-12-15T19:30:00', zone)` reads as "19:30 in that
+ * zone" and is not: a string without an offset is parsed in the *server's* zone, and the
+ * zone argument only decides how the result is displayed. The servers run in UTC, so a
+ * chuppah at 19:30 in Israel became 19:30 UTC — and the countdown on every invitation
+ * ran two hours late in winter and three in summer, still showing time to spare while
+ * the ceremony was under way.
+ *
+ * The numeric constructor interprets its arguments in the zone it is handed, whatever
+ * the machine around it is set to, so the same call is right on Vercel, in CI and on a
+ * laptop in any country.
+ *
+ * `time` is `HH:MM` or `HH:MM:SS`, as Postgres returns a `time` column; a missing part
+ * counts as zero.
+ */
+export function eventZoneInstant(isoDate: string, time = '00:00:00'): number {
+  const [year, month, day] = isoDate.split('-').map(Number) as [number, number, number];
+  // Padding the string supplies the missing parts, so there is no optional element to
+  // default and no branch that only a malformed value could take.
+  const [hour, minute, second] = `${time}:00:00`.split(':').map(Number) as [number, number, number];
+  return new TZDate(
+    year,
+    month - 1,
+    day,
+    hour,
+    minute,
+    Math.trunc(second),
+    EVENT_TIMEZONE,
+  ).getTime();
+}
+
 /** `2026-09-04` → `4.9.2026`. */
 export function formatEventDate(isoDate: string | null): string {
   if (toParts(isoDate) === null) return '—';
-  const zoned = new TZDate(`${isoDate}T00:00:00`, EVENT_TIMEZONE);
   return new Intl.DateTimeFormat(APP_LOCALE, {
     day: 'numeric',
     month: 'numeric',
     year: 'numeric',
     timeZone: EVENT_TIMEZONE,
-  }).format(zoned);
+  }).format(eventZoneInstant(isoDate!));
 }
 
 /** `2026-09-04` → `שישי`. */
@@ -54,7 +88,7 @@ export function formatEventWeekday(isoDate: string | null): string {
   // `getDay()` is 0–6 by definition and the tuple has seven entries, so a `?? ''`
   // fallback here would be a branch no input can ever take — dead code that reads as
   // caution. The assertion says the same thing honestly.
-  return HEBREW_WEEKDAYS[new TZDate(`${isoDate}T00:00:00`, EVENT_TIMEZONE).getDay()]!;
+  return HEBREW_WEEKDAYS[new TZDate(eventZoneInstant(isoDate!), EVENT_TIMEZONE).getDay()]!;
 }
 
 /** `2026-09-04` → `ד׳ באלול תשפ״ו`. */
@@ -73,14 +107,14 @@ export function formatHebrewDate(isoDate: string | null): string {
  */
 export function daysUntilEvent(isoDate: string | null, now: Date = new Date()): number | null {
   if (toParts(isoDate) === null) return null;
-  const startOfEventDay = new TZDate(`${isoDate}T00:00:00`, EVENT_TIMEZONE).getTime();
+  const startOfEventDay = eventZoneInstant(isoDate!);
   const todayIso = new Intl.DateTimeFormat('en-CA', {
     timeZone: EVENT_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(now);
-  const startOfToday = new TZDate(`${todayIso}T00:00:00`, EVENT_TIMEZONE).getTime();
+  const startOfToday = eventZoneInstant(todayIso);
   return Math.round((startOfEventDay - startOfToday) / 86_400_000);
 }
 

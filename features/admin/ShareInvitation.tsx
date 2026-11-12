@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
 import { renderTemplate, UI_MESSAGES, WHATSAPP_INVITE_TEMPLATE } from '@/config/messages';
+import { InvitationQrCode } from '@/features/admin/InvitationQrCode';
 
 /** Sending the invitation and the host's most common event actions. */
 export function ShareInvitation({
@@ -120,6 +121,8 @@ export function ShareInvitation({
           </a>
         </div>
       </div>
+
+      <InvitationQrCode url={inviteUrl} />
 
       <p className="text-muted-foreground mt-4 text-xs leading-relaxed">
         בעמוד המוזמנים אפשר להוסיף ידנית, לייבא מהטלפון, ולנהל את כל הכלים המתקדמים — Excel, שליחה

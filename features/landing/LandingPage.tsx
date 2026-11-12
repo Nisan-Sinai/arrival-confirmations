@@ -4,12 +4,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { buttonClass } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icons';
+import { Icon } from '@/components/ui/icons';
 import { Container, Rule } from '@/components/ui/layout';
 import { getDictionary } from '@/config/dictionary';
 import { AuthFragmentNotice } from '@/features/auth/AuthFragmentNotice';
 import { Candlelight } from '@/features/landing/Candlelight';
+import { Comparison } from '@/features/landing/Comparison';
+import { FeatureBento } from '@/features/landing/FeatureBento';
 import { InteractiveRsvpDemo } from '@/features/landing/InteractiveRsvpDemo';
 import { WrittenHeading } from '@/features/landing/WrittenHeading';
 import { writingDuration } from '@/features/landing/writingPace';
@@ -21,8 +22,41 @@ import { languageAlternates, localePath, openGraphLocale, type Locale } from '@/
 import { structuredData } from '@/lib/structuredData';
 import { supportWhatsAppUrl } from '@/lib/supportContact';
 
-/** One glyph per benefit, in the order the dictionary lists them. */
-const BENEFIT_ICONS: readonly IconName[] = ['calendar', 'dashboard', 'globe'];
+/**
+ * Copy that belongs to this page alone: the hero's second button, the mock replies
+ * floating beside the sample invitation, and the prompt beside the questions.
+ */
+const COPY: Record<
+  Locale,
+  {
+    readonly demoCta: string;
+    readonly tagline: string;
+    readonly replyTitle: string;
+    readonly replyMeta: string;
+    readonly faqLead: string;
+    readonly faqContact: string;
+    readonly guidesHeading: string;
+  }
+> = {
+  he: {
+    demoCta: 'צפו בהדגמה חיה',
+    tagline: 'ממוקדים במה שחשוב באמת: ליהנות מהאירוע שלכם.',
+    replyTitle: 'משפחת לוי אישרה הגעה',
+    replyMeta: '4 מגיעים · לפני דקה',
+    faqLead: 'התשובות לשאלות שבעלי שמחה שואלים לפני שהם שולחים את ההזמנה הראשונה.',
+    faqContact: 'שאלה אחרת? כתבו לנו',
+    guidesHeading: 'מדריכים לקריאה נוספת',
+  },
+  en: {
+    demoCta: 'Try the live demo',
+    tagline: 'More time celebrating. Less time chasing replies.',
+    replyTitle: 'The Levi family confirmed',
+    replyMeta: '4 attending · a minute ago',
+    faqLead: 'The answers hosts look for before they send their first invitation.',
+    faqContact: 'Something else? Message us',
+    guidesHeading: 'Guides for further reading',
+  },
+};
 
 /**
  * The marketing home page, shared by both locales (§12).
@@ -64,8 +98,9 @@ export function buildLandingMetadata(locale: Locale): Metadata {
 
 export function LandingPage({ locale }: { locale: Locale }) {
   const { landing } = getDictionary(locale);
-  const { hero, invitationPreview: preview, benefits, plans, faq, occasions, closing } = landing;
+  const { hero, invitationPreview: preview, plans, faq, occasions, closing } = landing;
   const dictionary = getDictionary(locale);
+  const copy = COPY[locale];
   const countdown: readonly [string, string][] = [
     ['42', preview.countdownDays],
     ['06', preview.countdownHours],
@@ -114,7 +149,16 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     className="block text-[#f1cf96]"
                   />
                 </h1>
-                <p className="enter enter-3 mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">
+                {/*
+                  Deliberately not `enter`. This paragraph is the largest block of text in
+                  the first screen, which makes it the page's Largest Contentful Paint —
+                  but only if it is painted with the first frame. Faded in from
+                  `opacity: 0` it was not a candidate at all, the title's words are each
+                  their own small box, and the LCP fell to whatever appeared last: the
+                  cookie notice, 3.9 seconds in. Left still, it paints at once and the
+                  metric measures the hero.
+                */}
+                <p className="mx-auto mt-7 max-w-xl text-base leading-8 text-white/75 sm:text-lg lg:mx-0">
                   {hero.lead}
                 </p>
                 <div className="enter enter-4 mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
@@ -133,8 +177,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     href="#demo"
                     className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/[0.06] px-7 font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e9c892]"
                   >
-                    <Icon name="eye" className="size-5" />{' '}
-                    {locale === 'he' ? 'צפו בהדגמה חיה' : 'Try the live demo'}
+                    <Icon name="eye" className="size-5" /> {copy.demoCta}
                   </Link>
                 </div>
                 <ul className="enter enter-5 mt-9 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-white/75 lg:justify-start">
@@ -145,11 +188,7 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-8 text-sm text-white/55">
-                  {locale === 'he'
-                    ? 'ממוקדים במה שחשוב באמת: ליהנות מהאירוע שלכם.'
-                    : 'More time celebrating. Less time chasing replies.'}
-                </p>
+                <p className="mt-8 text-sm text-white/55">{copy.tagline}</p>
               </div>
               <div className="enter enter-3 relative mx-auto w-full max-w-[425px] min-w-0 pt-7 pb-7 sm:px-4 lg:max-w-none">
                 <div
@@ -211,6 +250,26 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     </div>
                   </div>
                 </TiltCard>
+                {/*
+                  A reply arriving, opposite the caption chip below. Mock data like the
+                  card it sits beside, and hidden from assistive technology with it: a
+                  screen reader has no use for a fictional family's answer.
+                */}
+                <div
+                  aria-hidden="true"
+                  className="hero-float absolute start-0 top-2 hidden rounded-2xl border border-white/15 bg-[#3d2430]/95 px-3.5 py-2.5 text-white shadow-[0_18px_40px_-18px_rgba(0,0,0,0.7)] min-[420px]:block sm:start-2 lg:-start-4"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="relative flex size-2.5 shrink-0">
+                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400/70" />
+                      <span className="relative inline-flex size-2.5 rounded-full bg-emerald-400" />
+                    </span>
+                    <div>
+                      <span className="block text-xs font-bold">{copy.replyTitle}</span>
+                      <span className="block text-[11px] text-white/70">{copy.replyMeta}</span>
+                    </div>
+                  </div>
+                </div>
                 <div className="absolute end-0 bottom-0 rounded-2xl border border-[#e7d3b2] bg-white px-4 py-3 text-[#492431] shadow-xl sm:end-2">
                   <div className="flex items-center gap-3">
                     <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
@@ -260,121 +319,17 @@ export function LandingPage({ locale }: { locale: Locale }) {
 
         <RsvpFlowSteps locale={locale} />
 
+        <FeatureBento locale={locale} />
+
+        <Comparison locale={locale} />
+
         {/*
-          The `reveal` moved off the <section> and onto the content below each heading.
-
-          It cannot stay on an ancestor of a scroll-driven heading: `view()` measures the
-          word's own position in the viewport, and a parent that is translating the word
-          upward is changing the very quantity the word's progress is computed from. The
-          heading now carries its own arrival and the content below carries the reveal, so
-          the two never feed into each other.
+          `reveal` sits on the content under each heading and never on the section. A
+          scroll-driven heading measures its own position in the viewport, and an ancestor
+          that is translating it would be moving the very thing its progress is measured
+          from — so the heading carries its own arrival and the content carries the reveal.
         */}
-        <section className="py-16 sm:py-20">
-          <Container width="wide">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="text-eyebrow text-accent-strong font-semibold">{benefits.eyebrow}</p>
-              <h2 className="text-h1 text-primary mt-3 font-bold">
-                <WrittenHeading text={benefits.title} trigger="scroll" />
-              </h2>
-            </div>
-            <div className="reveal-stagger mt-10 grid gap-5 md:grid-cols-3">
-              {benefits.items.map((benefit, index) => (
-                // Five degrees, not the hero's nine: the same angle on a short wide box
-                // reads as the grid being crooked rather than as a card being tipped.
-                <TiltCard key={benefit.title} degrees={5} className="reveal h-full">
-                  <Card padding="lg" interactive className="h-full">
-                    <span
-                      aria-hidden="true"
-                      className="border-accent-strong/30 bg-accent-soft/50 text-accent-strong flex size-12 items-center justify-center rounded-2xl border"
-                    >
-                      <Icon name={BENEFIT_ICONS[index] ?? 'check'} className="size-6" />
-                    </span>
-                    <h3 className="text-h3 text-primary mt-5 font-semibold">{benefit.title}</h3>
-                    <p className="text-muted-foreground mt-3 leading-relaxed">{benefit.body}</p>
-                  </Card>
-                </TiltCard>
-              ))}
-            </div>
-          </Container>
-        </section>
-
-        <section className="relative overflow-hidden bg-white py-16 sm:py-24">
-          <Container width="wide">
-            <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-              <div>
-                <p className="text-accent-strong mb-3 text-sm font-bold tracking-widest">
-                  {locale === 'he' ? 'פשוט. ברור. בשליטתכם.' : 'Simple. Clear. In your hands.'}
-                </p>
-                <h2 className="text-primary font-[family-name:var(--font-display)] text-3xl leading-tight font-bold sm:text-4xl">
-                  {locale === 'he'
-                    ? 'הראש שלכם באירוע. אנחנו נעזור לעשות סדר ברשימה.'
-                    : 'Focus on your celebration. Keep the guest list under control.'}
-                </h2>
-                <p className="text-muted-foreground mt-5 text-base leading-8">
-                  {locale === 'he'
-                    ? 'במקום לעבור בין הודעות, גיליונות ושיחות — שולחים הזמנה אחת ורואים את המידע החשוב במקום מסודר. המערכת מתאימה גם למי שלא אוהב להתעסק בטכנולוגיה.'
-                    : 'Skip the spreadsheets, calls and endless message threads. Share one invitation and keep the information you need together in a clear overview.'}
-                </p>
-                <Link
-                  href={localePath(locale, '/signup')}
-                  className={buttonClass({ variant: 'outline', size: 'lg', className: 'mt-7' })}
-                >
-                  {hero.ctaPrimary}
-                  <Icon name="arrow-forward" className="size-4" />
-                </Link>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  {
-                    icon: 'send' as const,
-                    title: locale === 'he' ? 'שיתוף נוח בוואטסאפ' : 'Share via WhatsApp',
-                    body:
-                      locale === 'he'
-                        ? 'האורחים מקבלים קישור פשוט ויכולים להשיב מהטלפון.'
-                        : 'Guests receive a simple link and reply from their phones.',
-                  },
-                  {
-                    icon: 'dashboard' as const,
-                    title: locale === 'he' ? 'כל התשובות מול העיניים' : 'Replies in one place',
-                    body:
-                      locale === 'he'
-                        ? 'מי מגיע, מי מתלבט וכמה אנשים צפויים להגיע.'
-                        : 'See who is attending, undecided and how many guests to expect.',
-                  },
-                  {
-                    icon: 'shield' as const,
-                    title: locale === 'he' ? 'בלי הרשמה לאורחים' : 'No guest accounts',
-                    body:
-                      locale === 'he'
-                        ? 'הקישור נפתח בדפדפן, בלי אפליקציה או סיסמה.'
-                        : 'Guests can respond in a browser, with no app or password.',
-                  },
-                  {
-                    icon: 'credit-card' as const,
-                    title: locale === 'he' ? 'מחיר ידוע מראש' : 'Clear, upfront pricing',
-                    body:
-                      locale === 'he'
-                        ? 'בודקים בחינם, ולאחר מכן בוחרים מסלול בתשלום חד-פעמי.'
-                        : 'Try it free, then choose a one-time payment plan.',
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-[1.5rem] border border-[#ede2dc] bg-[#fcf9f5] p-6 transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
-                  >
-                    <span className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-[#f1dfc6] text-[#673545]">
-                      <Icon name={item.icon} className="size-6" />
-                    </span>
-                    <h3 className="text-primary text-lg font-bold">{item.title}</h3>
-                    <p className="text-muted-foreground mt-3 text-sm leading-7">{item.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Container>
-        </section>
-
-        <section className="bg-secondary/25 py-16 sm:py-20">
+        <section id="pricing" className="bg-secondary/25 scroll-mt-20 py-16 sm:py-24">
           <Container width="wide">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-eyebrow text-accent-strong font-semibold">{plans.eyebrow}</p>
@@ -389,56 +344,96 @@ export function LandingPage({ locale }: { locale: Locale }) {
           </Container>
         </section>
 
-        <section className="py-16 sm:py-20">
-          <Container>
-            <div className="mx-auto max-w-3xl">
-              <p className="text-eyebrow text-accent-strong text-center font-semibold">
-                {faq.eyebrow}
-              </p>
-              <h2 className="text-h1 text-primary mt-3 text-center font-bold">
-                <WrittenHeading text={faq.title} trigger="scroll" />
-              </h2>
-              <div className="reveal-stagger mt-9 space-y-3">
-                {faq.items.map((item) => (
-                  <details
-                    key={item.question}
-                    className="faq-item reveal border-border bg-card shadow-paper open:border-accent-strong/30 rounded-2xl border px-5 transition-colors duration-[--duration-fast]"
-                  >
-                    <summary className="text-primary flex cursor-pointer items-center justify-between gap-4 rounded-lg py-4 font-semibold">
-                      {item.question}
-                      <span
-                        aria-hidden="true"
-                        className="faq-chevron border-border text-accent-strong flex size-8 shrink-0 items-center justify-center rounded-full border transition-transform duration-[--duration-base] ease-[--ease-out]"
-                      >
-                        <Icon name="chevron-down" strokeWidth={2} className="size-4" />
-                      </span>
-                    </summary>
-                    <p className="faq-body text-muted-foreground pb-5 leading-relaxed">
-                      {item.answer}
-                    </p>
-                  </details>
-                ))}
+        <section id="faq" className="scroll-mt-20 py-16 sm:py-24">
+          <Container width="wide">
+            {/*
+              Two columns once there is room: the heading and the way to ask something
+              else stay beside the list while it scrolls, instead of nine questions
+              running down a narrow strip in the middle of a wide screen.
+            */}
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+              <div className="lg:sticky lg:top-28 lg:self-start">
+                <p className="text-eyebrow text-accent-strong font-semibold">{faq.eyebrow}</p>
+                <h2 className="text-h1 text-primary mt-3 font-bold">
+                  <WrittenHeading text={faq.title} trigger="scroll" />
+                </h2>
+                <p className="text-muted-foreground mt-4 max-w-md leading-relaxed">
+                  {copy.faqLead}
+                </p>
+                <a
+                  href={supportWhatsAppUrl(
+                    dictionary.pricing.whatsappIntro.replace('{plan}', 'Basic'),
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonClass({ variant: 'outline', className: 'mt-6' })}
+                >
+                  <Icon name="whatsapp" />
+                  {copy.faqContact}
+                  <span className="sr-only"> ({dictionary.a11y.externalLink})</span>
+                </a>
               </div>
-              <GuideLinks locale={locale} />
+
+              <div>
+                <div className="reveal-stagger space-y-3">
+                  {faq.items.map((item) => (
+                    <details
+                      key={item.question}
+                      className="faq-item reveal border-border bg-card shadow-paper open:border-accent-strong/40 open:shadow-raised rounded-2xl border px-5 transition-[border-color,box-shadow] duration-[--duration-fast] sm:px-6"
+                    >
+                      <summary className="text-primary flex cursor-pointer items-center justify-between gap-4 rounded-lg py-4 text-base font-semibold sm:py-5 sm:text-lg">
+                        {item.question}
+                        <span
+                          aria-hidden="true"
+                          className="faq-chevron border-border text-accent-strong flex size-8 shrink-0 items-center justify-center rounded-full border transition-transform duration-[--duration-base] ease-[--ease-out]"
+                        >
+                          <Icon name="chevron-down" strokeWidth={2} className="size-4" />
+                        </span>
+                      </summary>
+                      <p className="faq-body text-muted-foreground pb-5 leading-relaxed">
+                        {item.answer}
+                      </p>
+                    </details>
+                  ))}
+                </div>
+
+                <h3 className="text-primary mt-10 text-lg font-semibold">{copy.guidesHeading}</h3>
+                <GuideLinks locale={locale} />
+              </div>
             </div>
           </Container>
         </section>
 
-        {/* The last thing on the page is the first thing it asked for. */}
+        {/*
+          The last thing on the page is the first thing it asked for — and it is set on
+          the same wine ground as the hero, so the page closes the way it opened.
+        */}
         <section className="pb-16 sm:pb-24">
           <Container width="wide">
-            <div className="reveal border-accent-strong/30 from-accent-soft/60 via-card to-card shadow-raised relative overflow-hidden rounded-3xl border bg-gradient-to-br px-6 py-12 text-center sm:px-12 sm:py-16">
-              <div aria-hidden="true" className="hero-glow opacity-40" />
+            <div className="reveal relative isolate overflow-clip rounded-[2rem] bg-[#301b26] px-6 py-14 text-center text-white sm:px-12 sm:py-20">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_20%_0%,rgba(218,174,113,0.2),transparent_50%),radial-gradient(ellipse_at_85%_100%,rgba(151,85,94,0.32),transparent_55%)]"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#d9aa71]/70 to-transparent"
+              />
               <div className="relative mx-auto max-w-2xl">
-                <p className="text-eyebrow text-accent-strong font-semibold">{closing.eyebrow}</p>
-                <h2 className="text-h2 text-primary mt-3 font-bold">{closing.title}</h2>
-                <p className="text-lead text-muted-foreground mt-4">{closing.body}</p>
-                <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <p className="text-eyebrow font-semibold text-[#f1d29e]">{closing.eyebrow}</p>
+                <h2 className="text-h2 mt-3 font-bold text-white">{closing.title}</h2>
+                <p className="text-lead mt-4 text-white/75">{closing.body}</p>
+                <div className="mt-9 flex flex-wrap justify-center gap-3">
                   <Link
                     href={localePath(locale, '/signup')}
-                    className={buttonClass({ size: 'lg' })}
+                    className={buttonClass({
+                      variant: 'gold',
+                      size: 'lg',
+                      className:
+                        'border-[#e6c390] bg-[#e9c892] text-[#381c26] shadow-[0_12px_35px_-13px_rgba(240,202,148,0.45)] hover:bg-[#f2d9ad]',
+                    })}
                   >
-                    {closing.cta}
+                    {closing.cta} <Icon name="arrow-forward" className="size-4" />
                   </Link>
                   <a
                     href={supportWhatsAppUrl(
@@ -446,13 +441,21 @@ export function LandingPage({ locale }: { locale: Locale }) {
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={buttonClass({ variant: 'outline', size: 'lg' })}
+                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-white/35 bg-white/[0.06] px-7 font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e9c892]"
                   >
-                    <Icon name="whatsapp" />
+                    <Icon name="whatsapp" className="size-5" />
                     {closing.secondary}
                     <span className="sr-only"> ({dictionary.a11y.externalLink})</span>
                   </a>
                 </div>
+                <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white/70">
+                  {hero.facts.map((fact) => (
+                    <li key={fact} className="flex items-center gap-2">
+                      <Icon name="check-circle" className="size-4 text-[#e9c892]" />
+                      {fact}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </Container>

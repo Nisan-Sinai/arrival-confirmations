@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeResponseRate, computeRsvpStats } from '@/services/rsvpStats';
+import { computeReplyTrend, computeResponseRate, computeRsvpStats } from '@/services/rsvpStats';
 import type { Database } from '@/types/database.types';
 
 type Rsvp = Database['public']['Tables']['rsvps']['Row'];
@@ -246,5 +246,122 @@ describe('computeResponseRate', () => {
     );
     // 1/3 is 33.33…, and a dashboard showing "33.333333%" is a bug in presentation.
     expect(rate.percentage).toBe(33);
+  });
+});
+
+describe('receivedToday across the winter clock', () => {
+  /**
+   * Israel is at +02:00 from late October to late March. "Midnight" used to be built
+   * with a literal `+03:00`, which put it at 23:00 the evening before for half the
+   * year — so a reply sent in that last hour of yesterday was reported as today's.
+   */
+  const now = new Date('2026-12-15T12:00:00+02:00');
+
+  it('does not count the last hour of yesterday as today', () => {
+    const stats = computeRsvpStats([rsvp({ submitted_at: '2026-12-14T23:30:00+02:00' })], now);
+    expect(stats.receivedToday).toBe(0);
+  });
+
+  it('counts a reply from just after midnight', () => {
+    const stats = computeRsvpStats([rsvp({ submitted_at: '2026-12-15T00:05:00+02:00' })], now);
+    expect(stats.receivedToday).toBe(1);
+  });
+});
+
+describe('computeReplyTrend', () => {
+  const now = new Date('2026-08-15T12:00:00+03:00');
+
+  it('returns one entry per day, oldest first, ending today', () => {
+    const trend = computeReplyTrend([], now, 5);
+    expect(trend.days.map((day) => day.date)).toEqual([
+      '2026-08-11',
+      '2026-08-12',
+      '2026-08-13',
+      '2026-08-14',
+      '2026-08-15',
+    ]);
+    expect(trend.days.every((day) => day.replies === 0)).toBe(true);
+    expect(trend.total).toBe(0);
+    // Nothing arrived, so there is no busiest day to name.
+    expect(trend.peak).toBeNull();
+  });
+
+  it('defaults to a fortnight', () => {
+    const trend = computeReplyTrend([], now);
+    expect(trend.days).toHaveLength(14);
+    expect(trend.days[0]!.date).toBe('2026-08-02');
+    expect(trend.days[13]!.date).toBe('2026-08-15');
+  });
+
+  it('buckets replies by the day they arrived in Jerusalem, not in UTC', () => {
+    const trend = computeReplyTrend(
+      [
+        rsvp({ submitted_at: '2026-08-14T09:00:00+03:00' }),
+        rsvp({ submitted_at: '2026-08-14T18:00:00+03:00' }),
+        // 22:30 UTC on the 14th is already 01:30 on the 15th in Jerusalem.
+        rsvp({ submitted_at: '2026-08-14T22:30:00Z' }),
+      ],
+      now,
+      3,
+    );
+    expect(trend.days).toEqual([
+      { date: '2026-08-13', replies: 0 },
+      { date: '2026-08-14', replies: 2 },
+      { date: '2026-08-15', replies: 1 },
+    ]);
+    expect(trend.total).toBe(3);
+    expect(trend.peak).toEqual({ date: '2026-08-14', replies: 2 });
+  });
+
+  it('leaves replies older than the window out of the total', () => {
+    const trend = computeReplyTrend(
+      [
+        rsvp({ submitted_at: '2026-07-01T09:00:00+03:00' }),
+        rsvp({ submitted_at: '2026-08-15T09:00:00+03:00' }),
+      ],
+      now,
+      7,
+    );
+    expect(trend.total).toBe(1);
+    expect(trend.peak).toEqual({ date: '2026-08-15', replies: 1 });
+  });
+
+  it('names the earliest of two equally busy days as the peak', () => {
+    const trend = computeReplyTrend(
+      [
+        rsvp({ submitted_at: '2026-08-13T09:00:00+03:00' }),
+        rsvp({ submitted_at: '2026-08-15T09:00:00+03:00' }),
+      ],
+      now,
+      3,
+    );
+    expect(trend.peak).toEqual({ date: '2026-08-13', replies: 1 });
+  });
+
+  /**
+   * The window must hold every calendar day exactly once across a clock change. Israel
+   * moved its clocks back on 25 October 2026, a 25-hour day; stepping back in 24-hour
+   * strides from midnight would land on the same date twice there.
+   */
+  it('neither skips nor repeats a day across the autumn clock change', () => {
+    const trend = computeReplyTrend([], new Date('2026-10-27T12:00:00+02:00'), 5);
+    expect(trend.days.map((day) => day.date)).toEqual([
+      '2026-10-23',
+      '2026-10-24',
+      '2026-10-25',
+      '2026-10-26',
+      '2026-10-27',
+    ]);
+  });
+
+  it('holds every day across the spring clock change too', () => {
+    // Clocks went forward on 27 March 2026, a 23-hour day.
+    const trend = computeReplyTrend([], new Date('2026-03-29T12:00:00+03:00'), 4);
+    expect(trend.days.map((day) => day.date)).toEqual([
+      '2026-03-26',
+      '2026-03-27',
+      '2026-03-28',
+      '2026-03-29',
+    ]);
   });
 });

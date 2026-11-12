@@ -83,6 +83,8 @@ export type Dictionary = {
     /** Accessible name of the navigation region. */
     navAria: string;
     pricing: string;
+    /** The link to the RSVP guide — the one long-form page a first-time host looks for. */
+    guide: string;
     login: string;
     signup: string;
     /** The hamburger's accessible name, open and closed. */
@@ -307,12 +309,12 @@ export type Dictionary = {
     faq: {
       eyebrow: string;
       title: string;
-      items: readonly [
-        { question: string; answer: string },
-        { question: string; answer: string },
-        { question: string; answer: string },
-        { question: string; answer: string },
-      ];
+      /**
+       * A list rather than a fixed tuple: the same items feed the visible accordion, the
+       * `FAQPage` structured data and `llms-full.txt`, and the dictionary test already
+       * holds the two languages to the same length item by item.
+       */
+      items: readonly { question: string; answer: string }[];
     };
     /**
      * The strip of occasions under the hero. Eleven kinds of event, in the order the

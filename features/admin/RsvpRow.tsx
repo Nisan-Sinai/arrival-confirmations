@@ -64,8 +64,8 @@ function Cell({
     <div className={className}>
       {/* Visible while the row is stacked, hidden once the columns line up under the
           header at lg — where repeating it in every row would be noise. */}
-      <span className="text-muted-foreground block text-xs lg:sr-only">{label}</span>
-      <span className="mt-0.5 block lg:mt-0">{children}</span>
+      <span className="text-muted-foreground block text-xs lg:sr-only print:sr-only">{label}</span>
+      <span className="mt-0.5 block lg:mt-0 print:mt-0">{children}</span>
     </div>
   );
 }
@@ -79,8 +79,13 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
   const total = rsvp.adults_count + rsvp.children_count + rsvp.babies_count;
 
   return (
-    <li className="lg:hover:bg-secondary/25 p-4 transition-colors lg:px-4 lg:py-3">
-      <div className="grid gap-3 lg:grid-cols-[1.4fr_1.1fr_0.8fr_0.9fr_1.5fr_auto] lg:items-center lg:gap-4">
+    <li className="lg:hover:bg-secondary/25 p-4 transition-colors lg:px-4 lg:py-3 print:break-inside-avoid print:px-2 print:py-2">
+      {/*
+        On paper the row is always the aligned form, whatever the screen was showing: a
+        printed page is narrower than the `lg` breakpoint, so without the `print:` columns
+        a three-hundred-reply list came out as three hundred stacked cards.
+      */}
+      <div className="grid gap-3 lg:grid-cols-[1.4fr_1.1fr_0.8fr_0.9fr_1.5fr_auto] lg:items-center lg:gap-4 print:grid-cols-[1.4fr_1.1fr_0.8fr_0.7fr_1.6fr] print:items-center print:gap-3">
         <Cell label="שם">
           <span className="text-foreground font-semibold">{rsvp.full_name}</span>
         </Cell>
@@ -128,7 +133,7 @@ export function RsvpRow({ rsvp, eventId }: { rsvp: RsvpRowData; eventId: string 
           </span>
         </Cell>
 
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-1 print:hidden">
           <IconButton
             compact
             label={`עריכת התשובה של ${rsvp.full_name}`}

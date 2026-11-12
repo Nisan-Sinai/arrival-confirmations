@@ -1214,15 +1214,6 @@
     animation: faq-open var(--duration-base) var(--ease-out) both;
   }
 
-  /**
-   * The footer's upper tier is a product website's footer, and an invitation is not a
-   * product website: under `/e/…` and `/invite` only the credit and legal bar remain.
-   * The invitation `<main>` is the one element carrying `data-invitation-style`.
-   */
-  body:has([data-invitation-style]) .footer-columns {
-    display: none;
-  }
-
   /** The auth panel's warm glow — the hero's wash, on ink. */
   .auth-aside-glow {
     position: absolute;
@@ -1248,6 +1239,39 @@
   }
 
   /**
+   * The reply chip beside the hero's sample invitation, bobbing a few pixels.
+   *
+   * `translate` rather than `transform`, so it composes with the entrance animation on
+   * the column it sits in instead of replacing it. Six pixels over six seconds: the
+   * chip should look like it is resting on air, not like it is trying to be noticed.
+   */
+  .hero-float {
+    animation: hero-float 6s var(--ease-in-out) infinite alternate;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-float,
+    .hero-float .animate-ping {
+      animation: none;
+    }
+  }
+
+  /**
+   * The stage a feature drawing sits on.
+   *
+   * A wash of blush from one corner and gold from the other over the sand surface — the
+   * same two lights the hero uses, at a fraction of the strength. It separates the
+   * drawing from the text below it without a second border, and gives a row of tiles
+   * one shared light source rather than eight flat panels.
+   */
+  .bento-art {
+    background:
+      radial-gradient(60% 90% at 100% 0%, oklch(0.9 0.05 82 / 0.5), transparent 70%),
+      radial-gradient(55% 80% at 0% 100%, oklch(0.94 0.02 22 / 0.9), transparent 70%),
+      var(--color-surface-sand);
+  }
+
+  /**
    * A soft grid behind the console pages, so the app surface reads as a workspace and
    * not as the same cream field the marketing page sits on. Two 1px lines at a very low
    * alpha, fading out downward so the first screen has it and a long list does not.
@@ -1261,6 +1285,32 @@
       100% 100%,
       32px 32px,
       32px 32px;
+  }
+}
+
+/**
+ * The footer's upper tier is a product website's footer, and an invitation is not a
+ * product website: under `/e/…` and `/invite` only the credit and legal bar remain.
+ * The invitation `<main>` is the one element carrying `data-invitation-style`.
+ *
+ * Deliberately outside `@layer components`, and that is the fix rather than a style
+ * choice. The element is laid out by a Tailwind `grid` utility, and cascade layers are
+ * ordered before specificity is consulted: any rule in `utilities` beats every rule in
+ * `components`, however specific. Written inside the layer, this `display: none` lost to
+ * `.grid` on every invitation ever served, and guests at a family's simcha were shown the
+ * product's sitemap. Unlayered rules outrank all layers, which is the one place this can
+ * live and still win.
+ */
+body:has([data-invitation-style]) .footer-columns {
+  display: none;
+}
+
+@keyframes hero-float {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -6px;
   }
 }
 
@@ -1648,67 +1698,175 @@
   }
 }
 
-/* Optional analytics: equal choices, keyboard focus and no tracking before consent. */
+/**
+ * Optional analytics: equal choices, keyboard focus and no tracking before consent.
+ *
+ * The banner used to be a navy slab with blue links — the one object on the site drawn
+ * in another product's colours — and it was also the page's Largest Contentful Paint:
+ * it mounts after hydration and its paragraph was the biggest block of text on a phone,
+ * so the landing page's LCP was the cookie notice, 3.9 seconds in. It is now paper and
+ * ink like everything around it, and small enough that the hero's own copy, painted
+ * with the first frame, stays the largest thing on the screen.
+ *
+ * The two answers are deliberately identical in weight. A filled "accept" beside an
+ * outlined "decline" is the dark pattern consent law exists to stop; neither button
+ * here is the primary one.
+ */
 .analytics-privacy {
+  background-color: color-mix(in oklab, var(--color-surface-sand) 60%, var(--color-background));
+  padding: 0 1rem 1rem;
   text-align: center;
-  padding: 12px;
-  font-size: 14px;
+  font-size: 0.8125rem;
 }
+
 .analytics-settings {
-  padding: 8px 12px;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 9999px;
+  color: var(--color-muted-foreground);
   text-decoration: underline;
+  text-underline-offset: 4px;
   cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
 }
+
+.analytics-settings:hover {
+  color: var(--color-primary);
+}
+
 .analytics-consent {
   position: fixed;
-  inset-inline: 16px;
-  bottom: 16px;
+  inset-inline: 0.75rem;
+  bottom: 0.75rem;
   z-index: 80;
-  max-width: 680px;
-  margin-inline: auto;
-  padding: 20px;
-  border: 1px solid #8796ab;
-  border-radius: 12px;
-  color: #f4f7fb;
-  background: #142033;
-  box-shadow: 0 8px 32px #0005;
-  text-align: start;
+  max-width: 34rem;
   max-height: 75vh;
+  margin-inline: auto;
+  padding: 1rem 1.125rem 1.125rem;
   overflow: auto;
+  border: 1px solid var(--color-border-strong);
+  border-top: 2px solid var(--color-accent);
+  border-radius: 1.125rem;
+  background: var(--color-card);
+  color: var(--color-foreground);
+  box-shadow: var(--shadow-overlay);
+  text-align: start;
+  animation: consent-in var(--duration-slow) var(--ease-out) both;
 }
+
 .analytics-consent h2 {
-  font-size: 19px;
-  color: #fff;
-  margin: 0 0 8px;
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
 }
+
 .analytics-consent p {
-  line-height: 1.65;
-  margin: 8px 0;
+  margin: 0.375rem 0 0;
+  color: var(--color-muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.55;
 }
+
 .analytics-consent a {
-  color: #c3e5ff;
+  display: inline-block;
+  margin-top: 0.375rem;
+  padding-block: 0.25rem;
+  color: var(--color-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: underline;
+  text-underline-offset: 4px;
 }
+
 .analytics-consent-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
+
 .analytics-consent-actions button {
   flex: 1;
-  min-width: 130px;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid #aabacf;
-  border-radius: 6px;
-  background: #f4f7fb;
-  color: #142033;
+  min-width: 8.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9999px;
+  background: var(--color-background);
+  color: var(--color-primary);
   font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
 }
-.analytics-privacy button:focus-visible,
-.analytics-consent a:focus-visible {
-  outline: 3px solid #4dc6ff;
-  outline-offset: 3px;
+
+.analytics-consent-actions button:hover {
+  border-color: var(--color-primary);
+  background: var(--color-secondary);
+}
+
+@keyframes consent-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/**
+ * Paper.
+ *
+ * A host prints the event page to hand a caterer or a venue coordinator the head count
+ * and the list. What should come out is that page's content and nothing of the site
+ * around it: no header, no footer, no floating buttons, no cookie notice, and no film
+ * grain laid over the text. Controls inside the page hide themselves with `print:hidden`
+ * where they are declared; this block removes the chrome every page shares.
+ *
+ * `body > header` and `body > footer` are the site's own bars and nothing else — a
+ * page's title block is a `<header>` too, but it sits inside `<main>`.
+ */
+@media print {
+  @page {
+    margin: 14mm 12mm;
+  }
+
+  body::before,
+  body > header,
+  body > footer,
+  body > a[href='#main'],
+  .analytics-privacy,
+  [aria-controls='accessibility-panel'],
+  #accessibility-panel {
+    display: none !important;
+  }
+
+  body,
+  .console-grid {
+    background: #fff !important;
+  }
+
+  /* A scroll-driven reveal has no scroll position on paper and would print at whatever
+     opacity it happened to hold; a typed heading would print half written. */
+  .reveal,
+  .enter,
+  .animate-rise {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .written-word,
+  .written-word-armed,
+  .written-word-writing {
+    animation: none !important;
+    clip-path: none !important;
+  }
 }

@@ -1,3 +1,5 @@
+import { EVENT_TIMEZONE } from '@/config/event.config';
+import { eventZoneInstant } from '@/lib/eventDate';
 import type { Database } from '@/types/database.types';
 
 /**
@@ -24,15 +26,26 @@ export interface RsvpStats {
   readonly receivedToday: number;
 }
 
-/** Midnight in the event's zone, so "today" means the host's today (§5). */
+const eventZoneDay = new Intl.DateTimeFormat('en-CA', {
+  timeZone: EVENT_TIMEZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/** The calendar day an instant falls on in the event's zone, as `YYYY-MM-DD`. */
+const dayKey = (instant: Date): string => eventZoneDay.format(instant);
+
+/**
+ * Midnight in the event's zone, so "today" means the host's today (§5).
+ *
+ * Resolved through the zone rather than a literal offset. This used to append `+03:00`,
+ * which is Israel's offset for the summer half of the year only: from late October to
+ * late March the country is at +02:00, so "midnight" landed at 23:00 the previous
+ * evening and a reply sent in that hour was counted as today's all winter.
+ */
 function startOfTodayInJerusalem(now: Date): number {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Jerusalem',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(now);
-  return new Date(`${parts}T00:00:00+03:00`).getTime();
+  return eventZoneInstant(dayKey(now));
 }
 
 export function computeRsvpStats(rsvps: readonly Rsvp[], now: Date = new Date()): RsvpStats {
@@ -123,4 +136,59 @@ export function computeResponseRate(
   }
 
   return { percentage: null, responded: 0, invited: 0 };
+}
+
+export interface ReplyTrendDay {
+  /** The calendar day in the event's zone, as `YYYY-MM-DD`. */
+  readonly date: string;
+  readonly replies: number;
+}
+
+export interface ReplyTrend {
+  /** One entry per day, oldest first, ending today — days with no replies included. */
+  readonly days: readonly ReplyTrendDay[];
+  /** Replies inside the window, which can be fewer than the event's total. */
+  readonly total: number;
+  /** The busiest day in the window, or null when nothing arrived in it. */
+  readonly peak: ReplyTrendDay | null;
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Replies per day over the last `days` days, for the pace chart on the event page.
+ *
+ * The totals say where an event stands; this says whether it is still moving. A host
+ * deciding when to send a reminder needs exactly that — "four replies a day" and
+ * "nothing since Tuesday" are the same total and opposite decisions.
+ *
+ * Days are bucketed in the event's zone, like every other date here (§5). The window is
+ * walked back from *noon* rather than midnight: a daylight-saving change moves the clock
+ * by an hour, and an hour either side of noon is still the same calendar day, so no date
+ * can be skipped or counted twice at the transition.
+ */
+export function computeReplyTrend(
+  rsvps: readonly Pick<Rsvp, 'submitted_at'>[],
+  now: Date = new Date(),
+  days = 14,
+): ReplyTrend {
+  const counts = new Map<string, number>();
+  for (const rsvp of rsvps) {
+    const key = dayKey(new Date(rsvp.submitted_at));
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const noonToday = eventZoneInstant(dayKey(now), '12:00:00');
+  const window = Array.from({ length: days }, (_, index): ReplyTrendDay => {
+    const date = dayKey(new Date(noonToday - (days - 1 - index) * DAY_MS));
+    return { date, replies: counts.get(date) ?? 0 };
+  });
+
+  const total = window.reduce((sum, day) => sum + day.replies, 0);
+  const peak = window.reduce<ReplyTrendDay | null>(
+    (best, day) => (day.replies > (best?.replies ?? 0) ? day : best),
+    null,
+  );
+
+  return { days: window, total, peak };
 }
