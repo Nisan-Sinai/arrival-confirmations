@@ -76,7 +76,7 @@ jobs:
       node-version: '24'
       package-manager: pnpm
       install-command: pnpm install --frozen-lockfile
-      browser-install-command: pnpm exec playwright install --with-deps --only-shell chromium webkit
+      browser-install-command: pnpm exec playwright install --with-deps chromium webkit
       build-command: >-
         NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329
         NEXT_PUBLIC_SUPABASE_ANON_KEY="$GITHUB_SHA"
