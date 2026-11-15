@@ -58,7 +58,7 @@ export function MobileNav({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOpen(false);
-        triggerRef.current?.focus();
+        triggerRef.current?.focus({ preventScroll: true });
       }
     };
     document.addEventListener('keydown', onKey);
@@ -89,7 +89,7 @@ export function MobileNav({
            * title read straight through the menu). An opaque surface keeps the menu
            * legible regardless of what sits behind it.
            */
-          className="nav-sheet border-border bg-background shadow-lifted absolute inset-x-0 top-full z-[var(--z-overlay)] border-b"
+          className="nav-sheet border-border bg-background shadow-lifted absolute inset-x-0 top-full z-[var(--z-overlay)] max-h-[calc(100dvh-4rem-1px-env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain border-b"
         >
           <ul className="flex flex-col gap-1 px-4 py-3">
             {items.map((item) => (
@@ -98,7 +98,15 @@ export function MobileNav({
                   href={item.href}
                   lang={item.lang}
                   hrefLang={item.lang}
-                  onClick={() => setOpen(false)}
+                  aria-current={pathname === item.href ? 'page' : undefined}
+                  onNavigate={(event) => {
+                    setOpen(false);
+                    const { pathname, search, hash } = window.location;
+                    if (item.href === pathname + search + hash) {
+                      event.preventDefault();
+                      triggerRef.current?.focus({ preventScroll: true });
+                    }
+                  }}
                   className={
                     item.primary
                       ? buttonClass({ size: 'md', block: true, className: 'mt-2' })

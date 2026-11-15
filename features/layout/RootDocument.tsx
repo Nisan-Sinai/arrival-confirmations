@@ -148,6 +148,7 @@ export function RootDocument({
     <html
       lang={languageTag(locale)}
       dir={directionOf(locale)}
+      data-scroll-behavior="smooth"
       className={`${assistant.variable} ${frankRuhl.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">

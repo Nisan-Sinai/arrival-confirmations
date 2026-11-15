@@ -111,7 +111,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
   useEffect(() => {
     if (!open) return;
 
-    closeRef.current?.focus();
+    closeRef.current?.focus({ preventScroll: true });
     const trigger = triggerRef.current;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
@@ -120,7 +120,7 @@ export function AccessibilityWidget({ locale }: Readonly<{ locale: Locale }>) {
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
-      trigger?.focus();
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
   }, [open]);
 

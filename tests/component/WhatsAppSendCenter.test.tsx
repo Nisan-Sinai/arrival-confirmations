@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WhatsAppSendCenter, type SendCenterGuest } from '@/features/admin/WhatsAppSendCenter';
 
@@ -31,6 +31,8 @@ beforeEach(() => {
     // jsdom always provides storage; the guard mirrors the component's own.
   }
 });
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('WhatsAppSendCenter', () => {
   it('sends the plain personal link one-by-one on the free plan, with no controls', () => {
@@ -76,6 +78,29 @@ describe('WhatsAppSendCenter', () => {
     expect(screen.getByRole('button', { name: 'התחלת שליחה לכולם (1)' })).toBeInTheDocument();
     expect(screen.getByText('שרה כהן')).toBeInTheDocument();
     expect(screen.queryByText('דוד כהן')).toBeNull();
+  });
+
+  it('retries the same guest when the bulk sender fails to prepare a personal link', async () => {
+    const request = vi.fn(async (_url: string) => new Response(null, { status: 503 }));
+    vi.stubGlobal('fetch', request);
+    render(
+      <WhatsAppSendCenter
+        eventId="e1"
+        eventTitle="הברית"
+        guests={[guest(), guest({ id: 'g2', fullName: 'שרה כהן' })]}
+        premium
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'התחלת שליחה לכולם (2)' }));
+    const retry = await screen.findByRole('button', { name: 'פתיחת המוזמן הבא (1 מתוך 2)' });
+    await userEvent.click(retry);
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+    expect(request.mock.calls.map((args) => args[0])).toEqual([
+      '/share/guest/g1?kind=invitation&format=json',
+      '/share/guest/g1?kind=invitation&format=json',
+    ]);
+    expect(screen.queryByText('כל המוזמנים בתור נפתחו')).not.toBeInTheDocument();
   });
 
   it('sends a thank-you straight to WhatsApp with no token', async () => {

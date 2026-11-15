@@ -159,6 +159,7 @@ export default async function WhatsAppSettingsPage({
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap">
               <Button
+                type="submit"
                 formAction={adminTestWhatsAppSenderAction}
                 variant="outline"
                 className="w-full sm:w-auto"
@@ -166,7 +167,11 @@ export default async function WhatsAppSettingsPage({
                 <Icon name="send" />
                 בדיקת חיבור ל-Meta
               </Button>
-              <Button formAction={adminSaveWhatsAppSenderAction} className="w-full sm:w-auto">
+              <Button
+                type="submit"
+                formAction={adminSaveWhatsAppSenderAction}
+                className="w-full sm:w-auto"
+              >
                 <Icon name="check-circle" />
                 שמירת המספר הפעיל
               </Button>

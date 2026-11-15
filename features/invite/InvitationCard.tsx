@@ -146,7 +146,13 @@ const iconProps = {
   role: 'presentation' as const,
 };
 
-export function InvitationCard({ event }: { event: PublicEvent }) {
+export function InvitationCard({
+  event,
+  showRsvpAction = true,
+}: {
+  event: PublicEvent;
+  showRsvpAction?: boolean;
+}) {
   const preset = getEventTypePreset(event.event_type);
   const { weekday, date } = formatGregorian(event.event_date!);
   const ceremonyTime = formatTime(event.ceremony_time);
@@ -329,22 +335,24 @@ export function InvitationCard({ event }: { event: PublicEvent }) {
                 at an invitation with no visible indication that there is anything to
                 do. This is the call to action, and it is the only element on the card
                 that is filled rather than outlined. */}
-            <div className="mt-9 flex justify-center">
-              <a href="#rsvp" className={buttonClass({ size: 'lg' })}>
-                {UI_MESSAGES.rsvp.submit}
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 5v14M19 12l-7 7-7-7" />
-                </svg>
-              </a>
-            </div>
+            {showRsvpAction && (
+              <div className="mt-9 flex justify-center">
+                <a href="#rsvp" className={buttonClass({ size: 'lg' })}>
+                  {UI_MESSAGES.rsvp.submit}
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 5v14M19 12l-7 7-7-7" />
+                  </svg>
+                </a>
+              </div>
+            )}
 
             {event.contact_phone !== null && (
               <p className="text-muted-foreground mt-7 text-center text-sm">

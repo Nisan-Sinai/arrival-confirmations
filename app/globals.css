@@ -235,6 +235,13 @@
     scroll-padding-top: 5.5rem;
   }
 
+  /* An open modal keeps its background at the current scroll position. */
+  html:has(.modal-scroll-lock[open]) {
+    overflow-y: hidden;
+    overscroll-behavior: none;
+    scrollbar-gutter: stable;
+  }
+
   body {
     overflow-x: clip;
     background-color: var(--color-background);

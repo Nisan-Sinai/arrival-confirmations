@@ -188,6 +188,8 @@ export function WhatsAppSendCenter({
   const selectKind = (next: PremiumMessageKind) => {
     setKind(next);
     setScope(next === 'update' || next === 'thanks' ? 'attending' : 'unanswered');
+    setBulkGuestIds([]);
+    setBulkIndex(-1);
   };
 
   const storageKey = `whatsapp-send-progress:${eventId}:${kind}`;
@@ -261,12 +263,12 @@ export function WhatsAppSendCenter({
         whatsappUrl = payload.whatsappUrl;
       }
 
-      markSent(guest.id);
       const isMobile = /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent);
       const destination = isMobile
         ? whatsappUrl.replace(/^https:\/\/api\.whatsapp\.com\/send\?/, 'whatsapp://send?')
         : whatsappUrl;
       window.location.assign(destination);
+      markSent(guest.id);
       return true;
     } catch {
       setSendError('לא הצלחנו לפתוח את WhatsApp. נסו שוב.');
@@ -276,13 +278,16 @@ export function WhatsAppSendCenter({
     }
   };
 
+  const reachableGuests = shownGuests.filter(
+    (guest) => normalizeWhatsAppPhone(guest.phone) !== null,
+  );
+
   const startBulkSend = async () => {
-    const queue = shownGuests.filter((guest) => sendHref(guest) !== null).map((guest) => guest.id);
-    if (queue.length === 0) return;
-    setBulkGuestIds(queue);
-    setBulkIndex(0);
-    const firstGuest = guests.find((guest) => guest.id === queue[0]);
-    if (firstGuest !== undefined) await openWhatsApp(firstGuest);
+    const firstGuest = reachableGuests[0];
+    if (firstGuest === undefined) return;
+    setBulkGuestIds(reachableGuests.map((guest) => guest.id));
+    setBulkIndex(-1);
+    if (await openWhatsApp(firstGuest)) setBulkIndex(0);
   };
 
   const openNextBulkGuest = async () => {
@@ -291,15 +296,14 @@ export function WhatsAppSendCenter({
     if (nextGuestId === undefined) return;
     const nextGuest = guests.find((guest) => guest.id === nextGuestId);
     if (nextGuest === undefined) return;
-    setBulkIndex(nextIndex);
-    await openWhatsApp(nextGuest);
+    if (await openWhatsApp(nextGuest)) setBulkIndex(nextIndex);
   };
 
   const bulkInProgress = bulkGuestIds.length > 0 && bulkIndex < bulkGuestIds.length - 1;
   const bulkCompleted = bulkGuestIds.length > 0 && bulkIndex === bulkGuestIds.length - 1;
 
   return (
-    <Card id="whatsapp-send-center" padding="lg" className="scroll-mt-32">
+    <Card id="whatsapp-send-center" tabIndex={-1} padding="lg" className="scroll-mt-32">
       <div className="flex items-start gap-4">
         <span
           aria-hidden="true"
@@ -339,6 +343,7 @@ export function WhatsAppSendCenter({
             <Field label="סוג ההודעה">
               <Select
                 value={kind}
+                disabled={openingGuestId !== null}
                 onChange={(event) => selectKind(event.target.value as PremiumMessageKind)}
               >
                 <option value="invitation">הזמנה אישית</option>
@@ -397,8 +402,8 @@ export function WhatsAppSendCenter({
           <div className="border-accent/30 bg-accent-soft/25 mt-4 rounded-xl border p-4">
             <p className="text-primary font-semibold">שליחה מרוכזת לפי הסינון הנוכחי</p>
             <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-              התור כולל רק את {shownGuests.length} המוזמנים שמוצגים כעת. לאחר כל שליחה חוזרים לאתר
-              ופותחים את המוזמן הבא.
+              התור כולל את המוזמנים שמוצגים כעת ויש להם מספר תקין. לאחר כל שליחה חוזרים לאתר ופותחים
+              את המוזמן הבא.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {bulkInProgress ? (
@@ -418,12 +423,12 @@ export function WhatsAppSendCenter({
                   type="button"
                   variant="secondary"
                   size="sm"
-                  disabled={shownGuests.length === 0 || openingGuestId !== null}
+                  disabled={reachableGuests.length === 0 || openingGuestId !== null}
                   onClick={() => void startBulkSend()}
                 >
                   {openingGuestId !== null
                     ? 'פותח WhatsApp…'
-                    : `התחלת שליחה לכולם (${shownGuests.length})`}
+                    : `התחלת שליחה לכולם (${reachableGuests.length})`}
                 </Button>
               )}
               {bulkCompleted && (

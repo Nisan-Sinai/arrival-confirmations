@@ -1,23 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { FlowWalkthrough } from '@/features/landing/FlowWalkthrough';
 
-/**
- * The drawing is the poster; pressing play opens the clip in a lightbox.
- *
- * The first version played the video in place, in the same 9:16 slot the drawing sits
- * in beside the steps. That slot is right for an abstraction and wrong for a 1080×1920
- * screen recording whose every frame is full of Hebrew UI text — at 220–300px the thing
- * it is demonstrating is illegible, and `object-cover` cropped it further the moment it
- * went full screen. Someone who taps play wants to *watch* it.
- *
- * So play now dims the page and shows the clip centred, sized to the viewport with its
- * aspect ratio kept whole. The 1.9MB file is still fetched only on that tap —
- * `preload="none"` on an element that does not exist until `open` — and the drawn
- * walkthrough keeps running underneath as the trigger.
- */
+/** The animated poster opens the full screen recording on demand. */
 export function FlowDemo({
   playLabel,
   caption,
@@ -28,55 +15,12 @@ export function FlowDemo({
   readonly closeLabel: string;
 }) {
   const [open, setOpen] = useState(false);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    // A lightbox owns the keyboard while it is up: Escape closes it, and focus starts on
-    // the close button rather than wherever it happened to be on the page.
-    closeRef.current?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        return;
-      }
-      if (event.key !== 'Tab') return;
-
-      const focusable = [
-        ...(dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), video[controls]',
-        ) ?? []),
-      ].filter((element) => element.tabIndex >= 0);
-      if (focusable.length === 0) return;
-
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    // The page must not scroll behind the overlay.
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    // Captured now rather than read in the cleanup: by the time this unmounts the ref may
-    // point somewhere else, and the button to restore focus to is the one that was there
-    // when the dialog opened.
-    const trigger = triggerRef.current;
-
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
-      // Return focus to the thing that opened it, the way a dialog should.
-      trigger?.focus();
-    };
+  useLayoutEffect(() => {
+    // The top layer escapes the poster's animated, clipped ancestors.
+    if (open) dialogRef.current?.showModal();
   }, [open]);
 
   return (
@@ -106,40 +50,24 @@ export function FlowDemo({
       <figcaption className="mt-3 text-center text-xs text-white/60">{caption}</figcaption>
 
       {open && (
-        <div
+        <dialog
           ref={dialogRef}
-          role="dialog"
-          aria-modal="true"
           aria-label={playLabel}
-          onClick={(event) => {
-            // A click on the backdrop closes; a click that started on the video does not.
-            if (event.target === event.currentTarget) setOpen(false);
+          onClose={() => {
+            setOpen(false);
+            triggerRef.current?.focus({ preventScroll: true });
           }}
-          className="animate-rise fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) event.currentTarget.close();
+          }}
+          className="modal-scroll-lock fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none items-center justify-center overflow-hidden bg-transparent p-4 backdrop:bg-black/80 backdrop:backdrop-blur-sm open:flex"
         >
-          <div className="relative max-h-full w-auto">
-            {/*
-              `max-h-[85vh]` with `h-auto w-auto`: the clip is shown at whatever size fits
-              the shorter axis of the viewport with its 9:16 ratio intact — never cropped,
-              never stretched. On a phone that is nearly full-bleed; on a desktop it is a
-              tall centred panel.
-            */}
-            {/* No <track>: a silent screen recording, and the steps carry the words. */}
-            <video
-              src="/media/walkthrough.mp4"
-              tabIndex={0}
-              className="max-h-[85vh] w-auto rounded-2xl"
-              controls
-              autoPlay
-              playsInline
-              preload="auto"
-            />
+          <div className="motion-safe:animate-rise relative w-[min(calc(100dvw-3rem),47.8125dvh)]">
             <button
-              ref={closeRef}
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => dialogRef.current?.close()}
               aria-label={closeLabel}
-              className="focus-visible:outline-accent bg-primary text-primary-foreground absolute -top-3 -right-3 flex size-9 items-center justify-center rounded-full border border-white/20 shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="focus-visible:outline-accent bg-primary text-primary-foreground absolute -end-2 -top-2 z-10 flex size-11 items-center justify-center rounded-full border border-white/20 shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               <svg
                 aria-hidden="true"
@@ -153,8 +81,20 @@ export function FlowDemo({
                 <path d="M6 6l12 12M18 6 6 18" />
               </svg>
             </button>
+            {/* The silent recording is described by the accompanying walkthrough. */}
+            <video
+              src="/media/walkthrough.mp4"
+              width={1080}
+              height={1920}
+              tabIndex={0}
+              className="aspect-[9/16] w-full rounded-2xl bg-black object-contain"
+              controls
+              autoPlay
+              playsInline
+              preload="auto"
+            />
           </div>
-        </div>
+        </dialog>
       )}
     </figure>
   );
