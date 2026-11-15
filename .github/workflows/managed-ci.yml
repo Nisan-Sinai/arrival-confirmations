@@ -76,23 +76,24 @@ jobs:
       node-version: '24'
       package-manager: pnpm
       install-command: pnpm install --frozen-lockfile
-      browser-install-command: pnpm exec playwright install --with-deps chromium
+      browser-install-command: pnpm exec playwright install --with-deps chromium webkit
       build-command: >-
-        NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.supabase.co
+        NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329
         NEXT_PUBLIC_SUPABASE_ANON_KEY="$GITHUB_SHA"
         NEXT_PUBLIC_SITE_URL=http://localhost:3000
         SUPABASE_SERVICE_ROLE_KEY="$GITHUB_SHA"
-        TOKEN_PEPPER="$GITHUB_SHA"
-        IP_HASH_PEPPER="$GITHUB_SHA"
+        TOKEN_PEPPER=ci-placeholder-browser-token-"$GITHUB_SHA"
+        IP_HASH_PEPPER=ci-placeholder-browser-ip-"$GITHUB_SHA"
         pnpm build
       e2e-command: >-
-        NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.supabase.co
+        NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329
         NEXT_PUBLIC_SUPABASE_ANON_KEY="$GITHUB_SHA"
         NEXT_PUBLIC_SITE_URL=http://localhost:3000
         SUPABASE_SERVICE_ROLE_KEY="$GITHUB_SHA"
-        TOKEN_PEPPER="$GITHUB_SHA"
-        IP_HASH_PEPPER="$GITHUB_SHA"
-        pnpm test:e2e
+        TOKEN_PEPPER=ci-placeholder-browser-token-"$GITHUB_SHA"
+        IP_HASH_PEPPER=ci-placeholder-browser-ip-"$GITHUB_SHA"
+        E2E_EVENT_PUBLIC_ID=qa-scroll-event
+        pnpm test:e2e --workers=3
       lighthouse-command: bash scripts/check-lighthouse.sh
 
   supabase-cloud:

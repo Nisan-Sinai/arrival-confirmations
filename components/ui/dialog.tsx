@@ -76,7 +76,7 @@ export function ConfirmDialog({
         if (event.target === event.currentTarget) onCancel();
       }}
       className={cn(
-        'dialog-card bg-card text-card-foreground shadow-overlay m-auto w-[min(26rem,calc(100vw-2rem))] rounded-2xl border p-0',
+        'dialog-card modal-scroll-lock bg-card text-card-foreground shadow-overlay m-auto max-h-[calc(100dvh-2rem)] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-2xl border p-0',
         'backdrop:bg-surface-ink/45 backdrop:backdrop-blur-[2px]',
       )}
     >

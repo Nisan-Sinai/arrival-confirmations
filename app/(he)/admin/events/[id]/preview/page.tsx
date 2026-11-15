@@ -125,7 +125,7 @@ export default async function AdminCustomerInvitationPreviewPage({
           style={{ backgroundColor: branding.primaryColor }}
         />
         <div className="mt-5">
-          <InvitationCard event={event} />
+          <InvitationCard event={event} showRsvpAction={false} />
         </div>
       </section>
 

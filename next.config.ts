@@ -19,6 +19,10 @@ import { localePath, locales } from './lib/i18n';
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 const isDev = process.env.NODE_ENV === 'development';
+// WebKit upgrades loopback assets to HTTPS when running against a plain HTTP test server.
+const isLocalHttp =
+  process.env.VERCEL !== '1' &&
+  /^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\/?$/.test(process.env.NEXT_PUBLIC_SITE_URL ?? '');
 
 /**
  * The Supabase origin, so `connect-src` can name it exactly rather than opening the
@@ -68,7 +72,7 @@ const contentSecurityPolicy = [
   "base-uri 'self'",
   // The invitation is a page, not an app shell; nothing here should ever be a frame.
   "frame-src 'none'",
-  'upgrade-insecure-requests',
+  ...(isLocalHttp ? [] : ['upgrade-insecure-requests']),
 ].join('; ');
 
 const securityHeaders = [

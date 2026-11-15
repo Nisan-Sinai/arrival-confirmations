@@ -398,7 +398,12 @@ export function GuestManagementPanel({
     <div className="space-y-6">
       {status !== null && <Alert tone={status.tone}>{status.text}</Alert>}
 
-      <section id="manual-add" className="scroll-mt-32" aria-labelledby="manual-add-title">
+      <section
+        id="manual-add"
+        tabIndex={-1}
+        className="scroll-mt-32"
+        aria-labelledby="manual-add-title"
+      >
         <Card padding="lg">
           <SectionIntro
             id="manual-add-title"
@@ -421,7 +426,12 @@ export function GuestManagementPanel({
         </Card>
       </section>
 
-      <section id="phone-import" className="scroll-mt-32" aria-labelledby="phone-import-title">
+      <section
+        id="phone-import"
+        tabIndex={-1}
+        className="scroll-mt-32"
+        aria-labelledby="phone-import-title"
+      >
         <Card padding="lg">
           <SectionIntro
             id="phone-import-title"
@@ -483,6 +493,7 @@ export function GuestManagementPanel({
           {mode === 'owner' && (
             <form
               id="file-import"
+              tabIndex={-1}
               action={importGuestFileAction}
               className="border-border mt-6 scroll-mt-32 space-y-4 border-t pt-6"
             >
@@ -517,7 +528,12 @@ export function GuestManagementPanel({
         </Card>
       </section>
 
-      <section id="guest-list" className="scroll-mt-32" aria-labelledby="guest-list-title">
+      <section
+        id="guest-list"
+        tabIndex={-1}
+        className="scroll-mt-32"
+        aria-labelledby="guest-list-title"
+      >
         <Card padding="lg">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <SectionIntro
@@ -581,14 +597,11 @@ export function GuestManagementPanel({
                     return (
                       <li
                         key={guest.id}
-                        // content-visibility lets the browser skip layout and paint for
-                        // rows off-screen — on a list of hundreds of guests, each holding
-                        // a full edit form, rendering them all at once is what made the
-                        // page feel stuck. The intrinsic size reserves a collapsed row's
-                        // height so the scrollbar stays stable.
+                        // Keep the real height of collapsed rows in layout. Their phone
+                        // and seating details can wrap, so an estimated height moves the
+                        // WhatsApp target while a long anchor jump is still scrolling.
                         className={cn(
                           'border-border relative rounded-2xl border transition-colors duration-[--duration-fast]',
-                          '[contain-intrinsic-size:auto_76px] [content-visibility:auto]',
                           arrived ? 'border-success/30 bg-success-soft/30' : 'bg-card',
                         )}
                       >

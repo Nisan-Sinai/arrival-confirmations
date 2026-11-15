@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 
 import {
   submitRsvpAction,
@@ -77,6 +77,14 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
     submitRsvpAction,
     INITIAL_STATE,
   );
+  const successHeading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (state.status !== 'success') return;
+    const heading = successHeading.current;
+    heading?.focus({ preventScroll: true });
+    heading?.scrollIntoView?.({ block: 'nearest', behavior: 'instant' });
+  }, [state.status]);
 
   /**
    * Which answer is selected, mirrored into state only because the count fields are
@@ -132,7 +140,9 @@ export function RsvpForm({ eventId, sideALabel, sideBLabel, calendar }: RsvpForm
         </span>
         {/* §9: aria-live so a screen reader announces the outcome after submission. */}
         <div aria-live="polite">
-          <h2 className="text-h2 text-primary mt-6 font-bold">{UI_MESSAGES.rsvp.successTitle}</h2>
+          <h2 ref={successHeading} tabIndex={-1} className="text-h2 text-primary mt-6 font-bold">
+            {UI_MESSAGES.rsvp.successTitle}
+          </h2>
           <p className="text-muted-foreground mt-3 leading-relaxed">{state.message}</p>
         </div>
 

@@ -1,19 +1,20 @@
 import { defineConfig, devices } from '@playwright/test';
 import { config as loadDotenv } from 'dotenv';
 
+import { FIXTURE_ORIGIN } from './e2e/fixtures/scroll-data.mjs';
+
 loadDotenv({ path: '.env.local', quiet: true });
 
 const baseURL = process.env.TEST_BASE_URL ?? 'http://localhost:3000';
 const isCI = Boolean(process.env.CI);
+const isLocal = ['localhost', '127.0.0.1'].includes(new URL(baseURL).hostname);
+const mobileSpecs = /.*\.mobile\.spec\.ts/;
 
 /**
  * E2E and accessibility suites (§10.5, §9).
  *
- * Chromium only — the specification does not require cross-browser coverage, and a
- * single engine keeps the browser download inside the available disk budget.
- *
- * `fullyParallel` is off: every spec talks to the same Supabase project, so parallel
- * workers would race on shared rows. Auto-waiting only; no hard-coded sleeps.
+ * Desktop coverage uses Chromium. Touch and scroll regressions also run in WebKit.
+ * A single worker keeps the suites that share database fixtures from racing.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -48,17 +49,37 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: mobileSpecs,
     },
     {
       name: 'mobile',
-      use: { ...devices['Pixel 7'] },
-      testMatch: /.*\.mobile\.spec\.ts/,
+      use: { ...devices['Pixel 5'] },
+      testMatch: mobileSpecs,
+    },
+    {
+      name: 'iphone',
+      use: { ...devices['iPhone 13'] },
+      testMatch: mobileSpecs,
     },
   ],
-  webServer: {
-    command: isCI ? 'pnpm start' : 'pnpm dev',
-    url: baseURL,
-    reuseExistingServer: !isCI,
-    timeout: 180_000,
-  },
+  webServer: isLocal
+    ? [
+        ...(process.env.NEXT_PUBLIC_SUPABASE_URL === FIXTURE_ORIGIN
+          ? [
+              {
+                command:
+                  'node --input-type=module -e "import { startScrollFixture } from \'./e2e/fixtures/scroll-data.mjs\'; startScrollFixture()"',
+                url: `${FIXTURE_ORIGIN}/health`,
+                reuseExistingServer: !isCI,
+              },
+            ]
+          : []),
+        {
+          command: isCI ? 'pnpm start' : 'pnpm dev',
+          url: baseURL,
+          reuseExistingServer: !isCI,
+          timeout: 180_000,
+        },
+      ]
+    : undefined,
 });

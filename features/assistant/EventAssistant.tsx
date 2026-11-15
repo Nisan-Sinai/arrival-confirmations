@@ -31,6 +31,8 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
   const [messages, setMessages] = useState<Message[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
@@ -60,17 +62,44 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
           : ['How do I create an event?', 'How do I share invites?', 'What does it cost?'];
 
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (!open) return;
+
+    // Opening the panel on a touch device should leave the keyboard closed.
+    const initialFocus = window.matchMedia('(pointer: coarse)').matches
+      ? closeRef.current
+      : inputRef.current;
+    initialFocus?.focus({ preventScroll: true });
+
+    const viewport = window.visualViewport;
+    const widget = widgetRef.current;
+    if (viewport === null || widget === null) return;
+
+    // iOS may resize only the visible viewport when typing into a fixed panel.
+    const updateKeyboardInset = () => {
+      const inset =
+        viewport.scale === 1 && document.activeElement === inputRef.current
+          ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+          : 0;
+      widget.style.setProperty('--assistant-keyboard-inset', `${inset}px`);
+    };
+    updateKeyboardInset();
+    viewport.addEventListener('resize', updateKeyboardInset);
+    viewport.addEventListener('scroll', updateKeyboardInset);
+    return () => {
+      viewport.removeEventListener('resize', updateKeyboardInset);
+      viewport.removeEventListener('scroll', updateKeyboardInset);
+      widget.style.removeProperty('--assistant-keyboard-inset');
+    };
   }, [open]);
 
   function close() {
     setOpen(false);
-    triggerRef.current?.focus();
+    triggerRef.current?.focus({ preventScroll: true });
   }
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-  }, [messages, pending]);
+  }, [messages, pending, open]);
 
   async function sendQuestion(question: string) {
     const content = question.trim();
@@ -122,7 +151,10 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
   }
 
   return (
-    <div className="fixed right-4 bottom-[max(0.25rem,env(safe-area-inset-bottom))] z-[var(--z-overlay)] flex flex-col items-end rtl:items-start print:hidden">
+    <div
+      ref={widgetRef}
+      className="fixed right-4 bottom-[max(0.25rem,env(safe-area-inset-bottom),var(--assistant-keyboard-inset,0px))] z-[var(--z-overlay)] flex flex-col items-end rtl:items-start print:hidden"
+    >
       {open && (
         <section
           role="dialog"
@@ -131,9 +163,9 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
           onKeyDown={(event) => {
             if (event.key === 'Escape') close();
           }}
-          className="bg-card text-card-foreground border-border shadow-overlay mb-3 flex h-[min(36rem,calc(100dvh-6rem))] w-[min(25rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border"
+          className="bg-card text-card-foreground border-border shadow-overlay mb-3 flex h-[min(36rem,calc(100dvh-6rem-var(--assistant-keyboard-inset,0px)))] w-[min(25rem,calc(100vw-2rem))] flex-col overflow-y-auto overscroll-contain rounded-2xl border"
         >
-          <div className="bg-primary text-primary-foreground flex items-center justify-between gap-3 px-5 py-4">
+          <div className="bg-primary text-primary-foreground flex shrink-0 items-center justify-between gap-3 px-5 py-4">
             <div>
               <h2 className="text-base font-bold">
                 {isHe ? 'עוזר לאישורי הגעה' : 'RSVP assistant'}
@@ -145,6 +177,7 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
               </p>
             </div>
             <button
+              ref={closeRef}
               type="button"
               onClick={close}
               aria-label={isHe ? 'סגירת העוזר' : 'Close assistant'}
@@ -158,7 +191,7 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
             role="log"
             aria-live="polite"
             aria-relevant="additions"
-            className="flex-1 space-y-3 overflow-y-auto p-4 text-base"
+            className="min-h-16 flex-1 space-y-3 overflow-y-auto p-4 text-base"
           >
             {messages.length === 0 && (
               <div className="space-y-3">
@@ -224,7 +257,7 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
               </p>
             )}
           </div>
-          <form onSubmit={send} className="border-border border-t p-3">
+          <form onSubmit={send} className="border-border shrink-0 border-t p-3">
             {error && (
               <p role="alert" className="text-destructive mb-2 text-sm">
                 {error}
@@ -266,7 +299,7 @@ function AssistantConversation({ locale, pathname }: { locale: Locale; pathname:
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={
           isHe

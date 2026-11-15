@@ -1,5 +1,24 @@
+'use client';
+
+import type { MouseEvent } from 'react';
+
 import { Icon, type IconName } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
+
+function jumpToDistantSection(event: MouseEvent<HTMLAnchorElement>) {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
+    return;
+  const { hash } = event.currentTarget;
+  const section = document.getElementById(hash.slice(1));
+  // A nearby fragment keeps native smooth scrolling. A jump across hundreds of rows
+  // goes directly to the section so it cannot be interrupted midway through the list.
+  if (!section || Math.abs(section.getBoundingClientRect().top) <= window.innerHeight * 2) return;
+
+  event.preventDefault();
+  if (window.location.hash !== hash) window.history.pushState(null, '', hash);
+  section.scrollIntoView({ block: 'start', behavior: 'instant' });
+  section.focus({ preventScroll: true });
+}
 
 /**
  * The sticky quick-jump bar above the guest-management sections.
@@ -24,6 +43,7 @@ export function GuestQuickNav({
   const quickLink = (href: string, label: string, icon: IconName) => (
     <a
       href={href}
+      onClick={jumpToDistantSection}
       className={cn(
         'text-primary hover:bg-card inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold whitespace-nowrap sm:h-9 sm:px-3.5 sm:text-sm',
         'transition-[background-color,color] duration-[--duration-fast]',

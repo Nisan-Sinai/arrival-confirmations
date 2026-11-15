@@ -196,7 +196,7 @@ export function AutomaticWhatsAppSendPanel({
   };
 
   return (
-    <Card id="whatsapp-send-center" padding="lg" className="scroll-mt-32">
+    <Card id="whatsapp-send-center" tabIndex={-1} padding="lg" className="scroll-mt-32">
       <div className="flex items-start gap-3 sm:gap-4">
         <span
           aria-hidden="true"
